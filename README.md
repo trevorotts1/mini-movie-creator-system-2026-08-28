@@ -138,11 +138,20 @@ MIT — see [LICENSE](LICENSE). Bundled SFX/music clips and example AI media wer
 the repo author (ElevenLabs / fal / Gemini) and are redistributed here; per-clip provenance is
 recorded in `media/library/*/catalog.json` and the per-shot `.json` sidecars.
 
+<!-- lwh-footer -->
+
 ---
+
+## 📘 The free book
+
+This repo is one thing I built with AI. The book is the system underneath it.
+
+**[Vibe Engineering Blocks](https://learnwithhasan.com/blocks/)** is my free 74-page book.
+47 building blocks for shipping real apps with AI. One block per page, each with the exact
+prompt to hand your AI.
 
 Built by **[Hasan Aboul Hasan](https://learnwithhasan.com)**. I build real products with AI and
 write down exactly how.
-
 [Guides](https://learnwithhasan.com/guides/) &nbsp;·&nbsp;
 [YouTube](https://www.youtube.com/@HasanAboulHasan) &nbsp;·&nbsp;
-[Free book: 47 building blocks for shipping with AI](https://learnwithhasan.com/blocks/)
+[Community](https://learnwithhasan.com/community/)
