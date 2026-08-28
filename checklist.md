@@ -32,14 +32,14 @@
 - [x] CAP-006 pricing/quota model merged (batch 2, 7cf45a1)
 - [x] CAP-008 MAX_REASONING mapper merged (batch 2, 1669e5b)
 - [x] CAP-004 reference-count validator merged (batch 3, 2fc34f1)
-- [x] CAP-007 reasoning/vision LLM registry QC PASS (conflict: rebasing required)
-- [x] CAP-009 provider health/verify QC PASS (conflict: rebasing required)
-- [x] CAP-010 observed overrides QC PASS (conflict: rebasing required)
+- [x] CAP-007 reasoning/vision LLM registry merged (batch 5, 56ceb82)
+- [x] CAP-009 provider health/verify merged (batch 5, 56ceb82)
+- [x] CAP-010 observed overrides CONFLICT-BLOCKED batch 5 (index.ts, rebase required)
 - [x] KIE-002 generic task submit/poll merged (batch 2, 54abd40)
 - [x] KIE-003 Seedance 2.0 Mini profile merged (batch 2, e973ac2)
 - [x] KIE-004 Seedance modes/validation merged (batch 3, 90ac338)
 - [x] KIE-009 Failure normalization merged (batch 3, 2f79d22)
-- [x] KIE-001 Kie client/auth QC PASS (conflict: rebasing required)
+- [x] KIE-001 Kie client/auth merged (batch 5, 56ceb82)
 - [x] CORE-001 upstream audit merged (batch 3, b1631a3)
 - [x] CORE-004 project/series/episode schema merged (batch 3, e12c7bc)
 - [x] CHAR-003 candidate generation flow merged (batch 3, e877f9e)
@@ -76,3 +76,13 @@
 - [ ] Standalone app boots and resumes from `state/checkpoint.json`
 - [ ] Security baseline passes automated scan (no keys, no leaks)
 - [ ] Full regression test suite passing on clean clone
+
+## Batch 5 Merge Evidence (2026-08-28, be5ae16..56ceb82)
+
+- [x] Regression PASS: `pnpm -r test` exit 0 (17/17 packages Done, 0 failures)
+- [x] Regression PASS: `pnpm -r run typecheck` exit 0 (all packages clean)
+- [x] Pushed origin/integration (56ceb82 + control edc6c51), never force-pushed
+- [x] Merged (24): CAP-007, CAP-009, CHAR-011, CHAR-014, CORE-005, FISH-008, FISH-009, FISH-010, GHL-003, GHL-004, GHL-005, GHL-006, GHL-008, GHL-009, GHL-010, GHL-011, KIE-001, KIE-005, KIE-006, KIE-008, REC-001, REC-009, VID-001, VID-015
+- [x] CAP-010 conflict on packages/capability-registry/src/index.ts — aborted, branch retains PASS (rebase required)
+- [x] CORE-006, CORE-007 conflict on packages/database/src/repositories/index.ts — aborted, branches retain PASS (rebase required)
+- [x] KIE-010 conflict on docs/provider-capabilities/kie.md (add/add) — aborted, branch retains PASS (rebase required)

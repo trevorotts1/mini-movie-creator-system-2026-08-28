@@ -2,6 +2,7 @@ import type { Migration } from "./types.js";
 import { baselineMigrations } from "./000-init/index.js";
 import { jobsAssetsMigrations } from "./004-jobs-assets/index.js";
 import { projectSchemaMigrations } from "./010-project-series-episode/index.js";
+import { characterMigrations } from "./020-characters/index.js";
 
 /**
  * The ordered MMCS migration list. Bands are appended by their owning
@@ -12,6 +13,7 @@ import { projectSchemaMigrations } from "./010-project-series-episode/index.js";
  */
 export const MIGRATIONS: readonly Migration[] = [
   ...baselineMigrations,
-  ...projectSchemaMigrations,
   ...jobsAssetsMigrations,
+  ...projectSchemaMigrations,
+  ...characterMigrations,
 ];

@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-001",
+  "phase": "BUILDER_DONE",
+  "commit": "8dd6f4c",
+  "testsRun": "npx vitest run packages/providers/src/kie/client -> 1 file, 22/22 passed; npx tsc --noEmit -p packages/providers/tsconfig.json -> clean",
+  "notes": "Kie HTTP client: bearer auth from validated config (KIE_API_KEY), per-attempt timeout 30s (AbortController), bounded retries (network/timeout/429/5xx) with exponential backoff + 429 Retry-After (capped 30s), envelope validation (HTTP 2xx + code!=200 = failure, non-JSON = terminal bad-response), KieApiError taxonomy with credential-shape scrubbing; key never in errors/log lines (tests prove it). docs/provider-capabilities/kie.md records live docs.kie.ai facts (2026-08-28): base https://api.kie.ai, createTask/recordInfo endpoints, envelope schema, Seedance 2 Mini + Wan 3.0 input schemas with source URLs.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

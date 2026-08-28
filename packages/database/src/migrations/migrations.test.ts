@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { connectSqlite, type SqliteDatabase } from "../connection/index.js";
-import { MIGRATIONS, MIGRATIONS_TABLE, migrate, sortMigrations, type Migration } from "./index.js";
+import { MIGRATIONS, MIGRATIONS_TABLE, baselineMigrations, migrate, sortMigrations, type Migration } from "./index.js";
 
 let dir: string;
 let caseCounter = 0;

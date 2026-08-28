@@ -34,7 +34,11 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["packages/**/*.{test,spec}.ts", "apps/**/*.{test,spec}.ts"],
+    include: [
+      "packages/**/*.{test,spec}.ts",
+      "apps/**/*.{test,spec}.ts",
+      "scripts/**/*.{test,spec}.ts",
+    ],
     environment: "node",
   },
 });
