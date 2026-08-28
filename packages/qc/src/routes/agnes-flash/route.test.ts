@@ -219,6 +219,12 @@ describe("input validation", () => {
     expect(() => routeFlashShot(CTX, passQc(), 1.5)).toThrow(FlashRouteError);
   });
 
+  it("rejects attemptsUsed beyond the 2-attempt Flash budget (wiring bug, not budget-exhausted)", () => {
+    expect(() => routeFlashShot(CTX, failQc(["visual-artifacts"]), 3)).toThrow(
+      /exceeds the 2-attempt Flash budget/,
+    );
+  });
+
   it("rejects unknown verdicts", () => {
     expect(() =>
       routeFlashShot(CTX, { verdict: "MAYBE" } as unknown as FlashQcResult, 1),
@@ -229,6 +235,12 @@ describe("input validation", () => {
     expect(() =>
       routeFlashShot(CTX, { verdict: "PASS", failures: failQc(["x"]).failures }, 1),
     ).toThrow(FlashRouteError);
+  });
+
+  it("rejects PASS carrying providerError=true (incomplete QC cannot honestly PASS)", () => {
+    expect(() =>
+      routeFlashShot(CTX, { verdict: "PASS", failures: [], providerError: true }, 1),
+    ).toThrow(/cannot honestly PASS/);
   });
 
   it("rejects non-integer seed in context", () => {

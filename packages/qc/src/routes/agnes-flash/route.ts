@@ -237,6 +237,12 @@ function assertAttempt(attemptsUsed: number): void {
       `attemptsUsed must be a positive integer (1-based), got ${attemptsUsed}`,
     );
   }
+  if (attemptsUsed > MAX_FLASH_ATTEMPTS) {
+    throw new FlashRouteError(
+      "bad-attempt",
+      `attemptsUsed ${attemptsUsed} exceeds the ${MAX_FLASH_ATTEMPTS}-attempt Flash budget — a wiring bug, never a footage verdict`,
+    );
+  }
 }
 
 function assertQc(qc: FlashQcResult): void {
@@ -248,6 +254,12 @@ function assertQc(qc: FlashQcResult): void {
   }
   if (qc.verdict === "PASS" && qc.failures.length > 0) {
     throw new FlashRouteError("bad-qc", "PASS verdict must not carry failures");
+  }
+  if (qc.verdict === "PASS" && qc.providerError === true) {
+    throw new FlashRouteError(
+      "bad-qc",
+      "PASS verdict must not carry providerError=true — QC that could not complete cannot honestly PASS footage",
+    );
   }
   for (const failure of qc.failures) {
     if (
