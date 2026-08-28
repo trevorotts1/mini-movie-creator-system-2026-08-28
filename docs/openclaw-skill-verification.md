@@ -40,12 +40,19 @@ Result: `Installed mini-movie-creator from path -> /Users/blackceomacmini/clawd/
 
 Live-verified details of this OpenClaw version's install flow:
 
-- `--as` works for **local directory** installs only when the path is given
-  **relative** (`./…`). An absolute path is rejected with
-  `--as is only supported for git and local directory skill installs.`
+- `--as` works for **local directory** installs; both relative (`./…`) and
+  absolute paths install successfully (re-tested 2026-08-28 by QC with a
+  disposable probe skill: `openclaw skills install /tmp/<probe> --as
+  mmcs-install-probe --force --agent codex-computer-use` → rc 0, installed,
+  then removed and removal confirmed by the watcher).
 - Install destination is the config-resolved agent workspace:
   `<workspace>/skills/<slug>` (`~/clawd/skills/mini-movie-creator`). Workspace
   skills have highest precedence (skills roots order 1).
+- This OpenClaw version has **no `openclaw skills remove`** command
+  (`skills --help` lists check/curator/info/install/list/search/update/verify/
+  workshop only). Local-directory installs are removed by deleting the skill
+  directory from `<workspace>/skills/`; the watcher reflects the removal
+  within seconds (proven live).
 
 `openclaw skills info mini-movie-creator --agent codex-computer-use` after
 install:

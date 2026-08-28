@@ -68,13 +68,18 @@ REPO_ROOT="${MMCS_ROOT:-$(dirname "$(dirname "$SCRIPT_DIR")")}"
 SKILL_NAME="mini-movie-creator"
 SKILL_DIR="${MMCS_SKILL_DIR:-$REPO_ROOT/integrations/openclaw/mini-movie-creator}"
 START_EPOCH="$(date +%s)"
+EVID_FILE=""
+cleanup() { [ -n "$EVID_FILE" ] && rm -f "$EVID_FILE"; }
+trap cleanup EXIT
 
 fail_pre()  { echo "invocation-test: PRECONDITION FAIL — $*" >&2; exit 2; }
 fail_test() { echo "invocation-test: FAIL — $*" >&2; exit 1; }
 ok()        { echo "invocation-test: PASS — $*"; }
 note()      { echo "invocation-test: — $*"; }
 
-print_usage() { sed -n '2,45p' "${BASH_SOURCE[0]}" | grep -E '^#( |$)' | sed 's/^# \{0,1\}//'; exit 2; }
+print_usage() { sed -n '2,45p' "${BASH_SOURCE[0]}" | grep -E '^#( |$)' | sed 's/^# \{0,1\}//'; exit 0; }
+
+is_positive_int() { case "$1" in ''|*[!0-9]*) return 1;; *) [ "$1" -ge 1 ] 2>/dev/null || return 1;; esac; }
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -83,20 +88,22 @@ while [ "$#" -gt 0 ]; do
     --install) DO_INSTALL=1 ;;
     --agent) [ "$#" -ge 2 ] || fail_pre "--agent needs a value"
              TARGET_AGENT="$2"; shift ;;
-    --agent=*) TARGET_AGENT="${1#*=}" ;;
+    --agent=*) TARGET_AGENT="${1#*=}"; [ -n "$TARGET_AGENT" ] || fail_pre "--agent needs a non-empty value" ;;
     --mmcs-root) [ "$#" -ge 2 ] || fail_pre "--mmcs-root needs a value"
                  REPO_ROOT="$2"; shift ;;
-    --mmcs-root=*) REPO_ROOT="${1#*=}" ;;
+    --mmcs-root=*) REPO_ROOT="${1#*=}"; [ -n "$REPO_ROOT" ] || fail_pre "--mmcs-root needs a non-empty value" ;;
     --skill-dir) [ "$#" -ge 2 ] || fail_pre "--skill-dir needs a value"
                  SKILL_DIR="$2"; shift ;;
-    --skill-dir=*) SKILL_DIR="${1#*=}" ;;
+    --skill-dir=*) SKILL_DIR="${1#*=}"; [ -n "$SKILL_DIR" ] || fail_pre "--skill-dir needs a non-empty value" ;;
     --timeout) [ "$#" -ge 2 ] || fail_pre "--timeout needs a value"
                AGENT_TIMEOUT="$2"; shift ;;
+    --timeout=*) AGENT_TIMEOUT="${1#*=}" ;;
     --help|-h) print_usage ;;
     *) fail_pre "unknown argument: $1 (see --help)" ;;
   esac
   shift
 done
+is_positive_int "$AGENT_TIMEOUT" || fail_pre "--timeout/MMCS_OPENCLAW_AGENT_TIMEOUT must be a positive integer (got '$AGENT_TIMEOUT')."
 
 # --- resolve engine root (never guess) ---------------------------------------
 resolve_engine_root() {
@@ -300,7 +307,6 @@ sys.exit(0)
 PYEOF
   [ "$parse_rc" -eq 0 ] || fail_test "no session transcript recorded the invocation marker within the last few minutes (turn never executed?)."
   TRANSCRIPT_AND_EVIDENCE="$(cat "$EVID_FILE")"
-  rm -f "$EVID_FILE"
   TRANSCRIPT_PATH="$(printf '%s\n' "$TRANSCRIPT_AND_EVIDENCE" | sed -n 's/^TRANSCRIPT://p' | head -1)"
   AGENT_ENGINE_LINE="$(printf '%s\n' "$TRANSCRIPT_AND_EVIDENCE" | grep '^TOOLRESULT:' | grep -F "$DIRECT_FIRST_LINE" | head -1 | sed 's/^TOOLRESULT://' | head -1)"
   AGENT_EXIT_LINE="$(printf '%s\n' "$TRANSCRIPT_AND_EVIDENCE" | grep '^TOOLRESULT:' | grep -oE 'MMCS_INVOC_EXIT:[0-9]+' | head -1)"
@@ -336,7 +342,16 @@ if [ "$MODE" = "self-test" ]; then
     echo "self-test: FAIL possible secret handling in script" >&2
     exit 1
   fi
-  echo "self-test: PASS — syntax, required steps, no-secret invariant"
+  # --help must exit 0 (usage text is not an error).
+  bash "$BASH_SOURCE" --help >/dev/null 2>&1 || { echo "self-test: FAIL --help must exit 0" >&2; exit 1; }
+  # Non-integer agent timeout must be rejected (bounded retry guard).
+  bash "$BASH_SOURCE" --self-test --timeout=abc >/dev/null 2>&1 && { echo "self-test: FAIL non-integer --timeout accepted" >&2; exit 1; }
+  { bash "$BASH_SOURCE" --self-test --timeout=abc 2>&1 || true; } | grep -q "must be a positive integer" \
+    || { echo "self-test: FAIL --timeout rejection message missing" >&2; exit 1; }
+  bash "$BASH_SOURCE" --self-test --timeout=0 >/dev/null 2>&1 && { echo "self-test: FAIL zero --timeout accepted" >&2; exit 1; }
+  # Evidence temp file must be cleaned up by an EXIT trap (no leak on early exit).
+  grep -q 'trap cleanup EXIT' "$BASH_SOURCE" || { echo "self-test: FAIL evidence-file cleanup trap missing" >&2; exit 1; }
+  echo "self-test: PASS — syntax, required steps, no-secret invariant, usage/validation guards"
   exit 0
 fi
 
