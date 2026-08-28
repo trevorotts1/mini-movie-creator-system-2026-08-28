@@ -285,6 +285,32 @@ describe("assembleGeneratedClips — placement semantics", () => {
     ).rejects.toThrow(/Invalid fps/);
   });
 
+  it("rejects non-finite or negative explicit inSeconds", async () => {
+    const { resolve } = mapResolver({
+      ASSET_SH01: archivedClip({ assetId: "ASSET_SH01" }),
+      ASSET_SH02: archivedClip({ assetId: "ASSET_SH02" }),
+      ASSET_SH07: archivedClip({ assetId: "ASSET_SH07" }),
+    });
+    await expect(
+      assembleGeneratedClips(
+        [{ ...plan[0]!, inSeconds: Number.NaN }],
+        resolve,
+        FPS,
+      ),
+    ).rejects.toThrow(/inSeconds/);
+    await expect(
+      assembleGeneratedClips([{ ...plan[0]!, inSeconds: -1 }], resolve, FPS),
+    ).rejects.toThrow(/inSeconds/);
+    // Positive Infinity corrupts fromFrame the same way — reject it too.
+    await expect(
+      assembleGeneratedClips(
+        [{ ...plan[0]!, inSeconds: Number.POSITIVE_INFINITY }],
+        resolve,
+        FPS,
+      ),
+    ).rejects.toThrow(/inSeconds/);
+  });
+
   it("rejects non-positive slot durations", async () => {
     const { resolve } = mapResolver({
       ASSET_SH01: archivedClip({ assetId: "ASSET_SH01" }),

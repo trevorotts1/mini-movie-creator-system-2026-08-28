@@ -136,6 +136,13 @@ export async function assembleGeneratedClips(
 
   for (const { shot } of placementOrder) {
     const explicit = shot.inSeconds;
+    if (explicit !== undefined && (!Number.isFinite(explicit) || explicit < 0)) {
+      throw new InvalidGeneratedClipError(
+        shot.shotId,
+        "plan",
+        `inSeconds ${explicit} must be a non-negative finite number`,
+      );
+    }
     const inSeconds = explicit ?? cursor;
 
     const resolved = await resolve(shot);
