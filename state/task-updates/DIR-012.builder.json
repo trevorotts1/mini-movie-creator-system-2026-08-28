@@ -1,7 +1,7 @@
 {
   "taskId": "DIR-012",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "135c35a",
   "testsRun": "npx vitest run packages/scene-intelligence/src/keyframe-planner -> 1 file, 20/20 passed; npx tsc --noEmit -p packages/scene-intelligence -> clean",
   "notes": "keyframe-planner/: mutually exclusive per-shot classification into the five spec §8 strategies (zero / one-start / start-end / scene-master-refs / multimodal-package) via ordered precedence (frame anchoring > scene master > multimodal > zero); capability profile mapped from CAP-001 references block (firstFrame/lastFrame/firstLastFrame/multimodalReferences/maxImages), UNKNOWN maxImages tolerated, 0 blocks; unmet requirements downgrade (never invent) and record in `downgraded`; fixture tests prove classification changes when the capability profile changes (start-end→zero, scene-master-refs→zero, multimodal-package→zero); planKeyframes returns per-shot decisions + O(1) byShot lookup, rejects duplicate/empty shotIds",
   "blockers": [],
