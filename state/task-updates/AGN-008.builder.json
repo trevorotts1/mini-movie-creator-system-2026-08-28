@@ -1,7 +1,7 @@
 {
   "taskId": "AGN-008",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "217d912792775f46496369853d8e9aa4dbfc0c91",
   "testsRun": "npx vitest run packages/providers/src/agnes/validation -> 42/42 passed; npx vitest run packages/providers -> 82/82 passed; npx vitest run packages/capability-registry/src/validators packages/capability-registry/src/data -> 67/67 passed (no regression); tsc --noEmit -p packages/providers -> clean",
   "notes": "Agnes first/last/reference pre-flight validation: AgnesVideoRequestShape -> AgnesValidationProfile (Flash 720P-only/images-max-5/videos-unsupported; regular 720P/960P/2K/videos-ok; undocumented counts + prompt max stay null/UNKNOWN never enforced) with mode inference text/keyframe/reference, explicit-mode agreement check, per-mode field rules (keyframe needs >=1 frame, disallows references; reference needs >=1 media array, disallows frames; text disallows all media), profile capability gates, verified-limit count checks, seconds/size validation, and buildAgnesVideoPayload mapping to exact Agnes snake_case fields. Self-contained under src/agnes/validation/ (types.ts, profiles.ts, validate.ts, build.ts, index.ts, validation.test.ts); merger should add `export * from \"./agnes/validation/index.js\";` to packages/providers/src/index.ts when AGN-001 lands.",
   "blockers": [],
