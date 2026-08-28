@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-003",
+  "phase": "PASS",
+  "commit": "PENDING_COMMIT",
+  "checksRun": "npx vitest run --config packages/media-storage/src/ghl/folders/vitest.config.mts; npx tsc --noEmit -p packages/media-storage/tsconfig.json",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T17:10:00Z",
+  "notes": "Verified POST /medias/folder, GET /medias/files pagination/unwrapping/folderId variants, non-2xx fail-fast duplicate prevention, and search-before-create root deduplication. 25/25 tests pass, 0 type errors.",
+  "blockers": []
+}

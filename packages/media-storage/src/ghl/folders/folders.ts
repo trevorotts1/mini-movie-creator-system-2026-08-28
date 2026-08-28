@@ -106,16 +106,26 @@ export class GhlFetchTransport implements GhlTransport {
   }
 }
 
+/**
+ * Some GHL list payloads wrap items in a nested "folder" object. Unwrap once so
+ * every field read below sees the inner payload.
+ */
+function unwrapFolderLike(raw: unknown): Record<string, unknown> {
+  if (raw === null || typeof raw !== "object") {
+    return {};
+  }
+  const obj = raw as Record<string, unknown>;
+  if (obj.folder !== null && typeof obj.folder === "object") {
+    return obj.folder as Record<string, unknown>;
+  }
+  return obj;
+}
+
 /** Extract the folder id from the loose shapes GHL returns across endpoints. */
 function extractFolderId(raw: unknown): string | undefined {
-  if (raw === null || typeof raw !== "object") return undefined;
-  const obj = raw as Record<string, unknown>;
+  const obj = unwrapFolderLike(raw);
   const direct = obj.id ?? obj._id ?? obj.folderId ?? obj.folder_id;
   if (typeof direct === "string" && direct.length > 0) return direct;
-  // Some list payloads wrap items in a nested "folder" object.
-  if (obj.folder && typeof obj.folder === "object") {
-    return extractFolderId(obj.folder);
-  }
   return undefined;
 }
 
@@ -124,8 +134,8 @@ function toFolderRecord(raw: unknown, fallbackLocationId: string): GhlFolderReco
   if (raw === null || typeof raw !== "object") {
     throw new GhlFolderResponseError("folder payload is not an object");
   }
-  const obj = raw as Record<string, unknown>;
-  const id = extractFolderId(raw);
+  const obj = unwrapFolderLike(raw);
+  const id = extractFolderId(obj);
   if (id === undefined) {
     throw new GhlFolderResponseError("folder payload missing id (_id/id/folderId)");
   }
@@ -200,17 +210,6 @@ interface ListFilesEnvelope {
   [key: string]: unknown;
 }
 
-interface RawFolderLike {
-  id?: unknown;
-  _id?: unknown;
-  name?: unknown;
-  parentId?: unknown;
-  parent_id?: unknown;
-  altId?: unknown;
-  type?: unknown;
-  url?: unknown;
-}
-
 /**
  * List folders directly under `parentId` (or the location root when null).
  * Uses `GET /medias/files` with `type=folder`, paging with offset/limit until
@@ -224,10 +223,9 @@ export async function listFolders(
 ): Promise<GhlFolderRecord[]> {
   const folders: GhlFolderRecord[] = [];
   let offset = 0;
-  let sawUnknownTotal = false;
 
   for (;;) {
-    const { body } = await transport.request<ListFilesEnvelope>({
+    const { status, body } = await transport.request<ListFilesEnvelope>({
       method: "GET",
       path: "/medias/files",
       query: {
@@ -242,6 +240,16 @@ export async function listFolders(
       },
     });
 
+    if (status < 200 || status >= 300) {
+      // Never treat a failed search as "no match" — that would blind-create a
+      // duplicate root after a transient API error.
+      throw new GhlFolderApiError(
+        `GHL request failed: GET /medias/files -> ${status}`,
+        status,
+        "/medias/files",
+      );
+    }
+
     const rawItems: unknown[] = Array.isArray(body.files)
       ? body.files
       : Array.isArray(body.folders)
@@ -250,10 +258,8 @@ export async function listFolders(
     if (rawItems.length === 0 && offset > 0) break;
 
     for (const item of rawItems) {
-      const like = item as RawFolderLike;
-      const hasId =
-        (typeof like.id === "string" && like.id.length > 0) ||
-        (typeof like._id === "string" && like._id.length > 0);
+      const like = unwrapFolderLike(item);
+      const hasId = extractFolderId(item) !== undefined;
       const looksLikeFolder =
         hasId &&
         (like.type === "folder" ||
@@ -267,14 +273,8 @@ export async function listFolders(
 
     if (typeof body.totalItems === "number") {
       if (folders.length >= body.totalItems) break;
-    } else {
-      sawUnknownTotal = true;
     }
-    if (rawItems.length < pageSize) {
-      if (sawUnknownTotal || rawItems.length === 0) break;
-      // totalItems present but page short — still stop, API is exhausted
-      break;
-    }
+    if (rawItems.length < pageSize) break;
     offset += pageSize;
     if (offset > 10_000) {
       // hard stop against pathological pagination

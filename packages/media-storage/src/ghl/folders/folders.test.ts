@@ -260,6 +260,51 @@ describe("listFolders + findFolderByName (GET /medias/files)", () => {
     expect((await findFolderByName(transport, CONFIG, "Convert and Flow ", null))?.id).toBe("root");
     expect(await findFolderByName(transport, CONFIG, "Other Root", null)).toBeNull();
   });
+
+  it("regression: accepts folderId/folder_id id variants in list payloads", async () => {
+    const { transport } = makeTransport(() => ({
+      status: 200,
+      body: {
+        files: [
+          { folderId: "fid_1", name: "Convert and Flow", type: "folder" },
+          { folder_id: "fid_2", name: "Series", parentId: "fid_1", type: "folder" },
+        ],
+        totalItems: 2,
+      },
+    }));
+
+    const folders = await listFolders(transport, CONFIG, null);
+    expect(folders.map((f) => f.id)).toEqual(["fid_1", "fid_2"]);
+    expect(folders.map((f) => f.name)).toEqual(["Convert and Flow", "Series"]);
+    expect(folders[1]?.parentId).toBe("fid_1");
+  });
+
+  it("regression: unwraps nested {folder: {...}} list payloads with full record fields", async () => {
+    const { transport } = makeTransport(() => ({
+      status: 200,
+      body: {
+        files: [
+          { folder: { _id: "wrapped_root", name: "Convert and Flow", parentId: null, type: "folder" } },
+        ],
+        totalItems: 1,
+      },
+    }));
+
+    const folders = await listFolders(transport, CONFIG, null);
+    expect(folders).toHaveLength(1);
+    expect(folders[0]?.id).toBe("wrapped_root");
+    expect(folders[0]?.name).toBe("Convert and Flow");
+    expect(folders[0]?.parentId).toBeNull();
+  });
+
+  it("regression: throws GhlFolderApiError on non-2xx list status instead of returning empty", async () => {
+    const { transport } = makeTransport(() => ({
+      status: 500,
+      body: { message: "internal error" },
+    }));
+
+    await expect(listFolders(transport, CONFIG, null)).rejects.toBeInstanceOf(GhlFolderApiError);
+  });
 });
 
 describe("ensureFolder — search-before-create (duplicate-root prevention)", () => {
@@ -354,6 +399,39 @@ describe("ensureFolder — search-before-create (duplicate-root prevention)", ()
 
     expect(result.created).toBe(false);
     expect(result.folder.parentId).toBe("parent_1");
+    expect(requests.filter((r) => r.method === "POST")).toHaveLength(0);
+  });
+
+  it("regression: a failed search never blind-creates — no POST after non-2xx GET", async () => {
+    const { transport, requests } = makeTransport(() => ({
+      status: 503,
+      body: { message: "temporarily unavailable" },
+    }));
+
+    await expect(
+      ensureFolder(transport, CONFIG, { name: "Convert and Flow" }),
+    ).rejects.toBeInstanceOf(GhlFolderApiError);
+    expect(requests.filter((r) => r.method === "POST")).toHaveLength(0);
+  });
+
+  it("regression: folderId-variant listing still reuses the existing root", async () => {
+    const { transport, requests } = makeTransport((req) => {
+      if (req.method === "GET") {
+        return {
+          status: 200,
+          body: {
+            files: [{ folderId: "fid_root", name: "Convert and Flow", type: "folder" }],
+            totalItems: 1,
+          },
+        };
+      }
+      return { status: 200, body: { _id: "dup" } };
+    });
+
+    const result = await ensureFolder(transport, CONFIG, { name: "Convert and Flow" });
+
+    expect(result.created).toBe(false);
+    expect(result.folder.id).toBe("fid_root");
     expect(requests.filter((r) => r.method === "POST")).toHaveLength(0);
   });
 });
