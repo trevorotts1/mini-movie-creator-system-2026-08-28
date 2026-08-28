@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-013",
+  "phase": "PASS",
+  "commit": "ae39cf2",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/shot-replacement (17/17); npx vitest run apps/cli/src/commands/retry-shot + packages/remotion-runtime/src/shot-replacement (34/34, 3 files); full-package: packages/remotion-runtime 17/17, apps/cli 30/30; pnpm --filter @mmcs/remotion-runtime typecheck exit 0; apps/cli typecheck exit 0; no eslint config in repo (lint N/A); security grep of owned paths (no exec/spawn/eval/process.env/secrets)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:00:00Z",
+  "notes": "Fixed: CLI queued jobs the engine unconditionally rejects (--attempt 0 / --duration 0 / empty trim window) as false successes — pre-queue validation added with regression test; removed dead sourceFps param from replaceShot. Diff proof (only targeted shot changes, others pass through by reference) verified.",
+  "blockers": []
+}
