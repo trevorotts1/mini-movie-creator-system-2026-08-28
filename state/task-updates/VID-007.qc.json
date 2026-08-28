@@ -1,7 +1,7 @@
 {
   "taskId": "VID-007",
   "phase": "PASS",
-  "commit": "dd28a8e64d1f0d162d184c57e26e3fbf0c3e7d6e",
+  "commit": "dd28a8e883ec37b35b8345af2de8acc8a099c992",
   "checksRun": "npx vitest run packages/remotion-runtime/src/stock-layer -> 33/33 pass exit 0 (JSON reporter verified); npx tsc --noEmit -p packages/remotion-runtime -> clean; security grep (exec/spawn/fetch/secrets) over owned paths -> clean; git ls-files mode check -> no binary committed",
   "defectsFound": 4,
   "defectsFixed": 4,
