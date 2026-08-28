@@ -1,9 +1,9 @@
 {
   "taskId": "CAP-001",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "57ad8def6d86f949fd9c190adb28847552303115",
   "testsRun": "npx vitest run packages/capability-registry/src/schema -> 22 passed, 0 failed (rc=0); npx tsc --noEmit (packages/capability-registry) -> clean",
-  "notes": "MediaModelCapability + zod schemas per runbook §16/§22: kind enum reasoning/vision/image/video/voice/storage, confidence VERIFIED/PROVISIONAL/UNKNOWN, prompt/references (incl. incompatibleCombinations)/modes/output/constraints/pricing blocks, versioned per-kind registry snapshot, unknown-* constructors (null = never invent); zod ^4.4.3 dep per CORE-010 precedent",
+  "notes": "MediaModelCapability + zod schemas per runbook \u00a716/\u00a722: kind enum reasoning/vision/image/video/voice/storage, confidence VERIFIED/PROVISIONAL/UNKNOWN, prompt/references (incl. incompatibleCombinations)/modes/output/constraints/pricing blocks, versioned per-kind registry snapshot, unknown-* constructors (null = never invent); zod ^4.4.3 dep per CORE-010 precedent",
   "blockers": [],
   "updatedAt": "2026-08-28T13:20:00Z"
 }
