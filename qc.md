@@ -70,3 +70,55 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T14:38:00Z | GHL-007 | URL/file validation | Sonnet QC | PASS | 3 | 3 | MERGED |
 | 2026-08-28T14:38:00Z | CHAR-004 | Selection/retry UI-CLI contract | Sonnet QC | PASS | 1 | 1 | MERGED |
 | 2026-08-28T14:38:00Z | FISH-004 | Pronunciation dictionary | Sonnet QC | PASS | 1 | 1 | MERGED |
+
+
+## Batch 5 Merge Records (2026-08-28, batch be5ae16..56ceb82)
+
+| Timestamp (UTC) | Task ID | Component | Checker | Result | Defects Found | Fixes Applied | Final Verdict |
+|---|---|---|---|---|---|---|---|
+| 2026-08-28T~20:00Z | CAP-007 | CAP-007 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CAP-009 | CAP-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CAP-010 | CAP-010 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CHAR-011 | CHAR-011 | qc-batch | PASS | 6 | 6 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CHAR-014 | CHAR-014 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CORE-005 | CORE-005 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CORE-006 | CORE-006 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CORE-007 | CORE-007 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-005 | FISH-005 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-008 | FISH-008 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-009 | FISH-009 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-010 | FISH-010 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-003 | GHL-003 | qc-batch | PASS | 4 | 4 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-004 | GHL-004 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-005 | GHL-005 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-006 | GHL-006 | qc-batch | PASS | 5 | 5 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-008 | GHL-008 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-009 | GHL-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-010 | GHL-010 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-011 | GHL-011 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-001 | KIE-001 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-005 | KIE-005 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-006 | KIE-006 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-008 | KIE-008 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-010 | KIE-010 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-003 | QC-003 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-004 | QC-004 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-006 | QC-006 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-008 | QC-008 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-009 | QC-009 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-010 | QC-010 | qc-batch | PASS | 7 | 7 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | QC-012 | QC-012 | qc-batch | PASS | 6 | 6 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | REC-001 | REC-001 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | REC-009 | REC-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | REC-010 | REC-010 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | SKL-002 | SKL-002 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | SKL-004 | SKL-004 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | SKL-005 | SKL-005 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | SKL-006 | SKL-006 | qc-batch | PASS | 4 | 4 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | SKL-007 | SKL-007 | qc-batch | PASS | 4 | 4 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-001 | VID-001 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-003 | VID-003 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-007 | VID-007 | qc-batch | PASS | 4 | 4 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-011 | VID-011 | qc-batch | PASS | 4 | 4 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-012 | VID-012 | qc-batch | PASS | 5 | 5 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-015 | VID-015 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |

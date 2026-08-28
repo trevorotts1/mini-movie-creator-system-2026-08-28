@@ -1,15 +1,35 @@
 {
   "schema_version": 1,
   "project_id": "mmcs",
-  "timestamp": "2026-08-28T15:26:14Z",
+  "timestamp": "2026-08-28T20:05:00Z",
   "current_main_sha": "773054bebbe460de0f31dcfda5315970b1c8b4f2",
-  "current_integration_sha": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "current_integration_sha": "56ceb82f6273f0ad8807c1866b8c1cca0fce097b",
   "active_dependency_wave": 1,
-  "ready_task_ids": [],
-  "active_task_ids": [],
-  "qc_task_ids": [
-    "CAP-009"
+  "ready_task_ids": [
+    "CORE-008",
+    "CORE-009",
+    "CORE-015",
+    "DIR-002",
+    "DIR-009",
+    "AGN-002",
+    "AGN-003",
+    "AGN-004",
+    "VID-002",
+    "VID-005",
+    "VID-013",
+    "QC-005",
+    "SKL-003",
+    "REC-002",
+    "REC-003",
+    "REC-004",
+    "REC-005",
+    "REC-006",
+    "REC-007",
+    "REC-008",
+    "REC-011"
   ],
+  "active_task_ids": [],
+  "qc_task_ids": [],
   "merge_queue_ids": [],
   "blocked_task_ids": [],
   "active_workflow_ids": [],
@@ -20,5 +40,20 @@
     "fix CAP-009: replace @mmcs/capability-registry import in apps/cli/src/commands/providers-verify/command.ts with local types (CHAR-004 contract.ts pattern) or move providers-verify out of apps/cli",
     "rebase 3 still-conflict branches (CORE-006, CORE-007, CAP-010)",
     "re-merge cycle 4 batch after CAP-009 fix (14 branches retain QC PASS)"
-  ]
+  ],
+  "last_batch_merge": {
+    "timestamp": "2026-08-28T20:05:00Z",
+    "batch": 5,
+    "sha_range": "be5ae16..56ceb82",
+    "merged_count": 46,
+    "conflict_blocked": [
+      "CAP-010",
+      "CORE-006",
+      "CORE-007",
+      "KIE-010"
+    ],
+    "regression": "PASS (pnpm -r test exit 0, 17/17 packages; pnpm -r run typecheck exit 0)",
+    "integration_head": "56ceb82",
+    "pushed": true
+  }
 }
