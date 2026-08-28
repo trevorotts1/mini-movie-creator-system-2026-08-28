@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-009",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_COMMIT",
+  "commit": "6734d77",
   "testsRun": "npx vitest run packages/character-library/src/voice-binding -> 23 passed (23); npx tsc --noEmit -p packages/character-library/tsconfig.json -> clean",
   "notes": "voice-binding module: VoiceProfile record with all spec §16/§30 fields, JSON store (one profile per character, atomic writes, serialized RMW), deterministic synthesis binding + verifyVoiceStability/fingerprint so recurring characters never randomly change voices across episodes.",
   "blockers": [],
