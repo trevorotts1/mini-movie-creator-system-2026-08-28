@@ -76,7 +76,7 @@
       "branch": "task/CORE-006-scene-shot-schema",
       "worktree": "worktrees/CORE-006/",
       "acceptance": "shot table carries every field of spec §12 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "CORE-007",
@@ -89,7 +89,7 @@
       "branch": "task/CORE-007-job-asset-schema",
       "worktree": "worktrees/CORE-007/",
       "acceptance": "provider_jobs + assets tables carry every field of spec §19 asset manifest (all 26 fields asserted by introspection test) and §18 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "CORE-008",
@@ -117,7 +117,7 @@
       "branch": "task/CORE-009-cost-engine",
       "worktree": "worktrees/CORE-009/",
       "acceptance": "$24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger — run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.",
-      "status": "READY"
+      "status": "BLOCKED"
     },
     {
       "id": "CORE-010",
@@ -200,7 +200,7 @@
       "branch": "task/CORE-015-db-backup",
       "worktree": "worktrees/CORE-015/",
       "acceptance": "`mmcs backup export` produces a restorable archive; restore into empty DB passes full row-count + checksum comparison; `npx vitest run packages/database/src/backup` green incl. round-trip test.",
-      "status": "READY"
+      "status": "BLOCKED"
     },
     {
       "id": "CHAR-001",
@@ -763,7 +763,7 @@
       "branch": "task/CAP-010-observed-overrides",
       "worktree": "worktrees/CAP-010/",
       "acceptance": "runtime-discovered model IDs/limits refine profiles with PROVISIONAL confidence + provenance; VERIFIED values immutable on one transient failure (test); Agnes 2.5 runtime IDs recorded with source/date; `npx vitest run packages/capability-registry/src/observed-overrides` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "AGN-001",
@@ -1042,7 +1042,7 @@
       "branch": "task/KIE-010-kie-contract",
       "worktree": "worktrees/KIE-010/",
       "acceptance": "full mocked contract suite (submit/poll/resume/fail/archive handoff); optional live smoke gated behind credentials + $25 rule, skipped cleanly when absent; `npx vitest run packages/providers/src/kie/__tests__` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "FISH-001",
@@ -1112,7 +1112,7 @@
       "branch": "task/FISH-005-dialogue-cache",
       "worktree": "worktrees/FISH-005/",
       "acceptance": "same text+voice+model request returns cached asset (idempotency test); cache keyed by request hash; `npx vitest run packages/providers/src/fish-audio/cache` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "FISH-006",
@@ -1383,7 +1383,7 @@
       "branch": "task/VID-003-shot-timeline",
       "worktree": "worktrees/VID-003/",
       "acceptance": "shot → timeline sequence mapping (sequence_index, in/out frames, fps); upstream frames.mjs local_f = global_s * fps − sequence_from convention preserved; unit test with known timings; `npx vitest run packages/remotion-runtime/src/timeline` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "VID-004",
@@ -1437,7 +1437,7 @@
       "branch": "task/VID-007-stock-layer",
       "worktree": "worktrees/VID-007/",
       "acceptance": "stock/B-roll clips placed for generic establishing shots only; guard test rejects stock substitution for recurring main characters (spec §22); optional Pexels/Pixabay adapter interface stubbed; `npx vitest run packages/remotion-runtime/src/layers/stock` green.",
-      "status": "MERGED"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "VID-008",
@@ -1490,7 +1490,7 @@
       "branch": "task/VID-011-aspect",
       "worktree": "worktrees/VID-011/",
       "acceptance": "16:9 and 9:16 compositions both generate from the same plan; series-level default + per-episode override; resolution/safe-area math tested; `npx vitest run packages/remotion-runtime/src/aspect` green.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "VID-012",
@@ -1512,7 +1512,7 @@
       "branch": "task/VID-012-rough-cut",
       "worktree": "worktrees/VID-012/",
       "acceptance": "full episode assembles from shot plan + archived assets; `mmcs rough-cut` wired; 16:9 AND 9:16 rough cuts render (acceptance §32) on fixture project; `npx vitest run packages/remotion-runtime/src/rough-cut` green.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "VID-013",
@@ -1605,7 +1605,7 @@
       "branch": "task/QC-003-wardrobe-check",
       "worktree": "worktrees/QC-003/",
       "acceptance": "active appearance version (hair/wardrobe/props) verified against shot spec requirements; wrong-wardrobe fixture flagged; `npx vitest run packages/qc/src/wardrobe` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "QC-004",
@@ -1618,7 +1618,7 @@
       "branch": "task/QC-004-continuity",
       "worktree": "worktrees/QC-004/",
       "acceptance": "neighboring shots compared against each other + current Series Bible state (spec §11); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "QC-005",
@@ -1647,7 +1647,7 @@
       "branch": "task/QC-006-retry-policy",
       "worktree": "worktrees/QC-006/",
       "acceptance": "targeted repair of affected shot only — never whole-episode regeneration (test proves single-shot scope); retry bounded by cost policy; `npx vitest run packages/qc/src/retry` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "QC-007",
@@ -1675,7 +1675,7 @@
       "branch": "task/QC-008-agnes-regular-fallback",
       "worktree": "worktrees/QC-008/",
       "acceptance": "Flash FAIL after retry → Agnes Video 2.5 regular escalation; fallback trigger conditions tested; `npx vitest run packages/qc/src/routes/agnes-regular` green.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "QC-009",
@@ -1689,7 +1689,7 @@
       "branch": "task/QC-009-seedance-fallback",
       "worktree": "worktrees/QC-009/",
       "acceptance": "reference/identity problem persists after Agnes regular → Seedance 2.0 Mini escalation; mode constraints honored on fallback requests; `npx vitest run packages/qc/src/routes/seedance` green.",
-      "status": "MERGED"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "QC-010",
@@ -1703,7 +1703,7 @@
       "branch": "task/QC-010-wan-fallback",
       "worktree": "worktrees/QC-010/",
       "acceptance": "especially complex/long/hero/action shots route to Wan 3.0; routing policy considers capability/quality-history/cost/quota (policy table test); `npx vitest run packages/qc/src/routes/wan` green.",
-      "status": "MERGED"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "QC-011",
@@ -1732,7 +1732,7 @@
       "branch": "task/QC-012-final-episode-qc",
       "worktree": "worktrees/QC-012/",
       "acceptance": "full-episode QC runs before rough-cut presentation; production report data collected (runtime, aspect/resolution, providers/models, generated/accepted/rejected seconds, retries, cost, quota, characters, canon changes, final URL, QC status — spec §21); `npx vitest run packages/qc/src/final-episode` green.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "SKL-001",
@@ -1760,7 +1760,7 @@
       "branch": "task/SKL-002-claude-project-install",
       "worktree": "worktrees/SKL-002/",
       "acceptance": "`.claude/skills/mini-movie-creator` resolves to canonical source; `claude` loads it; non-destructive dry run of `/mini-movie-creator status` documented; install script idempotent (second run no-op); `bash integrations/claude/project-install.sh --check` exits 0.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "SKL-003",
@@ -1786,7 +1786,7 @@
       "branch": "task/SKL-004-nine-verify",
       "worktree": "worktrees/SKL-004/",
       "acceptance": "fresh claude-nine session invokes `/mini-movie-creator status` with same engine/state (no copied logic); actual skill discovery root (~/.claude-nine/skills/ primary + sync from ~/.claude/skills/) documented; verified behavior recorded, never invented; `bash integrations/claude/nine-verify.sh` exits 0.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "SKL-005",
@@ -1799,7 +1799,7 @@
       "branch": "task/SKL-005-openclaw-workspace",
       "worktree": "worktrees/SKL-005/",
       "acceptance": "packaging at integrations/openclaw/mini-movie-creator/ (SKILL.md + references/scripts, calls same CLI/DB — no engine fork); active workspace resolved from OpenClaw config (never guessed); install via current `openclaw skills install` flow or workspace placement; `openclaw skills list` shows mini-movie-creator.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "SKL-006",
@@ -1812,7 +1812,7 @@
       "branch": "task/SKL-006-openclaw-global",
       "worktree": "worktrees/SKL-006/",
       "acceptance": "optional global install form documented + tested; workspace install remains the supported default; uninstall/rollback path verified; `bash integrations/openclaw/global-install.sh --check` exits 0.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "SKL-007",
@@ -1825,7 +1825,7 @@
       "branch": "task/SKL-007-openclaw-invocation",
       "worktree": "worktrees/SKL-007/",
       "acceptance": "explicit invocation from an OpenClaw agent reaches the same mmcs engine + project state; skill watcher pickup verified (not assumed); `openclaw skills check` passes; test evidence recorded in docs/openclaw-skill-verification.md.",
-      "status": "MERGED"
+      "status": "READY"
     },
     {
       "id": "REC-001",
@@ -1962,7 +1962,7 @@
       "branch": "task/REC-010-restart-sim",
       "worktree": "worktrees/REC-010/",
       "acceptance": "simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission → resume polls existing task ID (no resubmit — spec §32 recovery acceptance); simulation script exits 0.",
-      "status": "MERGED"
+      "status": "PASS"
     },
     {
       "id": "REC-011",

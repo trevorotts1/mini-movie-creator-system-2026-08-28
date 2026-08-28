@@ -3,12 +3,10 @@
   "project_id": "mmcs",
   "timestamp": "2026-08-28T20:05:00Z",
   "current_main_sha": "773054bebbe460de0f31dcfda5315970b1c8b4f2",
-  "current_integration_sha": "56ceb82f6273f0ad8807c1866b8c1cca0fce097b",
+  "current_integration_sha": "edc6c51e2a4dcd49d7c156bdfa9f73cd05580260",
   "active_dependency_wave": 1,
   "ready_task_ids": [
     "CORE-008",
-    "CORE-009",
-    "CORE-015",
     "DIR-002",
     "DIR-009",
     "AGN-002",
@@ -16,9 +14,16 @@
     "AGN-004",
     "VID-002",
     "VID-005",
+    "VID-011",
+    "VID-012",
     "VID-013",
     "QC-005",
+    "QC-012",
     "SKL-003",
+    "SKL-004",
+    "SKL-005",
+    "SKL-006",
+    "SKL-007",
     "REC-002",
     "REC-003",
     "REC-004",
@@ -45,7 +50,7 @@
     "timestamp": "2026-08-28T20:05:00Z",
     "batch": 5,
     "sha_range": "be5ae16..56ceb82",
-    "merged_count": 46,
+    "merged_count": 24,
     "conflict_blocked": [
       "CAP-010",
       "CORE-006",
@@ -53,7 +58,7 @@
       "KIE-010"
     ],
     "regression": "PASS (pnpm -r test exit 0, 17/17 packages; pnpm -r run typecheck exit 0)",
-    "integration_head": "56ceb82",
+    "integration_head": "edc6c51",
     "pushed": true
   }
 }

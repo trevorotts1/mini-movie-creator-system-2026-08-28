@@ -81,7 +81,8 @@
 
 - [x] Regression PASS: `pnpm -r test` exit 0 (17/17 packages Done, 0 failures)
 - [x] Regression PASS: `pnpm -r run typecheck` exit 0 (all packages clean)
-- [x] Pushed origin/integration (56ceb82), never force-pushed
-- [x] CAP-007, CAP-009, CHAR-011, CHAR-014, CORE-005, FISH-005/008/009/010, GHL-003/004/005/006/008/009/010/011, KIE-001/005/006/008, QC-003/004/006/008/009/010/012, REC-001/009/010, SKL-002/004/005/006/007, VID-001/003/007/011/012/015 merged
-- [x] CORE-006, CORE-007 conflict on packages/database/src/repositories/index.ts — aborted, branch retains PASS (rebase required)
+- [x] Pushed origin/integration (56ceb82 + control edc6c51), never force-pushed
+- [x] Merged (24): CAP-007, CAP-009, CHAR-011, CHAR-014, CORE-005, FISH-008, FISH-009, FISH-010, GHL-003, GHL-004, GHL-005, GHL-006, GHL-008, GHL-009, GHL-010, GHL-011, KIE-001, KIE-005, KIE-006, KIE-008, REC-001, REC-009, VID-001, VID-015
+- [x] CAP-010 conflict on packages/capability-registry/src/index.ts — aborted, branch retains PASS (rebase required)
+- [x] CORE-006, CORE-007 conflict on packages/database/src/repositories/index.ts — aborted, branches retain PASS (rebase required)
 - [x] KIE-010 conflict on docs/provider-capabilities/kie.md (add/add) — aborted, branch retains PASS (rebase required)
