@@ -1,0 +1,9 @@
+{
+  "taskId": "CAP-010",
+  "phase": "BUILDER_DONE",
+  "commit": "1ac9fa6dda0518887cfd065774210d05e03e97db",
+  "testsRun": "npx vitest run packages/capability-registry/src/observed-overrides -> 29/29 pass; tsc --noEmit (capability-registry) -> clean",
+  "notes": "Runtime observed capability overrides: RuntimeObservation/ObservedOverride provenance model (PROVISIONAL-only from runtime, source+date+endpoint), refineFacet (UNKNOWN filled, PROVISIONAL refined, VERIFIED immutable), VERIFIED demotion gate = 3 consecutive same-class failures on 3 distinct days (never 1 transient), Agnes 2.5 runtime IDs (agnes-2.5-flash/pro/pro-alpha, video-v2.0) recorded from 2026-08-06 live probes with 512K/64K limits.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

@@ -1,0 +1,366 @@
+/// <reference types="node" />
+/**
+ * FISH-003 — dialogue TTS runner: dialogue in, durable audio asset out.
+ *
+ * Binding contracts (spec §30, runbook §21/§36/§38):
+ *   1. The TTS job record is PERSISTED BEFORE synthesis runs (SUBMITTING with
+ *      the request hash; runbook §21 "persist provider task/job ID BEFORE
+ *      polling" — Fish /v1/tts is synchronous, so the persisted record is what
+ *      a restart resumes from; a crash between persist and synthesis leaves
+ *      SUBMITTING with no provider id, and re-running is safe because no
+ *      provider task ever existed to duplicate).
+ *   2. On success a SEPARATE durable dialogue_audio asset is written. It has
+ *      no binding to any video/clip asset — replacing a video never forces
+ *      voice regeneration (spec §30).
+ *   3. providerTaskId is stamped on both the job record and the asset before
+ *      the call returns (runbook §36/§38). When Fish returns no server id
+ *      (synchronous TTS), the request-hash identifier stands in as
+ *      "fish-tts-<hash>" so provenance is still durable.
+ *   4. Idempotency: same ref + same requestHash + existing asset → REUSE
+ *      (cache path), never resynthesize. A changed line under the same ref is
+ *      a deliberate re-generation: the record is overwritten fresh.
+ *   5. Text is UNTRUSTED: it only travels inside JSON bodies and string
+ *      fields; nothing here executes, evals, or shells it.
+ */
+import { createHash } from "node:crypto";
+import { hashDialogueRequest } from "./hash.js";
+import type {
+  AudioAssetStore,
+  AudioByteStore,
+  DialogueAudioAsset,
+  DialogueAudioResult,
+  DialogueCachePort,
+  DialogueLineInput,
+  DialogueTtsRunnerOptions,
+  FishTtsSynthesizer,
+  SynthesisRequest,
+  TtsJobRecord,
+  TtsJobStore,
+} from "./types.js";
+import { isTtsTerminal } from "./types.js";
+
+/** Error thrown when dialogue input is invalid (fails fast, before persist). */
+export class DialogueValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DialogueValidationError";
+  }
+}
+
+/** Thrown on REJECTED synthesis; carries the persisted record for retry/QC
+ * layers to inspect without re-reading the store. */
+export class TtsSynthesisError extends Error {
+  readonly job: TtsJobRecord;
+
+  constructor(job: TtsJobRecord) {
+    super(
+      `Dialogue TTS job "${job.ref}" rejected: ${job.failure?.message ?? "unknown failure"}` +
+        (job.failure?.kind ? ` (${job.failure.kind})` : ""),
+    );
+    this.name = "TtsSynthesisError";
+    this.job = job;
+  }
+}
+
+const CHARACTER_ID_RE = /^[A-Z][A-Z0-9_]*$/;
+
+/** Validate + normalize one dialogue line. Throws before anything persists. */
+export function validateDialogueLine(line: DialogueLineInput): DialogueLineInput {
+  if (!line || typeof line !== "object") {
+    throw new DialogueValidationError("DialogueLineInput is required");
+  }
+  const characterId = line.characterId?.trim();
+  if (!characterId || !CHARACTER_ID_RE.test(characterId)) {
+    throw new DialogueValidationError(
+      `characterId must be a stable MMCS ID (CHAR_*_001 style), got: ${JSON.stringify(line.characterId)}`,
+    );
+  }
+  const voiceId = line.voiceId?.trim();
+  if (!voiceId) {
+    throw new DialogueValidationError(
+      "voiceId is required (from the character's FISH-002 voice profile)",
+    );
+  }
+  if (typeof line.text !== "string" || line.text.trim() === "") {
+    throw new DialogueValidationError("text is required and must be a non-empty string");
+  }
+  return {
+    ...line,
+    characterId,
+    voiceId,
+    originalText: line.originalText ?? line.text,
+    format: line.format ?? "mp3",
+  };
+}
+
+/** Build the synthesis request + its idempotency hash from a validated line. */
+export function buildSynthesisRequest(line: DialogueLineInput): {
+  request: SynthesisRequest;
+  requestHash: string;
+} {
+  const request: SynthesisRequest = {
+    characterId: line.characterId,
+    voiceId: line.voiceId,
+    text: line.text,
+    model: line.model,
+    format: line.format ?? "mp3",
+    settings: line.settings,
+  };
+  return { request, requestHash: hashDialogueRequest(request) };
+}
+
+/** Derive a deterministic asset id from the request hash. */
+export function deriveAssetId(requestHash: string): string {
+  return `da-${requestHash.slice(0, 32)}`;
+}
+
+/** SHA-256 hex of audio bytes (checksum field, runbook §36). */
+export function sha256Hex(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function defaultNow(): string {
+  return new Date().toISOString();
+}
+
+/**
+ * The FISH-003 runner. Depends on narrow ports only: a synthesizer (adapted
+ * from FISH-001's client in production, mocked in tests), two durable stores,
+ * and an optional cache seam (FISH-005 implements the durable version).
+ */
+export class DialogueTtsRunner {
+  private readonly now: () => string;
+  /** Optional durable byte store (runbook §21: resume, never resubmit). When
+   * provided, generated bytes are persisted there so a fresh runner instance
+   * over the same stores can reload them after a restart. */
+  private readonly byteStore?: AudioByteStore;
+  /** In-process byte registry fallback; the durable byteStore (or a
+   * media-storage-backed loadBytes override) is the cross-process source. */
+  private readonly bytes = new Map<string, Uint8Array>();
+
+  constructor(
+    private readonly synthesizer: FishTtsSynthesizer,
+    private readonly jobs: TtsJobStore,
+    private readonly assets: AudioAssetStore,
+    options: DialogueTtsRunnerOptions = {},
+  ) {
+    this.now = options.now ?? defaultNow;
+    this.byteStore = options.bytes;
+  }
+
+  /**
+   * Ensure a job record exists for `ref`, persisted BEFORE synthesis.
+   *   - no record → persist SUBMITTING → synthesize
+   *   - record at SUBMITTING (crash-before-submit) → reuse record → synthesize
+   *   - terminal record, same hash, asset present → REUSED, no synthesis
+   *   - terminal record, different hash (line changed) → new request, fresh
+   */
+  async ensureJob(
+    ref: string,
+    line: DialogueLineInput,
+  ): Promise<{ record: TtsJobRecord; requestHash: string; reused: boolean }> {
+    const { requestHash } = buildSynthesisRequest(line);
+    const existing = await this.jobs.load(ref);
+
+    if (
+      existing &&
+      isTtsTerminal(existing.state) &&
+      existing.requestHash === requestHash &&
+      existing.assetId
+    ) {
+      return { record: existing, requestHash, reused: true };
+    }
+
+    const submitting: TtsJobRecord = {
+      ref,
+      state: "SUBMITTING",
+      requestHash,
+      characterId: line.characterId,
+      voiceId: line.voiceId,
+      model: line.model,
+      submitRequest: {
+        characterId: line.characterId,
+        voiceId: line.voiceId,
+        text: line.text,
+        model: line.model,
+        format: line.format,
+        settings: line.settings,
+      },
+      createdAt: existing?.createdAt ?? this.now(),
+      updatedAt: this.now(),
+    };
+    // §21/§38: persist BEFORE the synthesis call.
+    await this.jobs.save(submitting);
+    return { record: submitting, requestHash, reused: false };
+  }
+
+  /**
+   * Full path: persist job → synthesize → persist asset → persist terminal
+   * job. Returns the durable asset, bytes, and cache provenance.
+   */
+  async generateDialogueAudio(
+    ref: string,
+    line: DialogueLineInput,
+    cache?: DialogueCachePort,
+  ): Promise<DialogueAudioResult> {
+    const validated = validateDialogueLine(line);
+    const { request, requestHash } = buildSynthesisRequest(validated);
+    const { record: job, reused } = await this.ensureJob(ref, validated);
+
+    if (reused && job.assetId) {
+      return this.reuseResult(job);
+    }
+
+    // Same requestHash under a DIFFERENT ref (asset ids are hash-derived, spec
+    // §30): the identical line already generated its audio once — reuse it
+    // instead of paying for a duplicate synthesis.
+    const deterministicAssetId = deriveAssetId(requestHash);
+    const existingAsset = await this.assets.load(deterministicAssetId);
+    if (existingAsset) {
+      const existingBytes = await this.loadBytes(deterministicAssetId);
+      if (existingBytes) {
+        const reusedJob: TtsJobRecord = {
+          ...job,
+          state: "GENERATED_TEMPORARY",
+          providerTaskId: existingAsset.providerTaskId ?? job.providerTaskId,
+          assetId: existingAsset.assetId,
+          updatedAt: this.now(),
+        };
+        await this.jobs.save(reusedJob);
+        return { job: reusedJob, asset: existingAsset, audio: existingBytes, fromCache: true };
+      }
+      // Asset record exists but its bytes are gone — fall through and
+      // synthesize fresh rather than return an unusable asset.
+    }
+
+    // Cache seam (FISH-005): a durable cache hit skips paid synthesis.
+    const cachedAssetId = cache ? await cache.findAssetId(requestHash) : undefined;
+    if (cachedAssetId) {
+      const cachedAsset = await this.assets.load(cachedAssetId);
+      if (cachedAsset) {
+        const bytes = await this.loadBytes(cachedAssetId);
+        if (bytes) {
+          const cachedJob: TtsJobRecord = {
+            ...job,
+            state: "GENERATED_TEMPORARY",
+            providerTaskId: cachedAsset.providerTaskId,
+            assetId: cachedAsset.assetId,
+            updatedAt: this.now(),
+          };
+          await this.jobs.save(cachedJob);
+          return { job: cachedJob, asset: cachedAsset, audio: bytes, fromCache: true };
+        }
+        // Cache said it has the asset but the bytes are gone — fall through
+        // and synthesize fresh rather than fail the caller.
+      }
+    }
+
+    // SYNTHESIS — after the job record is durably in SUBMITTING.
+    const outcome = await this.synthesizer.synthesize(request);
+
+    if (!outcome.ok) {
+      const rejected: TtsJobRecord = {
+        ...job,
+        state: "REJECTED",
+        failure: outcome.failure,
+        updatedAt: this.now(),
+      };
+      await this.jobs.save(rejected);
+      throw new TtsSynthesisError(rejected);
+    }
+
+    const providerTaskId = outcome.providerTaskId ?? `fish-tts-${requestHash}`;
+    const assetId = deriveAssetId(requestHash);
+    const asset: DialogueAudioAsset = {
+      assetId,
+      assetType: "dialogue_audio",
+      assetState: "GENERATED_TEMPORARY",
+      seriesId: validated.seriesId,
+      episodeId: validated.episodeId,
+      sceneId: validated.sceneId,
+      shotId: validated.shotId,
+      characterId: validated.characterId,
+      characterVersion: validated.characterVersion,
+      provider: "fish-audio",
+      providerModel: outcome.providerModel ?? validated.model,
+      providerTaskId,
+      checksum: sha256Hex(outcome.audio),
+      byteLength: outcome.audio.byteLength,
+      format: validated.format ?? "mp3",
+      dialogueRef: ref,
+      originalText: validated.originalText ?? validated.text,
+      spokenText: validated.text,
+      durationSec: outcome.durationSec,
+      generationSettings: validated.settings,
+      cost: outcome.cost,
+      createdAt: this.now(),
+    };
+    // Durable asset record BEFORE the job is marked terminal (runbook §36:
+    // never rely on filenames; the record is the asset's identity).
+    await this.assets.save(asset);
+    this.bytes.set(assetId, outcome.audio);
+    // Durable bytes too (runbook §21: resume, never resubmit). If no byte
+    // store is wired, the in-process registry is the best-effort fallback and
+    // a restart must re-synthesize (regenerable bytes, never double-charged).
+    await this.byteStore?.save(assetId, outcome.audio);
+
+    const generated: TtsJobRecord = {
+      ...job,
+      state: "GENERATED_TEMPORARY",
+      providerTaskId,
+      assetId,
+      updatedAt: this.now(),
+    };
+    await this.jobs.save(generated);
+    await cache?.put(requestHash, assetId);
+
+    return { job: generated, asset, audio: outcome.audio, fromCache: false };
+  }
+
+  /**
+   * Resume path for a restart AFTER successful generation (crash between the
+   * asset persist and the caller receiving bytes): reload asset + bytes from
+   * the durable stores. Never resubmits — a terminal job with an asset is
+   * returned as-is (runbook §21: resume, never resubmit/double spend).
+   */
+  async resume(ref: string): Promise<DialogueAudioResult> {
+    const job = await this.jobs.load(ref);
+    if (!job) throw new Error(`TTS job "${ref}" has no persisted record to resume`);
+    if (job.state === "REJECTED") throw new TtsSynthesisError(job);
+    if (!job.assetId || !isTtsTerminal(job.state)) {
+      throw new Error(
+        `TTS job "${ref}" is at ${job.state} without a durable asset; regenerate instead of resuming`,
+      );
+    }
+    return this.reuseResult(job);
+  }
+
+  /** Reload a completed job's asset + bytes (idempotent cache path). */
+  private async reuseResult(job: TtsJobRecord): Promise<DialogueAudioResult> {
+    const assetId = job.assetId as string;
+    const asset = await this.assets.load(assetId);
+    if (!asset) {
+      throw new Error(`TTS job "${job.ref}" references missing asset ${assetId}; regenerate instead`);
+    }
+    const bytes = await this.loadBytes(assetId);
+    if (!bytes) {
+      throw new Error(`asset ${assetId} has no loadable audio bytes; regenerate instead`);
+    }
+    return { job, asset, audio: bytes, fromCache: true };
+  }
+
+  /**
+   * Byte loading seam. Reads the durable byte store first (cross-process
+   * source), then the in-process registry; a media-storage-backed subclass
+   * overrides this entirely.
+   */
+  protected async loadBytes(assetId: string): Promise<Uint8Array | undefined> {
+    const durable = await this.byteStore?.load(assetId);
+    if (durable) return durable;
+    return this.bytes.get(assetId);
+  }
+}
+
+/** Re-export for callers narrowing states. */
+export { isTtsTerminal, TTS_TERMINAL_STATES } from "./types.js";
+export type { FishPipelineState } from "./types.js";

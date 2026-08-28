@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-28T21:59:00Z",
+  "updated_at": "2026-08-28T22:05:00Z",
   "items": [
     {
       "id": "CORE-001",
@@ -91,7 +91,7 @@
       "branch": "task/CORE-007-job-asset-schema",
       "worktree": "worktrees/CORE-007/",
       "acceptance": "provider_jobs + assets tables carry every field of spec \u00a719 asset manifest (all 26 fields asserted by introspection test) and \u00a718 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.",
-      "status": "PASS"
+      "status": "MERGED"
     },
     {
       "id": "CORE-008",
@@ -119,7 +119,7 @@
       "branch": "task/CORE-009-cost-engine",
       "worktree": "worktrees/CORE-009/",
       "acceptance": "$24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger \u2014 run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CORE-010",
@@ -202,7 +202,7 @@
       "branch": "task/CORE-015-db-backup",
       "worktree": "worktrees/CORE-015/",
       "acceptance": "`mmcs backup export` produces a restorable archive; restore into empty DB passes full row-count + checksum comparison; `npx vitest run packages/database/src/backup` green incl. round-trip test.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CHAR-001",
@@ -445,7 +445,7 @@
       "branch": "task/DIR-002-concept-generator",
       "worktree": "worktrees/DIR-002/",
       "acceptance": "idea \u2192 developed concept via director-model interface (OpenRouter-compatible, CAP-007 registry); mocked-LLM test produces concept options; no provider call without capability check; `npx vitest run packages/scene-intelligence/src/concept` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "DIR-003",
@@ -695,7 +695,7 @@
       "branch": "task/CAP-003-character-count",
       "worktree": "worktrees/CAP-003/",
       "acceptance": "counts compiled prompt characters exactly; rejects over hard max BEFORE provider call (Wan >20,000 test); passes when UNKNOWN hard max (never invents a limit); `npx vitest run packages/capability-registry/src/validators` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CAP-004",
@@ -789,7 +789,7 @@
       "branch": "task/CAP-010-observed-overrides",
       "worktree": "worktrees/CAP-010/",
       "acceptance": "runtime-discovered model IDs/limits refine profiles with PROVISIONAL confidence + provenance; VERIFIED values immutable on one transient failure (test); Agnes 2.5 runtime IDs recorded with source/date; `npx vitest run packages/capability-registry/src/observed-overrides` green.",
-      "status": "PASS"
+      "status": "MERGED"
     },
     {
       "id": "AGN-001",
@@ -1090,7 +1090,7 @@
       "branch": "task/KIE-010-kie-contract",
       "worktree": "worktrees/KIE-010/",
       "acceptance": "full mocked contract suite (submit/poll/resume/fail/archive handoff); optional live smoke gated behind credentials + $25 rule, skipped cleanly when absent; `npx vitest run packages/providers/src/kie/__tests__` green.",
-      "status": "PASS"
+      "status": "MERGED"
     },
     {
       "id": "FISH-001",
@@ -1133,7 +1133,7 @@
       "branch": "task/FISH-003-tts",
       "worktree": "worktrees/FISH-003/",
       "acceptance": "dialogue \u2192 audio asset as separate durable asset (video replacement never forces voice regeneration); job record persisted before polling; mocked test returns asset with provider_task_id; `npx vitest run packages/providers/src/fish-audio/tts` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "FISH-004",
@@ -1160,7 +1160,7 @@
       "branch": "task/FISH-005-dialogue-cache",
       "worktree": "worktrees/FISH-005/",
       "acceptance": "same text+voice+model request returns cached asset (idempotency test); cache keyed by request hash; `npx vitest run packages/providers/src/fish-audio/cache` green.",
-      "status": "PASS"
+      "status": "MERGED"
     },
     {
       "id": "FISH-006",
@@ -1173,7 +1173,7 @@
       "branch": "task/FISH-006-alignment",
       "worktree": "worktrees/FISH-006/",
       "acceptance": "word/phoneme timestamps extracted and persisted per dialogue asset; timestamp data feeds FISH-007; fixture test with known alignment; `npx vitest run packages/providers/src/fish-audio/alignment` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "FISH-007",
@@ -1186,7 +1186,7 @@
       "branch": "task/FISH-007-captions",
       "worktree": "worktrees/FISH-007/",
       "acceptance": "word-exact caption track generated from alignment (upstream gen_voice.py word-exact discipline); output format consumable by VID-004; `npx vitest run packages/providers/src/fish-audio/captions` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "FISH-008",
@@ -1420,7 +1420,7 @@
       "branch": "task/VID-002-episodic-registry",
       "worktree": "worktrees/VID-002/",
       "acceptance": "episodic composition registry (series/episode/scene/shot \u2192 composition) generated from DB plan; `npm run gen` extended; registry test proves one composition per episode resolves; `npx vitest run packages/remotion-runtime/src/registry` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "VID-003",
@@ -1465,7 +1465,7 @@
       "branch": "task/VID-005-generated-clip-layer",
       "worktree": "worktrees/VID-005/",
       "acceptance": "archived provider clips (GHL-resolved assets) placed on timeline per shot plan; missing-asset error names the shot; mocked test assembles 3-shot sequence; `npx vitest run packages/remotion-runtime/src/layers/generated-clips` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "VID-006",
@@ -1591,7 +1591,7 @@
       "branch": "task/VID-013-shot-replacement",
       "worktree": "worktrees/VID-013/",
       "acceptance": "replace one shot (new asset/trim) without regenerating unaffected shots \u2014 composition diff test proves only the targeted shot's inputs change; `mmcs retry-shot <id>` wired; `npx vitest run packages/remotion-runtime/src/shot-replacement` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "VID-014",
@@ -1664,7 +1664,7 @@
       "branch": "task/QC-002-identity-check",
       "worktree": "worktrees/QC-002/",
       "acceptance": "extracted frame vs canonical identity asset comparison via vision-model interface (registry-selected); mismatch verdict on doctored fixture; `npx vitest run packages/qc/src/identity` green (mocked vision model).",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "QC-003",
@@ -1677,7 +1677,7 @@
       "branch": "task/QC-003-wardrobe-check",
       "worktree": "worktrees/QC-003/",
       "acceptance": "active appearance version (hair/wardrobe/props) verified against shot spec requirements; wrong-wardrobe fixture flagged; `npx vitest run packages/qc/src/wardrobe` green.",
-      "status": "PASS"
+      "status": "MERGED"
     },
     {
       "id": "QC-004",
@@ -1690,7 +1690,7 @@
       "branch": "task/QC-004-continuity",
       "worktree": "worktrees/QC-004/",
       "acceptance": "neighboring shots compared against each other + current Series Bible state (spec \u00a711); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.",
-      "status": "PASS"
+      "status": "MERGED"
     },
     {
       "id": "QC-005",
@@ -1781,7 +1781,7 @@
       "branch": "task/QC-010-wan-fallback",
       "worktree": "worktrees/QC-010/",
       "acceptance": "especially complex/long/hero/action shots route to Wan 3.0; routing policy considers capability/quality-history/cost/quota (policy table test); `npx vitest run packages/qc/src/routes/wan` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "QC-011",
@@ -1855,7 +1855,7 @@
       "branch": "task/SKL-003-personal-install",
       "worktree": "worktrees/SKL-003/",
       "acceptance": "backup-before-overwrite logic (existing personal skill never destroyed without backup/confirmation); symlink to canonical source; verified in NEW session outside repo; documented skill-discovery root; `bash integrations/claude/personal-install.sh --check` exits 0.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "SKL-004",
@@ -1868,7 +1868,7 @@
       "branch": "task/SKL-004-nine-verify",
       "worktree": "worktrees/SKL-004/",
       "acceptance": "fresh claude-nine session invokes `/mini-movie-creator status` with same engine/state (no copied logic); actual skill discovery root (~/.claude-nine/skills/ primary + sync from ~/.claude/skills/) documented; verified behavior recorded, never invented; `bash integrations/claude/nine-verify.sh` exits 0.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "SKL-005",
@@ -1881,7 +1881,7 @@
       "branch": "task/SKL-005-openclaw-workspace",
       "worktree": "worktrees/SKL-005/",
       "acceptance": "packaging at integrations/openclaw/mini-movie-creator/ (SKILL.md + references/scripts, calls same CLI/DB \u2014 no engine fork); active workspace resolved from OpenClaw config (never guessed); install via current `openclaw skills install` flow or workspace placement; `openclaw skills list` shows mini-movie-creator.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "SKL-006",
