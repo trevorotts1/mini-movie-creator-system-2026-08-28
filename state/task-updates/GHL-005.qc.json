@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-005",
+  "phase": "PASS",
+  "commit": "5e092e3",
+  "checksRun": "npx vitest run packages/media-storage/src/ghl/upload-hosted -> 41/41 passed; npx vitest run packages/media-storage -> 41/41 passed; npx vitest run (worktree sweep) -> 41/41 passed; npx tsc --noEmit -p packages/media-storage/tsconfig.json -> clean; security grep: no exec/spawn/eval/env/secret access in owned files",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Fixed dead probeStatus field (now populated from probeUrl status on UNREACHABLE) and maxLength overflow in buildCanonicalName (negative keepBase silently exceeded cap; now throws); +7 regression tests, suite 34->41 green",
+  "blockers": []
+}

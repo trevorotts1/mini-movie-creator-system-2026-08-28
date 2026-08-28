@@ -12,6 +12,28 @@ HTTP 200 on that date). Registry data: `packages/capability-registry/src/data/ag
   - https://wiki.agnes-ai.com/en/docs/agnes-image-21-flash
   - https://wiki.agnes-ai.com/en/docs/pricing
 
+## Client/transport layer (AGN-001) — verified against docs 2026-08-28
+
+Implemented in `packages/providers/src/agnes/client/`. Transport facts checked
+against the live docs on 2026-08-28 (AGN-001 builder):
+
+| Fact | Value | Source (fetched 2026-08-28) |
+|---|---|---|
+| Base URL | `https://apihub.agnes-ai.com/v1` (OpenAI-compatible) | video-25 + video-25-flash |
+| Auth | `Authorization: Bearer $AGNES_API_KEY` header on every request | video-25-flash |
+| Create video task | `POST /v1/videos` | video-25-flash, video-25 |
+| Poll/retrieve | `GET /agnesapi?video_id={video_id}&model_name={model}` | video-25-flash, video-25 |
+| `model_name` rule | required for `keyframe`/`reference` tasks; `text`-mode tasks may omit | video-25-flash |
+| Create response | object: `id`(=task_id), `task_id`, `video_id`, `object`="video", `model`, `status`, `progress`, `created_at`, `seconds`, `size` | video-25 |
+| Retrieval adds | `completed_at`, `metadata.url` (final URL on completed), `metadata.size_mapping`, `error.message` | video-25 |
+| Status enum | `queued` \| `in_progress` \| `completed` \| `failed` | video-25 |
+| Retry guidance | 429 → exponential backoff, lower poll frequency; 500 → retry; 400/401/403/404 terminal | video-25 |
+| Client defaults | timeout 30s/attempt, 3 attempts max, 500ms exponential backoff (no invented Agnes-specific limits — none documented) | AGN-001 policy (spec §29) |
+| Key handling | key only in the Authorization header, never in URLs, errors, or log fields | spec §29 |
+
+Polling cadence itself (1–2s per docs) is AGN-005's concern, not the
+transport's. Prompt ceilings stay UNKNOWN per the policy below.
+
 ## Agnes Video 2.5 Flash (`agnes-video-2.5-flash`) — VERIFIED
 
 | Capability | Value | Source page |

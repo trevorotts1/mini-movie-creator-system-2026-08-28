@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-008",
+  "phase": "BUILDER_DONE",
+  "commit": "7a0dddd",
+  "testsRun": "npx vitest run scripts/orchestration/watchdog.test.ts (24 passed); npx tsx scripts/orchestration/watchdog.cli.ts --selftest (ok=true RC=0); --dry-run on repo (lock acquired, 149 tasks/129 worktrees, 38 BUILDER_DONE_NO_QC + 14 BLOCKED_INCOMPLETE flagged)",
+  "notes": "Watchdog engine + CLI + SKILL.md per runbook 7.1: lock, verify vs recorded, enforce 10/500, refill plan + dispatch, ping stalled, kill duplicates, QC coverage, PASS->queue, build-status/ledger/checkpoint writes; root vitest include widened to scripts/** (REC-009 precedent).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T18:20:00Z"
+}

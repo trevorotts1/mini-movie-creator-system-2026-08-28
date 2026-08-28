@@ -1,0 +1,11 @@
+{
+  "taskId": "CORE-004",
+  "phase": "BUILDER_DONE",
+  "commit": "30652c14aa2e27eb50c064629a7c04c18e3f0920",
+  "testsRun": "npx vitest run packages/database/src/repositories/projects => 17 passed; npx vitest run packages/database/src/migrations/010-project-series-episode => 7 passed; npx vitest run packages/database/src/connection => 11 passed; npx tsc --noEmit (packages/database) => 0 errors. Full packages/database run: 53 passed, 1 failed — the 1 failure is CORE-003's stale registry test (see blockers), not CORE-004 code.",
+  "notes": "Migration band 010_ (ids 0101-0103) creates projects/series/episodes with aspect-ratio master at series level + per-episode aspect_ratio_override (spec §23), episode code S01E01, STRICT tables + FKs with cascade delete; CRUD repositories under repositories/projects|series|episodes with validation, effectiveAspectRatio() inheritance, listBySeries/Project. Deviation from dispatch paths: dispatch said migrations/001-projects/ but ownership.md assigns CORE-004 band 010_-019_ (001_ is inside CORE-003's 000_-009_), so band 010-project-series-episode/ used.",
+  "blockers": [
+    "CORE-003-owned test packages/database/src/migrations/migrations.test.ts ('shipped MIGRATIONS registry (000-init)' block) asserts MIGRATIONS applies to an empty list — premise obsolete now a band is registered (my registry.ts edit is the mechanism that file's own contract prescribes for band tasks). Fix belongs to CORE-003/integration: update that test to assert the ledger contains ['0101','0102','0103'] after migrate(db, MIGRATIONS), or move it into the band. Not edited: file is CORE-003's."
+  ],
+  "updatedAt": "2026-08-28T14:40:00Z"
+}

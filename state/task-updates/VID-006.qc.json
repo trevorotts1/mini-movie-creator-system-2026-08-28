@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-006",
+  "phase": "PASS",
+  "commit": "444948e",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/remotion-runtime/src/layers/still-motion -> 65/65 pass across 3 files (exit 0); npx tsc --noEmit (packages/remotion-runtime) -> exit 0; node node_modules/vitest/vitest.mjs run (full monorepo regression) -> 473/473 pass across 27 files (exit 0); security grep pass (no exec/eval/secrets/fs in owned paths)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Substring false positives in KIND_PATTERNS flipped shots to wrong camera kind (ecstatic->static, companion->pan, handshake->handheld, jibberish->crane); fixed with word boundaries + inflected forms, added regression tests; determinism (seeded mulberry32/FNV-1a), edge-safety caps, ai_still_motion ownership validation all verified.",
+  "blockers": []
+}

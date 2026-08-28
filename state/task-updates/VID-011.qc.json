@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-011",
+  "phase": "PASS",
+  "commit": "05c1194fd5a851a79e97581951d23eec328e75de",
+  "checksRun": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true npx vitest run packages/remotion-runtime/src/aspect (57/57); npx tsc --noEmit -p packages/remotion-runtime (0 errors); grep security pass (no exec/eval/env/fetch/retries)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:10:00Z",
+  "notes": "Fixed: partial episode override fell back to builtin 16:9 instead of series default; parse silently truncated >64-char ids; caption zone fraction unbounded (negative y); bad resolution tier not validated on empty plan. 4 regression tests added (52->57).",
+  "blockers": []
+}

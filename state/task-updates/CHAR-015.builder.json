@@ -1,0 +1,9 @@
+{
+  "taskId": "CHAR-015",
+  "phase": "BUILDER_DONE",
+  "commit": "b45f43d8f85e35ce2cacc3d19524b2fa57dd285b",
+  "testsRun": "npx vitest run packages/character-library/src/refpack-metrics => 15/15 passed; npx vitest run packages/character-library => 114/114 passed; npx tsc --noEmit -p packages/character-library => clean",
+  "notes": "refpack-metrics: JSON-store of per-clip outcomes (reference pack + ACCEPTED/REJECTED), dedupe on job replay, historical success rate per character/model/reference and per pack with decision-time cutoff; DIR-013 consumption ready",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:30:00Z"
+}

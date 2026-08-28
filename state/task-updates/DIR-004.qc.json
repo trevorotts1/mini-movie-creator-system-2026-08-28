@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-004",
+  "phase": "PASS",
+  "commit": "49795f351b3f77fd256bc32bb27b149c91f2acaf",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/screenplay -> 35/35 PASS; npx vitest run (monorepo) -> 443/443 PASS; npx tsc --noEmit -p packages/scene-intelligence -> clean; security scan of owned paths (no exec/fs/network/env/secrets, slug neutralized, no unbounded loops)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Fixed: parseSceneHeading swallowed sublocations into timeOfDay (first-dash split -> last-dash greedy); composeScreenplayPrompt accepted schemaVersion but never emitted it (now names contract version in system message); missing writer logline hard-failed instead of falling back to approved concept logline (context gains fallbackLogline). 3 regression tests added. Builder's uncommitted QC-pass changes in worktree were sound and are folded into commit 49795f3.",
+  "blockers": []
+}

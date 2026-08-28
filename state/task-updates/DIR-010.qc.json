@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-010",
+  "phase": "PASS",
+  "commit": "ab7b74e",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/shot-planner (39/39 PASS); npx vitest run packages/scene-intelligence (39/39); full repo npx vitest run (447/447, 25 files); npx tsc --noEmit -p packages/scene-intelligence (clean); security grep on owned paths (no exec/fs/env, regex ReDoS-safe, loops bounded)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Fixed: beat-starvation TypeError crash (shots>beats -> clamp+warn or actionable validation error), unvalidated shotIdPrefix (now filename-safe per spec §19), NaN/Infinity durationSeconds silently falling through to estimation (now rejected). All three have regression tests; 45s->5-8 shots fixture acceptance and spec §12 field coverage verified independently.",
+  "blockers": []
+}

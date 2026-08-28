@@ -1,0 +1,9 @@
+{
+  "taskId": "AGN-007",
+  "phase": "BUILDER_DONE",
+  "commit": "8da83d3ac31a37dea986d78748cd84be72f9b0a6",
+  "testsRun": "npx vitest run packages/providers/src/agnes/profiles/regular → 52/52 PASS; npx tsc --noEmit (packages/providers) → clean",
+  "notes": "Agnes Video 2.5 regular profile (capability/validate/request/adapter/index + tests) mirroring AGN-006 flash layout: 4-12s, 720P/960P/2K, reference videos supported, prompt ceiling UNKNOWN; discrepancy: task line says <=5 ref images but live-doc verification (CAP-002) found no stated hard cap on regular (5 = free-allowance billing rule) so <=5 implemented as VERIFIED billing allowance, not enforced rejection — images beyond 5 accepted and billed via excessImageCount.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:45:00Z"
+}

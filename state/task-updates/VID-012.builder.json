@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-012",
+  "phase": "BUILDER_DONE",
+  "commit": "a4bfb9727cc46ad759aeae71280cfcfc0e96326e",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/rough-cut -> 3 files, 37 tests PASS (real ffmpeg 8.1.1 + ffprobe fixture renders: 16:9 AND 9:16 preview MP4s probe-valid); npx tsc --noEmit -p packages/remotion-runtime -> clean",
+  "notes": "Rough cut assembly: plan -> deterministic integer-frame timeline (upstream round(s*fps) convention) -> preview MP4 with ffprobe gate; render adapter injected (Remotion at integration, real-ffmpeg fixture now); mmcs rough-cut CLI wired. Sibling VID-002/003/004/010 layers not on integration yet - structural twin types used, same port posture as VID-013/014.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T11:30:00Z"
+}
