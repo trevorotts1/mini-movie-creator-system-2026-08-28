@@ -25,7 +25,7 @@ import type { AudioTimeline, PlacedAudioEvent } from "./types.js";
 /** One loop-safety finding against the timeline. */
 export interface AudioLoopIssue {
   /** Machine-readable code (stable, testable). */
-  code: "OVERFLOW" | "BED_SEAM_ASYMMETRIC" | "BED_OFF_GRID" | "UNKNOWN_LENGTH";
+  code: "OVERFLOW" | "BED_SEAM_ASYMMETRIC" | "BED_OFF_GRID" | "BED_FADE_EXCEEDS_LOOP" | "UNKNOWN_LENGTH";
   /** Fixed message. */
   message: string;
   /** Input id the issue is about (events only). */
@@ -108,6 +108,19 @@ export function analyzeAudioLoop(timeline: AudioTimeline): AudioLoopReport {
           `music bed fades in ${bed.fadeInFrames}f but fades out ${bed.fadeOutFrames}f — ` +
           `at the seam (frame ${fadeOutStart} → frame ${loopLen - 1} → frame 0) ` +
           `amplitude jumps; set fadeInFrames == fadeOutFrames`,
+        inputId: bed.inputId,
+      });
+    }
+    // Degenerate seam: fades so long they cover the whole loop — the fade-out
+    // never completes, so bed amplitude at the seam can never match frame 0's
+    // fade-in amplitude even when fadeIn == fadeOut.
+    if (loopLen > 0 && bed.fadeInFrames >= loopLen) {
+      issues.push({
+        code: "BED_FADE_EXCEEDS_LOOP",
+        message:
+          `music bed fade-in ${bed.fadeInFrames}f covers the entire ${loopLen}-frame loop — ` +
+          `the seam fade never completes and amplitude at the seam cannot equal frame 0; ` +
+          `shorten the fades to under the loop length`,
         inputId: bed.inputId,
       });
     }

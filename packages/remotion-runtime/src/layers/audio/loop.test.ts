@@ -57,6 +57,28 @@ describe("loop: last-frame == frame-0 convention", () => {
     expect(report.issues.map((i) => i.code)).toContain("BED_SEAM_ASYMMETRIC");
   });
 
+  it("flags a bed fade that covers the entire loop (seam fade never completes)", () => {
+    // Regression: symmetric fades LARGER than the loop still break the seam —
+    // the fade-out never finishes, so seam amplitude ≠ frame-0 amplitude even
+    // with fadeIn == fadeOut. Must not be reported loop-friendly. Validator
+    // caps fades at 30s, so use a loop shorter than the fade (10s loop, 20s fade).
+    const plan = loopPlan();
+    plan.music = { inputId: "bed", fadeInSec: 20, fadeOutSec: 20 }; // 600f > 300f window
+    const t = placeAudio(plan, 30, 0, 300);
+    const report = analyzeAudioLoop(t);
+    expect(report.loopFriendly).toBe(false);
+    expect(report.issues.map((i) => i.code)).toContain("BED_FADE_EXCEEDS_LOOP");
+  });
+
+  it("still reports loop-friendly for fades just under the loop length", () => {
+    const plan = loopPlan();
+    plan.music = { inputId: "bed", fadeInSec: 30, fadeOutSec: 30 }; // 900f < 1260f (max fade 30s)
+    const t = placeAudio(plan, 30, 0, 1260);
+    const report = analyzeAudioLoop(t);
+    expect(report.issues.map((i) => i.code)).not.toContain("BED_FADE_EXCEEDS_LOOP");
+    expect(report.loopFriendly).toBe(true);
+  });
+
   it("flags a bed that does not start on the loop origin", () => {
     const plan = loopPlan();
     // Force an off-grid bed by mutating the placed event.

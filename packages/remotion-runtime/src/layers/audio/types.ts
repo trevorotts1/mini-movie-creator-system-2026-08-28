@@ -172,6 +172,6 @@ export interface AudioTimeline {
   music: PlacedAudioEvent | null;
   /** SFX cues in plan order. */
   sfx: PlacedAudioEvent[];
-  /** Every event (dialogue, music, sfx) in plan order. */
+  /** Every event (dialogue, then music, then sfx); plan order within each group. */
   events: PlacedAudioEvent[];
 }
