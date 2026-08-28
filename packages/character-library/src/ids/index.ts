@@ -10,13 +10,11 @@ export {
   padSequence,
   parseCharacterId,
   type CharacterIdParts,
-} from "./ids/ids.js";
+} from "./ids.js";
 export {
   nextCharacterId,
   nextCharacterIdForSlug,
   sameCharacterId,
   slugifyCharacterName,
   type CharacterIdRequest,
-} from "./ids/allocate.js";
-
-export const MMCS_CHARACTER_LIBRARY = "@mmcs/character-library scaffold marker";
+} from "./allocate.js";
