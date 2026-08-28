@@ -189,11 +189,12 @@ describe("shipped MIGRATIONS registry (000-init)", () => {
   // shipped registry as their owning tasks land, so this test stays
   // registry-agnostic: whatever is shipped, applying twice is idempotent and
   // the ledger records exactly the ids applied, ascending.
-  it("applies twice cleanly and idempotently on a temp file DB", () => {
+  it("applies twice cleanly and idempotently on a temp file DB (band 000_ is framework-only; later bands append as their tasks land)", () => {
     const db = freshDb();
     const first = migrate(db, MIGRATIONS);
     expect(first.applied).toEqual([...first.applied].sort());
     expect(migrate(db, MIGRATIONS).applied).toEqual([]);
+    // The ledger records exactly what was applied, ascending.
     expect(db.all(`SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY id`).map((r) => String(r["id"]))).toEqual(first.applied);
     const tables = db.all("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").map((r) => String(r["name"]));
     expect(tables).toContain(MIGRATIONS_TABLE);

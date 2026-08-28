@@ -15,3 +15,4 @@ export {
 export { MIGRATIONS } from "./registry.js";
 export { baselineMigrations } from "./000-init/index.js";
 export { projectSchemaMigrations } from "./010-project-series-episode/index.js";
+export { scenesMigrations } from "./030-scenes-shots/index.js";
