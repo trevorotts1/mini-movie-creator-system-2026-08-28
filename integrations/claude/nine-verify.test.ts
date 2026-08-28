@@ -61,6 +61,23 @@ describe("nine-verify.sh — structural contract", () => {
     expect(body).toMatch(/\[ "\$FAIL" -eq 0 \] && exit 0 \|\| exit 1/);
   });
 
+  it("probes the REAL /mini-movie-creator skill (SKL-004 acceptance), never passing on its absence", () => {
+    expect(body).toContain("REAL /mini-movie-creator skill");
+    expect(body).toContain('$REPO_ROOT/skills/mini-movie-creator"');
+    expect(body).toContain("step skipped, not passed");
+    expect(body).toContain("ln -s \"$CANONICAL_SKILL\"");
+    // Real-skill evidence marker: engine stub output verbatim, never invented.
+    expect(body).toContain("grep -q \"\\[mmcs\\] status\"");
+  });
+
+  it("passes the repo root to the real-skill session as an environment fact, not a command", () => {
+    expect(body).toContain("The MMCS repository root is $REPO_ROOT");
+  });
+
+  it("cleans up the real-skill probe directory too", () => {
+    expect(body).toContain("${PROBE_C_DIR:-}");
+  });
+
   it("markers asserted by the live run exist in the probe payloads", () => {
     expect(body).toContain("MMCS-NINE-PROBE-OK");
     expect(body).toContain("MMCS-NINE-PRIMARY-ROOT-OK");

@@ -186,13 +186,25 @@ CLI handler still the documented §24 stub):**
    `$CLAUDE_CONFIG_DIR/skills` is the primary discovery root.
 3. **Sync behavior.** `sync-nine-skills.sh` re-run: exit 0, "already in sync
    (61 skills)". Root mix: 11 real dirs (nine's own, never overwritten) + 50
-   symlinks into `~/.claude/skills`.
+   symlinks into `~/.claude/skills`. (Count is live and grows when new skills
+   are installed — informational, not an asserted invariant.)
+4. **REAL `/mini-movie-creator` skill → same engine (acceptance probe).**
+   A fresh headless claude-nine session, launched from a scratch cwd whose
+   `.claude/skills/mini-movie-creator` symlinked to the canonical skill
+   (`skills/mini-movie-creator/`), was told to invoke the skill and run
+   `mmcs status`. The session did exactly that and replied with the engine's
+   verbatim output: `[mmcs] status — STUB: registered, not implemented yet
+   (spec §24).` — the SKL-004 acceptance with the actual skill, not a
+   throwaway stand-in, zero copied logic. Recorded live on 2026-08-28 with
+   the canonical skill content from SKL-001 (that branch lands in
+   `integration` via merge; until it does, step 6 of `nine-verify.sh` reports
+   a skip — a recorded skip is never a pass).
 
 **Re-run the verification:**
 
 ```bash
 cd <repo-root>
-bash integrations/claude/nine-verify.sh             # full: live probes, ~2 model calls via 9Router
+bash integrations/claude/nine-verify.sh             # full: live probes, ~3 model calls via 9Router
 bash integrations/claude/nine-verify.sh --selftest  # structural checks only, no model calls
 ```
 

@@ -11,6 +11,11 @@
 #      engine — no copied logic.
 #   4. A FRESH claude-nine session with an isolated CLAUDE_CONFIG_DIR discovers a
 #      skill in <config-dir>/skills — proving the config-dir root mechanism.
+#   5. A FRESH claude-nine session invokes the REAL /mini-movie-creator skill
+#      (SKL-004 acceptance, spec §27 install targets) and per that skill calls
+#      the SAME mmcs engine. Runs only when the canonical skill is present in
+#      this tree (SKL-001 merge); before that it is a recorded skip, never a
+#      pass — no invented evidence.
 #
 # Non-destructive: probes live in `mktemp -d` directories, removed on exit.
 # No repo state, no ~/.claude, no ~/.claude-nine content is modified. The sync
@@ -52,7 +57,7 @@ run_with_timeout() {
   fi
 }
 
-trap 'rm -rf "${PROBE_A_DIR:-}" "${PROBE_B_DIR:-}" 2>/dev/null' EXIT
+trap 'rm -rf "${PROBE_A_DIR:-}" "${PROBE_B_DIR:-}" "${PROBE_C_DIR:-}" 2>/dev/null' EXIT
 
 # ---------------------------------------------------------------------------
 # 0. Structural checks (always; also the whole of --selftest)
@@ -195,6 +200,34 @@ if echo "$PROBE_B_OUT" | grep -q "MMCS-NINE-PRIMARY-ROOT-OK"; then
   ok "skills resolve from \$CLAUDE_CONFIG_DIR/skills (claude-nine primary root = ~/.claude-nine/skills)"
 else
   bad "config-dir probe failed (rc=$PROBE_B_RC, out tail: $(echo "$PROBE_B_OUT" | tail -2 | tr '\n' ' ' | cut -c1-160))"
+fi
+
+# ---------------------------------------------------------------------------
+# 6. fresh claude-nine session: the REAL /mini-movie-creator skill calls the
+#    engine (SKL-004 acceptance). Only when the canonical skill is present in
+#    THIS tree — it lands via SKL-001 merge; until then this step is a
+#    recorded skip, never a pass (and never invented evidence).
+# ---------------------------------------------------------------------------
+header "6. fresh-session probe: real /mini-movie-creator skill -> engine"
+
+CANONICAL_SKILL="$REPO_ROOT/skills/mini-movie-creator"
+if [ ! -f "$CANONICAL_SKILL/SKILL.md" ]; then
+  note "canonical skill not in this tree yet ($CANONICAL_SKILL) — SKL-001 merge pending; step skipped, not passed"
+else
+  PROBE_C_DIR="$(mktemp -d "${TMPDIR:-/tmp}/mmcs-nine-verify-real.XXXXXX")"
+  mkdir -p "$PROBE_C_DIR/.claude/skills"
+  ln -s "$CANONICAL_SKILL" "$PROBE_C_DIR/.claude/skills/mini-movie-creator"
+  # Same session mechanics as probe A (foreign cwd, </dev/null, --max-turns 15).
+  # The repo root is given as an environment fact (operator-style), never as a
+  # command sequence — what to run must come from the skill itself.
+  PROBE_C_OUT="$(cd "$PROBE_C_DIR" && run_with_timeout "$PROBE_TIMEOUT" "$NINE_BIN" -p "Invoke the /mini-movie-creator skill and do exactly what it says. Run ONLY: mmcs status. The MMCS repository root is $REPO_ROOT. Reply with ONLY the command output." --allowedTools "Bash" --max-turns 15 </dev/null 2>&1)"; PROBE_C_RC=$?
+  if echo "$PROBE_C_OUT" | grep -q "\[mmcs\] status"; then
+    ok "fresh claude-nine session invoked the REAL /mini-movie-creator skill; skill called the mmcs engine (marker: [mmcs] status)"
+    note "$(echo "$PROBE_C_OUT" | grep "\[mmcs\] status" | head -1 | cut -c1-140)"
+  else
+    bad "real-skill probe failed (rc=$PROBE_C_RC, out tail: $(echo "$PROBE_C_OUT" | tail -2 | tr '\n' ' ' | cut -c1-160))"
+  fi
+  rm -rf "$PROBE_C_DIR"
 fi
 
 # ---------------------------------------------------------------------------
