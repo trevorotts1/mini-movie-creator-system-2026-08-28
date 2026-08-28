@@ -39,6 +39,17 @@ export interface GraphicsStack {
   warnings: string[];
 }
 
+/**
+ * Guard a canvas dimension: fall back when undefined/NaN/non-finite/<=0 so
+ * font scaling never emits NaN into layout. NaN passes the common
+ * `fallback <= 0` test after defaulting, so the check must reject the RAW
+ * value, not the defaulted one.
+ */
+function guardedDim(value: number, fallback: number): number {
+  const safe = safeNumber(value, fallback);
+  return Number.isFinite(safe) && safe > 0 ? safe : fallback;
+}
+
 /** Find shots whose ranges overlap on the same anchor+kind pair. */
 function findOverlaps(
   items: readonly ResolvedGraphicsItem[],
@@ -53,14 +64,19 @@ function findOverlaps(
   }
   for (const [key, bucket] of buckets) {
     const sorted = [...bucket].sort((a, b) => a.range.frameFrom - b.range.frameFrom);
-    for (let i = 1; i < sorted.length; i += 1) {
-      const prev = sorted[i - 1];
-      const cur = sorted[i];
-      if (!prev || !cur) continue; // unreachable under the loop bounds
-      if (cur.range.frameFrom < prev.range.frameTo) {
+    // Sweep with a running max end: adjacent-pair checks alone miss
+    // transitive overlaps (a:0-1000, b:100-200, c:300-400 — a overlaps c).
+    let open: ResolvedGraphicsItem | undefined;
+    let maxTo = Number.NEGATIVE_INFINITY;
+    for (const cur of sorted) {
+      if (open && cur.range.frameFrom < maxTo) {
         warnings.push(
-          `overlap: ${cur.spec.id} starts at ${cur.range.frameFrom} before ${prev.spec.id} ends at ${prev.range.frameTo} (${key})`,
+          `overlap: ${cur.spec.id} starts at ${cur.range.frameFrom} before ${open.spec.id} ends at ${open.range.frameTo} (${key})`,
         );
+      }
+      if (cur.range.frameTo > maxTo) {
+        maxTo = cur.range.frameTo;
+        open = cur;
       }
     }
   }
@@ -91,11 +107,13 @@ export function composeGraphics(input: GraphicsPlanInput): GraphicsStack {
   const shots = input.shots ?? [];
   const warnings: string[] = [];
 
-  // Guard the frame: non-positive fps/size collapses to the default canvas.
+  // Guard the frame: non-positive or non-finite fps/size collapses to the
+  // default canvas (NaN included — safeNumber alone would default then leak
+  // the raw NaN back through the `<= 0` check).
   const safeFrame: FrameSize = {
-    width: safeNumber(frame.width, DEFAULT_FRAME.width) <= 0 ? DEFAULT_FRAME.width : frame.width,
-    height: safeNumber(frame.height, DEFAULT_FRAME.height) <= 0 ? DEFAULT_FRAME.height : frame.height,
-    fps: safeNumber(frame.fps, DEFAULT_FRAME.fps) <= 0 ? DEFAULT_FRAME.fps : frame.fps,
+    width: guardedDim(frame.width, DEFAULT_FRAME.width),
+    height: guardedDim(frame.height, DEFAULT_FRAME.height),
+    fps: guardedDim(frame.fps, DEFAULT_FRAME.fps),
   };
 
   warnings.push(...findUnknownShots(input.items, shots));

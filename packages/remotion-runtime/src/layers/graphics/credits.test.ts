@@ -79,4 +79,14 @@ describe("creditsScrollAt", () => {
     const l = creditsScrollAt(5, { ...SPEC, durationFrames: 0 }, FRAME);
     expect(l.progress).toBe(1); // clamped: dur floor of 1 frame
   });
+
+  it("guards degenerate frame width (no NaN firstVisible)", () => {
+    for (const width of [0, Number.NaN]) {
+      const l = creditsScrollAt(100, SPEC, { ...FRAME, width });
+      expect(Number.isFinite(l.firstVisible), `width=${width}`).toBe(true);
+      expect(l.firstVisible).toBeGreaterThanOrEqual(0);
+      expect(l.firstVisible).toBeLessThanOrEqual(SPEC.rows.length);
+      expect(Number.isFinite(l.scrollY)).toBe(true);
+    }
+  });
 });

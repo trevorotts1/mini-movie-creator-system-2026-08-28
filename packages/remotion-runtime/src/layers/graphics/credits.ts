@@ -50,10 +50,13 @@ export const CREDITS_ROW = {
  * Guarded: non-finite row height math collapses to title-only.
  */
 export function creditsContentHeight(rows: readonly CreditRow[], frame: Pick<FrameSize, "width">): number {
-  const scale = frame.width / 1080;
+  // Guarded scale: a degenerate width (0/NaN) would poison every downstream
+  // pixel number (contentHeight -> travel -> scrollY) with NaN.
+  const rawScale = frame.width / 1080;
+  const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
   const rowsH = rows.length * (CREDITS_ROW.height + CREDITS_ROW.gap);
   const total = CREDITS_ROW.titleBlock + rowsH + CREDITS_ROW.bottomPad;
-  if (!Number.isFinite(total) || total <= 0) return CREDITS_ROW.titleBlock * scale;
+  if (!Number.isFinite(total) || total <= 0) return Math.round(CREDITS_ROW.titleBlock * scale);
   return Math.round(total * scale);
 }
 
@@ -78,17 +81,25 @@ export function creditsScrollAt(
 ): CreditsLayout {
   const dur = Math.max(1, Math.round(spec.durationFrames ?? 300));
   const start = Math.max(0, Math.round(spec.startFrame ?? 0));
-  const viewport = frameSize.height;
+  // Guarded viewport: height is a raw consumer value — degenerate (0/NaN)
+  // collapses to the 1080-canvas reference height rather than poisoning
+  // travel/scrollY with NaN.
+  const rawViewport = frameSize.height;
+  const viewport = Number.isFinite(rawViewport) && rawViewport > 0 ? rawViewport : 1920;
   const contentH = creditsContentHeight(spec.rows, frameSize);
   const travel = contentH + viewport; // total px traveled upward
   const p = clamp((frame - start) / dur, 0, 1);
   const scrollY = Math.round(viewport - travel * p);
 
   // First row fully above the viewport top: walk the title block, then rows.
-  const scale = frameSize.width / 1080;
+  // Guarded: a degenerate width (0/NaN) collapses the scale to 1 instead of
+  // propagating NaN through the division into firstVisible.
+  const rawScale = frameSize.width / 1080;
+  const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
   const rowPitch = (CREDITS_ROW.height + CREDITS_ROW.gap) * scale;
+  const rawFirst = Math.floor((-scrollY - CREDITS_ROW.titleBlock * scale) / rowPitch);
   const firstVisible = clamp(
-    Math.floor((-scrollY - CREDITS_ROW.titleBlock * scale) / rowPitch),
+    Number.isFinite(rawFirst) ? rawFirst : 0,
     0,
     spec.rows.length,
   );

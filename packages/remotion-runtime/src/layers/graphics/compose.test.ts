@@ -70,6 +70,46 @@ describe("composeGraphics", () => {
     expect(s.warnings.some((w) => w.startsWith("overlap:"))).toBe(true);
   });
 
+  it("overlap sweep catches transitive overlaps, not only adjacent pairs", () => {
+    // a spans 0-1000; b and c fit inside it. Adjacent-pair checks see only
+    // (b,c) — no overlap — and miss that a overlaps both.
+    const s = composeGraphics({
+      items: [
+        { id: "a", kind: "title", frameFrom: 0, frameTo: 1000, text: "A" },
+        { id: "b", kind: "title", frameFrom: 100, frameTo: 200, text: "B" },
+        { id: "c", kind: "title", frameFrom: 300, frameTo: 400, text: "C" },
+      ],
+      shots: [],
+    });
+    const overlaps = s.warnings.filter((w) => w.startsWith("overlap:"));
+    expect(overlaps.length).toBeGreaterThanOrEqual(2);
+    expect(overlaps.some((w) => w.includes("before b") || w.includes("before a"))).toBe(true);
+    expect(overlaps.some((w) => w.includes("c starts at"))).toBe(true);
+  });
+
+  it("non-overlapping same-kind items stay silent", () => {
+    const s = composeGraphics({
+      items: [
+        { id: "a", kind: "title", frameFrom: 0, frameTo: 100, text: "A" },
+        { id: "b", kind: "title", frameFrom: 100, frameTo: 200, text: "B" },
+        { id: "c", kind: "title", frameFrom: 400, frameTo: 500, text: "C" },
+      ],
+      shots: [],
+    });
+    expect(s.warnings.filter((w) => w.startsWith("overlap:"))).toEqual([]);
+  });
+
+  it("NaN frame dimensions collapse to the default canvas (no NaN font scale)", () => {
+    const s = composeGraphics({
+      items: [{ id: "t", kind: "title", text: "x", frameFrom: 0, frameTo: 10 }],
+      shots: [],
+      frame: { width: Number.NaN, height: Number.NaN, fps: Number.NaN },
+    });
+    const it = s.items[0];
+    expect(Number.isFinite(it?.fontSizeScaled)).toBe(true);
+    expect(it?.fontSizeScaled).toBeGreaterThan(0);
+  });
+
   it("guards non-positive frame sizes with the default canvas", () => {
     const s = composeGraphics({
       items: [{ id: "t", kind: "title", text: "x", frameFrom: 0, frameTo: 10 }],
