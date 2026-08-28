@@ -58,3 +58,6 @@ export const RUNTIME_MAX_SECONDS = 7_200;
 
 /** Series-link bounds: opaque ID, no whitespace or control characters. */
 export const SERIES_LINK_MAX_LENGTH = 128;
+
+/** Intake-ID bounds: opaque ID, no whitespace or control characters. */
+export const INTAKE_ID_MAX_LENGTH = 128;

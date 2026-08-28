@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-001",
+  "phase": "PASS",
+  "commit": "41068c763642b7245c97b4c6e61e54dd3ea62384",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/intake (27 passed); npx vitest run full repo (435 passed, 25 files); npx tsc --noEmit packages/scene-intelligence (clean); git grep secret patterns packages/scene-intelligence/src (rc=1 no match); byte-scan for stray control chars (none)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Fixed: package barrel did not export intake; parseIntake accepted empty/whitespace/oversized/control-char intakeId; missing regression tests for both. Spec \u00a729 injection suite verified.",
+  "blockers": []
+}

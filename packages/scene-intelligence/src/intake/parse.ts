@@ -6,6 +6,7 @@ import { containsNulByte, sanitizeIdeaText } from "./sanitize.js";
 import {
   IDEA_TEXT_MAX_LENGTH,
   IDEA_TEXT_MIN_LENGTH,
+  INTAKE_ID_MAX_LENGTH,
   RUNTIME_MAX_SECONDS,
   RUNTIME_MIN_SECONDS,
   SERIES_LINK_MAX_LENGTH,
@@ -29,9 +30,10 @@ export function parseIntake(input: IdeaIntakeInput): IdeaIntake {
   const targetRuntimeSeconds = requireRuntime(input.targetRuntimeSeconds);
   const seriesLink = requireSeriesLink(input.seriesLink);
   const createdAt = requireCreatedAt(input.createdAt);
+  const intakeId = requireIntakeId(input.intakeId);
 
   return {
-    intakeId: input.intakeId ?? newIntakeId(),
+    intakeId,
     rawText,
     aspectRatio,
     targetRuntimeSeconds,
@@ -43,6 +45,30 @@ export function parseIntake(input: IdeaIntakeInput): IdeaIntake {
 /** Generate a stable intake business ID (`idea_` + 16 random bytes hex). */
 export function newIntakeId(): string {
   return `idea_${randomBytes(16).toString("hex")}`;
+}
+
+/**
+ * A caller-supplied intake ID is opaque — shape-checked only, never parsed
+ * or used as a path. Empty/whitespace/control-character junk would produce
+ * a record that cannot be addressed later, so it is rejected outright.
+ */
+function requireIntakeId(value: unknown): string {
+  if (value === undefined || value === null) {
+    return newIntakeId();
+  }
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new IntakeValidationError("intakeId", "must be a non-empty string or omitted");
+  }
+  if (value.length > INTAKE_ID_MAX_LENGTH) {
+    throw new IntakeValidationError("intakeId", `exceeds ${INTAKE_ID_MAX_LENGTH} characters`);
+  }
+  if (/[\u0000-\u001F\u007F-\u009F]/.test(value)) {
+    throw new IntakeValidationError("intakeId", "must not contain control characters");
+  }
+  if (/\s/.test(value)) {
+    throw new IntakeValidationError("intakeId", "must not contain whitespace");
+  }
+  return value;
 }
 
 /**

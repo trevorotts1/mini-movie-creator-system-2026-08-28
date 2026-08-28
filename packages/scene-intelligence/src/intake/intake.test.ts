@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   IDEA_TEXT_MAX_LENGTH,
+  INTAKE_ID_MAX_LENGTH,
   IntakeValidationError,
   containsNulByte,
   isValidAspectRatio,
@@ -11,6 +12,10 @@ import {
   truncateForDisplay,
   type IdeaIntakeInput,
 } from "./index.js";
+import {
+  MMCS_SCENE_INTELLIGENCE,
+  parseIntake as barrelParseIntake,
+} from "../index.js";
 
 const FIXED_CREATED_AT = "2026-08-28T12:00:00.000Z";
 
@@ -22,6 +27,14 @@ function validInput(overrides: Partial<IdeaIntakeInput> = {}): IdeaIntakeInput {
     ...overrides,
   };
 }
+
+describe("package barrel", () => {
+  it("exports the intake API from the scene-intelligence package root", () => {
+    expect(typeof barrelParseIntake).toBe("function");
+    expect(barrelParseIntake).toBe(parseIntake);
+    expect(MMCS_SCENE_INTELLIGENCE).toBe("@mmcs/scene-intelligence scaffold marker");
+  });
+});
 
 describe("parseIntake — happy path", () => {
   it("validates a complete idea record with all four spec fields", () => {
@@ -128,6 +141,20 @@ describe("parseIntake — validation rejections", () => {
       parseIntake(validInput({ seriesLink: "s".repeat(129) })),
     ).toThrow(IntakeValidationError);
     expect(() => parseIntake(validInput({ seriesLink: "ser_a\nrm -rf /" }))).toThrow(
+      IntakeValidationError,
+    );
+  });
+
+  it("rejects an empty, whitespace, oversized, or control-char intakeId", () => {
+    expect(() => parseIntake(validInput({ intakeId: "" }))).toThrow(IntakeValidationError);
+    expect(() => parseIntake(validInput({ intakeId: "  " }))).toThrow(IntakeValidationError);
+    expect(() =>
+      parseIntake(validInput({ intakeId: "i".repeat(INTAKE_ID_MAX_LENGTH + 1) })),
+    ).toThrow(IntakeValidationError);
+    expect(() => parseIntake(validInput({ intakeId: "idea_bad\nid" }))).toThrow(
+      IntakeValidationError,
+    );
+    expect(() => parseIntake(validInput({ intakeId: "idea_bad\u0007id" }))).toThrow(
       IntakeValidationError,
     );
   });
