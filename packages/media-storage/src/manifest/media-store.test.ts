@@ -11,6 +11,7 @@ import {
   GHL_MEDIA_STORE_KIND,
   GhlMediaStoreConfigurationError,
   GoHighLevelMediaStore,
+  type GoHighLevelMediaStoreOptions,
 } from "./gohighlevel-media-store.js";
 import type {
   ArchiveAssetRequest,
@@ -189,6 +190,59 @@ describe("MediaStore abstraction", () => {
     ).rejects.toThrow(/parentId/);
   });
 
+  it("falls back to the binary ingest when the hosted ingest fails, keeping the checksum", async () => {
+    let hostedAttempts = 0;
+    let binaryAttempts = 0;
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      hostedIngest: async () => {
+        hostedAttempts += 1;
+        throw new Error("hosted ingest failed: provider URL expired");
+      },
+      binaryIngest: async (input) => {
+        binaryAttempts += 1;
+        expect(input.providerUrl).toBe("https://tmp.provider.example/clip.mp4");
+        expect(input.locationId).toBe("loc_123");
+        return {
+          fileId: "ghl_binary_fb",
+          url: "https://storage.gohighlevel.example/binary_fb",
+          sourceChecksum: "e".repeat(64),
+          verifiedChecksum: "e".repeat(64),
+        };
+      },
+      deps: { assets },
+    });
+    const archived = await store.archiveAsset({
+      record: record({ assetId: "mmcs_ghl_fallback" }),
+      ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+      parentId: "ghl_folder_episode",
+    });
+    expect(hostedAttempts).toBe(1);
+    expect(binaryAttempts).toBe(1);
+    expect(archived.uploaded).toBe(true);
+    expect(archived.record.ghlFileId).toBe("ghl_binary_fb");
+    expect(archived.record.checksum).toBe("e".repeat(64));
+    expect(assets.getById("mmcs_ghl_fallback")?.ghlUrl).toBe("https://storage.gohighlevel.example/binary_fb");
+  });
+
+  it("throws a configuration error when the hosted ingest fails and no binary fallback is wired", async () => {
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      hostedIngest: async () => {
+        throw new Error("hosted ingest failed");
+      },
+      deps: { assets },
+    });
+    await expect(
+      store.archiveAsset({
+        record: record({ assetId: "mmcs_ghl_hfail" }),
+        ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+        parentId: "ghl_folder_episode",
+      }),
+    ).rejects.toThrow(GhlMediaStoreConfigurationError);
+    expect(assets.getById("mmcs_ghl_hfail")).toBeUndefined();
+  });
+
   it("is idempotent: re-archiving a linked record never re-uploads", async () => {
     const { ingest, calls } = okIngest();
     const store = storeFor();
@@ -263,6 +317,17 @@ function storeFor(): BaseMediaStore {
 }
 
 describe("GoHighLevelMediaStore", () => {
+  it("exposes a correctly-spelled options type (regression: Gohl typo)", () => {
+    // Regression for the misspelled public type name: the correctly-spelled
+    // `GoHighLevelMediaStoreOptions` must exist and be the constructor type.
+    const options: GoHighLevelMediaStoreOptions = {
+      locationId: "loc_123",
+      deps: { assets },
+    };
+    const made = new GoHighLevelMediaStore(options);
+    expect(made.kind).toBe("gohighlevel");
+  });
+
   it("declares the gohighlevel store kind", () => {
     expect(GHL_MEDIA_STORE_KIND).toBe("gohighlevel");
     expect(store().kind).toBe("gohighlevel");
@@ -341,10 +406,49 @@ describe("GoHighLevelMediaStore", () => {
     expect(archived.record.checksum).toBe("b".repeat(64));
   });
 
-  it("throws a configuration error when no ingest can run", () => {
+  it("throws a configuration error when no ingest can run", async () => {
     const store = new GoHighLevelMediaStore({ locationId: "loc_123", deps: { assets } });
     const ingest = store.ingestFor({});
-    expect(ingest({ name: "n", parentId: "f" })).rejects.toThrow(GhlMediaStoreConfigurationError);
+    await expect(ingest({ name: "n", parentId: "f" })).rejects.toThrow(
+      GhlMediaStoreConfigurationError,
+    );
+  });
+
+  it("rejects an ingest that returns no verified fileId/url (never ARCHIVED)", async () => {
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      hostedIngest: async () => ({ fileId: "", url: "" }),
+      deps: { assets },
+    });
+    await expect(
+      store.archiveAsset({
+        record: record({ assetId: "mmcs_ghl_unverified" }),
+        ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+        parentId: "ghl_folder_episode",
+      }),
+    ).rejects.toThrow(/NOT archived/);
+    expect(assets.getById("mmcs_ghl_unverified")).toBeUndefined();
+  });
+
+  it("rejects a binary ingest whose source and verified checksums differ", async () => {
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      binaryIngest: async () => ({
+        fileId: "ghl_binary_bad",
+        url: "https://storage.gohighlevel.example/binary_bad",
+        sourceChecksum: "a".repeat(64),
+        verifiedChecksum: "b".repeat(64),
+      }),
+      deps: { assets },
+    });
+    await expect(
+      store.archiveAsset({
+        record: record({ assetId: "mmcs_ghl_badsum" }),
+        ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+        parentId: "ghl_folder_episode",
+      }),
+    ).rejects.toThrow(/integrity mismatch/);
+    expect(assets.getById("mmcs_ghl_badsum")).toBeUndefined();
   });
 });
 

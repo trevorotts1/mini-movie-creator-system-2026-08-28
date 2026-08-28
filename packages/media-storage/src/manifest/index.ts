@@ -36,6 +36,7 @@ export {
   GHL_MEDIA_STORE_KIND,
   GoHighLevelMediaStore,
   GhlMediaStoreConfigurationError,
+  type GoHighLevelMediaStoreOptions,
   type GohlMediaStoreOptions,
   type GhlHostedIngest,
   type GhlBinaryIngest,

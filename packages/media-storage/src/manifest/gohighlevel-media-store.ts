@@ -49,7 +49,7 @@ export type GhlBinaryIngest = (input: {
   locationId: string;
 }) => Promise<{ fileId: string; url: string; sourceChecksum: string; verifiedChecksum: string }>;
 
-export interface GohlMediaStoreOptions {
+export interface GoHighLevelMediaStoreOptions {
   /** GHL location (sub-account) ID used as altId on hosted ingests. */
   readonly locationId: string;
   /** Hosted-flow ingest (GHL-005 with transport bound). */
@@ -66,6 +66,9 @@ export interface GohlMediaStoreOptions {
    */
   readonly preferHosted?: boolean;
 }
+
+/** Backwards-compatible alias for earlier typo. */
+export type GohlMediaStoreOptions = GoHighLevelMediaStoreOptions;
 
 export class GhlMediaStoreConfigurationError extends Error {
   constructor(missing: string) {
@@ -88,7 +91,7 @@ export class GoHighLevelMediaStore extends BaseMediaStore {
   private readonly binaryIngest?: GhlBinaryIngest;
   private readonly preferHosted: boolean;
 
-  constructor(options: GohlMediaStoreOptions) {
+  constructor(options: GoHighLevelMediaStoreOptions) {
     super(options.deps);
     if (typeof options.locationId !== "string" || options.locationId.length === 0) {
       throw new GhlMediaStoreConfigurationError("locationId");
@@ -113,32 +116,50 @@ export class GoHighLevelMediaStore extends BaseMediaStore {
     altType?: "location" | "agency";
   }) => Promise<MediaStoreUploadResult> {
     return async (ingestRequest) => {
-      const hostedAvailable =
+      const hostedWired =
         this.hostedIngest !== undefined &&
         (ingestRequest.fileUrl !== undefined || request.originalProviderUrl !== undefined);
-      if (hostedAvailable && this.preferHosted) {
-        const result = await this.hostedIngest?.({
-          fileUrl: (ingestRequest.fileUrl ?? request.originalProviderUrl) as string,
-          name: ingestRequest.name,
-          parentId: ingestRequest.parentId,
-          altId: ingestRequest.altId ?? this.locationId,
-          altType: ingestRequest.altType ?? "location",
-        });
-        if (result !== undefined) {
-          return {
-            fileId: result.fileId,
-            url: result.url,
-            folderId: ingestRequest.parentId,
-          };
+      const binaryWired = this.binaryIngest !== undefined;
+
+      if (hostedWired && this.preferHosted) {
+        try {
+          const result = await this.hostedIngest?.({
+            fileUrl: (ingestRequest.fileUrl ?? request.originalProviderUrl) as string,
+            name: ingestRequest.name,
+            parentId: ingestRequest.parentId,
+            altId: ingestRequest.altId ?? this.locationId,
+            altType: ingestRequest.altType ?? "location",
+          });
+          if (result !== undefined) {
+            return {
+              fileId: result.fileId,
+              url: result.url,
+              folderId: ingestRequest.parentId,
+            };
+          }
+        } catch {
+          // spec §35.3: hosted ingest failure falls back to the binary path
+          // when wired — never propagate and lose the only copy of a paid asset.
+          if (!binaryWired) {
+            throw new GhlMediaStoreConfigurationError(
+              "a working hosted ingest (hosted ingest failed and no binary fallback is wired)",
+            );
+          }
+          // fall through to the binary ingest below
+        }
+        if (!binaryWired) {
+          throw new GhlMediaStoreConfigurationError(
+            "a working hosted ingest (hosted ingest returned no result and no binary fallback is wired)",
+          );
         }
       }
-      if (this.binaryIngest === undefined) {
+
+      if (!binaryWired) {
         throw new GhlMediaStoreConfigurationError(
-          hostedAvailable
-            ? "a working hosted ingest (hosted ingest failed and no binary fallback is wired)"
-            : "any ingest (hosted ingest not wired for this asset and no binary fallback is wired)",
+          "any ingest (hosted ingest not wired for this asset and no binary fallback is wired)",
         );
       }
+
       const providerUrl = ingestRequest.fileUrl ?? request.originalProviderUrl;
       if (providerUrl === undefined) {
         throw new GhlMediaStoreConfigurationError(
