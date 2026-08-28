@@ -1,7 +1,7 @@
 {
   "taskId": "KIE-003",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_COMMIT_SHA",
+  "commit": "96db4b3eff1a1d50054ca9a3623bbe8888994be4",
   "testsRun": "npx vitest run packages/providers/src/kie/seedance -> 25/25 passed (1 file); tsc --noEmit packages/providers -> clean",
   "notes": "Seedance 2.0 Mini adapter: exact wire schema from live docs.kie.ai (verified 2026-08-28), three mutually exclusive generation modes tracked separately, VERIFIED/UNKNOWN limit discipline, capability doc docs/provider-capabilities/kie.md",
   "blockers": [],
