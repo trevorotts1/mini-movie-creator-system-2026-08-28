@@ -46,3 +46,22 @@ export {
   type PropInput,
   type PropPatch,
 } from "./locations/index.js";
+export { SqliteProjectRepository, SqliteSeriesRepository } from "./projects/index.js";
+export { SqliteEpisodeRepository, formatEpisodeCode } from "./episodes/index.js";
+export type {
+  CreateEpisodeInput,
+  CreateProjectInput,
+  CreateSeriesInput,
+  Episode,
+  EpisodeRepository,
+  EpisodeStatus,
+  Project,
+  ProjectKind,
+  ProjectRepository,
+  ProjectStatus,
+  Series,
+  SeriesRepository,
+  UpdateEpisodePatch,
+  UpdateProjectPatch,
+  UpdateSeriesPatch,
+} from "./projects/index.js";

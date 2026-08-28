@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-012",
+  "phase": "PASS",
+  "commit": "1702137",
+  "checksRun": "CI=true npx vitest run packages/character-library/src/series-bible (22 passed, exit 0); CI=true npx vitest run packages/character-library (121 passed, exit 0); npx tsc --noEmit in packages/character-library (clean); lint N/A (no lint script on package); security scan of owned paths (no fs/net/exec/env, no proto pollution, no secret markers)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed: duplicate changeId accepted at propose (approval find() shadow); malformed effectiveEpisode poisoned later canonAtEpisode reads; episodeSummariesBefore lexicographic ordering broke S10+; approveCanonChange validated only against live canon so replay-crashing changes could pass approval.",
+  "blockers": []
+}

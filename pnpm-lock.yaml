@@ -26,6 +26,12 @@ importers:
         specifier: ^14.0.0
         version: 14.0.3
 
+  apps/web: {}
+
+  integrations/claude: {}
+
+  integrations/openclaw: {}
+
   packages/capability-registry:
     dependencies:
       zod:

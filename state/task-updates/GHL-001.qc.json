@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-001",
+  "phase": "PASS",
+  "commit": "877774b",
+  "checksRun": "npx vitest run packages/media-storage/src/ghl/auth -> 12/12 passed; npx vitest run packages/media-storage -> 12/12 passed; npx tsc --noEmit -p packages/media-storage -> 0 errors; live doc verification (media-storage-api, fetch-media-content, PrivateIntegrationsToken fetched 2026-08-28); secret scan of diff",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Fixed baseUrl empty/non-http(s) fail-fast gap + removed dead requireTrimmed; docs claims re-verified live and match code",
+  "blockers": []
+}
