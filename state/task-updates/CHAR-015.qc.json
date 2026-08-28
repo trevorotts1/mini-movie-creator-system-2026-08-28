@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-015",
+  "phase": "PASS",
+  "commit": "6dc263a",
+  "checksRun": "npx vitest run packages/character-library/src/refpack-metrics (25/25 PASS, exit 0); CI=1 vitest run --reporter=json packages/character-library (124/124 PASS); tsc --noEmit -p packages/character-library/tsconfig.json (clean); security pass on owned paths (no secrets, no exec/eval, atomic tmp+rename writes, input validation, no external consumers of @mmcs/character-library)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "QC round 2: normalize `at` cutoff to UTC before compare (mixed-offset cutoff string-sorted wrong vs UTC rows) + add missing `at` decision-time param to successRateForPack (DIR-013 oracle interface declares it); +3 regression tests (25 total). Acceptance met: per-clip ref-pack outcomes persisted, per character/model/reference + per-pack rates with normalized decision-time cutoff, dedupe on replay.",
+  "blockers": []
+}
