@@ -1,13 +1,13 @@
 {
   "taskId": "DIR-001",
   "phase": "PASS",
-  "commit": "c2bcdf6b2fd0d353e391e7a4775b7f79a7407a12",
-  "checksRun": "npx vitest run packages/scene-intelligence/src/intake (27 passed); npx vitest run full repo (435 passed, 25 files); npx tsc --noEmit packages/scene-intelligence (clean); git grep secret patterns packages/scene-intelligence/src (rc=1 no match); byte-scan for stray control chars (none)",
+  "commit": "0668ee8",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/intake (30 passed); npx vitest run packages/scene-intelligence (30 passed); npx vitest run full repo (438 passed, 25 files); tsc --noEmit scene-intelligence (clean); secret grep owned paths (no match); behavioral probes via tsx (null input, loose createdAt, truncate max<2, ratio parity vs CORE-004)",
   "defectsFound": 3,
   "defectsFixed": 3,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
-  "queuedAt": "2026-08-28T20:10:00Z",
-  "notes": "Fixed: package barrel did not export intake; parseIntake accepted empty/whitespace/oversized/control-char intakeId; missing regression tests for both. Spec \u00a729 injection suite verified.",
+  "queuedAt": "2026-08-28T21:30:00Z",
+  "notes": "QC round 2 on top of round 1 (barrel export + intakeId hardening): fixed TypeError on null/non-object input, ISO-8601 shape check on createdAt (Date.parse accepted 'March 5, 2026'), truncateForDisplay max<=0 returned 1-char ellipsis against its at-most-max contract. Regression tests added; spec §29 injection suite verified.",
   "blockers": []
 }
