@@ -1,7 +1,7 @@
 {
   "taskId": "QC-009",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "8b0af29daec65532a0608d859c0a9ac524a96fa5",
   "testsRun": "npx vitest run packages/qc/src/routes/seedance -> 18/18 passed (1 file); npx vitest run packages/qc -> 18/18; npx vitest run (full repo regression) -> 426/426 (25 files); npx tsc --noEmit -p packages/qc -> clean",
   "notes": "Seedance fallback route: escalates to bytedance/seedance-2-mini only when the reference/identity failure class persists at the agnes-regular stage after agnes-flash exhaustion; maps shot inputs to exactly one Seedance mode (multimodal-reference / first-frame-i2v / first-last-frame-i2v), fails closed on mixed mode groups, last-frame-without-first-frame, and zero-reference fallbacks; composes + validates through merged KIE-003 adapter (prompt 3-20000, refs 9/3/3, duration 4-15, 480p/720p enforced unchanged); pure module, no I/O",
   "blockers": [],
