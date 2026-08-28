@@ -1,7 +1,7 @@
 {
   "taskId": "VID-012",
   "phase": "PASS",
-  "commit": "",
+  "commit": "398b958eaaf6f8782585dc0f9fe183b2cb32adb1",
   "checksRun": "vitest run packages/remotion-runtime/src/rough-cut (44/44); tsc --noEmit packages/remotion-runtime (exit 0); security pass on owned paths",
   "defectsFound": 5,
   "defectsFixed": 5,
