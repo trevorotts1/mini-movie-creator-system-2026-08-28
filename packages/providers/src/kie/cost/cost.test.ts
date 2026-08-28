@@ -181,6 +181,32 @@ describe("estimateKieVideoCost — unknown pricing never guessed", () => {
     expect(() =>
       estimateKieVideoCost({ modelId: "wan/3-0-video", resolution: null as unknown as string, outputSeconds: 5 }),
     ).toThrow(KieCostError);
+    // Null/missing request object: KieCostError, not a raw TypeError.
+    expect(() =>
+      estimateKieVideoCost(null as unknown as KieCostRequest),
+    ).toThrow(KieCostError);
+    // Seconds beyond the supported bound (finite but absurd) must throw, never
+    // flow through as Infinity pricing.
+    expect(() =>
+      estimateKieVideoCost({ modelId: "wan/3-0-video", resolution: "480P", outputSeconds: 1e308 }),
+    ).toThrow(KieCostError);
+  });
+
+  it("treats prototype-chain model ids as unknown models, never crashes", () => {
+    for (const hostile of ["__proto__", "constructor", "toString", "hasOwnProperty"]) {
+      const estimate = estimateKieVideoCost({
+        modelId: hostile,
+        resolution: "480p",
+        outputSeconds: 5,
+      });
+      expect(estimate.basis).toBe("unknown_model");
+      expect(estimate.estimatedCost).toBeNull();
+      expect(estimate.confidence).toBe("UNKNOWN");
+    }
+    // And the spend decision gates on it instead of throwing.
+    const decision = kieSpendDecision([{ modelId: "constructor", resolution: "480p", outputSeconds: 5 }]);
+    expect(decision.requires).toBe("approval");
+    expect(decision.allowed).toBe(false);
   });
 });
 

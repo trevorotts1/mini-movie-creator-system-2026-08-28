@@ -99,6 +99,14 @@ function requireSeconds(value: number, field: string, positive: boolean): void {
   if (positive ? value <= 0 : value < 0) {
     throw new KieCostError(field, positive ? "must be greater than zero" : "must not be negative");
   }
+  // Overflow guard: a huge-but-finite second count would make billedSeconds
+  // Infinity and either emit estimatedCost: Infinity as "priced" or throw a
+  // raw PricingError out of estimateSpend (crashing the whole spend decision
+  // instead of gating one bad call). Real clips are bounded far below this.
+  const MAX_SECONDS = 1e6;
+  if (value > MAX_SECONDS) {
+    throw new KieCostError(field, `exceeds maximum supported seconds (${MAX_SECONDS})`);
+  }
 }
 
 /**
@@ -139,6 +147,9 @@ export function estimateKieVideoCost(
   request: KieCostRequest,
   profiles: KieProfileMap = KIE_MEDIA_PROFILES,
 ): KieCostEstimate {
+  if (request === null || typeof request !== "object") {
+    throw new KieCostError("request", "must be a request object");
+  }
   if (typeof request.modelId !== "string") {
     throw new KieCostError("modelId", "must be a string");
   }
@@ -153,7 +164,10 @@ export function estimateKieVideoCost(
   const inputVideoSeconds = request.inputVideoSeconds ?? 0;
   requireSeconds(inputVideoSeconds, "inputVideoSeconds", false);
 
-  const seed = profiles[modelId];
+  // Own-property lookup only: "constructor"/"__proto__" must resolve as an
+  // unknown model (gate as unknown_model), never reach Object.prototype and
+  // crash on `seed.pricing` below.
+  const seed = Object.hasOwn(profiles, modelId) ? profiles[modelId] : undefined;
   const billedSeconds = inputVideoSeconds + request.outputSeconds;
   const base = {
     provider: "kie" as const,
