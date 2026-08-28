@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-006",
   "phase": "PASS",
-  "commit": "",
+  "commit": "50626b8bcb6be1506884332450951926d1c70d67",
   "checksRun": "npx vitest run packages/providers/src/fish-audio/alignment (26/26 PASS); npx vitest run packages/providers (66/66 PASS); npx tsc --noEmit -p packages/providers (clean); cross-task contract check vs FISH-005 cache key + FISH-007 captions loader",
   "defectsFound": 3,
   "defectsFixed": 3,
