@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-006",
+  "phase": "PASS",
+  "commit": "aac9e974f8bad53bcb3cefb7a7c0578b43ce1c32",
+  "checksRun": "npx vitest run --config packages/qc/src/retry/vitest.config.mts; npx tsc --noEmit -p packages/qc/tsconfig.json",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "Retry policy QC PASS: targeted single-shot repair verified, spend gate enforcement confirmed, bounded retries with escalation ladder, typecheck and 25 unit tests green",
+  "blockers": []
+}

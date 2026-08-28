@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-015",
+  "phase": "BUILDER_DONE",
+  "commit": "4e50b7116670981f090b01ac6e0ffb57fdc1ffb4",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/ffprobe \u2014 28/28 PASS (2 files); tsc --noEmit clean",
+  "notes": "ffprobe wrapper (codec/duration/resolution/bitrate) + checkIntegrity + verifyPlayback decode-verify + validateRenderOutput pre-ARCHIVED gate; truncated/corrupt/empty/text-disguised fixtures all fail",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:50:00Z"
+}

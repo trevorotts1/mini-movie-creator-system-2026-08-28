@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-008",
+  "phase": "PASS",
+  "commit": "9658c6b5d8bfe71f02711ffb21d25753e7eb4424",
+  "checksRun": "npx vitest run packages/media-storage/src/manifest/ -> 38/38 PASS (2 files); npx tsc -p packages/media-storage/tsconfig.json --noEmit -> clean; npx vitest run -> 839/839 PASS (43 files) full regression; secret scan + shell-exec scan on packages/media-storage/src/manifest/ -> clean",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:50:00Z",
+  "notes": "Fixed GohlMediaStoreOptions typo (added GoHighLevelMediaStoreOptions + alias) and hosted-ingest failure propagation \u2014 throws killed the spec \u00a735.3 binary fallback; now falls back and carries checksum. Added 5 regression tests (fallback path, config-error on hosted failure, typo guard, unverified result, checksum mismatch).",
+  "blockers": []
+}

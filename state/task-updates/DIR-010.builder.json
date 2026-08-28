@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-010",
+  "phase": "BUILDER_DONE",
+  "commit": "0f98ef9",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/shot-planner \u2014 35/35 PASS; npx tsc --noEmit -p packages/scene-intelligence/tsconfig.json \u2014 clean; npx vitest run (full repo) \u2014 443/443 PASS",
+  "notes": "Shot planner built: PlannedScene -> ShotSpecificationRecord(spec 12) by beat; durations fit model window (UNKNOWN limits warn, never invented); 45s fixture -> 5-8 shots green.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T10:14:00Z"
+}
