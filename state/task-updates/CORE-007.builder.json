@@ -1,7 +1,7 @@
 {
   "taskId": "CORE-007",
   "phase": "BUILDER_DONE",
-  "commit": "e4016ca178a47625653d58d158fd453a5afcbe92",
+  "commit": "047183f4d306ae206c53de7794766733c9153e20",
   "testsRun": "npx vitest run packages/database/src/repositories/jobs -> 3 files, 25/25 passed; npx vitest run packages/database -> 6 files, 55/55 passed; npx tsc --noEmit -p packages/database -> clean",
   "notes": "Migration band 040_ (0401 provider_jobs with full §18 job-safety columns + 12-state CHECK PLANNED..REJECTED + idempotency unique index; 0402 assets with all 26 §19 manifest fields asserted by PRAGMA introspection). ProviderJobRepository (pre-poll durable write, findByProviderTask restart-resume, findByIdempotencyKey no-double-spend, listByStatus worklists, §18 transition guard w/ JobStateTransitionError) + AssetRepository (JSON edge serialization, listByEpisode/listByProviderTask). Soft TEXT references across bands by design. One pre-existing CORE-003 test updated (shipped-MIGRATIONS-registry test asserted the registry stays empty forever — broken by design once any band lands; now asserts idempotent apply + ledger equality). 3 unrelated whole-repo test files fail in this worktree from missing zod in worktree node_modules (env, present at repo root) — not touched.",
   "blockers": [],
