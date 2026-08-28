@@ -10,6 +10,6 @@
   "queuedAt": "2026-08-28T14:40:00Z",
   "notes": "Verified LLM registry schemas, presets, 7 selection slots, OpenRouter model ID support, zod dependency added to package.json, and exports aligned in index.ts.",
   "blockers": [],
-  "rebasedOnto": "6ca3b08fc7e70cb0bba7746849a934e85d812db8",
-  "rebaseCommit": "b00fc02c7e4b78cc75a562bdc7e20d2a5c55f7ff"
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "rebaseCommit": "c10ee9f2e8852c0f7e09045c1066a7e45ae88caf"
 }
