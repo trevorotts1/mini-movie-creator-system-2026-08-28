@@ -116,6 +116,24 @@ describe("validateFinalEpisodeQcInput", () => {
     ).toThrow(TypeError);
   });
 
+  it("rejects a non-accepted shot claiming accepted seconds", () => {
+    expect(() =>
+      validateFinalEpisodeQcInput({
+        ...input(),
+        shots: [shot({ qcStatus: "rejected", durationSeconds: 0, acceptedSeconds: 3 })],
+      }),
+    ).toThrow(/acceptedSeconds > 0/);
+  });
+
+  it("rejects an empty-string sceneId", () => {
+    expect(() =>
+      validateFinalEpisodeQcInput({
+        ...input(),
+        shots: [shot({ sceneId: "" })],
+      }),
+    ).toThrow(TypeError);
+  });
+
   it("rejects a bad finalUrl and malformed timestamps", () => {
     expect(() => validateFinalEpisodeQcInput({ ...input(), finalUrl: "ftp://x" })).toThrow(TypeError);
     expect(() => validateFinalEpisodeQcInput({ ...input(), qcCompletedAt: "yesterday" })).toThrow(TypeError);
@@ -223,7 +241,7 @@ describe("buildProductionReport", () => {
   it("fails on runtime mismatch, pending/rejected shot, missing URL, aspect mismatch", () => {
     const result = runFinalEpisodeQC(input({
       runtimeSeconds: 20,
-      shots: [shot({ shotId: "SH01", durationSeconds: 4, qcStatus: "pending" })],
+      shots: [shot({ shotId: "SH01", durationSeconds: 0, acceptedSeconds: 0, generatedSeconds: 4, rejectedSeconds: 0, qcStatus: "pending" })],
       finalUrl: null,
       declaredAspectRatio: "16:9",
     }));
@@ -311,6 +329,77 @@ describe("buildProductionReport", () => {
     const report = buildProductionReport(input());
     expect(report.quotaUsage).toHaveLength(2);
     expect(report.quotaUsage.find((q) => q.provider === "kie" && q.model === "seedance-2-mini")?.quotaUsed).toBe(6);
+  });
+
+  it("never reports PASS from buildProductionReport when errors were collected", () => {
+    const issues: Parameters<typeof buildProductionReport>[1] = [];
+    const report = buildProductionReport(
+      input({ finalUrl: null }),
+      issues,
+    );
+    expect(issues.some((i) => i.severity === "error")).toBe(true);
+    expect(report.qcStatus).toBe("FAIL");
+  });
+
+  it("ignores non-accepted shots in upscale provenance", () => {
+    const report = buildProductionReport(
+      input({
+        runtimeSeconds: 8,
+        shots: [
+          shot({ shotId: "SH01", durationSeconds: 4, sourceResolution: { width: 1080, height: 1920 } }),
+          shot({ shotId: "SH02", durationSeconds: 4, sourceResolution: { width: 1080, height: 1920 }, characters: ["monica", "leo"] }),
+          shot({
+            shotId: "SH03",
+            durationSeconds: 0,
+            acceptedSeconds: 0,
+            generatedSeconds: 2,
+            rejectedSeconds: 2,
+            qcStatus: "rejected",
+            sourceResolution: { width: 480, height: 854 },
+            cost: null,
+            quotaUsed: null,
+            quotaUnit: null,
+          }),
+        ],
+      }),
+    );
+    expect(report.nativeQuality).toBe(true);
+    expect(report.upscaledSegments).toBe(0);
+  });
+
+  it("nulls per-model cost when that model mixed currencies", () => {
+    const report = buildProductionReport(
+      input({
+        runtimeSeconds: 8,
+        shots: [
+          shot({ shotId: "SH01", cost: 0.1, currency: "USD", durationSeconds: 4 }),
+          shot({ shotId: "SH02", cost: 0.1, currency: "EUR", durationSeconds: 4, characters: ["monica", "leo"] }),
+        ],
+      }),
+    );
+    const agnes = report.providersModels.find((m) => m.provider === "agnes");
+    expect(agnes?.cost).toBeNull();
+    expect(agnes?.currency).toBeNull();
+  });
+
+  it("keeps per-model cost and currency when that model has none recorded", () => {
+    const report = buildProductionReport(
+      input({
+        runtimeSeconds: 8,
+        shots: [
+          shot({ shotId: "SH01", cost: null, durationSeconds: 4 }),
+          shot({
+            shotId: "SH02",
+            cost: null,
+            durationSeconds: 4,
+            provider: "kie",
+            model: "seedance-2-mini",
+            characters: ["monica", "leo"],
+          }),
+        ],
+      }),
+    );
+    expect(report.providersModels.every((m) => m.cost === null && m.currency === null)).toBe(true);
   });
 });
 

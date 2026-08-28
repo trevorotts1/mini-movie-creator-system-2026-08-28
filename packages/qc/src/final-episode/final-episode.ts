@@ -344,8 +344,8 @@ export function validateFinalEpisodeQcInput(input: FinalEpisodeQcInput): void {
 
 function validateShotRecord(shot: ShotProductionRecord): void {
   assertString(shot?.shotId, "shot.shotId");
-  if (shot.sceneId !== null && typeof shot.sceneId !== "string") {
-    throw new TypeError("final-episode QC input: shot.sceneId must be a string or null");
+  if (shot.sceneId !== null && (typeof shot.sceneId !== "string" || shot.sceneId.trim().length === 0)) {
+    throw new TypeError("final-episode QC input: shot.sceneId must be a non-empty string or null");
   }
   assertString(shot.provider, `shot ${shot.shotId} provider`);
   assertString(shot.model, `shot ${shot.shotId} model`);
@@ -356,6 +356,12 @@ function validateShotRecord(shot: ShotProductionRecord): void {
   // shot legitimately has no clip in the final assembly (duration 0).
   if (shot.qcStatus === "accepted" && shot.durationSeconds <= 0) {
     throw new TypeError(`final-episode QC input: accepted shot ${shot.shotId} durationSeconds must be a positive number`);
+  }
+  // A shot that never made the assembly must not claim accepted seconds:
+  // accepted seconds means "generated seconds that passed QC and were
+  // accepted for assembly". A rejected shot contributes none.
+  if (shot.qcStatus !== "accepted" && shot.acceptedSeconds > 0) {
+    throw new TypeError(`final-episode QC input: shot ${shot.shotId} has acceptedSeconds > 0 but qcStatus is "${shot.qcStatus}" — accepted seconds require an accepted shot`);
   }
   if (!isNonNegativeNumber(shot.generatedSeconds)) {
     throw new TypeError(`final-episode QC input: shot ${shot.shotId} generatedSeconds must be a non-negative number`);
@@ -441,7 +447,10 @@ interface Aggregate {
   acceptedSeconds: number;
   rejectedSeconds: number;
   retries: number;
+  /** Cost summed from shots of this provider/model (single currency per shot). */
   cost: number | null;
+  /** Set of shot currencies summed into `cost`; >1 entries = mixed and untrustworthy. */
+  costCurrencies: Set<string>;
 }
 
 /** Aggregate per-shot records into the §21 production report, pushing issues. */
@@ -478,6 +487,7 @@ export function buildProductionReport(
         rejectedSeconds: 0,
         retries: 0,
         cost: null,
+        costCurrencies: new Set<string>(),
       };
       byProviderModel.set(key, entry);
     }
@@ -487,6 +497,7 @@ export function buildProductionReport(
     entry.retries += shot.retries;
     if (shot.cost !== null) {
       entry.cost = (entry.cost ?? 0) + shot.cost;
+      entry.costCurrencies.add(shot.currency);
       costEntries.push({ cost: shot.cost, currency: shot.currency });
     }
 
@@ -553,7 +564,10 @@ export function buildProductionReport(
     }
 
     // Upscale provenance: never represent an upscaled segment as native.
+    // Only accepted shots live in the final assembly, so only they can make
+    // the episode non-native.
     if (
+      shot.qcStatus === "accepted" &&
       shot.sourceResolution !== null &&
       (shot.sourceResolution.width < input.renderResolution.width ||
         shot.sourceResolution.height < input.renderResolution.height)
@@ -654,8 +668,11 @@ export function buildProductionReport(
     acceptedSeconds: entry.acceptedSeconds,
     rejectedSeconds: entry.rejectedSeconds,
     retries: entry.retries,
-    cost: entry.cost,
-    currency: reportCurrency,
+    // Per-model cost is only trustworthy when every summed shot shares one
+    // currency; mixed-currency sums are garbage, so null them out instead of
+    // inventing a number.
+    cost: entry.cost !== null && entry.costCurrencies.size <= 1 ? entry.cost : null,
+    currency: entry.cost !== null && entry.costCurrencies.size === 1 ? [...entry.costCurrencies][0] ?? null : null,
   }));
 
   const sortedCharacters = [...characters].sort();
@@ -683,7 +700,9 @@ export function buildProductionReport(
     characterCount: sortedCharacters.length,
     canonChanges: input.canonChanges.map((change) => ({ ...change })),
     finalUrl: input.finalUrl,
-    qcStatus: "PASS",
+    // The report must never claim PASS while error-severity issues were
+    // collected into it — a lying report is worse than no report.
+    qcStatus: issues.some((item) => item.severity === "error") ? "FAIL" : "PASS",
   };
 }
 

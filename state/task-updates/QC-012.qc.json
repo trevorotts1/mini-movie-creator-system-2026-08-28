@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-012",
+  "phase": "PASS",
+  "commit": "",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/qc/src/final-episode --no-file-parallelism (36 passed, 0 failed); node_modules/.bin/tsc --noEmit -p packages/qc/tsconfig.json (clean); lint: no eslint tooling in repo (not applicable)",
+  "defectsFound": 6,
+  "defectsFixed": 6,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:40:00Z",
+  "notes": "Fixed lying PASS in buildProductionReport with errors, rejected-shot acceptedSeconds validation gap, empty sceneId, non-accepted shots poisoning upscale provenance, per-model currency attribution without recorded cost, mixed-currency per-model cost sums; 36 tests green",
+  "blockers": []
+}
