@@ -1,7 +1,7 @@
 {
   "taskId": "VID-004",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "64cd5e94b9bdc98727b12df7992e0ecbe7158681",
   "testsRun": "npx vitest run packages/remotion-runtime/src/layers/captions -> 25 passed, 0 failed (rc=0); npx tsc --noEmit -p packages/remotion-runtime -> 0 errors; control: npx vitest run packages/core -> 89 passed (no regression)",
   "notes": "Dialogue/captions layer: buildCaptionTrack (word-exact from FISH-007/006 structural alignment input, untrusted-text safe), msToFrame single-source ms->frames conversion preserving upstream round(global_s*fps)-from discipline, chunkTrack (<=maxWords, speaker-separated, upstream hold-tail discipline), CaptionsLayer React/Remotion renderer (pure function of frame+track, fails loudly on fps mismatch, React text-node escaping only)",
   "blockers": [],
