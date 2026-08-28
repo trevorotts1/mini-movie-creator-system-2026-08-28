@@ -1,8 +1,8 @@
 # Build Status Dashboard (build-status.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28 (bootstrap)
-**Current Stage:** Bootstrap / Control-Plane Init
+**Updated:** 2026-08-28T12:30:00Z (planning complete)
+**Current Stage:** Wave-1 Ready / Pre-Launch
 
 ---
 
@@ -10,8 +10,9 @@
 
 | Metric | Count |
 |---|---|
-| Ready Tasks | 0 |
-| Blocked Tasks | 0 |
+| Total Tasks | 149 |
+| Ready Tasks | 130 |
+| Blocked Tasks | 19 |
 | Building Tasks | 0 |
 | QC Tasks | 0 |
 | QC-fixing Tasks | 0 |
