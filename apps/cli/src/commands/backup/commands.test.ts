@@ -310,4 +310,60 @@ describe("dispatcher wiring", () => {
       cap.restore();
     }
   });
+
+  it("async export failure through the handler never becomes an unhandled rejection — it records exit 1 and a clean stderr line", async () => {
+    // Regression: the export handler used to `throw` inside .then(); the
+    // dispatcher invokes handlers fire-and-forget (`void handler(...)`), so
+    // that throw surfaced as an unhandled promise rejection with a raw stack
+    // instead of a recorded exit code. It must set process.exitCode = 1 and
+    // write one clean stderr line instead.
+    const handlers = makeBackupHandlers({
+      export: async () => {
+        throw new Error("unable to open database file");
+      },
+      restore: () => RESTORE_OK,
+      databaseExists: () => true,
+      archiveExists: () => true,
+    }) as unknown as Record<string, Handler>;
+
+    const cap = capture();
+    const origErr = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((c: string | Uint8Array) => {
+      cap.err.push(String(c));
+      return true;
+    }) as typeof process.stderr.write;
+
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown): void => {
+      unhandled.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+
+    const prevExitCode = process.exitCode;
+    process.exitCode = undefined;
+    try {
+      // Command-like options instance (integration shape) supplying the flags
+      // so the export port itself is what fails.
+      const likeCommand = {
+        getOptionValue: (k: string) =>
+          ({ db: "state/mmcs.db", out: "weekly.mmcsbak" })[k],
+      };
+      handlers["backup export"]!({}, likeCommand);
+      // Flush the microtask queue the .then chain runs on.
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(unhandled).toEqual([]);
+      expect(process.exitCode).toBe(1);
+      // run* converts the port error to exitCode 1 and emit() writes the
+      // engine message to stderr; the handler's own rethrow is caught and
+      // must not add a stack trace — only the recorded exit code.
+      expect(cap.err.join("")).toContain(
+        "backup export: failed: unable to open database file",
+      );
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+      process.exitCode = prevExitCode;
+      process.stderr.write = origErr;
+      cap.restore();
+    }
+  });
 });

@@ -331,12 +331,24 @@ export function makeBackupHandlers(ports: BackupPorts): Record<string, (args: Re
   };
   return {
     "backup export": (_args, options) => {
-      void runBackupExport(readOptions(options), ports).then((result) => {
-        emit(result);
-        if (result.exitCode !== 0) {
-          throw new Error(`backup export failed (exit ${result.exitCode})`);
-        }
-      });
+      runBackupExport(readOptions(options), ports)
+        .then((result) => {
+          emit(result);
+          if (result.exitCode !== 0) {
+            throw new Error(`backup export failed (exit ${result.exitCode})`);
+          }
+        })
+        .catch((err: unknown) => {
+          // The handler is invoked fire-and-forget by the dispatcher's wire()
+          // (`void handler(...)`) — an async throw here would surface as an
+          // unhandled promise rejection with a raw stack instead of the
+          // command's clean failure. Record the exit code so the process
+          // terminates non-zero, mirroring the synchronous restore handler.
+          process.exitCode = 1;
+          process.stderr.write(
+            `[mmcs] backup export: ${err instanceof Error ? err.message : String(err)}\n`,
+          );
+        });
     },
     "backup restore": (_args, options) => {
       const result = runBackupRestore(readOptions(options), ports);
