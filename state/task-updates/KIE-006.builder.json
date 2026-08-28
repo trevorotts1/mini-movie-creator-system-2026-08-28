@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-006",
+  "phase": "BUILDER_DONE",
+  "commit": "efea6ef30b27db877c515ce1a02beac1670a36f1",
+  "testsRun": "npx vitest run packages/providers/src/kie/wan/validation -> Test Files 1 passed (1), Tests 30 passed (30); tsc --noEmit (packages/providers) exit 0",
+  "notes": "Wan 3.0 validation: >20,000-char prompt, >10 reference images, >5 videos/audio, mode conflict (multimodal vs first/last-frame), duration/resolution limits — all rejected pre-provider-call, pure sync module",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
