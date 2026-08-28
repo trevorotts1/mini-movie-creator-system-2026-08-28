@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-010",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/core/src/config => 17/17 passed (exit 0); tsc --noEmit packages/core => clean (exit 0); git check-ignore .env => exit 0; git check-ignore .env.example => exit 1 (tracked as required)",
+  "notes": "zod-based config loader: strict+doctor schemas for 9 contract vars (AUTO_SPEND_LIMIT_USD default 25.00), missing-var errors name the variable, value-free error messages, repo-root .env walker (process.env wins over file), empty-string counts as unset; .env.example gains AUTO_SPEND_LIMIT_USD names-only entry; zod ^4.4.3 added to packages/core/package.json (owning-package dep per ownership.md); lockfile regenerated for that dep (merger may re-resolve); barrel untouched (CORE-012 owns sibling edits)",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
