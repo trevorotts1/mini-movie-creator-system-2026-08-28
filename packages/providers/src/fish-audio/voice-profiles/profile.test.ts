@@ -41,6 +41,10 @@ function memoryFs(initial: Record<string, string> = {}) {
           files.delete(a);
         }
       },
+      async unlink(p: string) {
+        ops.push(`unlink:${p}`);
+        files.delete(p);
+      },
     },
   };
 }
@@ -138,6 +142,16 @@ describe("createVoiceProfile — spec §30 fields", () => {
     expect(p.pronunciationDictionary).toEqual([{ term: "Kestrel", pronunciation: "KES-trul" }]);
     expect(p.importantProperNouns).toEqual(["Bennett"]);
   });
+
+  it("rejects blank proper-noun entries (regression: blank nouns silently masked)", () => {
+    expect(() =>
+      createVoiceProfile("CHAR_A_001", {
+        fishVoiceId: "v",
+        model: "m",
+        importantProperNouns: ["Bennett", "   "],
+      }),
+    ).toThrow(/importantProperNouns/);
+  });
 });
 
 describe("updateVoiceProfile — immutability + versioning", () => {
@@ -180,6 +194,13 @@ describe("updateVoiceProfile — immutability + versioning", () => {
     const base = makeProfile();
     const next = updateVoiceProfile(base, { testSampleAssetId: "asset_x" });
     expect(next.testSampleStatus).toBe("generated");
+  });
+
+  it("rejects blank proper-noun entries on update too (regression)", () => {
+    const base = makeProfile();
+    expect(() =>
+      updateVoiceProfile(base, { importantProperNouns: ["Ok", "  "] }),
+    ).toThrow(/importantProperNouns/);
   });
 });
 
@@ -279,6 +300,13 @@ describe("FishVoiceProfileStore — create/persist/list", () => {
     expect(out.map((p) => p.characterId)).toEqual(["CHAR_B_001", "CHAR_A_001"]);
   });
 
+  it("listForCharacters dedupes repeated IDs (regression: duplicate rows)", async () => {
+    const { store } = makeStore();
+    await store.create("CHAR_A_001", { fishVoiceId: "va", model: "m" });
+    const out = await store.listForCharacters(["CHAR_A_001", "CHAR_A_001"]);
+    expect(out.map((p) => p.characterId)).toEqual(["CHAR_A_001"]);
+  });
+
   it("recordTestSample persists status + asset id", async () => {
     const { store } = makeStore();
     await store.create("CHAR_A_001", { fishVoiceId: "v", model: "m" });
@@ -316,6 +344,12 @@ describe("FishVoiceProfileStore — create/persist/list", () => {
     await expect(store.list()).rejects.toThrow(/Voice profile store at \/tmp\/bad\.json is malformed|not json|JSON/i);
   });
 
+  it("rejects a store document whose profiles is an array (regression: typeof array === 'object')", async () => {
+    const mem = memoryFs({ "/tmp/arr.json": '{"formatVersion":1,"profiles":[]}' });
+    const store = new FishVoiceProfileStore({ filePath: "/tmp/arr.json", fs: mem.fs });
+    await expect(store.list()).rejects.toThrow(/malformed/);
+  });
+
   it("serializes concurrent creates and updates (read-modify-write safe)", async () => {
     const { store } = makeStore();
     await store.create("CHAR_A_001", { fishVoiceId: "v", model: "m" });
@@ -328,5 +362,44 @@ describe("FishVoiceProfileStore — create/persist/list", () => {
     const final = await store.get("CHAR_A_001");
     // Every write applied exactly once, no lost update; version advanced once per change.
     expect(final?.version).toBe(5);
+  });
+
+  it("update restamps updatedAt with the injected clock (regression: real clock leaked)", async () => {
+    const mem = memoryFs();
+    const fixed = new Date("2026-08-28T12:00:00.000Z");
+    const store = new FishVoiceProfileStore({
+      filePath: "/tmp/test-voice-profiles.json",
+      fs: mem.fs,
+      now: () => fixed,
+    });
+    await store.create("CHAR_A_001", { fishVoiceId: "v", model: "m" });
+    const updated = await store.update("CHAR_A_001", { pace: "slow" });
+    expect(updated.updatedAt).toBe("2026-08-28T12:00:00.000Z");
+    const noop = await store.update("CHAR_A_001", { pace: "slow" });
+    expect(noop.version).toBe(updated.version);
+    expect(noop.updatedAt).toBe("2026-08-28T12:00:00.000Z");
+  });
+
+  it("cleans up the temp file when rename fails (regression: .tmp orphans)", async () => {
+    const mem = memoryFs();
+    let failRename = true;
+    const failingFs = {
+      ...mem.fs,
+      async rename(a: string, b: string) {
+        if (failRename) throw new Error("rename boom");
+        await mem.fs.rename(a, b);
+      },
+    };
+    const store = new FishVoiceProfileStore({
+      filePath: "/tmp/test-voice-profiles.json",
+      fs: failingFs,
+    });
+    await expect(
+      store.create("CHAR_A_001", { fishVoiceId: "v", model: "m" }),
+    ).rejects.toThrow(/rename boom/);
+    failRename = false;
+    await store.create("CHAR_A_001", { fishVoiceId: "v", model: "m" });
+    const tmpLeft = [...mem.files.keys()].filter((k) => k.includes(".tmp-"));
+    expect(tmpLeft).toEqual([]);
   });
 });

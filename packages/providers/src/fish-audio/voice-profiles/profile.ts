@@ -149,6 +149,18 @@ export function isValidCharacterId(id: string): boolean {
   return CHARACTER_ID_RE.test(id);
 }
 
+/** Validate + normalize the proper-noun checklist. Blank entries are rejected,
+ * never silently kept — a blank entry would silently mask a real noun. */
+function normalizeProperNouns(raw: readonly string[]): string[] {
+  return raw.map((n) => {
+    const v = n?.trim();
+    if (!v) {
+      throw new Error("FishVoiceProfile.importantProperNouns entries must be non-blank");
+    }
+    return v;
+  });
+}
+
 /** Validate + normalize a pronunciation entry. Throws on a bad entry. */
 function normalizePronunciation(raw: FishPronunciation, index: number): FishPronunciation {
   const term = raw.term?.trim();
@@ -203,7 +215,7 @@ export function createVoiceProfile(
     pace,
     emotionStyle: input.emotionStyle?.trim() ?? "",
     pronunciationDictionary: (input.pronunciationDictionary ?? []).map(normalizePronunciation),
-    importantProperNouns: (input.importantProperNouns ?? []).map((n) => n.trim()),
+    importantProperNouns: normalizeProperNouns(input.importantProperNouns ?? []),
     testSampleStatus,
     approvalStatus,
     createdAt: now,
@@ -249,7 +261,7 @@ export function updateVoiceProfile(
     next.pronunciationDictionary = patch.pronunciationDictionary.map(normalizePronunciation);
   }
   if (patch.importantProperNouns !== undefined) {
-    next.importantProperNouns = patch.importantProperNouns.map((n) => n.trim());
+    next.importantProperNouns = normalizeProperNouns(patch.importantProperNouns);
   }
   if (patch.testSampleStatus !== undefined) {
     if (!TEST_SAMPLE_STATUSES.includes(patch.testSampleStatus)) {

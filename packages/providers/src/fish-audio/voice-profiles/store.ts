@@ -96,11 +96,15 @@ export class FishVoiceProfileStore {
     return Object.values(doc.profiles);
   }
 
-  /** List profiles bound to any of the given character IDs (deduped). */
+  /** List profiles bound to any of the given character IDs (deduped; first
+   * occurrence wins, order preserved). */
   async listForCharacters(characterIds: readonly string[]): Promise<FishVoiceProfile[]> {
     const doc = await this.readDoc();
+    const seen = new Set<string>();
     const out: FishVoiceProfile[] = [];
     for (const id of characterIds) {
+      if (seen.has(id)) continue;
+      seen.add(id);
       const p = doc.profiles[id];
       if (p) out.push(p);
     }
@@ -158,12 +162,19 @@ export class FishVoiceProfileStore {
     try {
       const raw = await this.fsImpl.readFile(this.filePath, "utf8");
       const parsed = JSON.parse(raw) as Partial<FishVoiceProfileFile>;
-      if (parsed?.formatVersion !== 1 || typeof parsed.profiles !== "object" || parsed.profiles === null) {
+      const profiles = parsed?.profiles;
+      const isPlainMap =
+        typeof profiles === "object" &&
+        profiles !== null &&
+        !Array.isArray(profiles) &&
+        (Object.getPrototypeOf(profiles) === Object.prototype ||
+          Object.getPrototypeOf(profiles) === null);
+      if (parsed?.formatVersion !== 1 || !isPlainMap) {
         throw new Error(
           `Voice profile store at ${this.filePath} is malformed (expected formatVersion 1)`,
         );
       }
-      return { formatVersion: 1, profiles: parsed.profiles };
+      return { formatVersion: 1, profiles: profiles };
     } catch (err) {
       if (isNodeENOENT(err)) {
         return { formatVersion: 1, profiles: {} };
@@ -172,25 +183,41 @@ export class FishVoiceProfileStore {
     }
   }
 
-  /** Atomically write the store: temp file + rename in the same directory. */
+  /** Atomically write the store: temp file + rename in the same directory.
+   * On any failure the temp file is removed so no `.tmp-*` orphans accumulate. */
   private async writeDoc(doc: FishVoiceProfileFile): Promise<void> {
     const dir = path.dirname(this.filePath);
     await this.fsImpl.mkdir(dir, { recursive: true });
     const tmp = `${this.filePath}.tmp-${process.pid}-${Date.now()}`;
-    await this.fsImpl.writeFile(tmp, JSON.stringify(doc, null, 2) + "\n", "utf8");
-    // rename is atomic on POSIX; fall back to direct write semantics only via
-    // the injected fs in tests (which provides rename through fs default).
-    const renameImpl = (this.fsImpl as unknown as { rename?: (a: string, b: string) => Promise<void> }).rename;
-    if (typeof renameImpl === "function") {
-      await renameImpl.call(this.fsImpl, tmp, this.filePath);
-    } else {
-      await this.fsImpl.writeFile(this.filePath, JSON.stringify(doc, null, 2) + "\n", "utf8");
+    const payload = JSON.stringify(doc, null, 2) + "\n";
+    try {
+      await this.fsImpl.writeFile(tmp, payload, "utf8");
+      // rename is atomic on POSIX; fall back to direct write semantics only via
+      // the injected fs in tests (which provides rename through fs default).
+      const renameImpl = (this.fsImpl as unknown as { rename?: (a: string, b: string) => Promise<void> }).rename;
+      if (typeof renameImpl === "function") {
+        await renameImpl.call(this.fsImpl, tmp, this.filePath);
+      } else {
+        await this.fsImpl.writeFile(this.filePath, payload, "utf8");
+      }
+    } catch (err) {
+      const unlinkImpl = (this.fsImpl as unknown as { unlink?: (p: string) => Promise<void> }).unlink;
+      if (typeof unlinkImpl === "function") {
+        try {
+          await unlinkImpl.call(this.fsImpl, tmp);
+        } catch {
+          // best-effort cleanup; the original write error is the one that matters
+        }
+      }
+      throw err;
     }
   }
 }
 
 /** Stamp updatedAt/createdAt with the store's injected clock (tests) while
- * preserving the validation module's defaults in production. */
+ * preserving the validation module's defaults in production. On update the
+ * version bump is the change signal: version moved => restamp with the store
+ * clock so the injected `now` wins over the real clock inside updateVoiceProfile. */
 function withClock(
   profile: FishVoiceProfile,
   now: () => Date,
@@ -198,7 +225,7 @@ function withClock(
 ): FishVoiceProfile {
   const stamp = now().toISOString();
   if (previous) {
-    return profile.updatedAt === previous.updatedAt ? { ...profile, updatedAt: stamp } : profile;
+    return profile.version !== previous.version ? { ...profile, updatedAt: stamp } : profile;
   }
   return { ...profile, createdAt: stamp, updatedAt: stamp };
 }
