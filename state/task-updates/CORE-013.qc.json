@@ -1,7 +1,7 @@
 {
   "taskId": "CORE-013",
   "phase": "PASS",
-  "commit": "842ca63",
+  "commit": "ff0a8d7",
   "checksRun": "npx vitest run --config packages/core/src/idempotency/vitest.config.mts (24 passed); npx tsc --noEmit -p packages/core/tsconfig.json (rc=0); security audit pass",
   "defectsFound": 1,
   "defectsFixed": 1,
