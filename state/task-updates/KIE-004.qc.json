@@ -1,15 +1,13 @@
 {
   "taskId": "KIE-004",
   "phase": "PASS",
-  "commit": "d00bdbf",
-  "rebasedOnto": "6ca3b08fc7e70cb0bba7746849a934e85d812db8",
-  "rebaseCommit": "fb47e6dd31a690fc58104c2ed2cb0778cf8e74cd",
-  "checksRun": "npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie/seedance (52/52 pass, 2 files); npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie (67/67 pass, 3 files); npx tsc --noEmit -p packages/providers/tsconfig.json (clean); git merge origin/integration clean (merge-tree clean)",
+  "commit": "7dad00d",
+  "checksRun": "npx vitest run --config packages/providers/src/kie/seedance/validation/vitest.config.mts packages/providers/src/kie/seedance/validation (27/27 passed); npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie (67/67 passed, 3 files); npx tsc --noEmit -p packages/providers/tsconfig.json (clean); security pass clean",
   "defectsFound": 0,
   "defectsFixed": 0,
   "finalTestResult": "PASS",
-  "qcAgent": "sonnet-rebase-fixer",
-  "queuedAt": "2026-08-28T14:40:00Z",
-  "notes": "Merged origin/integration into task/TASK-KIE-004-seedance-modes (PROBE-SONNET). Added callback URL validation and buildSeedanceTaskRequest helper. Seedance modes validation clean. 52/52 seedance tests green, 67/67 kie provider tests green, tsc clean.",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T17:10:00Z",
+  "notes": "Verified Seedance 2.0 Mini modes and pre-flight validation. Mutually exclusive mode checks enforced, prompt and reference limit bounds verified, callback URL handling validated, pure validation logic with zero side-effects. 27/27 validation tests pass, 67/67 total kie provider tests pass, tsc clean.",
   "blockers": []
 }
