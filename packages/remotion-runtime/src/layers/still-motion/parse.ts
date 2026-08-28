@@ -28,18 +28,26 @@ export const MOTION_MAX_TRAVEL_PERCENT = 2;
 /** Handheld jitter defaults (percent translate / degrees rotate). */
 export const HANDHELD_JITTER = { translate: 0.4, rotate: 0.35, scale: 0.006 } as const;
 
-/** Vocabulary → kind mapping, checked in order (first match wins). */
+/**
+ * Vocabulary → kind mapping, checked in order (first match wins).
+ * Word boundaries are load-bearing: creative motion text regularly carries
+ * words that merely CONTAIN a motion term ("ecstatic", "companion",
+ * "handshake") and an unbounded substring match would silently flip the
+ * shot to the wrong kind (e.g. "ecstatic push in" → static).
+ * Inflected forms (panned/tilted/drifted/cranes…) stay recognized via the
+ * explicit suffix groups.
+ */
 const KIND_PATTERNS: ReadonlyArray<readonly [CameraMotionKind, RegExp]> = [
-  ["whip_pan", /whip\s*pan|whippan/i],
-  ["handheld", /handheld|shake/i],
-  ["static", /static|locked\s*off|no\s*motion|still\b/i],
+  ["whip_pan", /\bwhip[-\s]*pan\b|\bwhippan\b/i],
+  ["handheld", /\bhandheld\b|\bshake\b/i],
+  ["static", /\bstatic\b|\blocked\s*off\b|\bno\s*motion\b|\bstill\b/i],
   ["zoom_in", /push\s*in|zoom\s*in|zoom\s*-\s*in|dolly\s*in|punch\s*in/i],
   ["zoom_out", /pull\s*(?:out|back)|zoom\s*out|zoom\s*-\s*out|dolly\s*out/i],
-  ["crane", /crane(?:\s*(?:up|down))?|jib|boom\s*(?:up|down)/i],
+  ["crane", /\bcrane(?:d|s)?(?:\s*(?:up|down))?\b|\bjib\b|\bboom\s*(?:up|down)\b/i],
   ["tracking", /tracking|dolly\s*(?:left|right)|truck(?:ing)?\s*(?:left|right)/i],
-  ["pan", /pan(?:ning)?\s*(?:left|right)?|whip(?!.*pan)/i],
-  ["tilt", /tilt(?:ing)?\s*(?:up|down)?/i],
-  ["drift", /drift|float|breathe|slow\s*move/i],
+  ["pan", /\bpan(?:ning|ned|s)?\b(?:\s*(?:left|right))?|\bwhip\b(?!.*\bpan\b)/i],
+  ["tilt", /\btilt(?:ing|ed|s)?\b(?:\s*(?:up|down))?/i],
+  ["drift", /\bdrift(?:ing|ed|s)?\b|float|breathe|slow\s*move/i],
 ];
 
 /** Parse `camera_motion` text into a motion kind. Unknown text → "drift". */
@@ -59,8 +67,10 @@ export function parseDirection(cameraMotion: string): { horizontal: number; vert
   let vertical = 0;
   if (/\bleft\b/.test(text)) horizontal -= 1;
   if (/\bright\b/.test(text)) horizontal += 1;
-  if (/\bup\b(?!.*\bdown\b)/.test(text)) vertical -= 1;
-  if (/\bdown\b(?!.*\bup\b)/.test(text)) vertical += 1;
+  if (/\bupward?s?\b/.test(text) && !/\bdownward?s?\b/.test(text)) vertical -= 1;
+  else if (/\bdownward?s?\b/.test(text) && !/\bupward?s?\b/.test(text)) vertical += 1;
+  else if (/\bup\b/.test(text) && !/\bdown\b/.test(text)) vertical -= 1;
+  else if (/\bdown\b/.test(text) && !/\bup\b/.test(text)) vertical += 1;
   return { horizontal, vertical };
 }
 

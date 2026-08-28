@@ -43,6 +43,26 @@ describe("parseMotionKind (§12 camera_motion text)", () => {
     expect(parseMotionKind("moody Establishing 2.5s")).toBe("drift");
     expect(parseMotionKind("something completely unknown")).toBe("drift");
   });
+
+  it("does not match motion words as substrings (regression: substring false positives)", () => {
+    // "ecstatic" contains "static" — must not flip a push-in to dead-static.
+    expect(parseMotionKind("ecstatic push in")).toBe("zoom_in");
+    // "companion"/"expansion" contain "pan" — must not become pans.
+    expect(parseMotionKind("companion shot")).toBe("drift");
+    expect(parseMotionKind("expansion of the city")).toBe("drift");
+    // "handshake" contains "shake" — must not become handheld.
+    expect(parseMotionKind("handshake moment")).toBe("drift");
+    // "jibberish" contains "jib" — must not become a crane.
+    expect(parseMotionKind("jibberish overlay")).toBe("drift");
+  });
+
+  it("recognizes hyphenated and inflected vocabulary", () => {
+    expect(parseMotionKind("whip-pan across")).toBe("whip_pan");
+    expect(parseMotionKind("panned left")).toBe("pan");
+    expect(parseMotionKind("tilted up")).toBe("tilt");
+    expect(parseMotionKind("camera drifts slowly")).toBe("drift");
+    expect(parseMotionKind("cranes down over the crowd")).toBe("crane");
+  });
 });
 
 describe("parseDirection", () => {
@@ -54,6 +74,12 @@ describe("parseDirection", () => {
   it("extracts vertical direction", () => {
     expect(parseDirection("tilt up")).toEqual({ horizontal: 0, vertical: -1 });
     expect(parseDirection("crane down")).toEqual({ horizontal: 0, vertical: 1 });
+    expect(parseDirection("tilt upward")).toEqual({ horizontal: 0, vertical: -1 });
+    expect(parseDirection("crane downward")).toEqual({ horizontal: 0, vertical: 1 });
+  });
+
+  it("mixed up+down text stays directionless (camera decides by seed)", () => {
+    expect(parseDirection("tilt up then down")).toEqual({ horizontal: 0, vertical: 0 });
   });
 
   it("no direction words → zeros", () => {
