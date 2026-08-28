@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-009",
+  "phase": "PASS",
+  "commit": "c08b19ea51978c69415afeb79b887e6e4f6d4527",
+  "checksRun": "npx vitest run packages/cost-engine (29/29 PASS); npx vitest run packages/cost-engine packages/database (181/181 PASS); tsc --noEmit for cost-engine, database, core (all clean); security scan of owned paths (no secrets/env reads/shell exec; SQL parameterized, identifiers whitelisted); money boundary fuzz (3M values, high-magnitude probes)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T01:00:00Z",
+  "notes": "Fixed reserve() nested-transaction crash + caller-rollback destruction (now joins open transactions); fixed usdToCents false sub-cent rejection at >= ~$10T magnitudes via magnitude-scaled tolerance; 4 regression tests added; acceptance verified: $24.99 auto-proceeds, $25.00 stops, 5 parallel $24.99 -> exactly 1 approved (incl. multi-connection), included quota tracked separately.",
+  "blockers": []
+}
