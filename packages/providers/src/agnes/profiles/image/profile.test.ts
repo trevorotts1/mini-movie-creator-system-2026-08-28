@@ -39,7 +39,16 @@ describe("verified per-call limits", () => {
       "21:9",
     ]);
     expect(AGNES_IMAGE_2_1_FLASH_LIMITS.ratioDefault.value).toBe("1:1");
-    expect(AGNES_IMAGE_2_1_FLASH_LIMITS.sizeDefault.value).toBe("1K");
+    expect(AGNES_IMAGE_2_1_FLASH_LIMITS.ratioDefault.status).toBe("VERIFIED");
+  });
+
+  it("marks the size DEFAULT as PROVISIONAL — docs state no default", () => {
+    // Live doc page marks `size` required and names no fallback tier.
+    // Runbook §16: an unstated value must never be labeled VERIFIED.
+    const sizeDefault = AGNES_IMAGE_2_1_FLASH_LIMITS.sizeDefault;
+    expect(sizeDefault.status).toBe("PROVISIONAL");
+    expect(sizeDefault.value).toBe("1K");
+    expect(sizeDefault.note).toMatch(/docs state no default/i);
   });
 
   it("keeps the prompt character ceiling UNKNOWN (spec §14)", () => {
@@ -79,7 +88,7 @@ describe("verified per-call limits", () => {
     });
   });
 
-  it("carries provenance on every VERIFIED limit", () => {
+  it("carries provenance on every VERIFIED limit and notes elsewhere", () => {
     for (const [key, limit] of Object.entries(
       AGNES_IMAGE_2_1_FLASH_LIMITS,
     )) {
@@ -88,6 +97,9 @@ describe("verified per-call limits", () => {
         expect(limit.source.startsWith("https://wiki.agnes-ai.com/"), key).toBe(
           true,
         );
+      } else if (limit.status === "PROVISIONAL") {
+        // Adapter policy, never doc provenance — must explain itself.
+        expect(limit.note.length, key).toBeGreaterThan(0);
       } else {
         expect(limit.note.length, key).toBeGreaterThan(0);
       }
@@ -231,11 +243,14 @@ describe("buildAgnesImageRequest", () => {
     expect("response_format" in req).toBe(false);
   });
 
-  it("sends reference images top-level AND under extra_body", () => {
+  it("sends reference images ONLY under extra_body.image (docs placement)", () => {
+    // Every img2img / multi-image example on the live 2.1 page nests the
+    // input array in extra_body.image; no top-level `image` exists. A
+    // top-level image[] is undocumented and risks provider rejection.
     const images = ["https://a/b.png", "data:image/png;base64,AAAA"];
     const req = buildAgnesImageRequest({ ...BASE, images });
-    expect(req.image).toEqual(images);
     expect(req.extra_body?.image).toEqual(images);
+    expect("image" in req).toBe(false);
     expect(agnesImageMode(images)).toBe("compose");
   });
 

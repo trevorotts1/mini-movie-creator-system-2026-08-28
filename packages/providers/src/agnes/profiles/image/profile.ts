@@ -59,8 +59,17 @@ export interface VerifiedLimit<T> {
   readonly value: T;
 }
 
-/** Either a verified value or an explicit UNKNOWN. */
-export type Limit<T> = VerifiedLimit<T> | UnknownLimit;
+/** An MMCS adapter policy choice where the docs state NO value (runbook §16
+ * confidence vocabulary: PROVISIONAL). Never labeled VERIFIED. */
+export interface ProvisionalLimit<T> {
+  readonly status: "PROVISIONAL";
+  /** Why provisional — what the docs do/do not say. */
+  readonly note: string;
+  readonly value: T;
+}
+
+/** A verified value, a provisional adapter policy, or an explicit UNKNOWN. */
+export type Limit<T> = VerifiedLimit<T> | UnknownLimit | ProvisionalLimit<T>;
 
 /** Output size tiers documented for the images API (legacy exact pixel
  * sizes like `1024x768` are accepted but normalized by the provider; MMCS
@@ -130,8 +139,9 @@ export const AGNES_IMAGE_2_1_FLASH_LIMITS: Readonly<{
   maxReferenceImages: UnknownLimit;
   /** Output size tiers. */
   sizes: VerifiedLimit<readonly string[]>;
-  /** Default output size tier when `size` is omitted. */
-  sizeDefault: VerifiedLimit<AgnesImageSize>;
+  /** MMCS adapter default tier when `size` is omitted. Docs state NO
+   * default and mark `size` required → PROVISIONAL policy, never VERIFIED. */
+  sizeDefault: ProvisionalLimit<AgnesImageSize>;
   /** Aspect-ratio enum. */
   ratios: VerifiedLimit<readonly string[]>;
   /** Default ratio when `ratio` is omitted. */
@@ -177,9 +187,8 @@ export const AGNES_IMAGE_2_1_FLASH_LIMITS: Readonly<{
     value: AGNES_IMAGE_SIZES,
   },
   sizeDefault: {
-    status: "VERIFIED",
-    source: AGNES_IMAGE_SOURCE_URLS[0],
-    verifiedOn: AGNES_IMAGE_VERIFIED_ON,
+    status: "PROVISIONAL",
+    note: "Docs state NO default for `size` (page marks it required; no sentence names a fallback tier). Adapter policy: default to the cheapest tier 1K when omitted. PROVISIONAL — flagged, not VERIFIED (runbook §16: never label an unstated value VERIFIED).",
     value: "1K",
   },
   ratios: {
@@ -233,8 +242,8 @@ export const AGNES_IMAGE_2_1_FLASH_LIMITS: Readonly<{
 };
 
 /** Mutually exclusive request modes, selected purely by input-image count
- * (docs: text-to-image vs img2img vs multi-image composition all share the
- * one endpoint; there are no tags and no separate compose endpoint). */
+ * (docs: text-to-image vs image-to-image vs multi-image composition all share
+ * the one endpoint; there are no tags and no separate compose endpoint). */
 export type AgnesImageMode = "text-to-image" | "edit" | "compose";
 
 /** Classify the generation mode from the reference-image list. */
@@ -284,19 +293,27 @@ export interface AgnesImageInput {
   model?: string;
 }
 
-/** Exact Agnes images/generations request body (wire format). */
+/** Exact Agnes images/generations request body (wire format).
+ *
+ * Docs-verified placements (https://wiki.agnes-ai.com/en/docs/agnes-image-21-flash,
+ * checked 2026-08-28):
+ * - `model` / `prompt` / `size` top-level.
+ * - `ratio` top-level (size+ratio pairing; legacy exact pixels unsupported for ratio pairing).
+ * - `return_base64` top-level (text-to-image only).
+ * - Input reference images ONLY inside `extra_body.image` — every img2img and
+ *   multi-image example nests them there; no example shows a top-level `image`.
+ * - `response_format` ONLY inside `extra_body` — top-level placement returns HTTP 400.
+ */
 export interface AgnesImageApiRequest {
   model: string;
   prompt: string;
   size: string;
   ratio?: string;
-  /** Reference images (top-level `image` per the 2.1 page). */
-  image?: string[];
   return_base64?: boolean;
-  /** Advanced params — response_format MUST live here, never top-level. */
+  /** Advanced params — response_format and input image[] MUST live here. */
   extra_body?: {
     response_format?: AgnesImageResponseFormat;
-    /** Alternative placement for input images shown on the 2.0 docs page. */
+    /** Input reference images (HTTPS URLs or data: URIs). */
     image?: string[];
   };
 }
@@ -362,10 +379,10 @@ export function validateAgnesImageRequest(
 
 /** Build the exact wire request for a validated input.
  *
- * Pitfalls encoded here (docs-verified):
+ * Pitfalls encoded here (docs-verified 2026-08-28):
  * - `response_format` goes under `extra_body` — top-level returns HTTP 400.
- * - Reference images ride top-level `image[]` AND `extra_body.image` (the
- *   docs show both placements; `extra_body.image` is required for img2img).
+ * - Reference images ride `extra_body.image` ONLY (every img2img /
+ *   multi-image doc example nests them there; no top-level `image` exists).
  * - No `n`, no `seed`, no `negative_prompt`, no task id is ever sent.
  */
 export function buildAgnesImageRequest(
@@ -378,7 +395,6 @@ export function buildAgnesImageRequest(
     size: input.size ?? AGNES_IMAGE_2_1_FLASH_LIMITS.sizeDefault.value,
   };
   if (input.ratio !== undefined) request.ratio = input.ratio;
-  if (images.length > 0) request.image = [...images];
   if (input.returnBase64 !== undefined)
     request.return_base64 = input.returnBase64;
   if (input.responseFormat !== undefined || images.length > 0) {
