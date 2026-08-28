@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-010",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "npx vitest run packages/qc/src/routes/wan (65/65 pass, rc=0); npx vitest run (full suite 473/473 pass); pnpm --filter @mmcs/qc typecheck (clean); security pass (no secrets, no exec, no fs, no unbounded retries, callBackUrl http(s)-validated)",
+  "defectsFound": 7,
+  "defectsFixed": 7,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:00:00Z",
+  "notes": "Fixed: prime-model rate now used for cost projection + spend gate; referenceVideoSeconds billed (input+output rule KIE-005); included quota offsets billable seconds before spend gate (spec §4 quota never paid spend); -1 duration sentinel no longer treated as under-limit; reference-video+output >30s window enforced; strict model allowlist (was startsWith wan/); callBackUrl http(s) pre-submit validation. Added 10 regression tests.",
+  "blockers": []
+}

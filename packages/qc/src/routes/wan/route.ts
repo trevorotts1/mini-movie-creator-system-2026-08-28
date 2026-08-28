@@ -157,7 +157,7 @@ export function validateWanRouteInput(
     issues.push({ field: "seed", message: "must be an integer in [0, 2147483647]" });
   }
 
-  if (!model.startsWith("wan/")) {
+  if (model !== "wan/3-0-video" && model !== "wan/3-0-video-prime") {
     issues.push({ field: "model", message: `unknown Wan model id "${model}"` });
   }
 
@@ -263,9 +263,15 @@ export async function routeShotToWan(
     resolution: decision.resolution,
   };
   // The spend gate's projection must match what we report on submit.
-  const projectedCostUsd = projectWanSpendUsd(shot, decision.resolution) ?? 0;
+  const projectedCostUsd =
+    projectWanSpendUsd(shot, decision.resolution, decision.model === "wan/3-0-video-prime")?.totalUsd ?? 0;
 
   validateWanRouteInput(input, decision.model);
+  if (options.callBackUrl !== undefined && !isHttpUrl(options.callBackUrl)) {
+    throw new WanRouteValidationError([
+      { field: "callBackUrl", message: "must be an http(s) URL string" },
+    ]);
+  }
 
   const body = buildWanRouteBody(input, decision.model, decision.resolution, options.callBackUrl);
   try {

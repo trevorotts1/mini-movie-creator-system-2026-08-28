@@ -217,6 +217,20 @@ describe("evaluateWanPolicy — capability factor", () => {
     expect(decision.reasons[0]?.code).toBe("duration_under_limit");
   });
 
+  it("does NOT treat the -1 model-decides sentinel as under-limit", () => {
+    const decision = evaluateWanPolicy(
+      plainShot({ hero: true, targetDurationSeconds: -1 }),
+      cleanContext(),
+    );
+    expect(decision.outcome).toBe("route");
+  });
+
+  it("skips when reference video + output exceeds the 30s input+output window (KIE-005 billing rule)", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: 20, referenceVideoSeconds: 15 });
+    const decision = evaluateWanPolicy(shot, cleanContext());
+    expect(decision.reasons[0]?.code).toBe("reference_video_duration_over_limit");
+  });
+
   it("capability gate runs before the spend gate", () => {
     expect(WAN_POLICY_GATES[0]?.id).toBe("capability");
     expect(WAN_POLICY_GATES[1]?.id).toBe("spend");
@@ -265,9 +279,25 @@ describe("evaluateWanPolicy — quality-history factor", () => {
 describe("evaluateWanPolicy — cost factor", () => {
   it("projects spend with the verified per-second rates", () => {
     const shot = plainShot({ hero: true, targetDurationSeconds: 10 });
-    expect(projectWanSpendUsd(shot, "1080P")).toBeCloseTo(1.6, 4);
-    expect(projectWanSpendUsd(shot, "720P")).toBeCloseTo(0.8, 4);
-    expect(projectWanSpendUsd(shot, "480P")).toBeCloseTo(0.4, 4);
+    expect(projectWanSpendUsd(shot, "1080P")?.totalUsd).toBeCloseTo(1.6, 4);
+    expect(projectWanSpendUsd(shot, "720P")?.totalUsd).toBeCloseTo(0.8, 4);
+    expect(projectWanSpendUsd(shot, "480P")?.totalUsd).toBeCloseTo(0.4, 4);
+  });
+
+  it("bills input reference-video seconds plus output duration (Kie billing rule)", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: 10, referenceVideoSeconds: 5 });
+    expect(projectWanSpendUsd(shot, "1080P")).toEqual({ totalUsd: 2.4, billableSeconds: 15 });
+  });
+
+  it("projects prime-model spend with the verified prime rates", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: 10 });
+    expect(projectWanSpendUsd(shot, "1080P", true)?.totalUsd).toBeCloseTo(2.52, 4);
+    expect(projectWanSpendUsd(shot, "480P", true)?.totalUsd).toBeCloseTo(0.612, 4);
+  });
+
+  it("returns null when the duration is model-chosen (-1)", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: -1 });
+    expect(projectWanSpendUsd(shot, "1080P")).toBeNull();
   });
 
   it("routes while cumulative + projected stays under the $25 ceiling", () => {
@@ -318,6 +348,33 @@ describe("evaluateWanPolicy — cost factor", () => {
     if (decision.outcome === "route") {
       expect(decision.reasons.find((r) => r.code === "quota")?.detail).toContain("90");
     }
+  });
+
+  it("does not hold when included quota fully covers the billable seconds (spec §4: quota is never paid spend)", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: 30 }); // 30s billable
+    const decision = evaluateWanPolicy(
+      shot,
+      cleanContext({ spend: { cumulativeUsd: 25, approvedCeilingUsd: 25, remainingQuotaSeconds: 30 } }),
+    );
+    expect(decision.outcome).toBe("route");
+  });
+
+  it("still holds when quota covers only part of the billable seconds", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: 30 }); // 30s billable
+    const decision = evaluateWanPolicy(
+      shot,
+      cleanContext({ spend: { cumulativeUsd: 24.99, approvedCeilingUsd: 25, remainingQuotaSeconds: 10 } }),
+    );
+    expect(decision.outcome).toBe("hold");
+  });
+
+  it("prime-model spend gate uses the prime rate (higher projection)", () => {
+    const shot = plainShot({ hero: true, targetDurationSeconds: 30 }); // 30s
+    const fast = evaluateWanPolicy(
+      shot,
+      cleanContext({ preferFastModel: true, spend: { cumulativeUsd: 24.5, approvedCeilingUsd: 25 } }),
+    );
+    expect(fast.outcome).toBe("hold"); // 30 × 0.252 = $7.56 ≥ 25
   });
 });
 
@@ -431,6 +488,13 @@ describe("validateWanRouteInput — final pre-submit barrier", () => {
   it("rejects an unknown model id", () => {
     const input = { prompt: "x", duration: 5 };
     expect(() => validateWanRouteInput(input, "other/model" as WanRouteModelIdBad)).toThrow(
+      WanRouteValidationError,
+    );
+  });
+
+  it("rejects a fake id sharing the wan/ prefix", () => {
+    const input = { prompt: "x", duration: 5 };
+    expect(() => validateWanRouteInput(input, "wan/attacker-invented" as WanRouteModelIdBad)).toThrow(
       WanRouteValidationError,
     );
   });
@@ -553,6 +617,16 @@ describe("routeShotToWan — end to end", () => {
     });
     expect(calls.bodies[0]).toMatchObject({ callBackUrl: "https://cb.example/hook" });
   });
+
+  it("rejects a non-http callBackUrl before any provider call", async () => {
+    const calls = { bodies: [] as unknown[] };
+    await expect(
+      routeShotToWan(stubClient("z", calls), plainShot({ hero: true }), cleanContext(), {
+        callBackUrl: "javascript:alert(1)",
+      }),
+    ).rejects.toThrow(WanRouteValidationError);
+    expect(calls.bodies).toHaveLength(0);
+  });
 });
 
 describe("WanRouteResult type completeness (compile-level)", () => {
@@ -584,5 +658,6 @@ describe("WanRouteResult type completeness (compile-level)", () => {
     expect(WAN_ROUTE_LIMITS.maxDurationSeconds).toBe(30);
     expect(WAN_ROUTE_LIMITS.minDurationSeconds).toBe(2);
     expect(WAN_ROUTE_LIMITS.usdPerSecondByResolution["1080P"]).toBe(0.16);
+    expect(WAN_ROUTE_LIMITS.usdPerSecondByResolutionPrime["1080P"]).toBe(0.252);
   });
 });

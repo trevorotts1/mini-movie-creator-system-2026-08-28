@@ -36,8 +36,10 @@ export const WAN_ROUTE_LIMITS = {
   longShotThresholdSeconds: 12,
   /** Reference-count needs at/above this signal "reference-heavy". */
   referenceHeavyThreshold: 5,
-  /** Verified per-output-second USD rates by resolution. */
+  /** Verified per-output-second USD rates by resolution (standard model). */
   usdPerSecondByResolution: { "480P": 0.04, "720P": 0.08, "1080P": 0.16 } as const,
+  /** Verified per-output-second USD rates by resolution (prime high-speed model, KIE-005). */
+  usdPerSecondByResolutionPrime: { "480P": 0.0612, "720P": 0.126, "1080P": 0.252 } as const,
   /** Default spec §33 spend gate. */
   defaultApprovedCeilingUsd: 25.0,
 } as const;
@@ -167,34 +169,55 @@ export const WAN_CAPABILITY_GATE: WanPolicyGate = {
         detail: `target duration ${shot.targetDurationSeconds}s > Wan max ${WAN_ROUTE_LIMITS.maxDurationSeconds}s; split the shot`,
       };
     }
-    if (shot.targetDurationSeconds < WAN_ROUTE_LIMITS.minDurationSeconds) {
+    // -1 is the verified "model decides" sentinel (KIE-005): not a violation.
+    if (shot.targetDurationSeconds !== -1 && shot.targetDurationSeconds < WAN_ROUTE_LIMITS.minDurationSeconds) {
       return {
         code: "duration_under_limit",
         detail: `target duration ${shot.targetDurationSeconds}s < Wan min ${WAN_ROUTE_LIMITS.minDurationSeconds}s`,
       };
+    }
+    const refVideoSeconds = shot.referenceVideoSeconds ?? 0;
+    if (refVideoSeconds > 0 && shot.targetDurationSeconds >= 0) {
+      const window = refVideoSeconds + shot.targetDurationSeconds;
+      if (window > WAN_ROUTE_LIMITS.maxDurationSeconds) {
+        return {
+          code: "reference_video_duration_over_limit",
+          detail: `reference video ${refVideoSeconds}s + output ${shot.targetDurationSeconds}s = ${window}s > Wan max ${WAN_ROUTE_LIMITS.maxDurationSeconds}s (input+output billing window, KIE-005); trim the reference video or shorten the shot`,
+        };
+      }
     }
     return null;
   },
 };
 
 /**
- * Spend gate (spec §33): a request whose projection reaches/exceeds the
+ * Spend gate (spec §4): a request whose projection reaches/exceeds the
  * user-approved ceiling cannot auto-proceed — it HOLDS for approval. The
- * projection uses the row's resolution rate × planned output seconds.
- * Cumulative state is read, never written, here.
+ * projection uses the row's resolution rate × planned output seconds plus
+ * reference-video input seconds (Kie bills input + output), at the chosen
+ * model's verified rate. Included quota covers the projection first (spec §4:
+ * included quota is never counted as paid spend) — a fully quota-covered
+ * request does not gate. Cumulative state is read, never written, here.
  */
 export const WAN_SPEND_GATE: WanPolicyGate = {
   id: "spend",
   onFailure: "hold",
   check: (shot, context) => {
-    const projection = projectWanSpendUsd(shot, "1080P");
+    const projection = projectWanSpendUsd(shot, "1080P", context.preferFastModel === true);
     if (projection === null) return null; // model-chosen duration: unknown until submit
+    // Included quota covers billable seconds (input video + output, all at the
+    // same per-second rate) before paid spend accrues (spec §4: included quota
+    // is never counted as paid spend).
+    const quotaSeconds = Math.max(context.spend.remainingQuotaSeconds ?? 0, 0);
+    const paidSeconds = Math.max(projection.billableSeconds - quotaSeconds, 0);
+    if (paidSeconds <= 0) return null; // fully quota-covered: no paid spend, no gate
+    const paidUsd = round4(projection.totalUsd * (paidSeconds / projection.billableSeconds));
     const ceiling = context.spend.approvedCeilingUsd ?? WAN_ROUTE_LIMITS.defaultApprovedCeilingUsd;
     const cumulative = context.spend.cumulativeUsd ?? 0;
-    if (cumulative + projection >= ceiling) {
+    if (cumulative + paidUsd >= ceiling) {
       return {
         code: "spend_ceiling",
-        detail: `cumulative $${cumulative.toFixed(2)} + projected $${projection.toFixed(2)} reaches/exceeds the approved ceiling $${ceiling.toFixed(2)} — user approval required (spec §33)`,
+        detail: `cumulative $${cumulative.toFixed(2)} + projected paid $${paidUsd.toFixed(2)} reaches/exceeds the approved ceiling $${ceiling.toFixed(2)} — user approval required (spec §4)`,
       };
     }
     return null;
@@ -235,10 +258,33 @@ export function priorTiersExhausted(history: WanRouteContext["qualityHistory"]):
   return relevant.every((a) => a.outcome === "fail");
 }
 
-/** Projected spend of one Wan request at the given resolution, USD. Null when duration is model-chosen (-1). */
-export function projectWanSpendUsd(shot: WanRouteShot, resolution: WanResolution): number | null {
-  const perSecond = WAN_ROUTE_LIMITS.usdPerSecondByResolution[resolution];
-  return round4(perSecond * shot.targetDurationSeconds);
+/**
+ * Projected spend of one Wan request at the given resolution, USD.
+ *
+ * Kie bills (input video duration + output duration) × per-second rate
+ * (capability registry KIE-005 notes.billing). Input video seconds are
+ * caller-declared (`referenceVideoSeconds`, billing cross-check); output
+ * seconds are the planned target duration. Null when the duration is
+ * model-chosen (-1) and no reference-video input pins a minimum.
+ */
+export function projectWanSpendUsd(
+  shot: WanRouteShot,
+  resolution: WanResolution,
+  prime = false,
+): {
+  totalUsd: number;
+  billableSeconds: number;
+} | null {
+  const duration = shot.targetDurationSeconds;
+  const inputSeconds = Math.max(shot.referenceVideoSeconds ?? 0, 0);
+  if (!Number.isFinite(duration)) return null;
+  if (duration < 0) return null; // model-chosen duration: unknown until submit
+  const rateTable = prime
+    ? WAN_ROUTE_LIMITS.usdPerSecondByResolutionPrime
+    : WAN_ROUTE_LIMITS.usdPerSecondByResolution;
+  const perSecond = rateTable[resolution];
+  const billableSeconds = inputSeconds + duration;
+  return { totalUsd: round4(perSecond * billableSeconds), billableSeconds };
 }
 
 /**
@@ -299,7 +345,7 @@ export function evaluateWanPolicy(
     },
     {
       code: "cost",
-      detail: `projected spend $${(projectWanSpendUsd(shot, resolution) ?? 0).toFixed(2)} at ${resolution}; cumulative $${(context.spend.cumulativeUsd ?? 0).toFixed(2)} / ceiling $${(context.spend.approvedCeilingUsd ?? WAN_ROUTE_LIMITS.defaultApprovedCeilingUsd).toFixed(2)}`,
+      detail: `projected spend $${(projectWanSpendUsd(shot, resolution, model === "wan/3-0-video-prime")?.totalUsd ?? 0).toFixed(2)} at ${resolution} (input video ${(shot.referenceVideoSeconds ?? 0).toFixed(1)}s + output ${shot.targetDurationSeconds}s billed); cumulative $${(context.spend.cumulativeUsd ?? 0).toFixed(2)} / ceiling $${(context.spend.approvedCeilingUsd ?? WAN_ROUTE_LIMITS.defaultApprovedCeilingUsd).toFixed(2)}`,
     },
     {
       code: "quota",
