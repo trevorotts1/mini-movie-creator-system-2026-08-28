@@ -50,7 +50,7 @@
       "branch": "task/CORE-004-project-schema",
       "worktree": "worktrees/CORE-004/",
       "acceptance": "migrations create projects/series/episodes tables incl. aspect-ratio + per-episode override fields (spec \u00a723); repositories CRUD-tested; `npx vitest run packages/database/src/repositories/projects` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CORE-005",
@@ -63,7 +63,7 @@
       "branch": "task/CORE-005-character-schema",
       "worktree": "worktrees/CORE-005/",
       "acceptance": "tables for characters, identity versions (immutable history), appearance versions w/ effective-episode, locations/props; GHL file/folder ID + sha256 columns present (spec \u00a79); `npx vitest run packages/database/src/repositories/characters` green incl. version-history immutability test.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CORE-006",
@@ -76,7 +76,7 @@
       "branch": "task/CORE-006-scene-shot-schema",
       "worktree": "worktrees/CORE-006/",
       "acceptance": "shot table carries every field of spec \u00a712 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CORE-007",
@@ -89,7 +89,7 @@
       "branch": "task/CORE-007-job-asset-schema",
       "worktree": "worktrees/CORE-007/",
       "acceptance": "provider_jobs + assets tables carry every field of spec \u00a719 asset manifest (all 26 fields asserted by introspection test) and \u00a718 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CORE-008",
@@ -242,7 +242,7 @@
       "branch": "task/CHAR-003-candidate-flow",
       "worktree": "worktrees/CHAR-003/",
       "acceptance": "new character request produces exactly 3 candidates as DRAFT/REVIEW; Try Again creates 3 NEW candidates; rejected candidates never selectable (state-machine test); `npx vitest run packages/character-library/src/candidates` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CHAR-004",
@@ -256,7 +256,7 @@
       "branch": "task/CHAR-004-selection-contract",
       "worktree": "worktrees/CHAR-004/",
       "acceptance": "`mmcs choose-character <1|2|3|4>` maps 4=Try Again; `mmcs approve-character <id>` requires gate 3; invalid selections rejected with usage text; `npx vitest run apps/cli/src/commands/choose-character` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CHAR-005",
@@ -340,7 +340,7 @@
       "branch": "task/CHAR-010-cast-links",
       "worktree": "worktrees/CHAR-010/",
       "acceptance": "global library \u2194 per-series cast join; cast resolution by episode; removing series cast never deletes global character; `npx vitest run packages/character-library/src/cast` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CHAR-011",
@@ -354,7 +354,7 @@
       "branch": "task/CHAR-011-location-library",
       "worktree": "worktrees/CHAR-011/",
       "acceptance": "location masters with approved wide/medium/reverse angles + day/night states; resolution by episode continuity point; `npx vitest run packages/character-library/src/locations` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CHAR-012",
@@ -368,7 +368,7 @@
       "branch": "task/CHAR-012-series-bible",
       "worktree": "worktrees/CHAR-012/",
       "acceptance": "bible stores premise, world rules, characters, relationships, locations, wardrobe, props, visual style, camera language, voice profiles, timeline, episode summaries, plot threads, versioned canon changes (spec \u00a710); historical episodes read canon-at-time; `npx vitest run packages/character-library/src/series-bible` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CHAR-013",
@@ -396,7 +396,7 @@
       "branch": "task/CHAR-014-asset-links",
       "worktree": "worktrees/CHAR-014/",
       "acceptance": "canonical GHL file ID + URL + checksum resolved verbatim in downstream reference plans; stale-link refresh via manifest; local-cache-removal resolution test passes against mocked GHL; `npx vitest run packages/character-library/src/asset-links` green.",
-      "status": "READY"
+      "status": "BUILDER_DONE"
     },
     {
       "id": "CHAR-015",
