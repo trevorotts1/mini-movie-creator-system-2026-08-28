@@ -1,0 +1,10 @@
+{
+  "name": "@mmcs/integrations-openclaw",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenClaw skill packaging for MMCS (spec §27)",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  }
+}
