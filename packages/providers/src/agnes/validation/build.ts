@@ -69,12 +69,13 @@ export function buildAgnesVideoPayload(
     });
   if (shape.seconds !== undefined) {
     // The validator guarantees whole seconds; guard standalone calls so the
-    // payload never carries "" / "NaN" / "4.5".
+    // payload never carries "" / "NaN" / "4.5". Only whole-numeric strings
+    // (the exact forms validateAgnesRequest accepts) may reach the payload.
     const seconds =
       typeof shape.seconds === "number"
         ? String(shape.seconds)
         : shape.seconds.trim();
-    if (seconds.length > 0) body.seconds = seconds;
+    if (/^[0-9]+$/.test(seconds)) body.seconds = seconds;
   }
   if (isPresent(shape.size)) body.size = shape.size;
   if (isPresent(shape.aspectRatio)) body.aspect_ratio = shape.aspectRatio;

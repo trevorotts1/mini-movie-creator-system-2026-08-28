@@ -559,6 +559,17 @@ describe("malformed input hardening (QC regressions)", () => {
     expect(payload.aspect_ratio).toBeUndefined();
     expect(payload.size).toBeUndefined();
   });
+
+  it("buildAgnesVideoPayload standalone guard never emits NaN or fractional seconds", () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, 4.5, "4.5", "NaN", "eight"]) {
+      const payload = buildAgnesVideoPayload("agnes-video-2.5", {
+        prompt: "x",
+        mode: "text",
+        seconds: bad as never,
+      });
+      expect(payload.seconds).toBeUndefined();
+    }
+  });
 });
 
 describe("round-trip with the CAP-002 registry seeds", () => {
