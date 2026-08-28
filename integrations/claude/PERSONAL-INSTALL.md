@@ -94,7 +94,7 @@ cd integrations/claude && npm test
 npx vitest run --config integrations/claude/vitest.config.mts
 ```
 
-22 tests drive the REAL script end-to-end inside temp fixture islands
+27 tests drive the REAL script end-to-end inside temp fixture islands
 (canonical source + a fake `$HOME`), covering: symlink creation with an
 absolute target, resolution through the symlink, idempotency, wrong-symlink
 repoint, refusal without `--force`, refusal of `--force` without `--confirm`,

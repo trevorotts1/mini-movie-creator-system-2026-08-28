@@ -200,6 +200,71 @@ describe("SKL-003 personal-install.sh", () => {
       expect(fs.existsSync(TARGET(home))).toBe(false);
       expect(fs.existsSync(path.join(home, ".mmcs", "mmcs.env"))).toBe(false);
     });
+
+    it("--dry-run with --force --confirm over a real dir prints backup + replace and mutates nothing", () => {
+      const { root, home } = makeFixture();
+      fs.mkdirSync(TARGET(home));
+      fs.writeFileSync(path.join(TARGET(home), "SKILL.md"), "previous skill\n");
+      const r = run(root, home, ["--force", "--confirm", "--dry-run"]);
+      expect(r.status).toBe(0);
+      expect(r.stdout).toMatch(/DRY-RUN: would back up/);
+      expect(r.stdout).toMatch(/DRY-RUN: would create/);
+      // nothing changed: real dir intact, no backup, still not a symlink
+      expect(fs.readFileSync(path.join(TARGET(home), "SKILL.md"), "utf8")).toBe(
+        "previous skill\n",
+      );
+      expect(fs.lstatSync(TARGET(home)).isSymbolicLink()).toBe(false);
+      const backups = fs
+        .readdirSync(path.join(home, ".claude", "skills"))
+        .filter((n) => n.startsWith("mini-movie-creator.backup-"));
+      expect(backups.length).toBe(0);
+    });
+
+    it("two forced replaces in the same second get distinct backups and the first backup stays intact", () => {
+      const { root, home } = makeFixture();
+      fs.mkdirSync(TARGET(home));
+      fs.writeFileSync(path.join(TARGET(home), "SKILL.md"), "first skill\n");
+      expect(run(root, home, ["--force", "--confirm"]).status).toBe(0);
+      // second replace immediately after: same wall-clock second is likely, and
+      // even when it is not, the assertion still holds — two runs, two backups,
+      // first backup content untouched by the second run.
+      fs.rmSync(TARGET(home));
+      fs.mkdirSync(TARGET(home));
+      fs.writeFileSync(path.join(TARGET(home), "SKILL.md"), "second skill\n");
+      expect(run(root, home, ["--force", "--confirm"]).status).toBe(0);
+      const backups = fs
+        .readdirSync(path.join(home, ".claude", "skills"))
+        .filter((n) => n.startsWith("mini-movie-creator.backup-"))
+        .sort();
+      expect(backups.length).toBe(2);
+      expect(new Set(backups).size).toBe(2); // distinct names
+      expect(
+        fs.readFileSync(path.join(home, ".claude", "skills", backups[0]!, "SKILL.md"), "utf8"),
+      ).toBe("first skill\n");
+      expect(
+        fs.readFileSync(path.join(home, ".claude", "skills", backups[1]!, "SKILL.md"), "utf8"),
+      ).toBe("second skill\n");
+    });
+
+    it("backup preserves symlinks inside the replaced tree (no dereference/ballooning)", () => {
+      const { root, home } = makeFixture();
+      fs.mkdirSync(TARGET(home));
+      fs.writeFileSync(path.join(TARGET(home), "SKILL.md"), "previous skill\n");
+      const bigDir = path.join(root, "big-tree");
+      fs.mkdirSync(path.join(bigDir, "node_modules"), { recursive: true });
+      fs.writeFileSync(path.join(bigDir, "node_modules", "pkg.js"), "x".repeat(4096));
+      fs.symlinkSync(path.join(bigDir, "node_modules"), path.join(TARGET(home), "node_modules"));
+      const r = run(root, home, ["--force", "--confirm"]);
+      expect(r.status).toBe(0);
+      const backups = fs
+        .readdirSync(path.join(home, ".claude", "skills"))
+        .filter((n) => n.startsWith("mini-movie-creator.backup-"));
+      expect(backups.length).toBe(1);
+      const backupLink = path.join(home, ".claude", "skills", backups[0]!, "node_modules");
+      // still a symlink inside the backup, not a dereferenced copy of the big tree
+      expect(fs.lstatSync(backupLink).isSymbolicLink()).toBe(true);
+      expect(fs.readlinkSync(backupLink)).toBe(path.join(bigDir, "node_modules"));
+    });
   });
 
   describe("--check", () => {
@@ -289,6 +354,22 @@ describe("SKL-003 personal-install.sh", () => {
       const { root, home } = makeFixture();
       const r = run(root, home, ["--check", "--source", CANON(root)]);
       expect(r.status).toBe(2);
+    });
+
+    it("rejects --dry-run together with --check", () => {
+      const { root, home } = makeFixture();
+      const r = run(root, home, ["--check", "--dry-run"]);
+      expect(r.status).toBe(2);
+    });
+
+    it("--help prints the full usage header including every documented mode", () => {
+      const { root, home } = makeFixture();
+      const r = run(root, home, ["--help"]);
+      expect(r.status).toBe(2);
+      // every mode line from the header comment must be present
+      for (const line of ["--dry-run", "--force --confirm", "--repo-root", "--source", "--check"]) {
+        expect(r.stdout).toContain(line);
+      }
     });
 
     it("records --repo-root in mmcs.env when the wrapper runs from a different checkout", () => {

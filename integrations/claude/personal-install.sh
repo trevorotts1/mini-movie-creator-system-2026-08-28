@@ -55,7 +55,10 @@ SOURCE=""
 REPO_ROOT_OVERRIDE=""
 
 print_usage() {
-  sed -n '2,42p' "${BASH_SOURCE[0]}" | grep -E '^#( |$)' | sed 's/^# \{0,1\}//'
+  # print the whole header comment (everything until the `set -euo pipefail` line),
+  # stripping the leading '# ' — no fragile line-number range that drifts when the
+  # header is edited.
+  awk 'NR < 2 { next } $0 == "set -euo pipefail" { exit } { sub(/^# ?/, ""); print }' "${BASH_SOURCE[0]}"
   exit 2
 }
 
@@ -72,8 +75,8 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [ "$MODE" = "check" ] && { [ "$FORCE" = "1" ] || [ "$CONFIRM" = "1" ] || [ -n "$REPO_ROOT_OVERRIDE" ] || [ -n "$SOURCE" ]; }; then
-  echo "ERROR: --force/--confirm/--source/--repo-root have no effect together with --check" >&2
+if [ "$MODE" = "check" ] && { [ "$FORCE" = "1" ] || [ "$CONFIRM" = "1" ] || [ "$DRY" = "1" ] || [ -n "$REPO_ROOT_OVERRIDE" ] || [ -n "$SOURCE" ]; }; then
+  echo "ERROR: --force/--confirm/--dry-run/--source/--repo-root have no effect together with --check" >&2
   exit 2
 fi
 if [ "$CONFIRM" = "1" ] && [ "$FORCE" != "1" ]; then
@@ -100,7 +103,6 @@ fi
 
 log()  { echo "$*"; }
 warn() { echo "WARN: $*" >&2; }
-fail() { echo "ERROR: $*" >&2; exit 1; }
 run()  { # prints what a dry run would do, else executes
   if [ "$DRY" = "1" ]; then log "DRY-RUN: $*"; else "$@"; fi
 }
@@ -168,13 +170,24 @@ write_env() {
 # ---- backup -----------------------------------------------------------------
 
 backup_existing() {
-  local stamp backup
+  local stamp backup i
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
   backup="$TARGET.backup-$stamp"
+  i=1
+  # Two forced replaces within the same second must never share a backup dir
+  # name: cp -R into an existing dir would nest the second copy inside the
+  # first backup and silently overwrite its files. Suffix -2, -3, ... instead.
+  while [ -e "$backup" ] || [ -L "$backup" ]; do
+    i=$((i + 1))
+    backup="$TARGET.backup-$stamp-$i"
+  done
   if [ "$DRY" = "1" ]; then
     log "DRY-RUN: would back up $TARGET -> $backup"
   else
-    cp -RpL "$TARGET" "$backup"
+    # -P: preserve symlinks inside the backup as links (never dereference):
+    # the replaced tree is restored exactly, and a link into a big tree
+    # (e.g. node_modules) cannot balloon or recurse the copy.
+    cp -RPp "$TARGET" "$backup"
     log "OK: backed up previous $TARGET -> $backup"
   fi
 }
