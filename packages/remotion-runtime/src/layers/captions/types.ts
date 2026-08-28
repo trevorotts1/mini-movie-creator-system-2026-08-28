@@ -44,8 +44,14 @@ export interface AlignmentTrackInput {
   readonly text?: string;
   /** Total audio duration in ms (optional; falls back to the last word end). */
   readonly durationMs?: number;
-  /** Word timings, in ms relative to the audio start. */
-  readonly words: ReadonlyArray<AlignmentWordInput>;
+  /** Word timings, in ms relative to the audio start. Either a flat word
+   * list (FISH-006 alignment) OR FISH-007's cue-grouped track — one of the
+   * two must be present. */
+  readonly words?: ReadonlyArray<AlignmentWordInput>;
+  /** FISH-007 CaptionTrack cue groups (alternative to `words`). */
+  readonly cues?: ReadonlyArray<AlignmentCueInput>;
+  /** FISH-007 sourceKey — mapped to `assetKey` provenance. */
+  readonly sourceKey?: string;
 }
 
 /** Loose word shape accepted on input (numbers may need normalization). */
@@ -53,6 +59,16 @@ export interface AlignmentWordInput {
   readonly word: string;
   readonly startMs: number;
   readonly endMs: number;
+  readonly speaker?: number;
+}
+
+/** FISH-007 `CaptionTrack` output shape (structural): cues instead of a
+ * flat word list. Accepted so the PRODUCTION hand-off (FISH-007 builds the
+ * track, VID-004 renders it) works without re-deriving words. */
+export interface AlignmentCueInput {
+  readonly words: ReadonlyArray<AlignmentWordInput>;
+  readonly startMs?: number;
+  readonly endMs?: number;
   readonly speaker?: number;
 }
 

@@ -75,8 +75,9 @@ export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({
     );
   }
   // The track was built at its own fps; the composition must agree or the
-  // word boundaries would silently shift. Fail loudly instead.
-  if (Math.round(fps) !== Math.round(track.fps)) {
+  // word boundaries would silently shift (29.97 vs 30 drifts by frame 100).
+  // Exact compare on the rounded value the ms→frames math actually used.
+  if (fps !== track.fps) {
     throw new CaptionTrackError(
       `CaptionsLayer: composition fps ${fps} != track fps ${track.fps} — rebuild the track at the composition fps`,
     );
@@ -141,10 +142,11 @@ export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({
         >
           {active.words.map((word, i) => {
             // Alignment boundary in frames — same conversion the track was
-            // built with (startFrame is baked into chunk frames; word frames
-            // here are track-relative and match chunkTrack's msToFrame math).
-            const start = msToFrame(word.startMs, fps);
-            const end = msToFrame(word.endMs, fps);
+            // built with. startFrame is baked into BOTH the chunk frames and
+            // the word boundaries (global timeline space), so the highlight
+            // can never drift from the chunk it sits inside.
+            const start = msToFrame(word.startMs, fps, track.startFrame);
+            const end = msToFrame(word.endMs, fps, track.startFrame);
             const started = prog(frame, start, start + 0.12 * fps);
             const isActive =
               frame >= start &&

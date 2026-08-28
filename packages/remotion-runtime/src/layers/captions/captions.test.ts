@@ -167,6 +167,17 @@ describe("timing sync — caption frame == alignment ms→frames", () => {
     // Upstream local_f discipline: global = round(global_s * fps) − from
     // inverted — frame(startMs=100) at 30fps from 480 → 3 + 480 = 483.
     expect(msToFrame(100, fps, MOUNT)).toBe(483);
+    // QC regression: chunk frames AND word boundaries live in the SAME
+    // global space when mounted — the highlight fires at the word, not
+    // startFrame frames early.
+    const chunks = chunkTrack(track, 2);
+    const c1 = chunks[0]!;
+    expect(c1.startFrame).toBe(MOUNT + 3); // 100ms @30fps + mount
+    const spoken = activeWordAt(c1, MOUNT + 5, fps, track.startFrame);
+    expect(spoken?.word).toBe("Pawn");
+    // Without the startFrame arg the same query would miss (frame 485 vs
+    // word span [3,10)) — proving the arg is load-bearing.
+    expect(activeWordAt(c1, MOUNT + 5, fps, 0)).toBeUndefined();
   });
 
   it("known-value check: 100ms @30fps == frame 3, 2100ms == frame 63", () => {
@@ -263,6 +274,24 @@ describe("chunkTrack / activeChunkAt / activeWordAt", () => {
     expect(() => chunkTrack(track, 0)).toThrow(CaptionTrackError);
   });
 
+  it("QC regression: chunk frames and activeWordAt agree in the SAME frame space (no double-conversion desync)", () => {
+    const fps = 30;
+    const MOUNT = 900; // mounted at frame 900
+    const track = buildCaptionTrack(ALIGNMENT, fps, { startFrame: MOUNT });
+    const chunks = chunkTrack(track, 4);
+    // Word boundaries derived the way the renderer does them (with
+    // startFrame) must fall INSIDE the chunk that carries the words.
+    chunks.forEach((chunk) => {
+      const first = chunk.words[0]!;
+      const last = chunk.words[chunk.words.length - 1]!;
+      expect(msToFrame(first.startMs, fps, MOUNT)).toBe(chunk.startFrame);
+      expect(msToFrame(last.endMs, fps, MOUNT)).toBe(chunk.endFrame);
+      expect(activeWordAt(chunk, chunk.startFrame, fps, MOUNT)?.word).toBe(
+        first.word,
+      );
+    });
+  });
+
   it("index re-exports the same functions (public surface)", () => {
     expect(chunkTrackReexport).toBe(chunkTrack);
   });
@@ -320,5 +349,62 @@ describe("word-exactness discipline (upstream gen_voice.py port)", () => {
     expect(track.words).toHaveLength(4);
     expect(track.words[0]).toMatchObject({ word: "Bishop", startMs: 0, endMs: 277 });
     expect(track.assetKey).toBe("fsh1:deadbeef");
+  });
+
+  it("accepts FISH-007's cue-grouped CaptionTrack output as-is (production hand-off)", () => {
+    // Shape mirrors FISH-007 CaptionTrack (packages/providers/src/fish-audio/
+    // captions/types.ts): cues, not flat words. QC regression: the original
+    // implementation rejected this real hand-off with "alignment has no words".
+    const fishTrack = {
+      sourceKey: "fsh1:cuefeed",
+      text: "Pawn to e4. Check.",
+      durationMs: 3200,
+      wordCount: 4,
+      builtAt: "2026-08-28T00:00:00Z",
+      cues: [
+        {
+          words: [
+            { word: "Pawn", startMs: 100, endMs: 340 },
+            { word: "to", startMs: 400, endMs: 470 },
+          ],
+          startMs: 100,
+          endMs: 470,
+        },
+        {
+          words: [
+            { word: "e4.", startMs: 520, endMs: 1400 },
+            { word: "Check.", startMs: 1600, endMs: 2100 },
+          ],
+          startMs: 520,
+          endMs: 2100,
+        },
+      ],
+      options: {},
+    };
+    const track = buildCaptionTrack(fishTrack, 30);
+    expect(track.words.map((w) => w.word)).toEqual([
+      "Pawn",
+      "to",
+      "e4.",
+      "Check.",
+    ]);
+    expect(track.words.map((w) => w.startMs)).toEqual([100, 400, 520, 1600]);
+    // sourceKey becomes provenance when no explicit assetKey given.
+    expect(track.assetKey).toBe("fsh1:cuefeed");
+    // Same timing math as the flat input — identical track words.
+    const flat = buildCaptionTrack(ALIGNMENT, 30);
+    expect(track.words.map((w) => [w.startMs, w.endMs])).toEqual(
+      flat.words.map((w) => [w.startMs, w.endMs]),
+    );
+    // Explicit assetKey still wins over sourceKey.
+    expect(
+      buildCaptionTrack(fishTrack, 30, { assetKey: "explicit" }).assetKey,
+    ).toBe("explicit");
+  });
+
+  it("throws when neither words nor cues are present", () => {
+    expect(() =>
+      buildCaptionTrack({ text: "orphan text" } as AlignmentTrackInput, 30),
+    ).toThrow(CaptionTrackError);
   });
 });
