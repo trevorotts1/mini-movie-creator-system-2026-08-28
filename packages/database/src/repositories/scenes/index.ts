@@ -24,6 +24,7 @@ export const VISUAL_SOURCE_TYPES = [
   "AI_STILL",
   "ANIMATED_STILL",
   "STOCK_OR_UPSCALED",
+  "NATIVE_GRAPHICS",
   "PENDING",
 ] as const;
 

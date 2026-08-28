@@ -43,6 +43,7 @@ CREATE TABLE scenes (
       'AI_STILL',
       'ANIMATED_STILL',
       'STOCK_OR_UPSCALED',
+      'NATIVE_GRAPHICS',
       'PENDING'
     )
   ),

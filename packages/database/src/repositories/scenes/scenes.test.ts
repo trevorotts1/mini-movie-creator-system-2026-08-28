@@ -70,6 +70,25 @@ describe("scenes repository", () => {
     expect(created.episodeId).toBeUndefined();
   });
 
+  it("accepts all four spec §22 visual source types plus PENDING", () => {
+    // §22: 1) generated character video, 2) AI still with Remotion
+    // treatment, 3) stock/B-roll, 4) native Remotion graphics — the schema
+    // must be able to record all four decisions, plus PENDING pre-decision.
+    const expected: SceneInput["visualSourceType"][] = [
+      "GENERATED_VIDEO",
+      "AI_STILL",
+      "STOCK_OR_UPSCALED",
+      "NATIVE_GRAPHICS",
+      "PENDING",
+    ];
+    for (const [index, type] of expected.entries()) {
+      const sceneId = `SC-VIS-${index}`;
+      const created = scenes.create(baseInput({ sceneId, visualSourceType: type }));
+      expect(created.visualSourceType).toBe(type);
+      expect(scenes.findById(sceneId)?.visualSourceType).toBe(type);
+    }
+  });
+
   it("rejects unknown planning status and visual source type", () => {
     expect(() => scenes.create(baseInput({ sceneId: "SC-BAD-1", planningStatus: "DREAMING" as never }))).toThrow(
       /unknown planning status/,
