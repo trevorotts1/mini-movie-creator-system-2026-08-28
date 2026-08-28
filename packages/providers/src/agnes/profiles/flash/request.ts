@@ -80,9 +80,11 @@ export function buildAgnesFlashRequest(input: AgnesFlashInput): AgnesFlashReques
   if (input.aspectRatio !== undefined) body.aspect_ratio = input.aspectRatio;
   if (input.firstFrameUrl !== undefined) body.first_frame = input.firstFrameUrl;
   if (input.lastFrameUrl !== undefined) body.last_frame = input.lastFrameUrl;
-  if (input.referenceImageUrls !== undefined)
+  // Empty arrays are never serialized: mode=text forbids an images/audios
+  // field outright, and an empty array carries no reference information.
+  if (input.referenceImageUrls !== undefined && input.referenceImageUrls.length > 0)
     body.images = [...input.referenceImageUrls];
-  if (input.referenceAudioUrls !== undefined)
+  if (input.referenceAudioUrls !== undefined && input.referenceAudioUrls.length > 0)
     body.audios = [...input.referenceAudioUrls];
   if (input.seed !== undefined) body.seed = input.seed;
   body.n = 1;

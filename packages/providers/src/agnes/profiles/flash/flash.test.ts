@@ -332,6 +332,29 @@ describe("buildAgnesFlashRequest", () => {
     req.images?.push("https://a/2.png");
     expect(imgs).toEqual(["https://a/1.png"]);
   });
+
+  it("omits empty reference arrays from the wire body (mode=text forbids them)", () => {
+    const req = buildAgnesFlashRequest({
+      ...BASE,
+      referenceImageUrls: [],
+      referenceAudioUrls: [],
+    });
+    expect(req.mode).toBe("text");
+    expect(req).not.toHaveProperty("images");
+    expect(req).not.toHaveProperty("audios");
+  });
+
+  it("keeps empty arrays out even in explicit reference mode (validator rejects that input)", () => {
+    // Validator: mode=reference with zero non-empty refs is an error, so the
+    // builder must never emit an images/audios field that could HTTP 400.
+    const req = buildAgnesFlashRequest({
+      ...BASE,
+      mode: "reference",
+      referenceImageUrls: [],
+    });
+    expect(req).not.toHaveProperty("images");
+    expect(req).not.toHaveProperty("audios");
+  });
 });
 
 describe("submitAgnesFlash", () => {
