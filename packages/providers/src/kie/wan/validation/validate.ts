@@ -33,16 +33,25 @@ function isReferenceValue(value: unknown): value is string {
 }
 
 /** Collect entries of a possibly-undefined reference array with their indexes. */
-function refEntries(values: string[] | undefined): Array<[number, string]> {
-  return (values ?? []).map((v, i) => [i, v] as [number, string]);
+function refEntries(values: unknown): Array<[number, string]> {
+  return Array.isArray(values) ? values.map((v, i) => [i, v] as [number, string]) : [];
 }
 
 /** Validate one reference array; returns the count and any INVALID_REFERENCE violations. */
 function validateReferenceArray(
-  values: string[] | undefined,
+  values: unknown,
   field: string,
   out: WanViolation[],
 ): number {
+  // Present but not an array (e.g. a JSON string or number) is malformed — flag it.
+  if (values !== undefined && !Array.isArray(values)) {
+    out.push({
+      code: "INVALID_REFERENCE",
+      field,
+      message: `${field} must be an array of reference strings`,
+    });
+    return 0;
+  }
   const entries = refEntries(values);
   for (const [i, v] of entries) {
     if (!isReferenceValue(v)) {
@@ -62,6 +71,20 @@ function validateReferenceArray(
  * violations found, not just the first, so callers can fix in one pass.
  */
 export function validateWanRequest(request: WanMultimodalRequest): WanValidationResult {
+  // The gate must reject malformed payloads structurally, never throw: it runs
+  // on caller-assembled data (often parsed JSON) BEFORE the provider call.
+  if (request === null || typeof request !== "object") {
+    return {
+      ok: false,
+      violations: [
+        {
+          code: "INVALID_REFERENCE",
+          field: "request",
+          message: "request must be a WanMultimodalRequest object",
+        },
+      ],
+    };
+  }
   const violations: WanViolation[] = [];
 
   // --- prompt -------------------------------------------------------------
@@ -120,14 +143,16 @@ export function validateWanRequest(request: WanMultimodalRequest): WanValidation
   }
 
   // --- first/last-frame values --------------------------------------------
-  if (hasFirstFrame && !isReferenceValue(request.firstFrameUrl)) {
+  // A present but non-string frame value is malformed, not absent — flag it
+  // instead of silently ignoring it while the request continues to the provider.
+  if (request.firstFrameUrl !== undefined && !isReferenceValue(request.firstFrameUrl)) {
     violations.push({
       code: "INVALID_REFERENCE",
       field: "firstFrameUrl",
       message: "firstFrameUrl must be a non-empty http(s) URL or data URI",
     });
   }
-  if (hasLastFrame && !isReferenceValue(request.lastFrameUrl)) {
+  if (request.lastFrameUrl !== undefined && !isReferenceValue(request.lastFrameUrl)) {
     violations.push({
       code: "INVALID_REFERENCE",
       field: "lastFrameUrl",

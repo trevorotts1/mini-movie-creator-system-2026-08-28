@@ -310,3 +310,78 @@ describe("gate-before-call contract shape", () => {
     expect(result.ok).toBe(true);
   });
 });
+
+describe("malformed payload handling (never throw, always structured rejection)", () => {
+  it("rejects null / undefined / primitives without throwing", () => {
+    for (const bad of [null, undefined, 42, "prompt", true]) {
+      const result = validateWanRequest(bad as unknown as WanMultimodalRequest);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.violations[0]?.code).toBe("INVALID_REFERENCE");
+        expect(result.violations[0]?.field).toBe("request");
+      }
+    }
+  });
+
+  it("rejects array payloads structurally (object without prompt) without throwing", () => {
+    const result = validateWanRequest([] as unknown as WanMultimodalRequest);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.violations.map((v) => v.code)).toContain("MISSING_PROMPT");
+    }
+  });
+
+  it("rejects non-array reference fields with INVALID_REFERENCE instead of crashing", () => {
+    const result = validateWanRequest(
+      baseRequest({ referenceImages: "https://cdn.example.test/a.png" as unknown as string[] }),
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.violations.map((v) => v.code)).toContain("INVALID_REFERENCE");
+      expect(result.violations.map((v) => v.field)).toContain("referenceImages");
+    }
+  });
+
+  it("rejects non-array referenceVideos/referenceAudio fields", () => {
+    for (const field of ["referenceVideos", "referenceAudio"] as const) {
+      const result = validateWanRequest(
+        baseRequest({ [field]: 7 as unknown as string[] }),
+      );
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.violations.map((v) => v.field)).toContain(field);
+    }
+  });
+
+  it("flags present-but-non-string firstFrameUrl/lastFrameUrl instead of silently ignoring", () => {
+    const result = validateWanRequest(
+      baseRequest({ firstFrameUrl: 123 as unknown as string, lastFrameUrl: true as unknown as string }),
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      const fields = result.violations.map((v) => v.field);
+      expect(fields).toContain("firstFrameUrl");
+      expect(fields).toContain("lastFrameUrl");
+    }
+  });
+
+  it("accepts undefined (absent) frame URLs — optional fields stay optional", () => {
+    expect(validateWanRequest(baseRequest({ firstFrameUrl: undefined })).ok).toBe(true);
+  });
+
+  it("non-array references present alongside frames still produce MODE_CONFLICT", () => {
+    // Array check happens on count; a non-array must not mask a real mode conflict.
+    const result = validateWanRequest(
+      baseRequest({
+        referenceImages: ["https://cdn.example.test/a.png"],
+        referenceVideos: 1 as unknown as string[],
+        firstFrameUrl: URL_A,
+      }),
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      const codes = result.violations.map((v) => v.code);
+      expect(codes).toContain("MODE_CONFLICT");
+      expect(codes).toContain("INVALID_REFERENCE");
+    }
+  });
+});
