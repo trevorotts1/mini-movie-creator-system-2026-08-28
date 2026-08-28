@@ -1,0 +1,9 @@
+{
+  "taskId": "SKL-003",
+  "phase": "BUILDER_DONE",
+  "commit": "",
+  "testsRun": "npx vitest run --config integrations/claude/vitest.config.mts -> 22/22 pass (exit 0); npm test in integrations/claude -> 22/22 pass (exit 0); tsc --noEmit -p integrations/claude/tsconfig.json -> exit 0; bash -n integrations/claude/personal-install.sh -> exit 0; live: bash integrations/claude/personal-install.sh --check -> exit 0 with canonical present (SKL-001 tree staged in worktree) / exit 1 with honest warn when SKL-001 not yet on integration; live: source ~/.mmcs/mmcs.env from /tmp -> mmcs-status.sh via personal symlink exits 0",
+  "notes": "Claude personal install (spec §27 target 2): personal-install.sh creates $HOME/.claude/skills/mini-movie-creator -> canonical source (absolute symlink), writes $HOME/.mmcs/mmcs.env (MMCS_REPO_ROOT/MMCS_CLI — the escape hatch for out-of-repo engine locate; mmcs-status.sh walk-up stops at $HOME through the personal symlink); never destroys an existing personal skill without BOTH --force AND --confirm, full backup to <target>.backup-<timestamp>/ first (wrong-symlink repoint needs no backup); --check/--dry-run/--source/--repo-root; 22 vitest tests drive the real script in fake-$HOME fixtures (real $HOME never touched); live install recorded; skill-discovery roots documented (claude: ~/.claude/skills, claude-nine: ~/.claude-nine/skills primary + sync from ~/.claude/skills via sync-nine-skills.sh, nine's real dirs win); tsconfig gets types:node (SKL-004's unmerged branch has the same fix — merge-safe union include); canonical tree still pending on SKL-001, --check warns honestly until it merges (same lifecycle as SKL-002)",
+  "blockers": [],
+  "updatedAt": "2026-08-28T11:49:00Z"
+}
