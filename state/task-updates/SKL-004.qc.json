@@ -2,15 +2,15 @@
   "taskId": "SKL-004",
   "phase": "PASS",
   "commit": "fda43aa",
-  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
-  "rebaseCommit": "0fe1de9",
-  "checksRun": "bash integrations/claude/nine-verify.sh -> PASS=12 FAIL=0 (real-skill step 6 skip recorded, SKL-001 merge pending); bash integrations/claude/nine-verify.sh with canonical skill content from task/SKL-001-canonical-skill extracted into worktree skills/ -> PASS=13 FAIL=0 incl. step 6 real /mini-movie-creator live probe; bash integrations/claude/nine-verify.sh --selftest -> PASS=5 FAIL=0; npx vitest run integrations/claude --config apps/cli/vitest.config.ts -> 15 passed; npx tsc --noEmit -p integrations/claude/tsconfig.json -> clean; shellcheck -S warning nine-verify.sh -> clean; npx vitest run --config apps/cli/vitest.config.ts apps/cli (regression) -> 13 passed",
+  "rebasedOnto": "0e9b00eeed15d213f8dc31a7321af132f5c9ae9d",
+  "rebaseCommit": "2f5efab",
+  "checksRun": "post-rebase batch-7: npx vitest run --config vitest.config.mts (integrations/claude) -> 27 passed; npx tsc --noEmit (integrations/claude) -> clean; npx pnpm -r run typecheck -> all 17 workspace projects Done, rc=0; npx pnpm -r run test -> rc=0 (claude 27, cli 63, openclaw 23, rest passWithNoTests); npx vitest run packages/database/src/repositories/jobs packages/qc/src/identity -> 47 passed; npx vitest run packages/providers/src/kie/__tests__ packages/providers/src/fish-audio packages/remotion-runtime/src/{layers/generated-clips,shot-replacement} packages/scene-intelligence/src/concept packages/capability-registry/src -> 660 passed 1 skipped; git merge-tree merge-base HEAD origin/integration -> no conflicts (rc=0). Pre-rebase evidence: bash integrations/claude/nine-verify.sh -> PASS=12 FAIL=0 (real-skill step 6 skip recorded, SKL-001 merge pending); with canonical skill content from task/SKL-001-canonical-skill -> PASS=13 FAIL=0 incl. step 6 live probe; nine-verify.sh --selftest -> PASS=5 FAIL=0; shellcheck -S warning nine-verify.sh -> clean",
   "defectsFound": 2,
   "defectsFixed": 2,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T19:00:00Z",
-  "notes": "Added step 6: fresh claude-nine session invokes the REAL /mini-movie-creator skill and calls the mmcs engine (SKL-004 acceptance) \u2014 proven live PASS=13 with canonical SKL-001 content, recorded skip (never pass) until SKL-001 merges; doc updated with recorded evidence and 3 model calls.",
+  "notes": "Rebased onto origin/integration 0e9b00e (batch-7): single conflict integrations/claude/tsconfig.json resolved by unioning include globs (kept SKL-004's *.ts + src/**/*.ts, kept integration's src/**/*.test.ts); both compilerOptions preserved. All workspace typechecks + tests green post-merge. Step 6 of nine-verify: fresh claude-nine session invokes the REAL /mini-movie-creator skill and calls the mmcs engine (SKL-004 acceptance) \u2014 proven live PASS=13 with canonical SKL-001 content, recorded skip (never pass) until SKL-001 merges.",
   "blockers": [
     "SKL-001: canonical skill (skills/mini-movie-creator) not yet merged into integration \u2014 step 6 of nine-verify.sh records a skip until it lands"
   ]
