@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-003",
   "phase": "BUILDER_DONE",
-  "commit": "3dabcd4",
+  "commit": "aae22b6",
   "testsRun": "npx vitest run packages/character-library/src/candidates -> 22 passed (2 files); npx tsc --noEmit -p packages/character-library -> clean",
   "notes": "3-candidate flow: DRAFT->REVIEW->APPROVED/REJECTED state machine (REJECTED terminal, never selectable), Try Again chains new rounds of 3 NEW candidates, pure domain no deps",
   "blockers": [],
