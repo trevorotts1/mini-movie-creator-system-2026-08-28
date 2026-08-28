@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-002",
+  "phase": "PASS",
+  "commit": "5bb278834268421e3d249d5cbbe0f3ce46675582",
+  "checksRun": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true npx vitest run packages/capability-registry/src/data (34/34 pass); pnpm -r run typecheck (all packages clean); security audit (no secrets, no injections, no path traversal)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "Verified seed profiles for Agnes Video 2.5 Flash + regular + Image 2.1 Flash, Seedance 2.0 Mini, Wan 3.0 + Prime, Fish S2.1 family (4 models), GLM 5.3 Flash / DeepSeek V4 Flash Vision Exp / Qwen 3.8 Flash / Gemini 3.7 Flash; provenance triple enforced; UNKNOWN hard prompt ceiling for Agnes asserted; 4 docs files in docs/provider-capabilities/; all 34 tests pass; typecheck clean.",
+  "blockers": []
+}
