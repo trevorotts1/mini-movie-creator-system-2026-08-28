@@ -1,0 +1,21 @@
+{
+  "note": "Standard chess-piece SVG set (cburnett) for the shared chess kit remotion/src/lib/chess.tsx, which renders pieces via staticFile('library/chess/<code>.svg'). Upstream shipped without this directory (BASELINE-REPORT.md PF-1: Short1Chess crashed on every render). White pieces (w*) use #f8f8f8 fill, black (b*) #101010, both with black outlines — designed to read on the kit's board colors. See LICENSE.txt for the GPL/BSD-3/GFDL tri-license provenance.",
+  "source": "lichess-org/lila public/piece/cburnett",
+  "license": "GPL-2.0-or-later / BSD-3-Clause / GFDL (tri-license, cburnett)",
+  "fetched": "2026-08-28",
+  "used_in": ["short-1-chess"],
+  "pieces": [
+    { "code": "wK", "file": "wK.svg", "name": "white king" },
+    { "code": "wQ", "file": "wQ.svg", "name": "white queen" },
+    { "code": "wR", "file": "wR.svg", "name": "white rook" },
+    { "code": "wB", "file": "wB.svg", "name": "white bishop" },
+    { "code": "wN", "file": "wN.svg", "name": "white knight" },
+    { "code": "wP", "file": "wP.svg", "name": "white pawn" },
+    { "code": "bK", "file": "bK.svg", "name": "black king" },
+    { "code": "bQ", "file": "bQ.svg", "name": "black queen" },
+    { "code": "bR", "file": "bR.svg", "name": "black rook" },
+    { "code": "bB", "file": "bB.svg", "name": "black bishop" },
+    { "code": "bN", "file": "bN.svg", "name": "black knight" },
+    { "code": "bP", "file": "bP.svg", "name": "black pawn" }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "taskId": "GHL-004",
+  "phase": "BUILDER_DONE",
+  "commit": "2da4698",
+  "testsRun": "npx vitest run packages/media-storage/src/ghl/tree -> 1 file, 11/11 passed; npx tsc --noEmit -p packages/media-storage -> clean",
+  "notes": "Idempotent Convert and Flow tree (spec \u00a717): search-before-create at every level via injected GhlFoldersClient seam (GHL-001/002/003 adapters plug in later); full Character Library / Series (+Series Bible, Season NN, SNNEE - Title with 01-09 subfolders) / Standalone Movies hierarchy; recording mock proves second run creates zero duplicates, partial trees only fill gaps, exact-name matching prevents near-duplicate roots.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
