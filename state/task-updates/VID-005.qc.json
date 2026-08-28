@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-005",
+  "phase": "PASS",
+  "commit": "982ba1d",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/layers/generated-clips (16/16 PASS via JSON reporter); tsc --noEmit packages/remotion-runtime (exit 0); package-wide vitest run packages/remotion-runtime (16/16 PASS); secret/exec/path-traversal scan of owned paths (clean); diff vs origin/integration reviewed (8 files, 934 insertions)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:15:00Z",
+  "notes": "Fixed explicit inSeconds bypassing validation (NaN/negative/Infinity produced corrupt fromFrame slots); regression test added; all green.",
+  "blockers": []
+}
