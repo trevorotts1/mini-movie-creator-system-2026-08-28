@@ -14,3 +14,4 @@ export {
 } from "./types.js";
 export { MIGRATIONS } from "./registry.js";
 export { baselineMigrations } from "./000-init/index.js";
+export { scenesMigrations } from "./030-scenes-shots/index.js";
