@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-007",
+  "phase": "PASS",
+  "commit": "5675cdd4dfdd4b3bd9667610415ca60212da1109",
+  "checksRun": "npx vitest run packages/capability-registry/src/llm-registry/llm-registry.test.ts; npx tsc -p packages/capability-registry/tsconfig.json --noEmit",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Verified LLM registry schemas, presets, 7 selection slots, OpenRouter model ID support, zod dependency added to package.json, and exports aligned in index.ts.",
+  "blockers": []
+}
