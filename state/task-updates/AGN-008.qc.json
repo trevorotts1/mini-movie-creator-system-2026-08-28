@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-008",
+  "phase": "PASS",
+  "commit": "",
+  "checksRun": "npx vitest run packages/providers/src/agnes/validation -> 48/48; npx vitest run packages/providers -> 88/88; tsc --noEmit -p packages/providers -> clean; secret/shell/retry scan on owned paths -> clean",
+  "defectsFound": 6,
+  "defectsFixed": 6,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Fixed 6 defects: non-array reference fields threw TypeError (now INVALID_REFERENCE_ENTRY/VIDEO_ENTRY issues); non-string frame fields silently dropped (now INVALID_FRAME_ENTRY); NaN/infinity/4.5 seconds passed validation and payload emitted NaN/4.5 (now INVALID_SECONDS); requireAudio unvalidated (now boolean-checked); buildAgnesVideoPayload emitted empty/garbage optional fields when called standalone (now omitted). 6 regression tests added. All green.",
+  "blockers": []
+}

@@ -75,6 +75,8 @@ export function validateAgnesRequest(
   }
 
   // --- fields present? ------------------------------------------------------
+  const firstRaw = isSet(shape.firstFrameUrl);
+  const lastRaw = isSet(shape.lastFrameUrl);
   const firstPresent = isPresent(shape.firstFrameUrl);
   const lastPresent = isPresent(shape.lastFrameUrl);
   const imagesPresent = hasEntries(shape.referenceImageUrls);
@@ -173,6 +175,20 @@ export function validateAgnesRequest(
   // mode === null: the mode-level issue is already reported above.
 
   // --- per-model capability flags -------------------------------------------
+  if (firstRaw && typeof shape.firstFrameUrl !== "string") {
+    issues.push({
+      field: "firstFrameUrl",
+      code: "INVALID_FRAME_ENTRY",
+      message: "firstFrameUrl must be a non-empty URL string when present",
+    });
+  }
+  if (lastRaw && typeof shape.lastFrameUrl !== "string") {
+    issues.push({
+      field: "lastFrameUrl",
+      code: "INVALID_FRAME_ENTRY",
+      message: "lastFrameUrl must be a non-empty URL string when present",
+    });
+  }
   if (firstPresent && !profile.references?.firstFrame) {
     issues.push({
       field: "firstFrameUrl",
@@ -234,55 +250,97 @@ export function validateAgnesRequest(
   );
 
   // --- reference entry shapes -------------------------------------------------
-  shape.referenceImageUrls?.forEach((url, index) => {
-    if (typeof url !== "string" || url.trim().length === 0) {
-      issues.push({
-        field: `referenceImageUrls[${index}]`,
-        code: "INVALID_REFERENCE_ENTRY",
-        message: "reference image entries must be non-empty URL strings",
-      });
-    }
-  });
-  shape.referenceAudioUrls?.forEach((url, index) => {
-    if (typeof url !== "string" || url.trim().length === 0) {
-      issues.push({
-        field: `referenceAudioUrls[${index}]`,
-        code: "INVALID_REFERENCE_ENTRY",
-        message: "reference audio entries must be non-empty URL strings",
-      });
-    }
-  });
-  shape.referenceVideos?.forEach((video, index) => {
-    const entry = video as Partial<AgnesReferenceVideo> | null | undefined;
-    if (
-      entry === null ||
-      typeof entry !== "object" ||
-      typeof entry.url !== "string" ||
-      entry.url.trim().length === 0
-    ) {
-      issues.push({
-        field: `referenceVideos[${index}]`,
-        code: "INVALID_REFERENCE_VIDEO_ENTRY",
-        message:
-          "reference video entries must be objects with a non-empty url (startSeconds/requireAudio optional)",
-      });
-    } else if (
-      entry.startSeconds !== undefined &&
-      (typeof entry.startSeconds !== "number" || !Number.isFinite(entry.startSeconds))
-    ) {
-      issues.push({
-        field: `referenceVideos[${index}].startSeconds`,
-        code: "INVALID_REFERENCE_VIDEO_ENTRY",
-        message: "reference video startSeconds must be a number",
-      });
-    }
-  });
+  if (shape.referenceImageUrls !== undefined && !Array.isArray(shape.referenceImageUrls)) {
+    issues.push({
+      field: "referenceImageUrls",
+      code: "INVALID_REFERENCE_ENTRY",
+      message: "referenceImageUrls must be an array of URL strings",
+    });
+  } else {
+    shape.referenceImageUrls?.forEach((url, index) => {
+      if (typeof url !== "string" || url.trim().length === 0) {
+        issues.push({
+          field: `referenceImageUrls[${index}]`,
+          code: "INVALID_REFERENCE_ENTRY",
+          message: "reference image entries must be non-empty URL strings",
+        });
+      }
+    });
+  }
+  if (shape.referenceAudioUrls !== undefined && !Array.isArray(shape.referenceAudioUrls)) {
+    issues.push({
+      field: "referenceAudioUrls",
+      code: "INVALID_REFERENCE_ENTRY",
+      message: "referenceAudioUrls must be an array of URL strings",
+    });
+  } else {
+    shape.referenceAudioUrls?.forEach((url, index) => {
+      if (typeof url !== "string" || url.trim().length === 0) {
+        issues.push({
+          field: `referenceAudioUrls[${index}]`,
+          code: "INVALID_REFERENCE_ENTRY",
+          message: "reference audio entries must be non-empty URL strings",
+        });
+      }
+    });
+  }
+  if (shape.referenceVideos !== undefined && !Array.isArray(shape.referenceVideos)) {
+    issues.push({
+      field: "referenceVideos",
+      code: "INVALID_REFERENCE_VIDEO_ENTRY",
+      message: "referenceVideos must be an array of video-entry objects",
+    });
+  } else {
+    shape.referenceVideos?.forEach((video, index) => {
+      const entry = video as Partial<AgnesReferenceVideo> | null | undefined;
+      if (
+        entry === null ||
+        typeof entry !== "object" ||
+        typeof entry.url !== "string" ||
+        entry.url.trim().length === 0
+      ) {
+        issues.push({
+          field: `referenceVideos[${index}]`,
+          code: "INVALID_REFERENCE_VIDEO_ENTRY",
+          message:
+            "reference video entries must be objects with a non-empty url (startSeconds/requireAudio optional)",
+        });
+        return;
+      }
+      if (
+        entry.startSeconds !== undefined &&
+        (typeof entry.startSeconds !== "number" || !Number.isFinite(entry.startSeconds))
+      ) {
+        issues.push({
+          field: `referenceVideos[${index}].startSeconds`,
+          code: "INVALID_REFERENCE_VIDEO_ENTRY",
+          message: "reference video startSeconds must be a finite number",
+        });
+      }
+      if (
+        entry.requireAudio !== undefined &&
+        typeof entry.requireAudio !== "boolean"
+      ) {
+        issues.push({
+          field: `referenceVideos[${index}].requireAudio`,
+          code: "INVALID_REFERENCE_VIDEO_ENTRY",
+          message: "reference video requireAudio must be a boolean",
+        });
+      }
+    });
+  }
 
   // --- duration ---------------------------------------------------------------
   if (shape.seconds !== undefined) {
     let numeric: number | null = null;
     if (typeof shape.seconds === "number") {
-      numeric = shape.seconds;
+      // Provider takes whole-second strings ("4"–"12"); reject NaN and
+      // non-integer numbers instead of forwarding them as "NaN"/"4.5".
+      if (!Number.isFinite(shape.seconds) || !Number.isInteger(shape.seconds)) {
+        numeric = null;
+      } else {
+        numeric = shape.seconds;
+      }
     } else if (
       typeof shape.seconds === "string" &&
       /^[0-9]+$/.test(shape.seconds.trim())
@@ -414,6 +472,11 @@ export function effectiveMode(
 
 function isPresent(value: string | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+/** True when the field is set (including wrong types and empty strings). */
+function isSet(value: unknown): boolean {
+  return value !== undefined && value !== null;
 }
 
 function hasEntries(value: readonly unknown[] | undefined): boolean {

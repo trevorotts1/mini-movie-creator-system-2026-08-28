@@ -487,6 +487,80 @@ describe("buildAgnesVideoPayload", () => {
   });
 });
 
+describe("malformed input hardening (QC regressions)", () => {
+  it("returns issues instead of throwing on non-array reference fields", () => {
+    const cases: Array<{ bad: AgnesVideoRequestShape; code: string }> = [
+      { bad: { referenceImageUrls: "abc" as never }, code: "INVALID_REFERENCE_ENTRY" },
+      { bad: { referenceAudioUrls: "abc" as never }, code: "INVALID_REFERENCE_ENTRY" },
+      { bad: { referenceVideos: "abc" as never }, code: "INVALID_REFERENCE_VIDEO_ENTRY" },
+    ];
+    for (const { bad, code } of cases) {
+      const result = validateAgnesRequest(REGULAR, {
+        prompt: "x",
+        ...bad,
+      } as AgnesVideoRequestShape);
+      expect(result.ok).toBe(false);
+      expect(result.issues.length).toBeGreaterThan(0);
+      expect(result.issues.map((i) => i.code)).toContain(code);
+    }
+  });
+
+  it("returns issues instead of throwing on non-array videos on Flash", () => {
+    const result = validateAgnesRequest(FLASH, {
+      prompt: "x",
+      referenceVideos: "abc" as never,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+
+  it("flags non-string frame fields instead of silently dropping them", () => {
+    const result = validateAgnesRequest(FLASH, {
+      prompt: "x",
+      firstFrameUrl: 123 as never,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((i) => i.code)).toContain("INVALID_FRAME_ENTRY");
+  });
+
+  it("rejects NaN and non-integer number seconds instead of emitting NaN/4.5", () => {
+    for (const seconds of [Number.NaN, 4.5, Number.POSITIVE_INFINITY]) {
+      const result = validateAgnesRequest(FLASH, {
+        prompt: "x",
+        seconds: seconds as never,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.issues.map((i) => i.code)).toContain("INVALID_SECONDS");
+    }
+  });
+
+  it("validates requireAudio as a boolean on regular (videos supported)", () => {
+    const result = validateAgnesRequest(REGULAR, {
+      prompt: "x",
+      referenceVideos: [
+        { url: "https://a/v.mp4", requireAudio: "yes" as never },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((i) => i.code)).toContain(
+      "INVALID_REFERENCE_VIDEO_ENTRY",
+    );
+  });
+
+  it("buildAgnesVideoPayload never emits empty or garbage optional fields", () => {
+    const payload = buildAgnesVideoPayload("agnes-video-2.5", {
+      prompt: "x",
+      mode: "text",
+      seconds: "" as never,
+      aspectRatio: "  ",
+      size: "",
+    });
+    expect(payload.seconds).toBeUndefined();
+    expect(payload.aspect_ratio).toBeUndefined();
+    expect(payload.size).toBeUndefined();
+  });
+});
+
 describe("round-trip with the CAP-002 registry seeds", () => {
   it("accepts every mode the registry seed declares supported", () => {
     // The registry (CAP-002) declares Flash/regular firstFrame/lastFrame/

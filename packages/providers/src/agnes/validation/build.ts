@@ -68,13 +68,16 @@ export function buildAgnesVideoPayload(
       return api;
     });
   if (shape.seconds !== undefined) {
-    body.seconds =
+    // The validator guarantees whole seconds; guard standalone calls so the
+    // payload never carries "" / "NaN" / "4.5".
+    const seconds =
       typeof shape.seconds === "number"
         ? String(shape.seconds)
         : shape.seconds.trim();
+    if (seconds.length > 0) body.seconds = seconds;
   }
-  if (shape.size !== undefined) body.size = shape.size;
-  if (shape.aspectRatio !== undefined) body.aspect_ratio = shape.aspectRatio;
+  if (isPresent(shape.size)) body.size = shape.size;
+  if (isPresent(shape.aspectRatio)) body.aspect_ratio = shape.aspectRatio;
   return body;
 }
 
