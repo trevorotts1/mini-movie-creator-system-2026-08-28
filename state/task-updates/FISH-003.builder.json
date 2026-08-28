@@ -1,0 +1,9 @@
+{
+  "taskId": "FISH-003",
+  "phase": "BUILDER_DONE",
+  "commit": "88c4c17",
+  "testsRun": "npx vitest run packages/providers/src/fish-audio/tts → 18/18 passed; tsc adapter overlay vs FISH-001 client → clean (module imports FISH-001 client, not yet on integration — merge FISH-001 first)",
+  "notes": "Dialogue TTS runner: job persisted before synthesis (§21), separate dialogue_audio asset with no video binding (§30), providerTaskId stamped on job+asset, durable byte store + cross-ref hash dedupe, resume without resynthesis",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
