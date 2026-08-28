@@ -1,7 +1,7 @@
 {
   "taskId": "GHL-007",
   "phase": "PASS",
-  "commit": "PENDING",
+  "commit": "3f137dd5a976ba6110a94b3cbc57db48ce328a3b",
   "checksRun": "npx vitest run packages/media-storage/src/ghl/validation (43/43 green, exit 0); npx tsc --noEmit (packages/media-storage, exit 0); node --experimental-strip-types SSRF bypass probes (all blocked); grep exec/spawn/fetch/net (clean); no eslint config in scaffold (n/a)",
   "defectsFound": 3,
   "defectsFixed": 3,
