@@ -1,9 +1,9 @@
 {
   "taskId": "VID-007",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
-  "testsRun": "npx vitest run packages/remotion-runtime/src/layers/stock -> 1 file, 18/18 passed (exit 0); npx tsc --noEmit -p packages/remotion-runtime -> clean",
-  "notes": "Stock/B-roll layer per spec §22: placeStockShots places resolved stock clips only for generic purposes (establishing/broll) on stock_broll-sourced shots; guard (evaluateStockGuard/assertStockAllowed/StockPolicyViolationError) rejects stock substitution for recurring main characters and non-generic purposes; Pexels/Pixabay adapter interfaces stubbed (createStockAdapter, StockAdapter contract) with no network code.",
+  "commit": "9de758206152a13c05976d3331d58bb47996e33d",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/stock-layer -> 1 file, 27/27 passed (exit 0); npx tsc --noEmit -p packages/remotion-runtime -> clean (exit 0)",
+  "notes": "Stock/B-roll layer per spec §22 at owned path src/stock-layer/: placeStockShots places only stock_broll-sourced shots with generic purposes (establishing/broll); guard (evaluateStockGuard/assertStockAllowed/StockPolicyViolationError) rejects stock substitution for recurring main characters; license provenance (StockLicenseInfo kind/attribution/licenseUrl/sourceUrl/sha256/verifiedAt) enforced by isLicenseSafe/assertLicenseSafe/StockLicenseError so unknown-license clips never reach the timeline; createLicenseSafePlaceholder gives search/select records (provider page URL, no binary committed); Pexels/Pixabay adapters stubbed, no network code. Path moved from layers/stock to stock-layer to match ownership.md owned path + acceptance command.",
   "blockers": [],
-  "updatedAt": "2026-08-28T15:55:00Z"
+  "updatedAt": "2026-08-28T18:25:00Z"
 }
