@@ -116,6 +116,40 @@ describe("buildAgnesImageComposeRequest — wire shape per doc table", () => {
     }
   });
 
+  it("rejects a missing, empty or whitespace-only prompt (doc: prompt REQUIRED)", () => {
+    for (const prompt of ["", "   ", "\n\t"]) {
+      const result = buildAgnesImageComposeRequest({ ...BASE, prompt });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe("INVALID_REQUEST");
+        expect(result.error.message).toContain("non-empty prompt");
+      }
+    }
+  });
+
+  it("rejects a non-https or non-data image URL before any HTTP call", () => {
+    const result = buildAgnesImageComposeRequest({
+      ...BASE,
+      images: [{ url: "http://insecure.example.com/ref.png" }],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("INVALID_REQUEST");
+      expect(result.error.message).toContain("image[0]");
+    }
+  });
+
+  it("accepts public https and data: URIs as input images", () => {
+    const result = buildAgnesImageComposeRequest({
+      ...BASE,
+      images: [
+        { url: "https://cdn.example/a.png" },
+        { url: "data:image/png;base64,AAAA" },
+      ],
+    });
+    expect(result.ok).toBe(true);
+  });
+
   it("does NOT invent a max image count the doc never states (UNKNOWN policy)", () => {
     expect(validateComposeInputCount(Array.from({ length: 12 }, () => ({}))).ok).toBe(true);
   });
@@ -195,6 +229,10 @@ describe("validateComposeOutputConstraints — doc-stated tiers/ratios", () => {
     if (!result.ok) {
       expect(result.error.code).toBe("INVALID_REQUEST");
     }
+  });
+
+  it("rejects an invalid mode as unsupported (fail-closed default)", () => {
+    expect(isAgnesImageModeSupported("not-a-mode" as never)).toBe(false);
   });
 });
 

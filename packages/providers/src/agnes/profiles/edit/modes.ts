@@ -35,6 +35,9 @@ export function isAgnesImageModeSupported(mode: AgnesImageEditMode): boolean {
       return AGNES_IMAGE_EDIT_CAPABILITY.compose.supported;
     case "masked-edit":
       return AGNES_IMAGE_EDIT_CAPABILITY.maskedEdit.supported;
+    default:
+      // Fail closed: a mode this module has never verified is unsupported.
+      return false;
   }
 }
 
@@ -127,4 +130,46 @@ export function validateComposeInputCount(images: readonly unknown[]): AgnesImag
     return { ok: false, error };
   }
   return { ok: true, value: images.length };
+}
+
+/**
+ * PROMPT GATE — the doc declares `prompt` REQUIRED. A missing, empty or
+ * whitespace-only prompt fails with INVALID_REQUEST before any HTTP call
+ * (runbook §16 pre-request validation). No character ceiling is enforced —
+ * the doc states none (UNKNOWN policy, never invented).
+ */
+export function validateComposePrompt(prompt: unknown): AgnesImageResult<string> {
+  if (typeof prompt !== "string" || prompt.trim().length === 0) {
+    const error: AgnesImageError = {
+      code: "INVALID_REQUEST",
+      message:
+        "Compose mode requires a non-empty prompt (text instruction for the composition).",
+    };
+    return { ok: false, error };
+  }
+  return { ok: true, value: prompt };
+}
+
+/**
+ * REFERENCE URL GATE — the doc accepts public HTTPS URLs and Data URI Base64
+ * only ("the provider fetches the URL itself"). Anything else (http://,
+ * ftp://, relative paths, garbage) fails with INVALID_REQUEST before any
+ * HTTP call so a provider-side fetch failure never happens silently.
+ */
+export function validateComposeImageUrls(
+  images: readonly { url: string }[],
+): AgnesImageResult<true> {
+  for (let i = 0; i < images.length; i++) {
+    const url = images[i]?.url;
+    if (typeof url !== "string" || (!url.startsWith("https://") && !url.startsWith("data:"))) {
+      const error: AgnesImageError = {
+        code: "INVALID_REQUEST",
+        message:
+          `image[${i}] must be a public HTTPS URL or a data: URI ` +
+          `(Agnes fetches the URL itself; private/cookie-protected hosts are not reachable).`,
+      };
+      return { ok: false, error };
+    }
+  }
+  return { ok: true, value: true };
 }

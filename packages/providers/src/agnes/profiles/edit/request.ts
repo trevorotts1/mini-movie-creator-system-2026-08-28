@@ -18,17 +18,27 @@ import {
   type AgnesImageResult,
 } from "./types.js";
 import {
+  validateComposeImageUrls,
   validateComposeInputCount,
   validateComposeOutputConstraints,
+  validateComposePrompt,
 } from "./modes.js";
 
 /** Build the POST /v1/images/generations body for a compose request. */
 export function buildAgnesImageComposeRequest(
   input: AgnesImageComposeInput,
 ): AgnesImageResult<AgnesImageComposeRequest> {
+  const prompt = validateComposePrompt(input.prompt);
+  if (!prompt.ok) {
+    return prompt;
+  }
   const count = validateComposeInputCount(input.images);
   if (!count.ok) {
     return count;
+  }
+  const urls = validateComposeImageUrls(input.images);
+  if (!urls.ok) {
+    return urls;
   }
   const constraints = validateComposeOutputConstraints(input.size, input.ratio);
   if (!constraints.ok) {
