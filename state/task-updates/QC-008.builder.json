@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-008",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/qc/src/routes/agnes-regular — 21/21 assertions passed, success=true (exit 0); npx tsc --noEmit (packages/qc) clean",
+  "notes": "Agnes regular fallback: Flash FAIL after retry (or retryBypassed per QC-007 hop contract) escalates to agnes-video-2.5 with mode-validated request plan (keyframe/reference/text, 720P default, seconds \"4\"-\"12\" clamped, per-duration worst-case 2K budget gate); declines PASS, non-Flash attempts, re-escalation, hero/complex/action/long (Wan tier), out-of-range durations, budget-exhausted; verified limits from CAP-002 seed (pricing 0.025/0.04/0.055 per s, 2026-08-28).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:50:00Z"
+}
