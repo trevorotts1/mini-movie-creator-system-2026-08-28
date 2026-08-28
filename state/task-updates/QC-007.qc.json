@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-007",
+  "phase": "PASS",
+  "commit": "2df1d89",
+  "checksRun": "npx vitest run packages/qc/src/routes/agnes-flash (26/26, exit 0); npx vitest run packages/qc (26/26, exit 0); pnpm --filter @mmcs/qc typecheck (exit 0); grep secret/injection/path scan on owned files (clean)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Fix: assertQc now rejects FAIL with zero failed checks and no providerError (was silently classified likely-prompt-seed -> paid retry on malformed QC) and rejects blank check names; +2 regression tests. Model id provenance verified against capability-registry agnes.ts and docs/provider-capabilities/agnes.md on integration.",
+  "blockers": []
+}
