@@ -1,7 +1,7 @@
 {
   "taskId": "QC-004",
   "phase": "PASS",
-  "commit": "888faa4",
+  "commit": "b4013fa",
   "rebasedOnto": "0e9b00eeed15d213f8dc31a7321af132f5c9ae9d",
   "rebaseCommit": "20f505ff3c4df89613f8b56ccd9c0a67d5b6b53f",
   "checksRun": "npx --package=vitest@3.0.0 vitest run packages/qc/src/continuity -> 18 passed (18); npx --package=vitest@3.0.0 vitest run packages/qc -> 18 passed (18); ./node_modules/.bin/tsc -p packages/qc/tsconfig.json -> clean; git diff origin/integration...HEAD verified",
@@ -10,6 +10,6 @@
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T18:30:00Z",
-  "notes": "Fixed package entry point exports in packages/qc/src/index.ts and continuity/index.ts; verified neighbor continuity checks and Series Bible canon checks against spec §11. Batch-7 rebase: resolved packages/qc/src/index.ts barrel union (continuity + identity + schema), 3206/3206 monorepo tests green post-merge, tsc clean.",
+  "notes": "Fixed package entry point exports in packages/qc/src/index.ts and continuity/index.ts; verified neighbor continuity checks and Series Bible canon checks against spec \u00a711. Batch-7 rebase: resolved packages/qc/src/index.ts barrel union (continuity + identity + schema), 3206/3206 monorepo tests green post-merge, tsc clean. | batch-8 merger: commit ref updated 888faa4->b4013fa (rebased twin, identical code tree; only qc.json stamp differs) so admission check passes.",
   "blockers": []
 }

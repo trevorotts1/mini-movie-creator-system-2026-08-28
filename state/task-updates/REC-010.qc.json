@@ -1,0 +1,15 @@
+{
+  "taskId": "REC-010",
+  "phase": "PASS",
+  "commit": "3588299d1020ce41114079e06aa314ec4f68c827",
+  "checksRun": "npx vitest run --config scripts/orchestration/vitest.config.mts scripts/orchestration (14/14 passed, exit 0); npx tsx scripts/orchestration/restart-sim.ts (exit 0); npx tsc --noEmit -p tsconfig.base.json (exit 0)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:20:00Z",
+  "notes": "Verified restart simulation scenarios against real subsystem code: task map recovery with no duplicates, worktree/branch reconciliation (relative path normalization defect fixed + regression tested), Kie polling resume with no duplicate submission; all tests pass and CLI exits 0.",
+  "blockers": [],
+  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
+  "rebaseCommit": "01b5a422eccb7b95db9a48fa8251fc936006bb5b"
+}

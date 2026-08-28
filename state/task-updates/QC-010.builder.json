@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-010",
+  "phase": "BUILDER_DONE",
+  "commit": "4a61fc5fe7fc0f268174540eafd42a64bc78650",
+  "testsRun": "npx vitest run packages/qc/src/routes/wan -> 55 passed (55), 1 file passed; packages/qc tsc --noEmit -> clean",
+  "notes": "Wan hero/complex fallback route: table-driven policy (hero/action/complex/long/reference-heavy/quality-history-escalation -> Wan 3.0 @1080P) weighing capability (20k chars, 10 img / 5 vid / 5 aud refs, 2-30s), quality history (prior Agnes Flash/regular + Seedance failures), cost (verified $/s rates, $25 ceiling -> hold-for-approval), quota; provider-decoupled structural port matching KIE-005's WanClientPort; final pre-submit wire validation (snake_case body) before createTask.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

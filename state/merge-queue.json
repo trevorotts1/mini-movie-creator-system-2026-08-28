@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "items": [],
-  "updated_at": "2026-08-28T22:05:00Z",
+  "updated_at": "2026-08-28T19:57:36.182Z",
   "last_batch": {
     "batch": "batch-7",
     "merged": [
@@ -28,27 +28,27 @@
     "failed": [
       {
         "id": "QC-003",
-        "reason": "conflict packages/qc/src/index.ts \u2014 rebase required"
+        "reason": "conflict packages/qc/src/index.ts — rebase required"
       },
       {
         "id": "QC-004",
-        "reason": "conflict packages/qc/src/index.ts \u2014 rebase required"
+        "reason": "conflict packages/qc/src/index.ts — rebase required"
       },
       {
         "id": "QC-010",
-        "reason": "conflict packages/qc/src/index.ts \u2014 rebase required"
+        "reason": "conflict packages/qc/src/index.ts — rebase required"
       },
       {
         "id": "SKL-004",
-        "reason": "conflict integrations/claude/tsconfig.json \u2014 rebase required"
+        "reason": "conflict integrations/claude/tsconfig.json — rebase required"
       },
       {
         "id": "VID-002",
-        "reason": "conflict packages/remotion-runtime/src/index.ts \u2014 rebase required"
+        "reason": "conflict packages/remotion-runtime/src/index.ts — rebase required"
       },
       {
         "id": "REC-010",
-        "reason": "deps REC-002..REC-005 not yet merged \u2014 admission rule 6"
+        "reason": "deps REC-002..REC-005 not yet merged — admission rule 6"
       }
     ]
   }

@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-008",
+  "phase": "BUILDER_DONE",
+  "commit": "90bce7d",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/layers/graphics -> 5 files, 89/89 passed (rc=0); npx tsc --noEmit (packages/remotion-runtime) -> clean; full worktree npx vitest run -> 497/497 passed",
+  "notes": "Native graphics layer per spec §21/§22 + brand.md: pure core (types GraphicsKind x8 bound per ShotPlanRef or absolute frames, brand tokens mirrored from remotion/src/brand.ts, safe-area anchor layout, frame envelopes fade+rise/fade+fall with line stagger, z-ordered composition with shot slicing + per-frame queries + overlap/unknown-shot warnings, deterministic credit-roll scroll, pre-render plan validation) + thin Remotion view components in views/ excluded from package tsconfig (remotion peer resolves in upstream remotion/ project; not installed on operator box, 13Gi disk — mounted by VID-012). No barrel edits (VID-003 owns wiring). Story text carried as plain strings, rendered as text children only (spec §29).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

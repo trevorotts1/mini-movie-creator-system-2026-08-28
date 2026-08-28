@@ -10,8 +10,6 @@
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T19:00:00Z",
-  "notes": "Rebased onto origin/integration 0e9b00e (batch-7): single conflict integrations/claude/tsconfig.json resolved by unioning include globs (kept SKL-004's *.ts + src/**/*.ts, kept integration's src/**/*.test.ts); both compilerOptions preserved. All workspace typechecks + tests green post-merge. Step 6 of nine-verify: fresh claude-nine session invokes the REAL /mini-movie-creator skill and calls the mmcs engine (SKL-004 acceptance) \u2014 proven live PASS=13 with canonical SKL-001 content, recorded skip (never pass) until SKL-001 merges.",
-  "blockers": [
-    "SKL-001: canonical skill (skills/mini-movie-creator) not yet merged into integration \u2014 step 6 of nine-verify.sh records a skip until it lands"
-  ]
+  "notes": "Rebased onto origin/integration 0e9b00e (batch-7): single conflict integrations/claude/tsconfig.json resolved by unioning include globs (kept SKL-004's *.ts + src/**/*.ts, kept integration's src/**/*.test.ts); both compilerOptions preserved. All workspace typechecks + tests green post-merge. Step 6 of nine-verify: fresh claude-nine session invokes the REAL /mini-movie-creator skill and calls the mmcs engine (SKL-004 acceptance) \u2014 proven live PASS=13 with canonical SKL-001 content, recorded skip (never pass) until SKL-001 merges. | batch-8 merger: stale blocker cleared \u2014 SKL-001 canonical skill landed on integration in batch-6 (4c4fe38); skills/mini-movie-creator verified present on integration tree.",
+  "blockers": []
 }
