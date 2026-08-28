@@ -146,15 +146,24 @@ export class TreeBuilder {
   async ensureTree(request: TreeRequest): Promise<TreeResult> {
     let createdCount = 0;
     let totalFolders = 0;
+    // Per-run memo keyed by (parentId, name): repeated specs in one request
+    // (duplicate character, duplicate episode) reuse the same node instead of
+    // issuing a second search/create — keeps the result tree duplicate-free
+    // and prevents duplicates against an eventually-consistent real API.
+    const seen = new Map<string, TreeFolderNode>();
 
     const ensure = async (
       parent: TreeFolderNode,
       name: string,
     ): Promise<TreeFolderNode> => {
+      const key = `${parent.id}//${name}`;
+      const cached = seen.get(key);
+      if (cached) return cached;
       const node = await this.ensureFolder(request.locationId, parent, name);
       parent.children.push(node);
       if (!node.existing) createdCount++;
       totalFolders++;
+      seen.set(key, node);
       return node;
     };
 

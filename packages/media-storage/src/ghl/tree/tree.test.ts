@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTreeBuilder } from "./tree.js";
+import { createTreeBuilder, CHARACTER_SUBFOLDERS, EPISODE_SUBFOLDERS } from "./tree.js";
 import { RecordingGhlClient, type GhlFoldersClient, type RecordedCall } from "./client.js";
 
 /**
@@ -237,6 +237,55 @@ describe("GhlTreeBuilder — idempotency (spec: search before create, never dupl
 
     expect(tree.root.name).toBe(ROOT);
     expect(client.createdCount).toBe(4); // root + 3 sections
+  });
+
+  it("duplicate specs within one run create nothing extra (intra-run memo)", async () => {
+    const client = new RecordingGhlClient();
+    const builder = createTreeBuilder({ client });
+    const tree = await builder.ensureTree({
+      locationId: "loc-1",
+      characters: [{ name: "Monica" }, { name: "Monica" }],
+      series: [
+        {
+          name: "Neon City",
+          episodes: [
+            { season: 1, episode: 1, title: "Pilot" },
+            { season: 1, episode: 1, title: "Pilot" },
+          ],
+        },
+        { name: "Neon City" },
+      ],
+    });
+
+    // Each duplicated node searched+created exactly once.
+    const monicaCreates = client.calls.filter(
+      (c): c is Extract<RecordedCall, { kind: "create" }> =>
+        c.kind === "create" && c.body.name === "Monica",
+    );
+    expect(monicaCreates).toHaveLength(1);
+    const pilotCreates = client.calls.filter(
+      (c): c is Extract<RecordedCall, { kind: "create" }> =>
+        c.kind === "create" && c.body.name === "S01E01 - Pilot",
+    );
+    expect(pilotCreates).toHaveLength(1);
+    const neonCreates = client.calls.filter(
+      (c): c is Extract<RecordedCall, { kind: "create" }> =>
+        c.kind === "create" && c.body.name === "Neon City",
+    );
+    expect(neonCreates).toHaveLength(1);
+
+    // Result tree carries each node exactly once.
+    const monica = findNode(tree.root, `${ROOT}/Character Library/Monica`);
+    expect(monica).toBeDefined();
+    expect(monica!.children).toHaveLength(CHARACTER_SUBFOLDERS.length);
+    const seasonNode = findNode(tree.root, `${ROOT}/Series/Neon City/Season 01`);
+    expect(
+      seasonNode!.children.filter((c) => c.name === "S01E01 - Pilot"),
+    ).toHaveLength(1);
+    expect(
+      findNode(tree.root, `${ROOT}/Series/Neon City/Season 01/S01E01 - Pilot`)!
+        .children,
+    ).toHaveLength(EPISODE_SUBFOLDERS.length);
   });
 });
 

@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-004",
+  "phase": "PASS",
+  "commit": "7e27280ca389a18e14b2992e8f4c5f108962679d",
+  "checksRun": "npx vitest run packages/media-storage/src/ghl/tree (12/12 PASS); npx tsc --noEmit -p packages/media-storage (clean); eslint not runnable repo-wide (no eslint.config.* — outside GHL-004 ownership); git diff vs origin/integration clean for packages/media-storage",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Fixed intra-run duplicate-spec defect: ensureTree memoizes (parentId,name) so duplicate characters/episodes in one request create one folder and render one node; regression test added (12 tests).",
+  "blockers": []
+}
