@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-001",
+  "phase": "PASS",
+  "commit": "f7d7fd8",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/qc/src/schema (27/27 pass, EXIT=0); node node_modules/vitest/vitest.mjs run (full repo: 435/435 pass, EXIT=0); npx tsc --noEmit (packages/qc clean); edge probes via node --experimental-strip-types (empty checks, negative/fractional attempt, NaN/Infinity/negative timecode, offset-vs-Z timestamps, empty supersedesResultId, undefined evidence, verdict contradiction); security pass on packages/qc/src/schema (pure zod validation, no fs/shell/network/secrets, no path-traversal vector, no retry loops)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Round 2 fix: shotQcResultSchema.safeParse threw (escaped safe contract) when checks: [] because superRefine called rollupVerdict([]) which throws - now guarded, structured failure with missing-check message; +4 regression tests (empty-checks structured fail, negative/fractional attempt, non-finite/negative timecodeSeconds). Cumulative: 4 defects found, 4 fixed (3 round-1: verdict/rollup contradiction, completedAt<startedAt, rollupVerdict([]) PASS; 1 round-2: safeParse throw on empty checks). All 17 spec section-20 checks covered, schemaVersion gated, evidence mandatory.",
+  "blockers": []
+}

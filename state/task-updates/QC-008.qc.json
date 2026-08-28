@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-008",
+  "phase": "PASS",
+  "commit": "aa2fa5b",
+  "checksRun": "npx vitest run --config packages/qc/src/routes/agnes-regular/vitest.config.mts (21/21 PASS); npx tsc -p packages/qc/tsconfig.json --noEmit (clean); security review on owned path",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "Agnes regular fallback: Flash FAIL after retry escalates to Agnes Video 2.5 regular with mode-validated plan; trigger conditions, bypass hop contract, idempotency, budget gate, and capability limits verified green.",
+  "blockers": []
+}

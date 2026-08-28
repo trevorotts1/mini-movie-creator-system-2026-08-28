@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-004",
+  "phase": "PASS",
+  "commit": "2e67daf",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/layers/captions (28/28); npx tsc --noEmit packages/remotion-runtime (clean); npx vitest run (full repo, 436/436); security scan owned paths (no secrets/shell/path-unsafety; text nodes escaped, no dangerouslySetInnerHTML)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Fixed: FISH-007 cue-shaped CaptionTrack hand-off was rejected; word-highlight startFrame desync when track mounted; loose fps compare. Regression tests added, suite green 436/436. Lint: no lint script exists repo-wide (pnpm also blocked on worktree root) — env gap, not a code defect.",
+  "blockers": []
+}

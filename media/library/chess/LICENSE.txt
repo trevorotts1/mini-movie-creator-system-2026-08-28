@@ -1,0 +1,12 @@
+Chess piece SVGs — cburnett set, sourced from lichess-org/lila
+(public/piece/cburnett, https://github.com/lichess-org/lila)
+
+The cburnett chess piece set is licensed GPL/BSD-3/GFDL (tri-license) and is
+the standard set used by Lichess. Files fetched 2026-08-28 for MMCS
+(repo mini-movie-creator-system-2026-08-28, itself an MIT fork of
+hassancs91/claude-faceless-shorts-creator, which references this same set in
+remotion/src/lib/chess.tsx).
+
+Under the GNU GPL portion of the tri-license, this file set is distributed
+under GPL-2.0-or-later. The BSD-3 and GFDL alternatives also apply.
+Upstream project: https://lichess.org — the set's author credit is "cburnett".

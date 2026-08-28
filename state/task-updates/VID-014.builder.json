@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-014",
+  "phase": "BUILDER_DONE",
+  "commit": "f7ab42b",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/final-render -> 38/38 passed; npx vitest run (full monorepo regression) -> 446/446 passed (25 files); npx tsc --noEmit -p packages/remotion-runtime -> clean; fixture final render completed against real system ffmpeg + real system ffprobe (h264, 320x180, validated)",
+  "notes": "Final render pipeline in packages/remotion-runtime/src/final-render/ (state/tasks.json owns dir; ownership.md row stale): contract.ts (FinalRenderSpec/gate-5 gate snapshot/spec-23 formats/deterministic S01E01_final_vNN.mp4 naming + 08 Final/09 QC Metadata folder segments), upscale.ts (720p-source-upscaled-to-1080p = upscaled-720p NEVER native-1080p + episode-tier rollup + timeline vs scale=1 native modes), pipeline.ts (gate 5 refusal -> render -> ffprobe validate -> honest metadata -> archive ports, FinalRenderError codes GATE_NOT_APPROVED/RENDER_FAILED/FFPROBE_FAILED/ARCHIVE_FAILED/INVALID_SPEC), cli.ts (mmcs final CommandSpec + handler: usage/exit-0 bare, --dry-run READY/BLOCKED, --native, --json, exit codes, no process.exit), ffprobe-fixture.ts (real ffprobe wrapper + real ffmpeg lavfi fixture renderer), spawn.ts. Upstream deps VID-012/VID-015/CORE-008 unmerged at build time -> injected ports matching their documented contracts (CAP-009/CHAR-004 pattern) so integration is a structural match. Test proves truncated file FAILS ffprobe gate.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

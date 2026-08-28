@@ -1,0 +1,9 @@
+{
+  "taskId": "GHL-006",
+  "phase": "BUILDER_DONE",
+  "commit": "9ab70f5",
+  "testsRun": "npx vitest run packages/media-storage/src/ghl/upload-binary → 21 passed (2 files: upload.test.ts 17, verify.test.ts 4 real-ffmpeg); npx tsc --noEmit (packages/media-storage) → exit 0",
+  "notes": "Binary fallback upload: download→SHA-256→ffprobe/decode verify→size limits (25 MB general / 500 MB video, enforced pre-verify+pre-upload)→binary upload→fileId+URL verify→integrity compare→ARCHIVED; all failure paths throw GhlUploadError with machine-readable reason and never mark ARCHIVED.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

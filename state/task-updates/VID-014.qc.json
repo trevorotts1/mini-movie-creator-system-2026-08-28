@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-014",
+  "phase": "PASS",
+  "commit": "a76e7e3",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/final-render -> 42/42; node_modules/.bin/vitest run (full monorepo) -> 450/450 (25 files); npx tsc --noEmit -p packages/remotion-runtime -> clean; adversarial probes of isSafeEpisodeCode/sanitizeTitleLeaf (traversal, control chars, cap boundary) via node --experimental-strip-types; security pass (no secrets, fixed-list spawn args, bounded timeouts, no retries, no process.exit)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:00:00Z",
+  "notes": "Fixed: (1) episode-code traversal guard was documented but never wired into planFinalRender — now enforced with INVALID_SPEC; (2) sanitizeTitleLeaf regex had raw control bytes in source and missed DEL/C1 — rewritten with explicit escapes + post-cap trailing strip; (3) >=1080p source upscaled to bigger master was mislabeled upscaled-720p — new honest tier upscaled-higher; (4) stale contract doc. Tests 38->42.",
+  "blockers": []
+}

@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-004",
+  "phase": "PASS",
+  "commit": "b69ff2e",
+  "checksRun": "npx vitest run apps/cli/src/commands/choose-character (21/21 PASS); tsc --noEmit apps/cli (0 errors); security grep scan owned paths (clean: no exec/spawn/eval/fs/env, hostile-input test present)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed: empty-string arg was treated as bare usage (exit 0); now rejected as invalid selection with usage + exit 1 per acceptance; regression test added.",
+  "blockers": []
+}

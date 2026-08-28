@@ -1,0 +1,9 @@
+{
+  "taskId": "AGN-002",
+  "phase": "BUILDER_DONE",
+  "commit": "44da0e1",
+  "testsRun": "npx vitest run packages/providers/src/agnes/profiles/image → 28/28 PASS; npx vitest run packages/providers → 226/226 PASS (full package regression); npx tsc --noEmit (packages/providers) → clean",
+  "notes": "Agnes Image 2.1 Flash request profile in packages/providers/src/agnes/profiles/image/ — sizes 1K-4K + 8 ratios verified live (wiki.agnes-ai.com, 2026-08-28), ref-image rules (public HTTPS/data: URI, max UNKNOWN — first-3-free is pricing not cap), prompt ceiling UNKNOWN preserved, response_format extra_body-only (top-level 400), no n/seed/negative_prompt/task id, list-price estimator; branch rebased onto origin/integration 5cb2c2e before work, stale wrong-path untracked draft (agnes/image/types.ts) from earlier attempt removed and superseded",
+  "blockers": [],
+  "updatedAt": "2026-08-28T18:25:00Z"
+}
