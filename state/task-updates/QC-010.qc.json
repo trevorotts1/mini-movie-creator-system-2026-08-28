@@ -1,6 +1,8 @@
 {
   "taskId": "QC-010",
   "phase": "PASS",
+  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
+  "rebaseCommit": "6cca6d40a1291be627c46a4275735a06dc9670aa",
   "commit": "febd0c7b20b5961277022e6efc78c45c4d4e30ca",
   "checksRun": "npx vitest run packages/qc/src/routes/wan (65/65 pass, rc=0); npx vitest run (full suite 473/473 pass); pnpm --filter @mmcs/qc typecheck (clean); security pass (no secrets, no exec, no fs, no unbounded retries, callBackUrl http(s)-validated)",
   "defectsFound": 7,
