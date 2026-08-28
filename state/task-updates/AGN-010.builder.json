@@ -1,0 +1,11 @@
+{
+  "taskId": "AGN-010",
+  "phase": "BUILDER_DONE",
+  "commit": "09af8a4",
+  "testsRun": "npx vitest run packages/providers/src/agnes/retry -> 29 passed (29); npx vitest run packages/providers -> 69 passed (69); npx vitest run packages/core -> 89 passed (89); npx tsc --noEmit -p packages/providers/tsconfig.json -> rc=0",
+  "notes": "Agnes retry/idempotency: boundedRetry (hard maxAttempts cap, capped exponential backoff, jitter clamped under cap, injectable sleep) + failure classification (transient 408/429/5xx + transport faults retry; deterministic 4xx/501 never — spec §29 no unbounded loops) + withSubmitIdempotency on CORE-013 IdempotencyStore: canonical request-hash key (order-stable), duplicate same-hash calls return the recorded providerJobId and never resubmit (paid double-spend guard, spec §18/§38), reservation is crash-durable (atomic temp+rename write survives restart at SUBMITTING), provider job id persisted immediately on success, per-key retryCount persisted and carried across restarts, resume path with known providerJobId never resubmits, concurrent same-key submits serialized to one submission.",
+  "blockers": [
+    "scaffold (pre-existing, also filed by CORE-013): repo-root package.json lacks \"type\":\"module\" while vitest.config.ts is ESM; on Node 26 `npx vitest run <path>` needed vitest installed in the worktree (done here via npm install, node_modules not committed). Did not touch root package.json (shared file)."
+  ],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

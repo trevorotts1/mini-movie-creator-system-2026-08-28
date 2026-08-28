@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-001",
+  "phase": "BUILDER_DONE",
+  "commit": "38220fba40c30f10f5ba15265e2691881f0c6020",
+  "testsRun": "npx vitest run packages/qc/src/schema -> 17/17 passed; npx vitest run (full repo) -> 425/425 passed; tsc --noEmit (packages/qc) -> clean",
+  "notes": "packages/qc/src/schema/: 17 spec section-20 check ids, versioned ShotQcResult (schemaVersion=1) with verdict + mandatory evidence per check, rollupVerdict, parse/safeParse; qc package.json gained zod dep + lockfile entry (CAP-001 precedent); branch task/QC-001-qc-schema.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

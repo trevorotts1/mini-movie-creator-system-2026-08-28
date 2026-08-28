@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-013",
+  "phase": "PASS",
+  "commit": "188cda2",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/reference-budget -> 39/39 PASS (31 builder + 8 QC regression); npx tsc --noEmit -p packages/scene-intelligence -> clean; npx vitest run packages/scene-intelligence (full package) -> 39/39 PASS; security grep on owned paths -> no I/O, no exec/eval/secrets, loop bounded",
+  "defectsFound": 7,
+  "defectsFixed": 7,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "QC fix loop: greedy loop stuffed max slots with redundant same-axis candidates (fixed via improvement filter), silent 1-frame start-end plan when end-frame missing (now errors for explicit strategy), companion-cap stop lied 'all axes covered' (honest note now), scene master lacked historical rate, oracle per-reference throw crashed planning (degrades to neutral), dead empty if-block removed, NEED_AXES doc corrected (7 axes, 8th scoring dim is history term).",
+  "blockers": []
+}

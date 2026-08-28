@@ -1,0 +1,9 @@
+{
+  "taskId": "AGN-005",
+  "phase": "BUILDER_DONE",
+  "commit": "d50a844f4a049e2cbc7ed2a403b6ead2bb89f702",
+  "testsRun": "npx vitest run packages/providers/src/agnes/video/poll \u2192 20 passed (20), 1 file; tsc --noEmit on packages/providers \u2192 clean",
+  "notes": "Poll-only AgnesVideoPollRunner: never submits (no create port; throws on missing persisted providerTaskId \u2014 kill-poller restart re-polls same task ID, no second charge); GENERATED_TEMPORARY persists metadata.url + provider-returned expiration (never invented, docs verified 2026-08-28: status enum queued/in_progress/completed/failed, URL at metadata.url, no documented expiration field).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
