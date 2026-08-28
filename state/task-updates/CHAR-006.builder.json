@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-006",
   "phase": "BUILDER_DONE",
-  "commit": "1eeb7d4244bd056e5f41f779434ae56dd10ff8c3",
+  "commit": "6a53384bae8493e7cd72431e52052575553aecd6",
   "testsRun": "npx vitest run packages/character-library/src/appearance-versions => 19/19 passed; npx tsc --noEmit -p packages/character-library => clean",
   "notes": "appearance-versions module: append-only history, effectiveEpisode/effectiveTime gates, Monica v1 braids E01-E08 / v2 short from E09 test green; base identity master immutable; package barrel index.ts left untouched (shared with sibling CHAR tasks)",
   "blockers": [],
