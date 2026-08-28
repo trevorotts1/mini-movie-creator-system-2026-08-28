@@ -54,3 +54,19 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T10:05:00Z | CAP-008 | MAX_REASONING mapper | Sonnet QC | PASS | 0 | 0 | MERGED |
 | 2026-08-28T10:05:00Z | KIE-002 | Generic task submit/poll | Sonnet QC | PASS | 0 | 0 | MERGED |
 | 2026-08-28T10:05:00Z | KIE-003 | Seedance 2.0 Mini profile | Sonnet QC | PASS | 1 | 1 | MERGED |
+| 2026-08-28T14:38:00Z | CAP-004 | Reference-count validator | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-007 | Wardrobe versions | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CORE-001 | Upstream audit + preservation map | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CORE-004 | Project/series/episode schema | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | FISH-001 | Fish Audio client | Sonnet QC | PASS | 4 | 4 | MERGED |
+| 2026-08-28T14:38:00Z | GHL-001 | GHL auth/config | Sonnet QC | PASS | 1 | 1 | MERGED |
+| 2026-08-28T14:38:00Z | KIE-004 | Seedance modes/validation | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | KIE-009 | Failure normalization | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-003 | Candidate generation flow (3 designs) | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-010 | Series cast links | Sonnet QC | PASS | 2 | 2 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-012 | Series Bible events | Sonnet QC | PASS | 4 | 4 | MERGED |
+| 2026-08-28T14:38:00Z | FISH-002 | Voice profile management | Sonnet QC | PASS | 6 | 6 | MERGED |
+| 2026-08-28T14:38:00Z | GHL-002 | List/search media | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | GHL-007 | URL/file validation | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-004 | Selection/retry UI-CLI contract | Sonnet QC | PASS | 1 | 1 | MERGED |
+| 2026-08-28T14:38:00Z | FISH-004 | Pronunciation dictionary | Sonnet QC | PASS | 1 | 1 | MERGED |

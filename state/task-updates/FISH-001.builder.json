@@ -1,0 +1,9 @@
+{
+  "taskId": "FISH-001",
+  "phase": "BUILDER_DONE",
+  "commit": "a8048c2a1d8aa973e7d1236202467a805945f3a7",
+  "testsRun": "npx vitest run packages/providers/src/fish-audio/client -> 31/31 passed (exit 0); npx tsc --noEmit in packages/providers -> clean (exit 0)",
+  "notes": "Fish Audio HTTP client (POST /v1/tts binary audio, POST /v1/tts/stream/with-timestamp SSE, GET /model, GET /model/{id}); Bearer auth from config (FISH_API_KEY), per-attempt timeout 30s, bounded retries w/ exponential backoff + Retry-After, key never logged (scrubbed errors + key-safe onRetry); model REQUIRED per call from config (FISH_TTS_MODELS = s1|s2-pro|s2.1-pro|s2.1-pro-free), s2.1-pro-free recorded never assumed; docs/provider-capabilities/fish.md with verified URLs + 2026-08-28 date (api.fish.audio/openapi.json, docs.fish.audio pricing/rate-limits pages); $15/M UTF-8 bytes + concurrency tiers documented for FISH-010.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
