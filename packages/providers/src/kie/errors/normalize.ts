@@ -160,8 +160,12 @@ function fromKieApiErrorLike(error: KieApiErrorLike, attempt?: number): Normaliz
   if (error.status !== undefined && error.kind === "http-error") {
     const classified = classifyKieHttpFailure(error.status, undefined, { attempt: effectiveAttempt });
     const apiMsg = error.apiMsg !== undefined ? redactSecrets(error.apiMsg) : undefined;
+    // KIE-001 carries Retry-After on rate-limited errors; the HTTP classifier
+    // never sees headers, so carry the field across instead of dropping it.
+    const retryAfterSec = classified.retryAfterSec ?? error.retryAfterSec;
     return {
       ...classified,
+      ...(retryAfterSec !== undefined ? { retryAfterSec } : {}),
       detail: { ...classified.detail, apiCode: error.apiCode, apiMsg },
     };
   }

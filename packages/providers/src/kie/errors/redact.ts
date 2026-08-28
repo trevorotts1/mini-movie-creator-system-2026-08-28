@@ -91,7 +91,9 @@ function redactValue(value: unknown, depth: number, maxDepth: number, seen: Weak
 
 /**
  * Build one redacted, single-line log string for a normalized failure.
- * Guaranteed secret-free: it is composed only from already-redacted fields.
+ * The message is redacted HERE as well (not assumed pre-redacted): callers may
+ * hand in any failure-shaped object, so the log line is guaranteed secret-free
+ * by construction, never by convention.
  */
 export function failureToLogLine(failure: {
   classification: string;
@@ -105,7 +107,7 @@ export function failureToLogLine(failure: {
     `code=${failure.code}`,
     failure.status !== undefined ? `status=${failure.status}` : undefined,
     failure.attempt !== undefined ? `attempt=${failure.attempt}` : undefined,
-    `msg="${failure.message.replace(/\s+/g, " ").trim()}"`,
+    `msg="${redactSecrets(failure.message).replace(/\s+/g, " ").trim()}"`,
   ].filter((part): part is string => part !== undefined);
   return parts.join(" ");
 }

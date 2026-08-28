@@ -148,7 +148,13 @@ function readRetryAfterSeconds(body: KieHttpBody): number | undefined {
     if (!candidate || typeof candidate !== "object") continue;
     const raw = (candidate as Record<string, unknown>)["retryAfter"] ?? (candidate as Record<string, unknown>)["retry_after"];
     const seconds = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
-    if (Number.isFinite(seconds) && seconds >= 0) return seconds;
+    // Hard cap: a hostile/buggy body must never hand downstream a sleep that
+    // is effectively infinite (unbounded retry hang). Clamp, don't drop — the
+    // pacing hint is still useful at its ceiling.
+    if (Number.isFinite(seconds) && seconds >= 0) return Math.min(seconds, MAX_RETRY_AFTER_SEC);
   }
   return undefined;
 }
+
+/** Upper bound on a server-supplied Retry-After we will propagate (15 min). */
+const MAX_RETRY_AFTER_SEC = 900;

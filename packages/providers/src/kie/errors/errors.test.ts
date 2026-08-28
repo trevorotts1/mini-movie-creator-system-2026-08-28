@@ -82,6 +82,18 @@ describe("taxonomy normalization — HTTP shapes", () => {
     expect(f.retryable).toBe(false);
     expect(f.code).toBe("kie:http_error");
   });
+
+  it("caps an absurd server-supplied Retry-After (unbounded-sleep guard)", () => {
+    const huge = classifyKieHttpFailure(429, { retryAfter: 86400 });
+    expect(huge.retryAfterSec).toBe(900);
+    const sane = classifyKieHttpFailure(429, { retryAfter: 30 });
+    expect(sane.retryAfterSec).toBe(30);
+  });
+
+  it("keeps the server envelope message redacted", () => {
+    const f = classifyKieHttpFailure(422, { msg: `bad payload, key ${FAKE_KEY}` });
+    expect(f.message).not.toContain(FAKE_KEY);
+  });
 });
 
 describe("taxonomy normalization — task failure payloads", () => {
@@ -141,6 +153,12 @@ describe("normalizeKieFailure — every shape folds to the taxonomy", () => {
     const bad = normalizeKieFailure(new FakeKieApiError("bad-response", "2xx body not the documented envelope"));
     expect(bad.classification).toBe("fatal");
     expect(bad.code).toBe("kie:bad_response");
+  });
+
+  it("carries KieApiError Retry-After across the http-error mapping", () => {
+    const f = normalizeKieFailure(new FakeKieApiError("http-error", "rate limit hit", 429, undefined, undefined, 12, 1));
+    expect(f.classification).toBe("quota");
+    expect(f.retryAfterSec).toBe(12);
   });
 
   it("maps a raw task failure payload thrown as a value", () => {
@@ -242,6 +260,17 @@ describe("secret redaction — no leakage into messages, detail, or log lines", 
     const line = failureToLogLine(f);
     expect(line).not.toContain(FAKE_KEY);
     expect(line).toContain("kie-failure");
+  });
+
+  it("failureToLogLine redacts a raw, never-normalized message (defense in depth)", () => {
+    const raw = {
+      classification: "fatal",
+      code: "kie:leak_sim",
+      message: `upstream echoed Bearer ${FAKE_KEY}`,
+    };
+    const line = failureToLogLine(raw);
+    expect(line).not.toContain(FAKE_KEY);
+    expect(line).toContain("[redacted]");
   });
 
   it("redacts query-string credential parameters", () => {
