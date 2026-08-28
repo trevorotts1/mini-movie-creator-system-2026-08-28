@@ -240,4 +240,23 @@ describe("input validation", () => {
       ),
     ).toThrow(FlashRouteError);
   });
+
+  it("rejects a FAIL with no failed checks and no providerError (never paid-retry on unexplained FAIL)", () => {
+    expect(() =>
+      routeFlashShot(CTX, { verdict: "FAIL", failures: [] }, 1),
+    ).toThrow(FlashRouteError);
+  });
+
+  it("rejects a failure entry without a non-empty check name", () => {
+    expect(() =>
+      routeFlashShot(
+        CTX,
+        {
+          verdict: "FAIL",
+          failures: [{ check: "   " } as unknown as { check: string }],
+        },
+        1,
+      ),
+    ).toThrow(FlashRouteError);
+  });
 });

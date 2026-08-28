@@ -249,6 +249,22 @@ function assertQc(qc: FlashQcResult): void {
   if (qc.verdict === "PASS" && qc.failures.length > 0) {
     throw new FlashRouteError("bad-qc", "PASS verdict must not carry failures");
   }
+  for (const failure of qc.failures) {
+    if (
+      typeof failure !== "object" ||
+      failure === null ||
+      typeof failure.check !== "string" ||
+      failure.check.trim().length === 0
+    ) {
+      throw new FlashRouteError("bad-qc", "each failure must carry a non-empty check name");
+    }
+  }
+  if (qc.verdict === "FAIL" && qc.failures.length === 0 && qc.providerError !== true) {
+    throw new FlashRouteError(
+      "bad-qc",
+      "FAIL verdict must carry at least one failed check (or providerError=true) — an unexplained FAIL must never trigger a paid retry",
+    );
+  }
 }
 
 /**
