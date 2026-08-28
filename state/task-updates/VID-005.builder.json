@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-005",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/layers/generated-clips -> 2 files, 15/15 passed (rc=0); npx vitest run packages/remotion-runtime -> 15/15 (rc=0); npx tsc --noEmit -p packages/remotion-runtime/tsconfig.json -> clean (rc=0)",
+  "notes": "Generated clip layer: provider-independent ArchivedClip contract + resolver seam (wired by VID-012 to CORE-007 AssetRepository ghl_url); assembleGeneratedClips places archived GHL clips per shot plan with fromFrame=round(in_s*fps) local_f discipline; MissingGeneratedClipError names shot; InvalidGeneratedClipError rejects non-ARCHIVED/non-video/empty-source; Remotion GeneratedClipLayer/GeneratedClipSequence/GeneratedClipPoster components; 3-shot mocked sequence acceptance test green. tsconfig: added jsx react-jsx + tsx include (shared within remotion-runtime package, needed by any .tsx layer).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
