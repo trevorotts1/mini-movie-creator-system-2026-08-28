@@ -1,7 +1,7 @@
 {
   "taskId": "GHL-007",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "1337c980fafb83a99e26efe0a3af445c7a299644",
   "testsRun": "npx vitest run packages/media-storage/src/ghl/validation -> 38 passed (1 file); npx tsc --noEmit -p packages/media-storage/tsconfig.json -> clean (rc=0)",
   "notes": "URL/file validation at packages/media-storage/src/ghl/validation/ (validate.ts + index.ts + 38 pure tests): validateRemoteUrl (HTTPS-only scheme allowlist, embedded-credential + non-443-port rejection, SSRF guard isPrivateHost covering loopback/RFC1918/link-local/CGNAT/multicast IPv4, IPv6 loopback/link-local/unique-local incl. hex-normalized ::ffff: IPv4-mapped forms, .localhost/.local/.internal names, 169.254.169.254 + metadata.google.internal); validateMimeType (image/video/audio allowlist with parameter/case normalization, filename-extension fallback, category restriction, rejects text/html application/javascript application/x-sh octet-stream); validateFileSize (spec §17 25 MB general / 500 MB video, category-aware, empty/NaN rejection); sanitizeFilename/checkFilename (flattens ../ ..\\\\ absolute/UNC paths, strips control + Windows-reserved chars, CON/PRN/AUX/NUL/COM1-9/LPT1-9 guards, length cap preserving extension, never returns separator or dot-dot); validateMediaFile combined preflight; pure functions, no I/O, no credentials — downloaders (GHL-006) and uploaders (GHL-005) call these before fetch/POST; /// <reference types=\"node\" /> for TS7 URL global (same quirk CORE-012 recorded)",
   "blockers": [],
