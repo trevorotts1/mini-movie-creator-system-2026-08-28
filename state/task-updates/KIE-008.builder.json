@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-008",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/providers/src/kie/temp-url => 15/15 PASS; npx vitest run packages/providers/src/kie/temp-url packages/providers/src/kie/task => 30/30 PASS; tsc --noEmit (packages/providers) => clean",
+  "notes": "Fixed TDZ bug in TempUrlCapturer.capture (param/const 'record' shadowing); triggerArchival now returns final persisted record so FAILED handoffs surface to callers; test clock assertion + scripted handoff 'url' field fixed; all acceptance criteria covered (persist URL+expiration before handoff, GHL-012 archival trigger, idempotent re-arm).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:45:00Z"
+}
