@@ -244,6 +244,55 @@ describe("HeuristicCriticModel", () => {
     expect(critique.verdict).toBe("pass");
   });
 
+  it("DIA-banned: does not match mid-word substrings (word-boundary regression)", async () => {
+    // "art" must not match inside "start"; "trust me" must not match inside
+    // "distrust me". The old bare includes() fed DIR-007 false findings.
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
+      {
+        id: "s3c",
+        title: "t",
+        logline: "l",
+        scenes: [
+          {
+            index: 1,
+            heading: "INT. A - NIGHT",
+            action: "a",
+            dialogue: [
+              { character: "MARA", text: "Let us start the artwork tonight." },
+              { character: "MARA", text: "I distrust me some shortcuts, said nobody." },
+            ],
+            plannedDurationSeconds: 20,
+          },
+        ],
+      },
+      { characters: [{ name: "MARA", bannedPhrases: ["art", "trust me"] }] },
+    );
+    expect(critique.findings.filter((f) => f.rule === "DIA-banned")).toEqual([]);
+    expect(critique.verdict).toBe("pass");
+  });
+
+  it("DIA-banned: still flags the standalone phrase after boundary fix", async () => {
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
+      {
+        id: "s3d",
+        title: "t",
+        logline: "l",
+        scenes: [
+          {
+            index: 1,
+            heading: "INT. A - NIGHT",
+            action: "a",
+            dialogue: [{ character: "MARA", text: "Trust me, it is a piece of cake." }],
+            plannedDurationSeconds: 20,
+          },
+        ],
+      },
+      FIXTURE_CONTEXT,
+    );
+    const banned = critique.findings.filter((f) => f.rule === "DIA-banned");
+    expect(banned.length).toBe(2); // "trust me" and "piece of cake"
+  });
+
   it("DIA-monolog: flags an outlier monologue on the flawed fixture", async () => {
     const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
       FLAWED_SCREENPLAY,
@@ -262,6 +311,49 @@ describe("HeuristicCriticModel", () => {
     const phys = critique.findings.filter((f) => f.rule === "CHA-physical");
     expect(phys.length).toBeGreaterThanOrEqual(1);
     expect(phys.some((f) => f.location.character === "MARA")).toBe(true);
+  });
+
+  it("negation matchers: mid-word 'not calm' never satisfies via 'cannot calm' (boundary regression)", async () => {
+    // "cannot calm" contains "not calm" as a substring; only whole-word
+    // negation matching may flag it. Voice sheet trait "calm under pressure"
+    // must NOT produce CHA-drift on this line.
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
+      {
+        id: "s6",
+        title: "t",
+        logline: "l",
+        scenes: [
+          {
+            index: 1,
+            heading: "INT. A - NIGHT",
+            action: "a",
+            dialogue: [{ character: "DEACON", text: "I cannot calm the scanner, it keeps beeping." }],
+            plannedDurationSeconds: 20,
+          },
+        ],
+      },
+      FIXTURE_CONTEXT,
+    );
+    expect(critique.findings.filter((f) => f.rule === "CHA-drift")).toEqual([]);
+    // And the real negation still fires.
+    const negated = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
+      {
+        id: "s6b",
+        title: "t",
+        logline: "l",
+        scenes: [
+          {
+            index: 1,
+            heading: "INT. A - NIGHT",
+            action: "a",
+            dialogue: [{ character: "DEACON", text: "I am never calm when the alarm blares." }],
+            plannedDurationSeconds: 20,
+          },
+        ],
+      },
+      FIXTURE_CONTEXT,
+    );
+    expect(negated.findings.filter((f) => f.rule === "CHA-drift").length).toBeGreaterThanOrEqual(1);
   });
 
   it("CHA-drift: flags dialogue contradicting the voice sheet", async () => {

@@ -126,6 +126,26 @@ function sameName(a: string, b: string): boolean {
 
 const NEGATIONS = ["no ", "not ", "never ", "without ", "no longer ", "missing ", "absent "] as const;
 
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Whole-phrase, word-boundary match on already-lowercased text. A bare
+ * `includes()` false-flags mid-word substrings ("art" inside "start",
+ * "trust me" inside "distrust me") and fed the revision loop (DIR-007)
+ * false findings; every phrase match here must respect word edges.
+ */
+function containsPhrase(haystack: string, needle: string): boolean {
+  const phrase = escapeRegExp(needle.trim());
+  if (phrase === "") return false;
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}_])${phrase}(?![\\p{L}\\p{N}_])`,
+    "u",
+  );
+  return pattern.test(haystack);
+}
+
 /**
  * Deterministic offline critic. Rules (one per finding class):
  * - PAC-empty     pacing: no scenes at all.
@@ -294,7 +314,8 @@ export class HeuristicCriticModel implements CriticModel {
       for (const scene of screenplay.scenes) {
         const actionLower = scene.action.toLowerCase();
         for (const neg of NEGATIONS) {
-          if (actionLower.includes(neg + keyword)) {
+          // Word-boundary match: "cannot calm" must not satisfy "not calm".
+          if (containsPhrase(actionLower, neg + keyword)) {
             this.push(findings, {
               rule: "CON-canon",
               category: "continuity",
@@ -346,7 +367,7 @@ export class HeuristicCriticModel implements CriticModel {
           // Empty/whitespace phrases match every line — skip them instead of
           // flooding the critique with false DIA-banned findings.
           if (banned.trim() === "") continue;
-          if (d.text.toLowerCase().includes(banned.toLowerCase())) {
+          if (containsPhrase(d.text.toLowerCase(), banned.toLowerCase())) {
             this.push(findings, {
               rule: "DIA-banned",
               category: "dialogue",
@@ -384,7 +405,7 @@ export class HeuristicCriticModel implements CriticModel {
           const head = trait.split(" ")[0] ?? "";
           if (head.length < 4) continue;
           for (const neg of NEGATIONS) {
-            if (d.text.toLowerCase().includes(neg + head)) {
+            if (containsPhrase(d.text.toLowerCase(), neg + head)) {
               this.push(findings, {
                 rule: "CHA-drift",
                 category: "character-consistency",
@@ -412,7 +433,7 @@ export class HeuristicCriticModel implements CriticModel {
           const head = trait.split(" ")[0] ?? "";
           if (head.length < 4) continue;
           for (const neg of NEGATIONS) {
-            if (actionLower.includes(neg + head)) {
+            if (containsPhrase(actionLower, neg + head)) {
               this.push(findings, {
                 rule: "CHA-physical",
                 category: "character-consistency",
