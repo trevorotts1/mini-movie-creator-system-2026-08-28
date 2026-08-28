@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-007",
+  "phase": "BUILDER_DONE",
+  "commit": "",
+  "testsRun": "npx vitest run packages/providers/src/kie/cost -> 16/16 PASS (cost.test.ts); npx vitest run packages/providers -> 56/56 PASS (3 files); tsc --noEmit packages/providers -> clean; registry suite verified green at integration root (137/137; fails inside fresh worktree only due to missing node_modules/zod symlink, no registry changes made)",
+  "notes": "Kie cost calculator from registry pricing: per-model/per-resolution estimates (Seedance with/no-video-input tables, Wan input+output billing), unknown pricing stays null and gates, toSpendEstimate feeds CORE-009, kieSpendDecision enforces cumulative $25 rule",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
