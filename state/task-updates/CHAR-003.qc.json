@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-003",
+  "phase": "PASS",
+  "commit": "666b69e67a2510626b7f3be537b1939cc0c88dbc",
+  "checksRun": "npx vitest run packages/character-library/src/candidates -> 25 passed / 0 failed (candidate-flow 17, candidate-state 8); npx vitest run packages/character-library -> 25 passed; tsc --noEmit -p packages/character-library -> clean; security grep owned paths (secrets/exec/child_process/eval/path-traversal) -> 0 matches; diff vs origin/integration reviewed (5 files, 871 lines)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Acceptance verified independently: exactly 3 DRAFT->REVIEW candidates per round; Try Again rejects round terminally and creates 3 NEW candidates (distinct IDs); rejected candidates never selectable across rounds incl. state-machine revive gate; invalid choices throw. No code changes needed.",
+  "blockers": []
+}

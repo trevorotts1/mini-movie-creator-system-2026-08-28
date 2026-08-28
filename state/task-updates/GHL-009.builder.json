@@ -1,0 +1,9 @@
+{
+  "taskId": "GHL-009",
+  "phase": "BUILDER_DONE",
+  "commit": "7de8ed61efd807917f900a0bb5acf23b07b8d8d0",
+  "testsRun": "npx vitest run packages/media-storage/src/character-links -> 19/19 PASS (1 file); full package regression npx vitest run packages/media-storage -> 101/101 PASS (4 files); tsc --noEmit on packages/media-storage -> clean (exit 0)",
+  "notes": "spec §9 canonical link persistence: folders port (search-before-create Convert and Flow/Character Library/<Name>/Identity Masters), archive port (file ID + URL + SHA-256), store port persists full durable record (ghlFileId/ghlFolderId/ghlUrl/sha256 + provider/model/sourceJobId/prompt/dimensions/approvalState/canonical) on the character record; memory adapters included; depends-on GHL-008 (manifest, own path empty on integration) not required — self-contained via ports",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:45:00Z"
+}

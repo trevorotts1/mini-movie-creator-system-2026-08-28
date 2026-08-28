@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-014",
+  "phase": "BUILDER_DONE",
+  "commit": "4a136d8",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/storyboard -> 31 passed (31), 0 failed; npx tsc --noEmit -p packages/scene-intelligence clean; full-worktree npx vitest run -> 439 passed, 0 failed",
+  "notes": "storyboard/: planStoryboard builds per-shot image-generation contracts — selectImageModel picks image-kind profile by capability (documented maxImages enforced, UNKNOWN tolerated, multimodal required for multimodal-package, video profiles never selected), resolveOutputEnvelope validates aspect/resolution against documented lists (hard fail on undocumented, passthrough+note on UNKNOWN), validateFramePrompt enforces only DOCUMENTED hardMaxCharacters (UNKNOWN null never enforced/never invented per spec §5), MockImageClient is the only executable client and generateStoryboardFrames refuses real clients (no paid generation, gate 4 = DIR-015), every contract + frame stamped NON_PROVIDER_INPUT with marker-authoritative isProviderEligibleFrame/assertNotProviderInput guard (spec §8)",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

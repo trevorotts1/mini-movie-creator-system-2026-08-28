@@ -1,0 +1,13 @@
+{
+  "taskId": "FISH-001",
+  "phase": "PASS",
+  "commit": "79d573a",
+  "checksRun": "npx vitest run packages/providers/src/fish-audio/client -> 41/41 passed (exit 0); npx tsc --noEmit in packages/providers -> clean (exit 0); live re-verify https://api.fish.audio/openapi.json (HTTP 200: model header enum [s1,s2-pro,s2.1-pro,s2.1-pro-free], BearerAuth, servers url, TTS responses 200/401/402/503); secret scan of diff -> clean (only fake test key); no eslint config exists in repo",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Fixed unbounded exponential backoff (cap 30s + maxRetries<=10), bearer-key exfiltration via non-relative request paths (origin pinning + backslash normalization), model header injection guard, and bad-response kind now produced for unparseable JSON 2xx; 7 regression tests added.",
+  "blockers": []
+}

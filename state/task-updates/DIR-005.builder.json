@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-005",
+  "phase": "BUILDER_DONE",
+  "commit": "b334ae9051a96ab65a22308a356024b17e91e98d",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/runtime-estimator -> 2 files, 34/34 passed; npx tsc --noEmit -p packages/scene-intelligence -> clean; npx vitest run (full repo) -> 425 passed, 1 pre-existing unrelated failure (packages/core/src/config/config.test.ts zod resolution — reproduces identically on clean origin/integration baseline)",
+  "notes": "Runtime estimator: structured screenplay (scenes/dialogue/action elements, versioned input contract) -> per-scene + total seconds via word-count pacing (2.5 dialogue wps, 4.0 action wps, 1.5s scene overhead, 3s scene floor; callers override any). Three known-duration fixtures hand-computed (Coffee at Dawn 23.4s single scene, Rooftop Pursuit 22.8s 3 scenes, Quiet Hours 11.7s with min-floor) — all within exact ±10% tolerance, total equals per-scene sum exactly. RuntimeEstimateStore persists summary + per-scene rows to SQLite (own idempotent tables, no other task's schema), latest-wins on re-estimation, consistency check scene-sum vs total. Story text counted only, never executed (hostile-input test).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:30:00Z"
+}

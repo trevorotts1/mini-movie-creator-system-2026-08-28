@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-011",
+  "phase": "PASS",
+  "commit": "315e61d",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/scene-master -> 28 passed (28), 0 failed; npx tsc --noEmit -p packages/scene-intelligence -> clean; full-worktree npx vitest run -> 436 passed, 0 failed; security scan of owned paths (exec/spawn/eval/fs/env/secrets/retry greps) clean",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Patched 4 malformed-input defects: missing/non-object room+lighting and null/non-object array entries threw raw TypeError (now SceneMasterError via requireObject/requireElement); unknown importance level produced NaN score silently dropping the scene-master flag (now SceneMasterError); planSceneMasters crashed on duplicate characters because classifier dedupes but spec builder did not (now dedupes). 5 regression tests added (23->28). Barrel index.ts left untouched — integration-owned per ownership.md rule 6.",
+  "blockers": []
+}

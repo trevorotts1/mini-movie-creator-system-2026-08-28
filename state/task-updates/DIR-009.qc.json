@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-009",
+  "phase": "PASS",
+  "commit": "c19b58f",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/scene-parser (33/33 PASS); npx vitest run packages/scene-intelligence (33/33 PASS); npx tsc --noEmit (packages/scene-intelligence) clean; security probes: prototype-pollution-shaped input, ReDoS backtracking probes (0ms), 50k-scene flood (82ms), type-confused structured fields, Infinity/NaN/1e308 duration overrides, hostile sceneIdPrefix, regex-metachar knownCharacters, newline-smuggled character names",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Fixed: structured-input crash on null/primitives; bare-INT. multi-line headings leaked location into action; hostile sceneIdPrefix passed path/control chars into sceneId (spec 19) and was ignored on structured path; Infinity/1e308 duration overrides poisoned totalDurationSeconds. 33/33 green.",
+  "blockers": []
+}

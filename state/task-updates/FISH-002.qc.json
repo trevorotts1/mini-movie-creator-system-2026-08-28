@@ -1,0 +1,13 @@
+{
+  "taskId": "FISH-002",
+  "phase": "PASS",
+  "commit": "b40ee03e512d8a2e26268357cd8aff7cce52345b",
+  "checksRun": "npx vitest run packages/providers/src/fish-audio/voice-profiles; cd packages/providers && npx tsc --noEmit; security review of owned paths",
+  "defectsFound": 6,
+  "defectsFixed": 6,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "29/29 tests green; fixed tmp-file leak, profiles-array malformed doc, dead injected clock, listForCharacters dedupe, blank proper-noun validation (create+update)",
+  "blockers": []
+}
