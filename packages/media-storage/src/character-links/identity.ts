@@ -159,13 +159,14 @@ export function buildCanonicalLink(
   const sha256 = normalizeSha256(archived.sha256);
   const approvalState: CanonicalLinkState = input.approvalState ?? "APPROVED";
   return {
-    assetId,
+    assetId: input.assetId ?? assetId,
     characterId: input.characterId,
     identityVersion: input.identityVersion,
     ghlFileId: archived.ghlFileId,
     ghlFolderId: "",
     ghlUrl: archived.ghlUrl,
     sha256,
+    localCachePath: input.localCachePath ?? null,
     width: input.width,
     height: input.height,
     provider: input.provider,

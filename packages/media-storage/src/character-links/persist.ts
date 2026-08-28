@@ -90,7 +90,11 @@ export async function persistCanonicalCharacterLink(
     );
   }
 
-  const filename = canonicalFilename(input.characterId, input.identityVersion);
+  const filename = canonicalFilename(
+    input.characterId,
+    input.identityVersion,
+    input.extension,
+  );
   const archived = await ports.archive.archiveImage({
     sourceUrl: input.sourceUrl,
     filename,

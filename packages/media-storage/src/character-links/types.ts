@@ -61,6 +61,12 @@ export interface CanonicalCharacterImageInput {
   sourceJobId: string;
   /** Asset lifecycle state at persistence time. Defaults to `APPROVED`. */
   approvalState?: CanonicalLinkState;
+  /** Optional explicit asset ID; generated if omitted. */
+  assetId?: string;
+  /** Optional local cache path if present; canonical linkage survives removal. */
+  localCachePath?: string | null;
+  /** Optional image extension override (e.g. 'png', 'jpg', 'webp'). */
+  extension?: string;
 }
 
 /** The durable link persisted on the character record (spec §9 fields). */
@@ -79,6 +85,8 @@ export interface CanonicalCharacterLink {
   ghlUrl: string;
   /** SHA-256 of the archived bytes (lowercase hex). */
   sha256: string;
+  /** Optional local cache path if present on disk; null otherwise. */
+  localCachePath?: string | null;
   /** Image width in pixels. */
   width: number;
   /** Image height in pixels. */

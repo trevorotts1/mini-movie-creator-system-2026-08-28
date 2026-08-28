@@ -321,7 +321,7 @@ describe("memory adapters", () => {
   });
 });
 
-describe("asset ID generation", () => {
+describe("asset ID generation and optional fields", () => {
   it("mirrors the character-library IDENT_ASSET format", () => {
     expect(generateCanonicalAssetId("CHAR_MONICA_BENNETT_001", 7)).toBe(
       "IDENT_ASSET_MONICA_BENNETT_001_007",
@@ -329,5 +329,22 @@ describe("asset ID generation", () => {
     expect(generateCanonicalAssetId("CHAR_MONICA_BENNETT_001", 123)).toBe(
       "IDENT_ASSET_MONICA_BENNETT_001_123",
     );
+  });
+
+  it("persists optional assetId, localCachePath, and extension when provided", async () => {
+    const w = wired();
+    const result = await persistCanonicalCharacterLink(
+      {
+        ...w.input,
+        assetId: "IDENT_ASSET_MONICA_BENNETT_001_CUSTOM",
+        localCachePath: "/var/tmp/cache/monica.webp",
+        extension: "webp",
+      },
+      { folders: w.folders, archive: w.archive, store: w.store },
+    );
+
+    expect(result.link.assetId).toBe("IDENT_ASSET_MONICA_BENNETT_001_CUSTOM");
+    expect(result.link.localCachePath).toBe("/var/tmp/cache/monica.webp");
+    expect(result.filename).toBe("CHAR_MONICA_BENNETT_001_identity-v1_master.webp");
   });
 });
