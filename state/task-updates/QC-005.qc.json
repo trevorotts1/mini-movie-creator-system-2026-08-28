@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-005",
+  "phase": "PASS",
+  "commit": "5f68cae98b163ed727b9abd8567aaa58943bae82",
+  "checksRun": "npx vitest run packages/qc/src/route (24/24 pass); npx vitest run packages/qc (24/24 pass); tsc --noEmit packages/qc (clean); lint: no lint script exists in any packages/*/package.json (checked all 12)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T01:00:00Z",
+  "notes": "Fixed stem path-traversal guard (hostile stem escaped outputDir via path.join) + count validation in representativeTimestamps (NaN silently planned zero frames, Infinity looped; now throws, and plan capped at usable frame count); 2 regression tests added; NOTE from builder stands: packages/qc/src/index.ts barrel wiring is merger's job when QC-001/QC-002 land (outside owned paths).",
+  "blockers": []
+}
