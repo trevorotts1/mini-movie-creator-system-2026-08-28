@@ -174,14 +174,38 @@ export const shotQcResultSchema = z
         });
       }
     }
+    // Verdict must match the per-check rollup; a self-contradictory result
+    // would corrupt downstream routing (verdict drives APPROVED/QC_FIXING).
+    const rolled = rollupVerdict(result.checks);
+    if (rolled !== result.verdict) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["verdict"],
+        message: `verdict "${result.verdict}" contradicts per-check rollup "${rolled}"`,
+      });
+    }
+    // QC cannot have completed before it started.
+    if (Date.parse(result.completedAt) < Date.parse(result.startedAt)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["completedAt"],
+        message: "completedAt must not be earlier than startedAt",
+      });
+    }
   });
 export type ShotQcResult = z.infer<typeof shotQcResultSchema>;
 
 /**
  * Roll up per-check verdicts into the shot verdict (spec §18/§20):
  * any FAIL → FAIL; otherwise any REVIEW → REVIEW; otherwise PASS.
+ * Throws on empty input — no checks is not a passing shot.
  */
-export function rollupVerdict(checks: readonly QcCheckResult[]): QcVerdict {
+export function rollupVerdict(
+  checks: readonly { verdict: QcVerdict }[],
+): QcVerdict {
+  if (checks.length === 0) {
+    throw new Error("rollupVerdict requires at least one check result");
+  }
   let sawReview = false;
   for (const check of checks) {
     if (check.verdict === "FAIL") return "FAIL";
