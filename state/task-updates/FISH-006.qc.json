@@ -1,13 +1,13 @@
 {
   "taskId": "FISH-006",
   "phase": "PASS",
-  "commit": "50626b8bcb6be1506884332450951926d1c70d67",
-  "checksRun": "npx vitest run packages/providers/src/fish-audio/alignment (26/26 PASS); npx vitest run packages/providers (66/66 PASS); npx tsc --noEmit -p packages/providers (clean); cross-task contract check vs FISH-005 cache key + FISH-007 captions loader",
-  "defectsFound": 3,
-  "defectsFixed": 3,
+  "commit": "6051e51",
+  "checksRun": "npx vitest run packages/providers/src/fish-audio/alignment -> 30/30 passed; npx vitest run (worktree root) -> 438/438 passed, 25 files; pnpm typecheck (packages/providers, tsc --noEmit) -> clean; security scan (exec/eval/secrets/retry grep) -> clean",
+  "defectsFound": 4,
+  "defectsFixed": 4,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
-  "queuedAt": "2026-08-28T20:10:00Z",
-  "notes": "Fixed: parseAlignmentDoc accepted records missing text (FISH-007 loader rejects them); negative times rounding to -0 passed validation; invalid options.source passed through unvalidated. Regression tests added.",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Fixed overlap-unsafe durationMs fallback (multi-voice S2 truncation), prototype-chain timeUnit bypass, shallow parseAlignmentDoc (null words / missing contract fields), dead spec refs (21->29, 37->25); 4 regression tests added; FISH-005 key-format drift re-verified (fsh1 identical).",
   "blockers": []
 }
