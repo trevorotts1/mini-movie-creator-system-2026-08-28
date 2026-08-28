@@ -17,9 +17,10 @@ import { refreshStaleLink, type AssetManifestStore } from "./manifest";
  *    cache is present (path + checksum match), and the record has durable
  *    linkage. Returns the triplet with the cache path attached.
  * 2. Durable DB/manifest record — the verbatim triplet as persisted.
- * 3. GHL refresh — when `refreshOnStale` is set and the record's URL is absent
- *    or the caller flags the link stale, re-read the current GHL media record
- *    and rewrite the record. Never fabricates a link.
+ * 3. GHL refresh — when the record's linkage is absent/incomplete with
+ *    `refreshOnStale` set, or the caller flags the link stale via `stale`,
+ *    re-read the current GHL media record and rewrite the record. Never
+ *    fabricates a link.
  */
 
 /** Options for {@linkcode resolveAssetLink}. */
@@ -32,6 +33,14 @@ export interface ResolveAssetLinkOptions {
   localCache?: { path: string; sha256: string } | null;
   /** Allow a GHL round-trip when the record is stale/incomplete. */
   refreshOnStale?: boolean;
+  /**
+   * Caller-detected staleness (e.g. a provider call failed on the record's
+   * URL, or a checksum probe mismatched). Bypasses the durable record and
+   * forces the GHL refresh path; implies `refreshOnStale`. When the refresh
+   * cannot produce a link, the error surfaces — the stale triplet is never
+   * handed downstream.
+   */
+  stale?: boolean;
 }
 
 /**
@@ -48,7 +57,7 @@ export async function resolveAssetLink(
   options: ResolveAssetLinkOptions = {},
 ): Promise<AssetLinkResolution> {
   const durable =
-    record.ghlFileId && record.ghlUrl && record.sha256
+    record.ghlFileId && record.ghlUrl && record.sha256 && !options.stale
       ? requireCanonicalLink(record)
       : null;
 
@@ -75,7 +84,7 @@ export async function resolveAssetLink(
     };
   }
 
-  if (options.refreshOnStale) {
+  if (options.refreshOnStale || options.stale) {
     const refreshed = await refreshStaleLink(record.assetId, manifest, ghl);
     return {
       link: refreshed,

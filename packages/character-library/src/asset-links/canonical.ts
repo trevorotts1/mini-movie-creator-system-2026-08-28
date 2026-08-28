@@ -2,7 +2,6 @@ import {
   AssetLinkError,
   type AssetLinkRecord,
   type CanonicalAssetLink,
-  type GhlMediaStore,
 } from "./types";
 
 /**
@@ -46,17 +45,20 @@ export function requireCanonicalLink(
   };
 }
 
+/** Minimal shape a GHL refresh source must return (subset of GhlMediaRecord). */
+export interface GhlRefreshRecord {
+  fileId: string;
+  url: string;
+  sha256: string;
+}
+
 /**
  * Validate a triplet returned by a GHL refresh so a corrupt store response can
  * never replace a good canonical record. Same rules as
  * {@linkcode requireCanonicalLink} with refresh-specific error text.
  */
 export function validateRefreshedLink(
-  record: GhlMediaStore extends never ? never : {
-    fileId: string;
-    url: string;
-    sha256: string;
-  },
+  record: GhlRefreshRecord,
 ): CanonicalAssetLink {
   if (!record.fileId) {
     throw new AssetLinkError("refreshed GHL record lacks fileId");

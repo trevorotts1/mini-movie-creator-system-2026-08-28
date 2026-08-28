@@ -199,6 +199,71 @@ describe("resolveAssetLink — local cache removal fallback (mocked GHL)", () =>
       resolveAssetLink(record, new InMemoryAssetManifest(), mockGhl()),
     ).rejects.toThrow(AssetLinkError);
   });
+
+  it("durable record with refreshOnStale resolves from manifest without a GHL round-trip", async () => {
+    // refreshOnStale permits a refresh when needed; a complete durable record
+    // still short-circuits — no speculative network call.
+    const ghl = mockGhl();
+    const resolution = await resolveAssetLink(
+      makeRecord(),
+      new InMemoryAssetManifest(),
+      ghl,
+      { refreshOnStale: true },
+    );
+    expect(resolution.source).toBe("manifest");
+    expect(resolution.link).toEqual(CANONICAL);
+    expect(ghl.calls).toEqual([]);
+  });
+
+  it("caller-flagged staleness (stale: true) forces a GHL refresh past a durable record", async () => {
+    // Record looks complete, but a provider call just failed on its URL — the
+    // caller flags it stale; resolution must NOT return the stale URL verbatim.
+    const freshUrl =
+      "https://services.leadconnectorhq.com/media/ghl-file-0001/reissued.png";
+    const manifest = new InMemoryAssetManifest([
+      {
+        assetId: "IDENT_ASSET_MONICA_V1_0001",
+        link: { ...CANONICAL, localCachePath: null },
+      },
+    ]);
+    const ghl = mockGhl({
+      [CANONICAL.ghlFileId]: {
+        fileId: CANONICAL.ghlFileId,
+        url: freshUrl,
+        sha256: "1".repeat(64),
+        folderId: "folder-canon",
+        sizeBytes: 4096,
+        dimensions: null,
+      },
+    });
+
+    const resolution = await resolveAssetLink(
+      makeRecord({ localCachePath: "/tmp/cache/monica_v1.png" }),
+      manifest,
+      ghl,
+      { stale: true },
+    );
+
+    expect(resolution.source).toBe("ghl-refresh");
+    expect(resolution.refreshed).toBe(true);
+    expect(resolution.link).toEqual({
+      ghlFileId: CANONICAL.ghlFileId,
+      ghlUrl: freshUrl,
+      sha256: "1".repeat(64),
+    });
+    expect(ghl.calls).toEqual([CANONICAL.ghlFileId]);
+    const saved = await manifest.load("IDENT_ASSET_MONICA_V1_0001");
+    expect(saved?.link.ghlUrl).toBe(freshUrl);
+  });
+
+  it("stale: true with no manifest entry surfaces the refresh error (never a stale triplet)", async () => {
+    const ghl = mockGhl(); // no manifest entry -> refreshStaleLink throws
+    await expect(
+      resolveAssetLink(makeRecord(), new InMemoryAssetManifest(), ghl, {
+        stale: true,
+      }),
+    ).rejects.toThrow(AssetLinkError);
+  });
 });
 
 describe("refreshStaleLink — stale-link refresh via manifest", () => {
