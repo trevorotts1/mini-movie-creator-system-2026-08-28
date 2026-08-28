@@ -228,14 +228,18 @@ export class HeuristicCriticModel implements CriticModel {
 
     const totalLines = scenes.reduce((a, s) => a + s.dialogue.length, 0);
     if (totalLines > 0) {
-      const secondsPerLine = mean / totalLines;
+      // True seconds-per-line across the whole script: total planned
+      // runtime / total dialogue lines (the old mean / totalLines math
+      // undercounted multi-scene scripts and false-flagged healthy pacing).
+      const totalDuration = durations.reduce((a, b) => a + b, 0);
+      const secondsPerLine = totalDuration / totalLines;
       if (secondsPerLine < this.minSecondsPerLine) {
         this.push(findings, {
           rule: "PAC-rushed",
           category: "pacing",
           severity: "major",
           title: "Dialogue is rushed relative to planned runtime",
-          detail: `${totalLines} dialogue lines across ${scenes.length} scene(s) average ${secondsPerLine.toFixed(1)}s each at the ${mean.toFixed(1)}s mean scene duration; minimum is ${this.minSecondsPerLine}s.`,
+          detail: `${totalLines} dialogue lines across ${scenes.length} scene(s) average ${secondsPerLine.toFixed(1)}s each against a ${totalDuration.toFixed(1)}s total planned runtime; minimum is ${this.minSecondsPerLine}s.`,
           suggestion: "Add breathing room between lines or trim dialogue.",
           location: this.loc(null),
         });
@@ -251,7 +255,11 @@ export class HeuristicCriticModel implements CriticModel {
     // CON-ghost: a recurring location (2+ scenes) whose last appearance sits
     // before the final scene has been abandoned mid-screenplay. Location =
     // the heading part before the conventional " - " time split
-    // ("INT. WAREHOUSE - NIGHT" → "int. warehouse").
+    // ("INT. WAREHOUSE - NIGHT" → "int. warehouse"). All comparisons run on
+    // scene POSITION (1-based ordinal), never scene.index, so 0-based or
+    // sparse scene indices cannot skew the count or the last-scene check.
+    const scenePositions = screenplay.scenes.map((_, i) => i + 1);
+    const sceneCount = scenePositions.length;
     const sceneLocations = screenplay.scenes.map((s) =>
       (s.heading.split(/\s+-\s+/)[0] ?? s.heading).trim().toLowerCase(),
     );
@@ -260,20 +268,20 @@ export class HeuristicCriticModel implements CriticModel {
     screenplay.scenes.forEach((scene, i) => {
       const loc = sceneLocations[i] as string;
       totals.set(loc, (totals.get(loc) ?? 0) + 1);
-      lastSeen.set(loc, scene.index);
+      lastSeen.set(loc, scenePositions[i] as number);
     });
     for (const [loc, total] of totals) {
       if (total < 2) continue;
       const last = lastSeen.get(loc) ?? 0;
-      if (last >= screenplay.scenes.length) continue;
+      if (last >= sceneCount) continue;
       const firstScene =
-        screenplay.scenes.find((_, i) => sceneLocations[i] === loc)?.index ?? null;
+        scenePositions[screenplay.scenes.findIndex((_, i) => sceneLocations[i] === loc)] ?? null;
       this.push(findings, {
         rule: "CON-ghost",
         category: "continuity",
         severity: "minor",
         title: `Recurring location "${loc}" is not revisited`,
-        detail: `Location "${loc}" appears in ${total} scene(s) but never returns after scene ${last}, despite the screenplay continuing to scene ${screenplay.scenes.length}.`,
+        detail: `Location "${loc}" appears in ${total} scene(s) but never returns after scene ${last}, despite the screenplay continuing to scene ${sceneCount}.`,
         suggestion: "Either revisit the location or resolve its thread explicitly.",
         location: this.loc(firstScene),
       });
@@ -335,6 +343,9 @@ export class HeuristicCriticModel implements CriticModel {
         }
         const sheet = (context.characters ?? []).find((c) => sameName(c.name, d.character));
         for (const banned of sheet?.bannedPhrases ?? []) {
+          // Empty/whitespace phrases match every line — skip them instead of
+          // flooding the critique with false DIA-banned findings.
+          if (banned.trim() === "") continue;
           if (d.text.toLowerCase().includes(banned.toLowerCase())) {
             this.push(findings, {
               rule: "DIA-banned",

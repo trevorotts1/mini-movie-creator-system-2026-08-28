@@ -75,6 +75,54 @@ describe("HeuristicCriticModel", () => {
     expect(critique.findings.some((f) => f.rule === "PAC-rushed")).toBe(true);
   });
 
+  it("PAC-rushed: does not false-flag healthy multi-scene pacing", async () => {
+    // 4 scenes x 30s = 120s planned runtime for 15 lines -> 8s/line, healthy.
+    // Regression: the old mean-per-scene math computed 30/15 = 2s and flagged it.
+    const screenplay: Screenplay = {
+      id: "s2b",
+      title: "t",
+      logline: "l",
+      scenes: [1, 2, 3, 4].map((i) => ({
+        index: i,
+        heading: `INT. S${i} - NIGHT`,
+        action: "a",
+        dialogue: Array.from({ length: 4 }, (_, k) => ({
+          character: "A",
+          text: `line ${i}-${k}`,
+        })),
+        plannedDurationSeconds: 30,
+      })),
+    };
+    screenplay.scenes[0]!.dialogue = [...screenplay.scenes[0]!.dialogue.slice(0, 3)];
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(screenplay);
+    expect(critique.findings.filter((f) => f.rule === "PAC-rushed")).toEqual([]);
+  });
+
+  it("PAC-rushed: still flags genuinely crammed dialogue", async () => {
+    // Single 8s scene with 4 lines -> 2s/line, genuinely rushed.
+    const screenplay: Screenplay = {
+      id: "s2c",
+      title: "t",
+      logline: "l",
+      scenes: [
+        {
+          index: 1,
+          heading: "INT. A - NIGHT",
+          action: "a",
+          dialogue: [
+            { character: "A", text: "one" },
+            { character: "B", text: "two" },
+            { character: "A", text: "three" },
+            { character: "B", text: "four" },
+          ],
+          plannedDurationSeconds: 8,
+        },
+      ],
+    };
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(screenplay);
+    expect(critique.findings.some((f) => f.rule === "PAC-rushed")).toBe(true);
+  });
+
   it("PAC-empty: critical finding for a screenplay with no scenes", async () => {
     const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique({
       id: "s0",
@@ -105,6 +153,44 @@ describe("HeuristicCriticModel", () => {
     expect(ghost?.detail).toContain("int. bakery");
   });
 
+  it("CON-ghost: does not flag a location that runs through the final scene", async () => {
+    const screenplay: Screenplay = {
+      id: "s5b",
+      title: "t",
+      logline: "l",
+      scenes: [1, 2, 3].map((i) => ({
+        index: i,
+        heading: "INT. BAKERY - NIGHT",
+        action: "a",
+        dialogue: [],
+        plannedDurationSeconds: 20,
+      })),
+    };
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(screenplay);
+    expect(critique.findings.filter((f) => f.rule === "CON-ghost")).toEqual([]);
+  });
+
+  it("CON-ghost: flags abandonment correctly with 0-based scene indices", async () => {
+    // Scene indices are 0-based and the location truly abandons after
+    // position 2 of 3 — position math must not depend on scene.index.
+    const screenplay: Screenplay = {
+      id: "s5c",
+      title: "t",
+      logline: "l",
+      scenes: [
+        { index: 0, heading: "INT. BAKERY - NIGHT", action: "a", dialogue: [], plannedDurationSeconds: 20 },
+        { index: 1, heading: "INT. BAKERY - NIGHT", action: "a", dialogue: [], plannedDurationSeconds: 20 },
+        { index: 2, heading: "INT. TUNNEL - NIGHT", action: "a", dialogue: [], plannedDurationSeconds: 20 },
+      ],
+    };
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(screenplay);
+    const ghost = critique.findings.find((f) => f.rule === "CON-ghost");
+    expect(ghost).toBeDefined();
+    // Anchored by 1-based scene POSITION, not the screenplay's scene.index.
+    expect(ghost?.location.sceneIndex).toBe(1);
+    expect(ghost?.detail).toContain("never returns after scene 2");
+  });
+
   it("CON-canon: flags action negating a continuity note", async () => {
     const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
       FLAWED_SCREENPLAY,
@@ -133,6 +219,29 @@ describe("HeuristicCriticModel", () => {
     const banned = critique.findings.filter((f) => f.rule === "DIA-banned");
     expect(banned.length).toBe(1);
     expect(banned[0]?.location.character).toBe("MARA");
+  });
+
+  it("DIA-banned: ignores empty banned-phrase entries instead of matching every line", async () => {
+    const screenplay: Screenplay = {
+      id: "s3b",
+      title: "t",
+      logline: "l",
+      scenes: [
+        {
+          index: 1,
+          heading: "INT. A - NIGHT",
+          action: "a",
+          dialogue: [{ character: "MARA", text: "Hello there." }],
+          plannedDurationSeconds: 20,
+        },
+      ],
+    };
+    const critique = await new HeuristicCriticModel("t", { now: FIXED_NOW }).critique(
+      screenplay,
+      { characters: [{ name: "MARA", bannedPhrases: ["", "  "] }] },
+    );
+    expect(critique.findings.filter((f) => f.rule === "DIA-banned")).toEqual([]);
+    expect(critique.verdict).toBe("pass");
   });
 
   it("DIA-monolog: flags an outlier monologue on the flawed fixture", async () => {
