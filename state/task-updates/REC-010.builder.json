@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-010",
+  "phase": "BUILDER_DONE",
+  "commit": "1f658f4272d7218b711160e9b2ce123659592d37",
+  "testsRun": "npx vitest run --config scripts/orchestration/vitest.config.mts scripts/orchestration -> 13/13 passed (exit 0); npx tsx scripts/orchestration/restart-sim.ts -> all 3 scenarios PASS, exit 0; npx tsc --noEmit -p tsconfig.base.json -> clean; regression: npx vitest run packages/core/src/recovery -> 18/18, npx vitest run packages/providers -> 40/40",
+  "notes": "Restart simulation scripts/orchestration/restart-sim.ts (+ .test.ts, vitest.config.mts) + docs/recovery-simulation.md; 3 spec-32 recovery scenarios against real subsystem code — CORE-014 CheckpointService task-map reload with uniqueIds set-union (no duplicate task creation), reconcileWorktrees vs live git worktree list --porcelain (phantom + drift detected), KIE-002 KieTaskRunner kill-after-submit resume polling existing providerTaskId (createTask stays 1, no resubmit); CLI main exits 0 only when all pass; test config mirrors idempotency-package .mts pattern (root ESM config broken on Node 26 — existing scaffold blocker, not new).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T16:10:00Z"
+}
