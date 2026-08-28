@@ -7,9 +7,10 @@
  * Story text renders as React text children only — never injected markup
  * (spec §29: story text is untrusted data).
  *
- * This file is excluded from the package's strict tsconfig/test surface (the
- * `remotion` peer is resolved inside the upstream `remotion/` project). VID-012
- * mounts these in the episodic composition's native-graphics sequence.
+ * The package tsconfig includes *.tsx with jsx react-jsx (same include the
+ * captions layer ships under), so this file is typechecked with the package;
+ * the `remotion` peer resolves from the upstream Remotion project's install.
+ * VID-012 mounts these in the episodic composition's native-graphics sequence.
  */
 import React from "react";
 import { AbsoluteFill, Easing, useCurrentFrame, useVideoConfig } from "remotion";
@@ -23,14 +24,21 @@ import type { FrameSize, SafeArea } from "../types.js";
 const EASE_OUT = Easing.bezier(0.33, 1, 0.68, 1);
 void EASE_OUT; // brand reference; core math already emits eased envelopes
 
-/** Wrapper positioning per resolved item. */
-function itemStyle(it: ResolvedGraphicsItem, frame: FrameSize, safe: SafeArea): React.CSSProperties {
-  const block = anchorBlock(it.anchor, frame, safe);
+/** Wrapper positioning per resolved item.
+ *
+ * Two distinct "frame" values flow through here: the canvas geometry
+ * (FrameSize) drives anchorBlock + width math, while the current timeline
+ * frame (a plain number, from useCurrentFrame) drives the envelope. Passing
+ * the FrameSize object into envelopeAt was the TS2345 defect the QC
+ * regression test pins: envelopeAt(frame, ...) takes a number.
+ */
+function itemStyle(it: ResolvedGraphicsItem, frame: number, canvas: FrameSize, safe: SafeArea): React.CSSProperties {
+  const block = anchorBlock(it.anchor, canvas, safe);
   const env = envelopeAt(frame, it.range, it.timing);
   return {
     position: "absolute",
     left: block.align === "left" ? block.x : undefined,
-    right: block.align === "right" ? frame.width - block.x : undefined,
+    right: block.align === "right" ? canvas.width - block.x : undefined,
     top: block.y + env.translateY,
     width: block.align === "center" ? "100%" : undefined,
     textAlign: block.align === "center" ? "center" : block.align,
@@ -50,7 +58,8 @@ export const GraphicsItemView: React.FC<{
   frameSize?: FrameSize;
   safeArea?: SafeArea;
 }> = ({ item, frameSize = DEFAULT_FRAME, safeArea = DEFAULT_SAFE_AREA }) => {
-  const style = itemStyle(item, frameSize, safeArea);
+  const frame = useCurrentFrame();
+  const style = itemStyle(item, frame, frameSize, safeArea);
   const lines = item.lines;
 
   if (item.spec.kind === "progressBar") {
