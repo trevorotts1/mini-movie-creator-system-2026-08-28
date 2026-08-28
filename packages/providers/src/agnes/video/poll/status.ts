@@ -118,7 +118,11 @@ export function extractUrlExpiration(info: AgnesVideoTaskInfo): string | null | 
     metadataField(info, "expire_at"),
   ];
   for (const candidate of candidates) {
-    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+    // 0 / negative numbers are sentinel "no expiration" values, not real
+    // timestamps: converting them would persist "1970-01-01…" as a genuine
+    // (already-expired) expiration the archival layer could act on. Absent
+    // beats corrupt — fall through to the next candidate.
+    if (typeof candidate === "number" && Number.isFinite(candidate) && candidate > 0) {
       return new Date(candidate * 1000).toISOString();
     }
     if (typeof candidate === "string" && candidate.trim() !== "") {

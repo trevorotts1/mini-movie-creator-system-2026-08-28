@@ -153,6 +153,18 @@ describe("extractUrlExpiration (never invent)", () => {
       "2026-08-29T00:00:00Z",
     );
   });
+
+  it("treats 0/negative epoch seconds as 'no expiration' (never persists 1970 sentinel)", () => {
+    expect(extractUrlExpiration({ status: "completed", expiresAt: 0 })).toBeUndefined();
+    expect(extractUrlExpiration({ status: "completed", expiresAt: -5 })).toBeUndefined();
+    expect(
+      extractUrlExpiration({ status: "completed", metadata: { url: "https://a/x.mp4", expires_at: 0 } }),
+    ).toBeUndefined();
+    // A real positive epoch still converts.
+    expect(extractUrlExpiration({ status: "completed", expiresAt: 1787000000 })).toBe(
+      new Date(1787000000 * 1000).toISOString(),
+    );
+  });
 });
 
 describe("AgnesVideoPollRunner — poll-only, resume at SUBMITTED (kill-poller test)", () => {
