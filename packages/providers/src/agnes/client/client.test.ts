@@ -5,6 +5,7 @@ import {
   AgnesClient,
   AgnesApiError,
   isRetryableError,
+  isRetryableStatus,
   type AgnesFetch,
 } from "./index.js";
 import { resolveAgnesClientConfig } from "./config.js";
@@ -123,6 +124,63 @@ describe("AgnesClient — auth and body", () => {
   });
 });
 
+describe("AgnesClient — host pinning (spec §29)", () => {
+  it("throws (fail-fast) on an absolute URL path that escapes the configured host", async () => {
+    const { fetch, calls } = scriptedFetch([]);
+    const client = makeClient(fetch);
+    // A path bug is a programming error — fail loudly rather than surface as
+    // a provider failure that the routing layer would retry elsewhere.
+    await expect(
+      client.request({ path: "https://evil.example/v1/videos", body: { model: "m" } }),
+    ).rejects.toThrow(/configured host/);
+    expect(calls).toHaveLength(0); // request never left the client
+  });
+
+  it("throws on a protocol-relative path (//evil.example)", async () => {
+    const { fetch, calls } = scriptedFetch([]);
+    const client = makeClient(fetch);
+    await expect(client.request({ path: "//evil.example/v1/videos", body: {} })).rejects.toThrow(
+      /configured host/,
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  it("still allows the documented /agnesapi host-root route", async () => {
+    const { fetch, calls } = scriptedFetch([jsonResponse(200, TASK_OK)]);
+    const client = makeClient(fetch);
+    const result = await client.getVideo("video_1", "agnes-video-2.5-flash");
+    expect(result.ok).toBe(true);
+    expect(calls[0]!.url).toBe("https://mock.agnes.test/agnesapi?video_id=video_1&model_name=agnes-video-2.5-flash");
+  });
+});
+
+describe("AgnesClient — deadline covers body read (spec §29)", () => {
+  it("times out when the server drips the response body", async () => {
+    // A Response whose body never completes: fetch resolves fast, json() hangs.
+    const never = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode("{"));
+          // never close
+        },
+      }),
+      { status: 200 },
+    );
+    const fetch: AgnesFetch = async () => never;
+    const client = new AgnesClient(
+      { apiKey: API_KEY, baseUrl: "https://mock.agnes.test/v1", timeoutMs: 50, maxRetries: 1 },
+      { fetch },
+    );
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("timeout");
+      expect(result.error.message).toContain("timed out");
+      expect(JSON.stringify(result)).not.toContain(API_KEY);
+    }
+  }, 5_000);
+});
+
 describe("AgnesClient — HTTP error mapping", () => {
   it("maps 401 to non-retryable http-error", async () => {
     const { fetch, calls } = scriptedFetch([
@@ -150,42 +208,79 @@ describe("AgnesClient — HTTP error mapping", () => {
     expect(calls).toHaveLength(1);
   });
 
-  it("maps 429 to retryable rate-limited and honors Retry-After", async () => {
+  it("maps 429 on GET to retryable rate-limited and honors Retry-After", async () => {
     const { fetch, calls } = scriptedFetch([
       jsonResponse(429, { error: { message: "rate limit" } }, { "Retry-After": "2" }),
       jsonResponse(200, TASK_OK),
     ]);
     const client = makeClient(fetch);
-    const result = await client.createVideo({ model: "m" });
+    const result = await client.getVideo("video_1", "agnes-video-2.5-flash");
     expect(result.ok).toBe(true);
     expect(calls).toHaveLength(2);
   });
 
-  it("retries 5xx then succeeds", async () => {
+  it("retries 5xx on GET then succeeds", async () => {
     const { fetch, calls } = scriptedFetch([
       jsonResponse(500, { error: { message: "boom" } }),
       jsonResponse(200, TASK_OK),
     ]);
     const client = makeClient(fetch);
-    const result = await client.createVideo({ model: "m" });
+    const result = await client.getVideo("video_1");
     expect(result.ok).toBe(true);
     expect(calls).toHaveLength(2);
   });
 
-  it("gives up after maxRetries and reports the last error", async () => {
+  it("gives up after maxRetries on GET and reports the last error", async () => {
     const { fetch, calls } = scriptedFetch([
       jsonResponse(500, { error: { message: "boom" } }),
       jsonResponse(500, { error: { message: "boom" } }),
       jsonResponse(500, { error: { message: "boom" } }),
     ]);
     const client = makeClient(fetch, { maxRetries: 3 });
-    const result = await client.createVideo({ model: "m" });
+    const result = await client.getVideo("video_1");
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.kind).toBe("server-error");
       expect(result.error.attempt).toBe(3);
     }
     expect(calls).toHaveLength(3);
+  });
+});
+
+describe("AgnesClient — POST is never auto-retried on HTTP failure (paid non-idempotent submit)", () => {
+  it("does NOT retry a 500 on createVideo (a timed-out 5xx may still have created a task)", async () => {
+    const { fetch, calls } = scriptedFetch([
+      jsonResponse(500, { error: { message: "boom" } }),
+      jsonResponse(200, TASK_OK),
+    ]);
+    const client = makeClient(fetch, { maxRetries: 3 });
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("server-error");
+      expect(result.error.attempt).toBe(1);
+    }
+    expect(calls).toHaveLength(1);
+  });
+
+  it("does NOT retry a 429 on createVideo", async () => {
+    const { fetch, calls } = scriptedFetch([
+      jsonResponse(429, { error: { message: "rate limit" } }, { "Retry-After": "2" }),
+      jsonResponse(200, TASK_OK),
+    ]);
+    const client = makeClient(fetch, { maxRetries: 3 });
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.kind).toBe("rate-limited");
+    expect(calls).toHaveLength(1);
+  });
+
+  it("still retries wire failures (network/timeout) on createVideo — no response means no task was created", async () => {
+    const { fetch, calls } = scriptedFetch([new TypeError("fetch failed"), jsonResponse(200, TASK_OK)]);
+    const client = makeClient(fetch, { maxRetries: 3 });
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(2);
   });
 });
 
@@ -217,6 +312,16 @@ describe("AgnesClient — timeout and network", () => {
     expect(isRetryableError("bad-response")).toBe(false);
   });
 
+  it("isRetryableStatus recognizes 429/5xx only", () => {
+    expect(isRetryableStatus(429)).toBe(true);
+    expect(isRetryableStatus(500)).toBe(true);
+    expect(isRetryableStatus(503)).toBe(true);
+    expect(isRetryableStatus(401)).toBe(false);
+    expect(isRetryableStatus(404)).toBe(false);
+    expect(isRetryableStatus(400)).toBe(false);
+    expect(isRetryableStatus(undefined)).toBe(false);
+  });
+
   it("notifies onRetry with key-safe fields", async () => {
     const { fetch } = scriptedFetch([jsonResponse(500, { error: { message: "boom" } }), jsonResponse(200, TASK_OK)]);
     const seen: Array<{ reason: string; attempt: number; path: string }> = [];
@@ -227,8 +332,8 @@ describe("AgnesClient — timeout and network", () => {
         onRetry: (info) => seen.push({ reason: info.reason, attempt: info.attempt, path: info.path }),
       },
     );
-    await client.createVideo({ model: "m" });
-    expect(seen).toEqual([{ reason: "server-error", attempt: 1, path: "/v1/videos" }]);
+    await client.getVideo("video_1");
+    expect(seen).toEqual([{ reason: "server-error", attempt: 1, path: "/agnesapi" }]);
     // The retry callback must never receive the key or Authorization header.
     expect(JSON.stringify(seen)).not.toContain(API_KEY);
     expect(JSON.stringify(seen)).not.toContain("Bearer");
@@ -246,7 +351,7 @@ describe("AgnesClient — key never leaks", () => {
       jsonResponse(500, { error: { message: "boom" } }),
     ]);
     const client = makeClient(fetch, { maxRetries: 6 });
-    const result = await client.createVideo({ model: "m" });
+    const result = await client.getVideo("video_1");
     expect(result.ok).toBe(false);
     const serialized = JSON.stringify(result);
     expect(serialized).not.toContain(API_KEY);
@@ -270,6 +375,43 @@ describe("AgnesClient — key never leaks", () => {
     const result = await client.createVideo({ model: "m" });
     expect(result.ok).toBe(false);
     expect(JSON.stringify(result)).not.toContain(API_KEY);
+  });
+
+  it("scrubs SHORT secret-shaped token values echoed by the server", async () => {
+    const { fetch } = scriptedFetch([
+      jsonResponse(422, { error: { message: "invalid api key: sk-agn-1234" } }),
+    ]);
+    const client = makeClient(fetch);
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(false);
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("sk-agn-1234");
+    expect(serialized).toContain("[redacted]");
+  });
+
+  it("keeps the phrase but redacts the value in credential-shaped messages", async () => {
+    const { fetch } = scriptedFetch([
+      jsonResponse(401, { error: { message: "invalid apikey abc123" } }),
+    ]);
+    const client = makeClient(fetch);
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(false);
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("abc123");
+    expect(serialized).toContain("[redacted]");
+  });
+
+  it("scrubs bare 16+ char mixed-alphanumeric tokens (including echoed URLs — safe direction)", async () => {
+    const { fetch } = scriptedFetch([
+      jsonResponse(422, { error: { message: "token agnesabc123def456ghi is invalid; see https://cdn.agnes-ai.com/video/123.mp4" } }),
+    ]);
+    const client = makeClient(fetch);
+    const result = await client.createVideo({ model: "m" });
+    expect(result.ok).toBe(false);
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("agnesabc123def456ghi");
+    expect(serialized).not.toContain("https://cdn.agnes-ai.com/video/123.mp4");
+    expect(serialized).toContain("[redacted]");
   });
 
   it("request URL never embeds the key (auth is header-only)", async () => {
@@ -299,7 +441,7 @@ describe("AgnesClient — backoff behavior", () => {
       },
       { fetch },
     );
-    await client.createVideo({ model: "m" });
+    await client.getVideo("video_1");
     expect(sleeps).toEqual([100, 200]);
   });
 
@@ -319,7 +461,54 @@ describe("AgnesClient — backoff behavior", () => {
       },
       { fetch },
     );
-    await client.createVideo({ model: "m" });
+    await client.getVideo("video_1");
     expect(sleeps).toEqual([5000]);
+  });
+
+  it("clamps a huge Retry-After (no unbounded waits) and ignores garbage values", async () => {
+    const sleeps: number[] = [];
+    const { fetch } = scriptedFetch([
+      jsonResponse(429, { error: { message: "slow down" } }, { "Retry-After": "999999" }),
+      jsonResponse(429, { error: { message: "slow down" } }, { "Retry-After": "garbage" }),
+      jsonResponse(200, TASK_OK),
+    ]);
+    const client = new AgnesClient(
+      {
+        apiKey: API_KEY,
+        baseUrl: "https://mock.agnes.test/v1",
+        retryBackoffMs: 100,
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+      },
+      { fetch },
+    );
+    await client.getVideo("video_1");
+    // 999999 clamped to 300s; "garbage" ignored -> falls back to backoff (100 * 2^1).
+    expect(sleeps).toEqual([300_000, 200]);
+  });
+});
+
+describe("AgnesClientConfig — bounded limits (spec §29)", () => {
+  it("rejects maxRetries above the hard cap", () => {
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", maxRetries: 11 })).toThrow(/maxRetries/);
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", maxRetries: 999999 })).toThrow(/maxRetries/);
+    expect(resolveAgnesClientConfig({ apiKey: "k", maxRetries: 10 }).maxRetries).toBe(10);
+  });
+
+  it("rejects timeoutMs above the hard cap", () => {
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", timeoutMs: 300_001 })).toThrow(/timeoutMs/);
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", timeoutMs: 999999999 })).toThrow(/timeoutMs/);
+    expect(resolveAgnesClientConfig({ apiKey: "k", timeoutMs: 300_000 }).timeoutMs).toBe(300_000);
+  });
+
+  it("rejects retryBackoffMs above the hard cap", () => {
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", retryBackoffMs: 60_001 })).toThrow(/retryBackoffMs/);
+  });
+
+  it("rejects non-http(s) and malformed base URLs", () => {
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", baseUrl: "file:///etc/passwd" })).toThrow(/baseUrl/);
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", baseUrl: "not a url" })).toThrow(/baseUrl/);
+    expect(() => resolveAgnesClientConfig({ apiKey: "k", baseUrl: "ftp://x.example" })).toThrow(/baseUrl/);
   });
 });

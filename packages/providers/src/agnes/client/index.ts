@@ -13,7 +13,8 @@ export {
   AGNES_DEFAULT_TIMEOUT_MS,
   AGNES_DEFAULT_MAX_RETRIES,
   AGNES_DEFAULT_RETRY_BACKOFF_MS,
+  AGNES_MAX_RETRY_AFTER_MS,
   type AgnesClientConfig,
   type ResolvedAgnesClientConfig,
 } from "./config.js";
-export { AgnesApiError, isRetryableError, type AgnesErrorKind } from "./errors.js";
+export { AgnesApiError, isRetryableError, isRetryableStatus, type AgnesErrorKind } from "./errors.js";

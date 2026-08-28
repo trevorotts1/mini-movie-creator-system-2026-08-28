@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-001",
+  "phase": "PASS",
+  "commit": "PENDING_COMMIT",
+  "checksRun": "npx vitest run packages/providers/src/agnes/client (38/38 PASS); npx vitest run packages/providers (78/78 PASS); npx tsc --noEmit -p packages/providers (clean); security pass: no console/env/exec, no real secrets, retry/timeout caps, host pinning, POST non-idempotent no-auto-retry",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:40:00Z",
+  "notes": "Fixed: Retry-After clamp dead code (parse cap 300s vs backoff re-cap 30s); timeout did not cover body read (slow-drip server could hang client indefinitely); no host pinning on req.path (absolute/protocol-relative path could leak bearer header off-host). Regression tests added for all three.",
+  "blockers": []
+}

@@ -56,12 +56,26 @@ function sanitizeMsg(msg: string | undefined): string | undefined {
   let out = msg;
   // Remove bearer/basic schemes outright.
   out = out.replace(/(?:bearer|basic)\s+[^\s"']+/gi, "[redacted]");
-  // Remove long opaque token-looking runs.
-  out = out.replace(/(?=[^\s"]*\d)(?=[^\s"]*[a-z])[^\s"]{20,}/gi, "[redacted]");
+  // Secret-looking VALUES that follow credential phrases, even when the token
+  // is too short for the opaque-token pattern below. A value qualifies when
+  // it is token-shaped (contains a digit or a -_. separator); the phrase
+  // itself stays (the words "API key" are not a secret — its value is).
+  out = out.replace(
+    /((?:api[ _-]?key|apikey|auth(?:entication)?[ _-]?(?:token|header|key)|secret|password|credential)s?\s*(?:=|:)?\s*(?:is|was|invalid|incorrect|wrong|expired|revoked)?\s*)(?=[^\s"']*(?:\d|[-_.]))([^\s"']{4,})/gi,
+    "$1[redacted]",
+  );
+  // Remove long opaque token-looking runs (mixes digits + letters; this also
+  // covers full URLs the server may echo — safe direction: redact).
+  out = out.replace(/(?=[^\s"]*\d)(?=[^\s"]*[a-z])[^\s"]{16,}/gi, "[redacted]");
   return out;
 }
 
 /** True when an error of this shape is worth retrying. */
 export function isRetryableError(kind: AgnesErrorKind): boolean {
   return kind === "network" || kind === "timeout" || kind === "rate-limited" || kind === "server-error";
+}
+
+/** True when an HTTP status of this shape is worth retrying (5xx or 429). */
+export function isRetryableStatus(status: number | undefined): boolean {
+  return status === 429 || (status !== undefined && status >= 500 && status <= 599);
 }
