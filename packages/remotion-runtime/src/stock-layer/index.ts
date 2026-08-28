@@ -9,7 +9,6 @@ import {
 import {
   createLicenseSafePlaceholder,
   isLicenseSafe,
-  isStockAllowedPurpose,
   STOCK_ALLOWED_PURPOSES,
   type StockClip,
   type StockPlacementCandidate,
@@ -45,25 +44,44 @@ export function placeStockShots(
   const placements: StockShotPlacement[] = [];
   for (const candidate of candidates) {
     if (candidate.visualSource !== "stock_broll") continue;
-    if (!isStockAllowedPurpose(candidate.purpose)) continue;
 
-    const clip = clipsByShotId.get(candidate.shotId);
-    if (!clip) continue;
-
+    // Policy gate FIRST: a stock_broll-typed shot with a non-generic purpose
+    // or a recurring main character is refused loudly, never silently dropped
+    // from the timeline (spec §22).
     assertStockAllowed(
       toStockGuardInput(candidate),
       recurringMainCharacterIds,
       candidate.shotId,
     );
 
+    const clip = clipsByShotId.get(candidate.shotId);
+    if (!clip) continue;
+
     assertLicenseSafe(clip, candidate.shotId);
 
     const start = candidate.startSeconds ?? 0;
+    if (!Number.isFinite(start) || start < 0) {
+      throw new RangeError(
+        `startSeconds must be a non-negative finite number for shot "${candidate.shotId}", got ${start}`,
+      );
+    }
+    if (!Number.isFinite(clip.durationSeconds) || clip.durationSeconds <= 0) {
+      throw new RangeError(
+        `clip "${clip.id}" for shot "${candidate.shotId}" must have a positive finite durationSeconds, got ${clip.durationSeconds}`,
+      );
+    }
+    const durationInFrames = Math.round(clip.durationSeconds * fps);
+    if (durationInFrames < 1) {
+      throw new RangeError(
+        `clip "${clip.id}" for shot "${candidate.shotId}" is shorter than one frame at ${fps} fps (${clip.durationSeconds}s)`,
+      );
+    }
+
     placements.push({
       shotId: candidate.shotId,
       clip,
       startFrame: Math.round(start * fps),
-      durationInFrames: Math.round(clip.durationSeconds * fps),
+      durationInFrames,
     });
   }
   return placements;
@@ -82,7 +100,12 @@ export type {
   StockGuardInput,
   StockGuardResult,
 } from "./guard.js";
-export { createStockAdapter } from "./adapters.js";
+export {
+  createPexelsAdapter,
+  createPixabayAdapter,
+  createStockAdapter,
+  STOCK_ADAPTER_FACTORIES,
+} from "./adapters.js";
 export {
   createLicenseSafePlaceholder,
   isLicenseSafe,

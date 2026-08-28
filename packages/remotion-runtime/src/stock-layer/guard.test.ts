@@ -4,10 +4,13 @@ import {
   assertLicenseSafe,
   assertStockAllowed,
   createLicenseSafePlaceholder,
+  createPexelsAdapter,
+  createPixabayAdapter,
   createStockAdapter,
   evaluateStockGuard,
   isLicenseSafe,
   placeStockShots,
+  STOCK_ADAPTER_FACTORIES,
   STOCK_ALLOWED_PURPOSES,
   StockLicenseError,
   StockPolicyViolationError,
@@ -201,19 +204,40 @@ describe("placeStockShots", () => {
     expect(placements.map((p) => p.shotId)).toEqual(["s-gen"]);
   });
 
-  it("skips non-generic purposes without throwing", () => {
-    const placements = placeStockShots(
-      [
-        candidate({ shotId: "s-broll", purpose: "broll" }),
-        candidate({ shotId: "s-dlg", purpose: "dialogue", characterIds: [] }),
-      ],
-      new Map([
-        ["s-broll", CLIP],
-        ["s-dlg", CLIP],
-      ]),
-      [],
-    );
-    expect(placements.map((p) => p.shotId)).toEqual(["s-broll"]);
+  it("rejects non-generic purposes on stock_broll candidates with StockPolicyViolationError", () => {
+    expect(() =>
+      placeStockShots(
+        [
+          candidate({ shotId: "s-broll", purpose: "broll" }),
+          candidate({ shotId: "s-dlg", purpose: "dialogue", characterIds: [] }),
+        ],
+        new Map([
+          ["s-broll", CLIP],
+          ["s-dlg", CLIP],
+        ]),
+        [],
+      ),
+    ).toThrow(StockPolicyViolationError);
+  });
+
+  it("rejects a non-generic purpose even when the candidate has no resolved clip", () => {
+    expect(() =>
+      placeStockShots(
+        [candidate({ shotId: "s-dlg", purpose: "dialogue" })],
+        new Map(),
+        [],
+      ),
+    ).toThrow(StockPolicyViolationError);
+  });
+
+  it("rejects recurring main characters even when the candidate has no resolved clip", () => {
+    expect(() =>
+      placeStockShots(
+        [candidate({ shotId: "s1", characterIds: ["hero-main"] })],
+        new Map(),
+        ["hero-main"],
+      ),
+    ).toThrow(StockPolicyViolationError);
   });
 
   it("skips candidates with no resolved clip", () => {
@@ -231,6 +255,38 @@ describe("placeStockShots", () => {
     ).toThrow(RangeError);
     expect(() =>
       placeStockShots([candidate()], new Map(), [], { fps: NaN }),
+    ).toThrow(RangeError);
+  });
+
+  it("throws RangeError for a negative startSeconds", () => {
+    expect(() =>
+      placeStockShots(
+        [candidate({ shotId: "s1", startSeconds: -1 })],
+        new Map([["s1", CLIP]]),
+        [],
+      ),
+    ).toThrow(RangeError);
+  });
+
+  it("throws RangeError for a non-positive clip duration", () => {
+    const zeroDuration = { ...CLIP, durationSeconds: 0 };
+    expect(() =>
+      placeStockShots(
+        [candidate({ shotId: "s1" })],
+        new Map([["s1", zeroDuration]]),
+        [],
+      ),
+    ).toThrow(RangeError);
+  });
+
+  it("throws RangeError when the clip is shorter than one frame", () => {
+    const subFrame = { ...CLIP, durationSeconds: 0.01 }; // 0.3 frames at 30 fps
+    expect(() =>
+      placeStockShots(
+        [candidate({ shotId: "s1" })],
+        new Map([["s1", subFrame]]),
+        [],
+      ),
     ).toThrow(RangeError);
   });
 });
@@ -305,7 +361,9 @@ describe("license-safe placeholder (no binary committed)", () => {
     expect(clip.license.sourceUrl).toBe(
       "https://www.pexels.com/video/city-night-12345/",
     );
-    expect(clip.license.verifiedAt).toBeTruthy();
+    // Nothing has been verified yet — an unverified clip must never carry a
+    // verification timestamp (provenance integrity, spec §19/§29).
+    expect(clip.license.verifiedAt).toBeUndefined();
     // The placeholder itself must NOT pass the license gate — it stands in
     // for a download that has not happened yet.
     expect(isLicenseSafe(clip)).toBe(false);
@@ -347,5 +405,17 @@ describe("stock adapters (stubbed, spec §22)", () => {
 
   it("local provider id has no remote adapter", () => {
     expect(createStockAdapter("local")).toBeUndefined();
+  });
+});
+
+describe("adapter factories are exported from the layer entry", () => {
+  it("createPexelsAdapter / createPixabayAdapter / STOCK_ADAPTER_FACTORIES exist", async () => {
+    const pexels = createPexelsAdapter();
+    const pixabay = createPixabayAdapter();
+    expect(pexels.providerId).toBe("pexels");
+    expect(pixabay.providerId).toBe("pixabay");
+    expect(STOCK_ADAPTER_FACTORIES.pexels).toBe(createPexelsAdapter);
+    expect(STOCK_ADAPTER_FACTORIES.pixabay).toBe(createPixabayAdapter);
+    await expect(pexels.search("x")).rejects.toThrow(/stub/);
   });
 });

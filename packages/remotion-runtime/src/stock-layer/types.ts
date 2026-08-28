@@ -111,7 +111,6 @@ export function createLicenseSafePlaceholder(input: {
       kind: "unknown",
       attribution: input.attribution,
       sourceUrl: input.sourceUrl,
-      verifiedAt: new Date().toISOString(),
     },
   };
 }
