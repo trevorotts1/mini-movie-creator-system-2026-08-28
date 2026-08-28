@@ -1,7 +1,6 @@
 /// <reference types="node" />
 import { mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
-import { requestHash } from "./request-hash.js";
 
 /**
  * Atomic file write: write to a unique temp file in the same directory, fsync,
