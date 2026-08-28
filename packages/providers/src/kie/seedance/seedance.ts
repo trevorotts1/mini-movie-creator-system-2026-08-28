@@ -241,7 +241,7 @@ export interface SeedanceInput {
 
 /** Inputs that may reach the mode classifier. */
 export interface SeedanceGenerationInput extends Pick<
-  SeedanceInputFields,
+  SeedanceInput,
   | "firstFrameUrl"
   | "lastFrameUrl"
   | "referenceImageUrls"
@@ -295,25 +295,6 @@ export interface SeedanceRequest {
     nsfw_checker?: boolean;
   };
   callBackUrl?: string;
-}
-
-/** Alias used by the mode classifier above. */
-export interface SeedanceInput extends SeedanceInputFields {}
-
-interface SeedanceInputFields {
-  prompt: string;
-  firstFrameUrl?: string;
-  lastFrameUrl?: string;
-  referenceImageUrls?: readonly string[];
-  referenceVideoUrls?: readonly string[];
-  referenceAudioUrls?: readonly string[];
-  resolution?: "480p" | "720p";
-  aspectRatio?: "1:1" | "4:3" | "3:4" | "16:9" | "9:16" | "21:9" | "adaptive";
-  duration?: number;
-  generateAudio?: boolean;
-  webSearch?: boolean;
-  nsfwChecker?: boolean;
-  callbackUrl?: string;
 }
 
 const ASSET_SCHEME = /^asset:\/\/asset-[\w-]+$/;
