@@ -1,0 +1,9 @@
+{
+  "taskId": "CAP-008",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING_COMMIT",
+  "testsRun": "npx vitest run packages/capability-registry/src/max-reasoning -> 22 passed (22/22, 1 file); tsc --noEmit -p packages/capability-registry -> clean",
+  "notes": "MAX_REASONING logical mapper: per-adapter table (openrouter, openai-responses, openai-chat, anthropic-messages, google-gemini, deepseek-chat, literal-max-passthrough) maps logical preference to highest supported effort per adapter; adapter-table test proves literal 'max' reaches only the verified passthrough endpoint; effort-string and thinking-budget wire styles; model-level effort overrides; body patch merge without clobbering; self-contained in owned path (top-level package index untouched to avoid CAP-007 conflict).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
