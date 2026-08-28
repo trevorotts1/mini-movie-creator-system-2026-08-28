@@ -419,6 +419,44 @@ export async function resumeEmergencyArchival(
         "hosted ingest returned a non-ARCHIVED result",
       );
     }
+    // Spec §17 step 3: ARCHIVED is only meaningful with a real fileId +
+    // storage URL. A sloppy adapter must never let the caller persist
+    // ARCHIVED with empty/garbage IDs — that would mark a paid asset as
+    // safely persisted when no GHL copy is addressable.
+    if (typeof result.fileId !== "string" || result.fileId.trim() === "") {
+      return blocked(
+        "HOSTED_INGEST_FAILED",
+        record,
+        nowMs,
+        "hosted ingest returned ARCHIVED with an empty fileId",
+      );
+    }
+    if (typeof result.url !== "string" || result.url.trim() === "") {
+      return blocked(
+        "HOSTED_INGEST_FAILED",
+        record,
+        nowMs,
+        "hosted ingest returned ARCHIVED with an empty storage URL",
+      );
+    }
+    try {
+      const resultUrl = new URL(result.url);
+      if (!ALLOWED_SCHEMES.has(resultUrl.protocol)) {
+        return blocked(
+          "HOSTED_INGEST_FAILED",
+          record,
+          nowMs,
+          `hosted ingest returned ARCHIVED with non-http(s) storage URL scheme ${resultUrl.protocol}`,
+        );
+      }
+    } catch {
+      return blocked(
+        "HOSTED_INGEST_FAILED",
+        record,
+        nowMs,
+        "hosted ingest returned ARCHIVED with an unparseable storage URL",
+      );
+    }
     return {
       status: "ARCHIVED",
       fileId: result.fileId,

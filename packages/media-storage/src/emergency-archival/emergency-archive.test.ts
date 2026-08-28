@@ -325,6 +325,68 @@ describe("resumeEmergencyArchival — BLOCKED paths never regenerate", () => {
     if (outcome.status !== "BLOCKED") return;
     expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
   });
+
+  it("hosted ingest ARCHIVED with empty fileId → BLOCKED HOSTED_INGEST_FAILED (never persist ARCHIVED without a fileId)", async () => {
+    const hosted = makeHosted(async () =>
+      archivedResult({ fileId: "", url: "https://files.gohighlevel.example/storage/file-999.mp4" }),
+    );
+    const probe = okProbe();
+    const outcome = await resumeEmergencyArchival(baseRecord(), hosted, {
+      now: () => FIXED_NOW,
+      probe: probe.probe,
+    });
+    expect(outcome.status).toBe("BLOCKED");
+    if (outcome.status !== "BLOCKED") return;
+    expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
+    expect(outcome.detail).toContain("empty fileId");
+  });
+
+  it("hosted ingest ARCHIVED with blank/missing storage URL → BLOCKED HOSTED_INGEST_FAILED", async () => {
+    const probe = okProbe();
+    for (const url of ["", "   "]) {
+      const hosted = makeHosted(async () =>
+        archivedResult({ fileId: "file-999", url }),
+      );
+      const outcome = await resumeEmergencyArchival(baseRecord(), hosted, {
+        now: () => FIXED_NOW,
+        probe: probe.probe,
+      });
+      expect(outcome.status).toBe("BLOCKED");
+      if (outcome.status !== "BLOCKED") return;
+      expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
+      expect(outcome.detail).toContain("empty storage URL");
+    }
+  });
+
+  it("hosted ingest ARCHIVED with non-http(s) storage URL → BLOCKED HOSTED_INGEST_FAILED", async () => {
+    const hosted = makeHosted(async () =>
+      archivedResult({ fileId: "file-999", url: "ftp://files.example/f.mp4" }),
+    );
+    const probe = okProbe();
+    const outcome = await resumeEmergencyArchival(baseRecord(), hosted, {
+      now: () => FIXED_NOW,
+      probe: probe.probe,
+    });
+    expect(outcome.status).toBe("BLOCKED");
+    if (outcome.status !== "BLOCKED") return;
+    expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
+    expect(outcome.detail).toContain("non-http(s)");
+  });
+
+  it("hosted ingest ARCHIVED with unparseable storage URL → BLOCKED HOSTED_INGEST_FAILED", async () => {
+    const hosted = makeHosted(async () =>
+      archivedResult({ fileId: "file-999", url: "::not a url::" }),
+    );
+    const probe = okProbe();
+    const outcome = await resumeEmergencyArchival(baseRecord(), hosted, {
+      now: () => FIXED_NOW,
+      probe: probe.probe,
+    });
+    expect(outcome.status).toBe("BLOCKED");
+    if (outcome.status !== "BLOCKED") return;
+    expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
+    expect(outcome.detail).toContain("unparseable storage URL");
+  });
 });
 
 describe("resumeEmergencyArchival — entry-state gate", () => {

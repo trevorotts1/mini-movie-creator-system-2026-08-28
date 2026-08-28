@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-012",
+  "phase": "PASS",
+  "commit": "b4b4f4047140355fc864c9a3bb7dad7d9ca478d5",
+  "checksRun": "npx vitest run packages/media-storage/src/emergency-archival (30 passed); node node_modules/.bin/tsc -p packages/media-storage/tsconfig.json --noEmit (exit 0); secret scan on diff; exec/eval/retry security scan",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "QC fixed malformed-ARCHIVED-payload hole: adapter returning status ARCHIVED with empty/invalid fileId or storage URL now yields BLOCKED HOSTED_INGEST_FAILED; +4 regression tests (26->30).",
+  "blockers": []
+}
