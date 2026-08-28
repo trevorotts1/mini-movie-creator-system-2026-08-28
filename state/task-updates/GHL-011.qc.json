@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-011",
+  "phase": "PASS",
+  "commit": "0195596c9ec6ffec158fb24daa89e5aa66ef226b",
+  "checksRun": "npx vitest run --config packages/media-storage/src/ghl/retry/vitest.config.mts (35 passed); npx tsc --noEmit -p packages/media-storage/tsconfig.json (rc=0); security scan (no secrets/eval/shell injection)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T17:10:00Z",
+  "notes": "QC PASS: bounded exponential backoff with hard caps verified; archival idempotency ledger prevents duplicate GHL file uploads; archival failures preserve provider task ID and never trigger regeneration (spec §35.3/§38); all 35 tests pass; typecheck clean.",
+  "blockers": []
+}
