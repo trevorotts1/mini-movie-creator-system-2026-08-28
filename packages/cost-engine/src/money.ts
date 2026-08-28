@@ -22,8 +22,13 @@ export function usdToCents(usd: number): number {
   }
   const cents = Math.round(usd * 100);
   // Math.round(x*100) === x*100 only when x had at most 2 decimal places
-  // (within double precision). Anything else is a caller bug.
-  if (Math.abs(cents - usd * 100) > 1e-6) {
+  // (within double precision). Anything else is a caller bug. The tolerance
+  // scales with magnitude: doubles cannot resolve cents near 2^53/100, so a
+  // fixed epsilon would falsely reject legitimate 2-decimal values there
+  // (e.g. 10_000_000_000_000.37 — the product itself drifts by ~0.125).
+  const product = usd * 100;
+  const tolerance = Math.max(1e-6, Math.abs(product) * Number.EPSILON * 8);
+  if (Math.abs(cents - product) > tolerance) {
     throw new MoneyError(`USD amount has sub-cent precision: ${usd}`);
   }
   return cents;

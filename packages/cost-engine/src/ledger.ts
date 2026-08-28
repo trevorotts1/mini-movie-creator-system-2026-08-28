@@ -193,7 +193,11 @@ export class CostLedger {
     // (deferred BEGIN would let two connections read the same old total and
     // both pass the gate — the failure would surface only at COMMIT, too
     // late for a spend gate).
-    this.exec("BEGIN IMMEDIATE");
+    // If the caller already has a transaction open on this connection we
+    // must JOIN it (BEGIN inside BEGIN is an error, and a ROLLBACK here
+    // would destroy the caller's work); the caller owns commit/rollback.
+    const outerTransaction = this.db.inTransaction;
+    if (!outerTransaction) this.exec("BEGIN IMMEDIATE");
     try {
       const row = this.db.get(PROJECTED_SQL);
       const projectedCents = Number(row?.["total_cents"] ?? 0);
@@ -201,7 +205,7 @@ export class CostLedger {
 
       if (kind === "paid" && !input.force && nextCents >= this.limitCents) {
         // Stop BEFORE crossing: no row, no spend, caller asks the operator.
-        this.exec("COMMIT");
+        if (!outerTransaction) this.exec("COMMIT");
         return {
           outcome: "requires_approval",
           reason:
@@ -243,7 +247,7 @@ export class CostLedger {
           now,
         );
 
-      this.exec("COMMIT");
+      if (!outerTransaction) this.exec("COMMIT");
       return {
         outcome: "approved",
         reservation: this.get(id) as Reservation,
@@ -251,10 +255,12 @@ export class CostLedger {
         limitUsd: this.limitUsd,
       } satisfies ReservationDecision;
     } catch (err) {
-      try {
-        this.exec("ROLLBACK");
-      } catch {
-        // a statement-level abort may have resolved the transaction already
+      if (!outerTransaction) {
+        try {
+          this.exec("ROLLBACK");
+        } catch {
+          // a statement-level abort may have resolved the transaction already
+        }
       }
       throw err;
     }

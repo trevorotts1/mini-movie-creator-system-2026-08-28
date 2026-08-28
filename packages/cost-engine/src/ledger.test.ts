@@ -52,6 +52,15 @@ describe("money — integer-cent exactness", () => {
     expect(() => usdToCents(Number.NaN)).toThrow(MoneyError);
     expect(() => usdToCents(Number.POSITIVE_INFINITY)).toThrow(MoneyError);
   });
+
+  it("accepts every 2-decimal value across magnitudes (no false sub-cent rejection)", () => {
+    // Regression: near the double-precision cents boundary a fixed 1e-6
+    // tolerance falsely rejected legitimate 2-decimal values (e.g.
+    // 10_000_000_000_000.37 whose usd*100 drifts ~0.125 in a double).
+    for (const usd of [0.07, 19.99, 24.99, 1234567.89, 9876543.21, 10000000000000.37, 40000000000000.37]) {
+      expect(usdToCents(usd)).toBe(Math.round(usd * 100));
+    }
+  });
 });
 
 describe("the $25 gate — spec §4 / §32 Spend acceptance", () => {
@@ -197,6 +206,46 @@ describe("atomicity — concurrent reservations cannot bypass the gate", () => {
       ledger.commit(d.reservation.id);
     }
     expect(ledger.reserve(paid({ estimatedUsd: 6 })).outcome).toBe("requires_approval");
+  });
+
+  it("reserve joins a caller's open transaction instead of crashing on nested BEGIN", () => {
+    // Regression: raw BEGIN IMMEDIATE inside an open transaction throws
+    // "cannot start a transaction within a transaction".
+    const result = db.transaction(() => ledger.reserve(paid({ estimatedUsd: 24.99 })));
+    expect(isApproved(result)).toBe(true);
+    expect(ledger.projectedUsd).toBeCloseTo(24.99, 10);
+    expect(db.inTransaction).toBe(false);
+  });
+
+  it("a failing reserve inside a caller's transaction does not roll back the caller's work", () => {
+    // The gate stop must not destroy the caller's outer transaction.
+    let callerSaw: string | undefined;
+    db.transaction(() => {
+      db.exec("INSERT INTO cost_quota_usage (id, provider, provider_model, period, units_kind, units, created_at) VALUES ('caller-row', 'p', 'm', 'per', 'u', 1, '2026-08-29')");
+      const stopped = ledger.reserve(paid({ estimatedUsd: 30 }));
+      expect(stopped.outcome).toBe("requires_approval");
+      callerSaw = db.get("SELECT id FROM cost_quota_usage WHERE id = 'caller-row'")?.["id"] as string;
+    });
+    expect(callerSaw).toBe("caller-row");
+    // Caller's outer transaction committed intact.
+    expect(db.get("SELECT id FROM cost_quota_usage WHERE id = 'caller-row'")?.["id"]).toBe("caller-row");
+  });
+
+  it("a throwing reserve inside a caller's transaction rolls back with the caller, not alone", () => {
+    let callerSaw: string | undefined;
+    expect(() =>
+      db.transaction(() => {
+        db.exec("INSERT INTO cost_quota_usage (id, provider, provider_model, period, units_kind, units, created_at) VALUES ('caller-row-2', 'p', 'm', 'per', 'u', 1, '2026-08-29')");
+        // Unknown reservation id makes commit() throw inside reserve's window.
+        ledger.reserve(paid({ estimatedUsd: 1 }));
+        throw Object.assign(new Error("caller boom"), { reserveSideEffect: true });
+      }),
+    ).toThrow("caller boom");
+    // Outer transaction rolled back: neither the caller row nor the
+    // reservation survives — they are one atomic unit.
+    callerSaw = db.get("SELECT id FROM cost_quota_usage WHERE id = 'caller-row-2'")?.["id"] as string | undefined;
+    expect(callerSaw).toBeUndefined();
+    expect(ledger.projectedUsd).toBe(0);
   });
 });
 
