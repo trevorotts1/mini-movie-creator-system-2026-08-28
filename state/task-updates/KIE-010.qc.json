@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-010",
+  "phase": "PASS",
+  "commit": "51d7f7c",
+  "checksRun": "vitest run packages/providers/src/kie/__tests__ (23 passed, 1 skipped); pnpm -r run typecheck (clean)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T17:10:00Z",
+  "notes": "Verified submit/poll/resume/fail/archive-handoff contract tests and gated live smoke. All 23 contract tests pass; typecheck clean; security review clean.",
+  "blockers": []
+}
