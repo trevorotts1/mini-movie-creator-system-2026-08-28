@@ -1,8 +1,8 @@
 {
   "taskId": "QC-010",
   "phase": "PASS",
-  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
-  "rebaseCommit": "6cca6d40a1291be627c46a4275735a06dc9670aa",
+  "rebasedOnto": "0e9b00eeed15d213f8dc31a7321af132f5c9ae9d",
+  "rebaseCommit": "f86c14df8cb410a80e29270d6aaef12e2fba807f",
   "commit": "febd0c7b20b5961277022e6efc78c45c4d4e30ca",
   "checksRun": "npx vitest run packages/qc/src/routes/wan (65/65 pass, rc=0); npx vitest run (full suite 473/473 pass); pnpm --filter @mmcs/qc typecheck (clean); security pass (no secrets, no exec, no fs, no unbounded retries, callBackUrl http(s)-validated)",
   "defectsFound": 7,
@@ -11,5 +11,6 @@
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T19:00:00Z",
   "notes": "Fixed: prime-model rate now used for cost projection + spend gate; referenceVideoSeconds billed (input+output rule KIE-005); included quota offsets billable seconds before spend gate (spec \u00a74 quota never paid spend); -1 duration sentinel no longer treated as under-limit; reference-video+output >30s window enforced; strict model allowlist (was startsWith wan/); callBackUrl http(s) pre-submit validation. Added 10 regression tests.",
-  "blockers": []
+  "blockers": [],
+  "rebaseChecks": "batch-7 rebase onto origin/integration 0e9b00e (merge commit f86c14d): single conflict packages/qc/src/index.ts barrel resolved append-only (schema + routes/wan + identity exports kept, MMCS_QC marker kept); pnpm -r typecheck clean; npx vitest run packages/qc 217/217; packages/qc/src/routes/wan 65/65; full suite 3253/3253 pass; merge-tree clean vs origin/integration"
 }
