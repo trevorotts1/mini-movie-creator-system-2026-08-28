@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-010",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "4e81769fe6051c39ed220c02ffa906fad53c9853",
   "testsRun": "npx vitest run packages/character-library/src/cast -> 24 passed (24); npx tsc --noEmit -p packages/character-library -> exit 0",
   "notes": "Series cast links: CastService joins global library by permanent ID into per-series casts, resolves by episode with exclusive effectiveUntil + series override fallback to global active versions, unlink removes the link only (reader-only port over the global library makes global deletion structurally impossible); in-memory ports + full validation (permanent-ID pattern, inverted-range rejection).",
   "blockers": [],
