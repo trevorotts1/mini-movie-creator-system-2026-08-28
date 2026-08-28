@@ -2,6 +2,8 @@
   "taskId": "VID-013",
   "phase": "PASS",
   "commit": "ae39cf2",
+  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
+  "rebaseCommit": "2c46253272561e00088007ba6398c4f3ba547410",
   "checksRun": "npx vitest run packages/remotion-runtime/src/shot-replacement (17/17); npx vitest run apps/cli/src/commands/retry-shot + packages/remotion-runtime/src/shot-replacement (34/34, 3 files); full-package: packages/remotion-runtime 17/17, apps/cli 30/30; pnpm --filter @mmcs/remotion-runtime typecheck exit 0; apps/cli typecheck exit 0; no eslint config in repo (lint N/A); security grep of owned paths (no exec/spawn/eval/process.env/secrets)",
   "defectsFound": 2,
   "defectsFixed": 2,
