@@ -412,6 +412,7 @@ then SFX audition (`python tools/mix_sfx.py <plan>`), then optional music bed
 | Render outputs | remotion/out/qa/*.png (13 comps verified, 1 fails per PF-1) |
 | Production repo | /Users/blackceomacmini/Projects/mini-movie-creator-system-2026-08-28 — read-only for this agent; only this report written (docs/BASELINE-REPORT.md) |
 | Production repo HEAD matches upstream | YES (773054b) |
+| Production repo HEAD matches upstream | YES (773054b) |
 ---
 
 ## 14. Upstream Audit — Package/Script Disposition Map (CORE-001, 2026-08-28)
@@ -448,3 +449,4 @@ Verdicts:
   cross-check). Acceptance command passes: `test -s
   docs/upstream-audit/preservation-map.md && grep -q "PF-1"
   docs/upstream-audit/preservation-map.md`.
+

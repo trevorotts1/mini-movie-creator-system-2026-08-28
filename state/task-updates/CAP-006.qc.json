@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-006",
+  "phase": "PASS",
+  "commit": "c1c01ad6d27dbcdc9d89a8bf67aa850a19c72c69",
+  "checksRun": "npx vitest run packages/capability-registry/src/pricing (26/26 green, exit 0); npx tsc --noEmit -p packages/capability-registry/tsconfig.json (clean); independent node transpile-runner re-verified all 21 original + 5 regression tests",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Money-gate hardening: NaN amount slipped past `< 0` check and auto-approved past the $25 gate (rejected non-finite; isEstimable rejects non-finite cost); negative/non-finite quotaUsed inflated free allowance (now throws); decideSpend silently summed mixed currencies and accepted negative alreadySpent (now throws). Security scan clean: no secrets, no shell exec, no path ops, no unbounded retries.",
+  "blockers": []
+}

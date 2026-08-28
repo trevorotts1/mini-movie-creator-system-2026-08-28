@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project_id": "mmcs",
+  "timestamp": "unknown",
+  "current_main_sha": "773054bebbe460de0f31dcfda5315970b1c8b4f2",
+  "current_integration_sha": null,
+  "active_dependency_wave": 0,
+  "ready_task_ids": [],
+  "active_task_ids": [],
+  "qc_task_ids": [],
+  "merge_queue_ids": [],
+  "blocked_task_ids": [],
+  "active_workflow_ids": [],
+  "active_agent_ids": [],
+  "last_watchdog_timestamp": null,
+  "last_batch_merge_timestamp": null,
+  "next_recommended_actions": ["launch planning workflow"]
+}
