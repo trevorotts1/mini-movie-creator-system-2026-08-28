@@ -1,21 +1,24 @@
 {
   "schema_version": 1,
   "project_id": "mmcs",
-  "timestamp": "2026-08-28T14:38:00Z",
+  "timestamp": "2026-08-28T15:26:14Z",
   "current_main_sha": "773054bebbe460de0f31dcfda5315970b1c8b4f2",
-  "current_integration_sha": "c7d489222c19e735fa108a95610d440ad2f00d8d",
+  "current_integration_sha": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
   "active_dependency_wave": 1,
   "ready_task_ids": [],
   "active_task_ids": [],
-  "qc_task_ids": [],
+  "qc_task_ids": [
+    "CAP-009"
+  ],
   "merge_queue_ids": [],
   "blocked_task_ids": [],
   "active_workflow_ids": [],
   "active_agent_ids": [],
   "last_watchdog_timestamp": null,
-  "last_batch_merge_timestamp": "2026-08-28T14:38:00Z",
+  "last_batch_merge_timestamp": "2026-08-28T15:26:14Z",
   "next_recommended_actions": [
-    "rebase 8 conflict-blocked branches",
-    "continue dispatch of newly unblocked tasks"
+    "fix CAP-009: replace @mmcs/capability-registry import in apps/cli/src/commands/providers-verify/command.ts with local types (CHAR-004 contract.ts pattern) or move providers-verify out of apps/cli",
+    "rebase 3 still-conflict branches (CORE-006, CORE-007, CAP-010)",
+    "re-merge cycle 4 batch after CAP-009 fix (14 branches retain QC PASS)"
   ]
 }
