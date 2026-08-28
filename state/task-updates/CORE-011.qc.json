@@ -1,7 +1,7 @@
 {
   "taskId": "CORE-011",
   "phase": "PASS",
-  "commit": "82965ca225fa3fb8274ff2dbe8f5d6374f2e1358",
+  "commit": "2701957e6cc3b7d368dd30f3bf54bf2b94cf26b8",
   "checksRun": "pnpm --filter @mmcs/cli test (13/13 passed); pnpm -r run typecheck (clean across all packages/apps); pnpm -r run build (apps/cli built dist/ cleanly); node apps/cli/dist/index.js doctor (exited 0 with stub message); security audit (no secrets, safe string interpolation, inert arg echoing, commander bounded input)",
   "defectsFound": 1,
   "defectsFixed": 1,
