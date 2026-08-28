@@ -248,7 +248,11 @@ export function classifyShotKeyframes(
       reason += "; single image slot: scene master only";
     }
     if (needsStart && !startSupported) {
-      downgraded.push("exact start dropped: model has no first-frame anchoring; scene master anchors identity instead");
+      downgraded.push(
+        needsEnd
+          ? "exact start/end dropped: model has no first-frame anchoring; scene master anchors identity instead"
+          : "exact start dropped: model has no first-frame anchoring; scene master anchors identity instead",
+      );
       reason += "; start anchor unavailable — scene master carries identity";
     }
   } else if (multimodalApplicable) {
@@ -262,7 +266,9 @@ export function classifyShotKeyframes(
     }
     if (needsStart && !startSupported) {
       downgraded.push(
-        "exact start dropped: model has no first-frame anchoring; package references approximate composition",
+        needsEnd
+          ? "exact start/end dropped: model has no first-frame anchoring; package references approximate composition"
+          : "exact start dropped: model has no first-frame anchoring; package references approximate composition",
       );
     }
   } else {
@@ -270,7 +276,11 @@ export function classifyShotKeyframes(
     reason = "text-to-video acceptable: no keyframe or reference requirement";
     if (needsEnd && !bothFramesSupported) {
       downgraded.push(
-        "exact start/end dropped: model has no frame anchoring; text-to-video accepts composition drift",
+        startSupported && !endSupported
+          ? "exact start/end dropped: model cannot anchor a last frame; text-to-video accepts composition drift"
+          : !startSupported && endSupported
+            ? "exact start/end dropped: model cannot anchor a first frame (last-frame anchor unusable without it); text-to-video accepts composition drift"
+            : "exact start/end dropped: model has no frame anchoring; text-to-video accepts composition drift",
       );
     } else if (needsStart && !startSupported) {
       downgraded.push(
@@ -316,7 +326,12 @@ export function planKeyframes(
 ): KeyframePlan {
   const seen = new Set<string>();
   const decisions: KeyframeDecision[] = [];
-  const byShot: Record<string, KeyframeDecision> = {};
+  // Null prototype: shotIds like "__proto__" must land as own keys, never
+  // touch the object prototype.
+  const byShot: Record<string, KeyframeDecision> = Object.create(null) as Record<
+    string,
+    KeyframeDecision
+  >;
 
   for (const shot of shots) {
     if (!shot.shotId) {

@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-012",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/keyframe-planner (26/26 PASS); npx vitest run (434/434 PASS); tsc --noEmit -p packages/scene-intelligence (exit 0); security scan of keyframe-planner (no exec/env/fs/network)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "QC property invariant falsely flagged keyframe-mode profiles (firstLastFrame=true, firstFrame=false) — fixed invariant to honor pair anchoring; planner logic verified correct",
+  "blockers": []
+}
