@@ -341,8 +341,25 @@ describe("policy resolution and helpers", () => {
 
   it("detects Wan eligibility from tags", () => {
     expect(isWanEligible({ shotId: "S", tags: ["hero"] })).toBe(true);
-    expect(isWanEligible({ shotId: "S", tags: ["dialogue", "action"] })).toBe(true);
-    expect(isWanEligible({ shotId: "S", tags: ["dialogue"] })).toBe(false);
+    expect(isWanEligible({ shotId: "S", tags: ["custom", "action"] })).toBe(true);
+    expect(isWanEligible({ shotId: "S", tags: ["custom"] })).toBe(false);
     expect(isWanEligible({ shotId: "S" })).toBe(false);
+  });
+
+  it("handles empty history when checking attempts on route", () => {
+    expect(attemptsUsedOnRoute([], "SHOT_01", "agnes-flash")).toBe(0);
+  });
+
+  it("handles empty ladder gracefully by falling back to human review", () => {
+    const singleShot: ShotContext = { shotId: "SHOT_01", targetDurationSeconds: 6 };
+    const plan = buildRepairPlan({
+      ...episode([singleShot], singleShot.shotId),
+      policy: {
+        ladder: { standard: [], wanEligible: [] },
+      },
+    });
+    const d = plan.decisions[0];
+    expect(d?.action).toBe("review");
+    expect(d?.routeId).toBeNull();
   });
 });

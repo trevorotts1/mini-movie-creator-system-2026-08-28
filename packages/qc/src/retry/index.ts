@@ -24,7 +24,7 @@
  */
 
 /** Shot tags that make a shot Wan-eligible (spec §13: complex/long/hero/action). */
-export type ShotTag = "hero" | "complex" | "long" | "action";
+export type ShotTag = "hero" | "complex" | "long" | "action" | (string & {});
 
 /** Route ids of the retry ladder; `review` is the terminal human state (spec §20). */
 export type RouteId =
@@ -120,6 +120,12 @@ export interface SpendGate {
   ): { allowed: true } | { allowed: false; reason: string };
 }
 
+export interface RetryPolicyOverrides {
+  ladder?: RetryLadder;
+  maxAttemptsPerRoute?: Readonly<Partial<Record<RouteId, number>>>;
+  maxTotalAttempts?: number;
+}
+
 export interface RepairRequest {
   episodeId: string;
   /** All shots of the episode — any shot other than the failed one is keep. */
@@ -128,7 +134,7 @@ export interface RepairRequest {
   failedShotId: string;
   /** Prior retry history for the failed shot (read-only, may be empty). */
   history: readonly RetryHistoryEntry[];
-  policy?: Partial<RetryPolicyConfig>;
+  policy?: RetryPolicyOverrides;
   costEstimator: RetryCostEstimator;
   spendGate: SpendGate;
 }
@@ -161,7 +167,7 @@ export class RetryError extends Error {
 }
 
 /** Merge a partial policy over the defaults, field by field. */
-export function resolvePolicy(overrides?: Partial<RetryPolicyConfig>): RetryPolicyConfig {
+export function resolvePolicy(overrides?: RetryPolicyOverrides): RetryPolicyConfig {
   const base = DEFAULT_RETRY_POLICY;
   const maxAttemptsPerRoute: Record<RouteId, number> = { ...base.maxAttemptsPerRoute };
   if (overrides?.maxAttemptsPerRoute) {
@@ -313,7 +319,7 @@ function nextLadderStep(
 ): { routeId: RouteId; attempt: number } | null {
   for (const routeId of ladder) {
     const used = attemptsUsedOnRoute(history, shotId, routeId);
-    const cap = policy.maxAttemptsPerRoute[routeId];
+    const cap = policy.maxAttemptsPerRoute[routeId] ?? 0;
     if (used < cap) {
       return { routeId, attempt: used + 1 };
     }
