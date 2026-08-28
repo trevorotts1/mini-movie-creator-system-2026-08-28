@@ -346,21 +346,43 @@ describe("withSubmitIdempotency — same request hash never double-submits", () 
     const restarted = new IdempotencyStore(dir);
     const keys = await readdir(dir);
     expect(keys.some((k) => k.endsWith(".json"))).toBe(true);
-    // The failure must NOT be treated as success on a later call: the record
-    // stays reserved, so a later call retries from the persisted count.
+    // Regression (QC AGN-010): a SECOND failed round must persist the
+    // CUMULATIVE count, never regress to this-round-only (the old code wrote
+    // attemptsMade-1 on exhaustion, dropping the 2 retries spent in round one).
     let secondRound = 0;
-    const outcome2 = await withSubmitIdempotency(
+    const failed2 = await withSubmitIdempotency(
       restarted,
       request(),
       async () => {
         secondRound += 1;
-        return { providerJobId: `vid_recovered_${secondRound}` };
+        throw new AgnesRetryableHttpError(503, "still failing");
+      },
+      { baseDelayMs: 1, maxAttempts: 2, sleep: immediateSleep },
+    ).catch((err: unknown) => err as AgnesSubmitFailedError);
+    expect(failed2).toBeInstanceOf(AgnesSubmitFailedError);
+    expect(secondRound).toBe(2);
+    expect((failed2 as AgnesSubmitFailedError).retryCount).toBe(3); // 2 (round 1) + 1 (round 2)
+    const afterSecond = new IdempotencyStore(dir);
+    const secondRecord = await afterSecond.get<AgnesSubmitRecord>(
+      afterSecond.keyFor("agnes-submit", request()),
+    );
+    const secondPayload = secondRecord?.result as AgnesSubmitRecord | undefined;
+    expect(secondPayload?.retryCount).toBe(3); // persisted cumulative, not 1
+
+    // And a later success still carries the full cumulative count.
+    let thirdRound = 0;
+    const outcome3 = await withSubmitIdempotency(
+      afterSecond,
+      request(),
+      async () => {
+        thirdRound += 1;
+        return { providerJobId: `vid_final_${thirdRound}` };
       },
       { sleep: immediateSleep },
     );
-    expect(secondRound).toBe(1);
-    expect(outcome2.reused).toBe(false);
-    expect(outcome2.retryCount).toBe(2); // carried over from the failed round
+    expect(thirdRound).toBe(1);
+    expect(outcome3.reused).toBe(false);
+    expect(outcome3.retryCount).toBe(3); // never lost
   });
 
   it("never submits when a providerJobId is already known (resume path)", async () => {
@@ -378,6 +400,9 @@ describe("withSubmitIdempotency — same request hash never double-submits", () 
     expect(submits).toBe(0);
     expect(outcome.providerJobId).toBe("vid_existing");
     expect(outcome.reused).toBe(true);
+    // Regression (QC AGN-010): the record's requestHash field must be the real
+    // sha-256 request hash (64 hex chars), not a truncated key string.
+    expect(outcome.record.requestHash).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("survives a crash mid-submit: reservation on disk, restart re-derives the same key", async () => {

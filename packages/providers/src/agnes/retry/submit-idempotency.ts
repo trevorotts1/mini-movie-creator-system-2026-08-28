@@ -213,8 +213,9 @@ export async function withSubmitIdempotency<
     // Resume path: the job id is already known (persisted before polling,
     // spec §18) — never resubmit a known job.
     const key = store.keyFor("agnes-submit-resume", request);
+    const hash = requestHash("agnes-submit-resume", request);
     const payload: AgnesSubmitRecord = {
-      requestHash: store.keyFor("agnes-submit-resume", request).slice(0, 64),
+      requestHash: hash,
       state: "completed",
       providerJobId: request.providerJobId,
       retryCount: 0,
@@ -257,6 +258,9 @@ export async function withSubmitIdempotency<
   let reusedUnderLock = false;
   let recordedProviderJobId: string | null = null;
   let recordedResult: T | null = null;
+  // Hoisted so the exhaustion/error handlers can persist the CUMULATIVE count
+  // (prior rounds + this round) instead of regressing to this round only.
+  let priorRetryCount = 0;
 
   try {
     await store.lock(key, async () => {
@@ -272,7 +276,7 @@ export async function withSubmitIdempotency<
 
       // Reserve before the first network attempt: a crash mid-submit leaves
       // a durable reservation on disk, and a restart re-derives the same key.
-      const priorRetryCount = underLock?.retryCount ?? existingPayload?.retryCount ?? 0;
+      priorRetryCount = underLock?.retryCount ?? existingPayload?.retryCount ?? 0;
       await putPayload(store, key, scope, hash, {
         requestHash: hash,
         state: "reserved",
@@ -319,19 +323,37 @@ export async function withSubmitIdempotency<
   } catch (err) {
     if (err instanceof IdempotencyError) throw err;
     if (err instanceof RetryBudgetExhaustedError) {
-      const retryCount = attemptsMade > 0 ? attemptsMade - 1 : 0;
-      // Persist the final retry count before surfacing exhaustion.
+      const retryCount = priorRetryCount + (attemptsMade > 0 ? attemptsMade - 1 : 0);
+      // Persist the final CUMULATIVE retry count before surfacing exhaustion
+      // (prior rounds' retries are never lost, spec §18 "retry count"). The
+      // write lands after the lock has been released, so it is monotonic: a
+      // queued same-key caller may have already advanced the count further —
+      // never write a value that would regress it.
+      let persistedCount = retryCount;
+      try {
+        const current = await readPayload();
+        if (current && typeof current.retryCount === "number" && current.retryCount > persistedCount) {
+          persistedCount = current.retryCount;
+        }
+      } catch {
+        // read failure must not mask the real failure below
+      }
       await putPayload(store, key, scope, hash, {
         requestHash: hash,
         state: "reserved",
         providerJobId: null,
-        retryCount,
+        retryCount: persistedCount,
         attempts: attemptsMade,
         result: null,
       }).catch(() => undefined);
       throw new AgnesSubmitFailedError(key, hash, retryCount, err.lastError ?? err);
     }
-    throw new AgnesSubmitFailedError(key, hash, attemptsMade > 0 ? attemptsMade - 1 : 0, err);
+    throw new AgnesSubmitFailedError(
+      key,
+      hash,
+      priorRetryCount + (attemptsMade > 0 ? attemptsMade - 1 : 0),
+      err,
+    );
   }
 
   const completed = await readPayload();
@@ -339,7 +361,7 @@ export async function withSubmitIdempotency<
     throw new AgnesSubmitFailedError(
       key,
       hash,
-      0,
+      priorRetryCount + (attemptsMade > 0 ? attemptsMade - 1 : 0),
       new Error("submit completed without a durable record"),
     );
   }

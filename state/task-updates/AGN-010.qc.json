@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-010",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "npx vitest run --config packages/providers/src/agnes/retry/vitest.config.mts packages/providers/src/agnes/retry -> 29 passed (29); npx vitest run packages/providers -> 69 passed (69); npx tsc --noEmit -p packages/providers/tsconfig.json -> rc=0; mutation check (reverted cumulative-retryCount fix -> regression test failed as expected, fix restored); security scan of owned paths (no exec/eval/secrets/unbounded loops)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Fixed: (1) exhaustion handler persisted this-round-only retryCount, regressing across failed rounds -> now cumulative priorRetryCount+; (2) same regression in the generic error path; (3) post-lock exhaustion write is now monotonic (never regresses a concurrent caller's advanced count); (4) resume-path record.requestHash was a truncated key string, now the real sha-256 hash. Also fixed ESM-unfriendly __dirname in vitest.config.mts (import.meta). Regression tests added for (1)+(4) and mutation-verified.",
+  "blockers": []
+}
