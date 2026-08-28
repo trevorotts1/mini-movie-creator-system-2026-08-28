@@ -352,6 +352,35 @@ describe("extractAlignment (known-alignment fixture)", () => {
       ),
     ).toThrow(/must be finite numbers/);
   });
+
+  it("rejects negative word times (regression: negative -0.001s rounded to 0)", () => {
+    expect(() =>
+      extractAlignment(
+        {
+          text: FIXTURE_TEXT,
+          words: [{ word: "x", start: -0.001, end: 0.1 }],
+          timeUnit: "s",
+        },
+        { key: FIXTURE_KEY, now: () => FIXED_NOW },
+      ),
+    ).toThrow(/must be non-negative/);
+    expect(() =>
+      extractAlignment(
+        { text: FIXTURE_TEXT, words: [], duration: -0.001 },
+        { key: FIXTURE_KEY, now: () => FIXED_NOW },
+      ),
+    ).toThrow(/must be non-negative/);
+  });
+
+  it("rejects an invalid source value (regression: untyped value passed straight through)", () => {
+    expect(() =>
+      extractAlignment(fixturePayload, {
+        key: FIXTURE_KEY,
+        source: "caption-import" as never,
+        now: () => FIXED_NOW,
+      }),
+    ).toThrow(/options\.source/);
+  });
 });
 
 describe("FishAlignmentStore", () => {
@@ -436,6 +465,24 @@ describe("FishAlignmentStore", () => {
       fs: mem2.fs,
     });
     await expect(store2.getByKey(FIXTURE_KEY)).rejects.toThrow(/malformed/);
+  });
+
+  it("throws on a stored document missing text (FISH-007 loader rejects it too)", async () => {
+    // A record without a text field would pass the writer's structural check
+    // but crash the FISH-007 caption loader downstream — the writer must
+    // reject it as malformed (defect regression: parser checked key+words
+    // only, not text).
+    const mem = memoryFs({
+      [`/tmp/test-alignment/${FIXTURE_KEY}.json`]: JSON.stringify({
+        formatVersion: 1,
+        alignment: { key: FIXTURE_KEY, words: [], durationMs: 0, source: "provider_response", extractedAt: "x" },
+      }),
+    });
+    const store = new FishAlignmentStore({
+      directory: "/tmp/test-alignment",
+      fs: mem.fs,
+    });
+    await expect(store.getByKey(FIXTURE_KEY)).rejects.toThrow(/malformed/);
   });
 
   it("parseAlignmentDoc round-trips the fixture document verbatim", () => {

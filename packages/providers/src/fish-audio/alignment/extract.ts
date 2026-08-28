@@ -62,6 +62,9 @@ function toMs(value: number, unit: FishAlignmentTimeUnit, field: string): number
   if (!isFiniteNumber(rounded)) {
     throw new Error(`${field} is not a finite time value`);
   }
+  if (rounded < 0 || Object.is(rounded, -0)) {
+    throw new Error(`${field} must be non-negative (got ${rounded}ms)`);
+  }
   return rounded;
 }
 
@@ -192,6 +195,11 @@ export function extractAlignment(
   }
 
   const source = options.source ?? "provider_response";
+  if (source !== "provider_response" && source !== "transcription") {
+    throw new Error(
+      `options.source must be "provider_response" or "transcription", got ${JSON.stringify(source)}`,
+    );
+  }
   const extractedAt = (options.now ?? (() => new Date()))().toISOString();
 
   const alignment: FishDialogueAlignment = {

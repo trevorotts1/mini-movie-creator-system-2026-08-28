@@ -147,6 +147,7 @@ export function parseAlignmentDoc(raw: string, filePath: string): FishDialogueAl
     typeof doc.alignment !== "object" ||
     doc.alignment === null ||
     typeof doc.alignment.key !== "string" ||
+    typeof doc.alignment.text !== "string" ||
     !Array.isArray(doc.alignment.words)
   ) {
     throw new Error(

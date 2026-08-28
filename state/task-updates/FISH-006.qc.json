@@ -1,0 +1,13 @@
+{
+  "taskId": "FISH-006",
+  "phase": "PASS",
+  "commit": "",
+  "checksRun": "npx vitest run packages/providers/src/fish-audio/alignment (26/26 PASS); npx vitest run packages/providers (66/66 PASS); npx tsc --noEmit -p packages/providers (clean); cross-task contract check vs FISH-005 cache key + FISH-007 captions loader",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Fixed: parseAlignmentDoc accepted records missing text (FISH-007 loader rejects them); negative times rounding to -0 passed validation; invalid options.source passed through unvalidated. Regression tests added.",
+  "blockers": []
+}
