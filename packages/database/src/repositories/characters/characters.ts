@@ -361,6 +361,10 @@ export class AppearanceVersionRepository extends BaseRepository {
         "versionLabel, hairVersion and wardrobeVersion must be non-empty",
       );
     }
+    const state = input.state ?? "DRAFT";
+    if (!ASSET_APPROVAL_STATES.includes(state)) {
+      throw new CharacterRepositoryError(`invalid appearance state: ${String(input.state)}`);
+    }
     this.db
       .prepare(
         `INSERT INTO character_appearance_versions (
@@ -378,7 +382,7 @@ export class AppearanceVersionRepository extends BaseRepository {
         input.effectiveEpisode ?? null,
         input.effectiveTime ?? null,
         input.changeNote ?? null,
-        input.state ?? "DRAFT",
+        state,
         isoNow(),
       );
     const rows = this.db

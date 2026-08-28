@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-005",
+  "phase": "PASS",
+  "commit": "",
+  "checksRun": "npx vitest run packages/database/src/repositories/characters packages/database/src/migrations packages/database/src/repositories/locations (60 passed/4 files); npx vitest run packages/database (75 passed/6 files); npx vitest run (332 passed/22 files, after worktree node_modules symlink repair); npx tsc --noEmit (packages/database) clean; no eslint config exists repo-wide (vacuous)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed: AppearanceVersionRepository.create skipped typed state validation (raw SQLite CHECK error) -> typed CharacterRepositoryError + regression test; characters-schema.test.ts asserted exact ledger equality -> contains assertion so sibling bands (010/030/040) can merge. Repaired worktree node_modules zod/commander symlinks (env, uncommitted).",
+  "blockers": []
+}

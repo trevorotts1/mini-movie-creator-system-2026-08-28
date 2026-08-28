@@ -301,6 +301,20 @@ describe("appearance versions — effective episode + immutable history (spec §
     ).toThrow(/effective episode/i);
   });
 
+  it("rejects an invalid appearance state with a typed error (SQL CHECK never hit)", () => {
+    expect(() =>
+      appearances.create({
+        characterId: MONICA,
+        versionLabel: "v1",
+        hairVersion: "long-braids-v1",
+        wardrobeVersion: "business-blue-v1",
+        baseIdentityVersionId,
+        effectiveEpisode: "S01E01",
+        state: "BANANA" as never,
+      }),
+    ).toThrow(/invalid appearance state/);
+  });
+
   it("resolves canon-at-the-time: v1 for E01–E08, v2 from E09", () => {
     appearances.create({
       characterId: MONICA,

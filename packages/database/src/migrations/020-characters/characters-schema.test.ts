@@ -32,7 +32,10 @@ describe("020-characters band", () => {
 
   it("applies band 0201–0204 once and records the ledger", () => {
     const ledger = db.all(`SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY id`).map((r) => String(r["id"]));
-    expect(ledger).toEqual(["0201", "0202", "0203", "0204"]);
+    // Contain, not equal: sibling bands (010_, 030_, 040_) share the ledger.
+    for (const id of ["0201", "0202", "0203", "0204"]) {
+      expect(ledger).toContain(id);
+    }
     // Idempotent second run.
     expect(migrate(db, MIGRATIONS).applied).toEqual([]);
   });
