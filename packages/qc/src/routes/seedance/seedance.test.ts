@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   IDENTITY_FAILURE_CLASS,
@@ -8,6 +8,7 @@ import {
   routeSeedanceFallback,
   shouldEscalateToSeedance,
   type EscalationHistory,
+  type PersistingFailureClass,
   type QcOutcome,
   type SeedanceFallbackShot,
 } from "./index.js";
@@ -63,6 +64,21 @@ describe("QC-009 shouldEscalateToSeedance (escalation gate)", () => {
       failures: ["reference-identity-mismatch"],
     };
     expect(shouldEscalateToSeedance(IDENTITY_FAIL, history)).toBe(false);
+  });
+
+  it("does NOT escalate when the triggering verdict is a non-identity failure (regression: verdict class must match)", () => {
+    // History may still carry the identity class from the flash stage, but the
+    // verdict that triggered this route call is a cost failure — not this
+    // route's trigger (retry policy, QC-006).
+    expect(shouldEscalateToSeedance(COST_FAIL, BOTH_STAGES)).toBe(false);
+  });
+
+  it("does NOT escalate when the triggering verdict is prop-mismatch (props are not identity)", () => {
+    const propVerdict: QcOutcome = {
+      status: "FAIL",
+      failures: [{ failureClass: "prop-mismatch", detail: "coffee cup wrong" }],
+    };
+    expect(shouldEscalateToSeedance(propVerdict, BOTH_STAGES)).toBe(false);
   });
 
   it("does NOT escalate on non-identity failures (cost/timeout belong to retry policy)", () => {
@@ -221,5 +237,24 @@ describe("QC-009 mode constraints honored on fallback requests", () => {
     if (result.ok) {
       expect(result.value.referencesUsed).toEqual(BASE_SHOT.referenceImageUrls);
     }
+  });
+
+  it("referencesUsed excludes keyframe fields — frames are strategy, not references (regression)", () => {
+    const result = buildSeedanceFallback({
+      ...BASE_SHOT,
+      referenceImageUrls: undefined,
+      firstFrameUrl: "https://media.example.test/keyframes/start.png",
+      lastFrameUrl: "https://media.example.test/keyframes/end.png",
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.referencesUsed).toEqual([]);
+    }
+  });
+
+  it("type level: prop-mismatch is not an accepted persisting failure class", () => {
+    expectTypeOf<PersistingFailureClass>().not.toEqualTypeOf<
+      PersistingFailureClass | "prop-mismatch"
+    >();
   });
 });

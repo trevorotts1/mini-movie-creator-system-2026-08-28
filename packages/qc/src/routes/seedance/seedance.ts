@@ -37,12 +37,22 @@ import {
 export const IDENTITY_FAILURE_CLASS = "reference-identity-mismatch" as const;
 export type IdentityFailureClass = typeof IDENTITY_FAILURE_CLASS;
 
-/** QC failure classes the Seedance escalation accepts. */
+/**
+ * QC failure classes the Seedance escalation accepts — the reference/identity
+ * problem family (spec §13). `prop-mismatch` is deliberately NOT identity:
+ * props are a separate QC check category from character identity (spec §15).
+ */
 export type PersistingFailureClass =
   | typeof IDENTITY_FAILURE_CLASS
   | "wardrobe-mismatch"
-  | "hair-mismatch"
-  | "prop-mismatch";
+  | "hair-mismatch";
+
+/** The identity-class membership list the escalation gate consults. */
+const PERSISTING_FAILURE_CLASSES: readonly PersistingFailureClass[] = [
+  IDENTITY_FAILURE_CLASS,
+  "wardrobe-mismatch",
+  "hair-mismatch",
+];
 
 /** QC verdict shape this route consumes (QC-001 schema fields, structural only). */
 export interface QcFailure {
@@ -110,10 +120,19 @@ export type SeedanceFallbackResult =
 /** True when the failure class observed at the LATEST exhausted stage is the reference/identity class — the problem persisted through escalation. */
 function hasIdentityClassFailure(failures: readonly string[]): boolean {
   const latest = failures[failures.length - 1];
+  return PERSISTING_FAILURE_CLASSES.includes(
+    latest as PersistingFailureClass,
+  );
+}
+
+/** True when `qc` (the verdict that triggered this route call) carries the identity failure class. */
+function qcHasIdentityClassFailure(qc: QcOutcome): boolean {
+  const latest = qc.failures[qc.failures.length - 1];
   return (
-    latest === IDENTITY_FAILURE_CLASS ||
-    latest === "wardrobe-mismatch" ||
-    latest === "hair-mismatch"
+    latest !== undefined &&
+    PERSISTING_FAILURE_CLASSES.includes(
+      latest.failureClass as PersistingFailureClass,
+    )
   );
 }
 
@@ -121,8 +140,11 @@ function hasIdentityClassFailure(failures: readonly string[]): boolean {
  * Should this shot escalate to Seedance? True only when BOTH Agnes stages
  * (flash with its retry, then regular) are exhausted AND the persisting
  * failure is the reference/identity class (spec §13 wording: "reference/
- * identity problem remains"). A cost/timeout failure is NOT this route's
- * trigger — it belongs to the retry policy (QC-006).
+ * identity problem remains") — checked in BOTH the current QC verdict (the
+ * trigger for this route call) and the latest recorded history failure, so
+ * a verdict whose failure class no longer matches the history cannot
+ * escalate. A cost/timeout failure is NOT this route's trigger — it belongs
+ * to the retry policy (QC-006).
  */
 export function shouldEscalateToSeedance(
   qc: QcOutcome,
@@ -133,14 +155,19 @@ export function shouldEscalateToSeedance(
   if (!exhausted.has("agnes-flash") || !exhausted.has("agnes-regular")) {
     return false;
   }
-  return hasIdentityClassFailure(history.failures);
+  return (
+    qcHasIdentityClassFailure(qc) && hasIdentityClassFailure(history.failures)
+  );
 }
 
-/** Every reference URL the shot carries, in canonical order. */
+/**
+ * Every reference URL the shot carries, in canonical order.
+ * Keyframe fields (first/last frame) are excluded: they are exact-frame
+ * strategy inputs, not reference assets (spec §21 `reference_assets` vs
+ * `keyframe_strategy` are distinct shot-spec fields).
+ */
 function collectReferences(shot: SeedanceFallbackShot): string[] {
   const refs: string[] = [];
-  if (shot.firstFrameUrl !== undefined) refs.push(shot.firstFrameUrl);
-  if (shot.lastFrameUrl !== undefined) refs.push(shot.lastFrameUrl);
   refs.push(...(shot.referenceImageUrls ?? []));
   refs.push(...(shot.referenceVideoUrls ?? []));
   refs.push(...(shot.referenceAudioUrls ?? []));

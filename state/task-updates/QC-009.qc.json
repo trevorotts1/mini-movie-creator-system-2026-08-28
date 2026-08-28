@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-009",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/qc/src/routes/seedance -> 22/22 PASS; node node_modules/vitest/vitest.mjs run -> 430/430 PASS; npx tsc --noEmit -p packages/qc -> clean; npx tsc --noEmit -p packages/providers -> clean; secret/shell/fs/env grep over packages/qc/src/routes/seedance -> clean",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:00:00Z",
+  "notes": "Fixed 3 defects: gate now requires triggering QC verdict class to match identity family (cost/timeout verdict cannot escalate), removed prop-mismatch from accepted persisting failure classes (type + gate), referencesUsed excludes first/last keyframe URLs; 4 regression tests added",
+  "blockers": []
+}
