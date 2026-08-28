@@ -1,7 +1,7 @@
 {
   "taskId": "SKL-002",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "3f69521",
   "testsRun": "npx vitest run --config integrations/claude/vitest.config.mts -> 18/18 pass (exit 0); same from integrations/claude cwd via npm test -> 18/18 pass; bash integrations/claude/project-install.sh --check -> exit 0; bash integrations/claude/project-install.sh (idempotent second run) -> no-op exit 0; live claude 2.1.227 probes -> skill discovered via symlink + non-destructive status dry run (zero files modified)",
   "notes": "Claude Code/claude-nine project install: committed relative symlink .claude/skills/mini-movie-creator -> ../../skills/mini-movie-creator (resolves when SKL-001 lands; DAG orders SKL-002 after SKL-001); idempotent project-install.sh with symlink mode, copy+sync fallback (marker file, stale-file removal, drift detection), --check, --dry-run, --force-with-backup, foreign-dir refusal; 18 vitest tests drive the real script in fixture repos; live verification + dry-run documented in integrations/claude/PROJECT-INSTALL.md; no new dependencies, no lockfile change",
   "blockers": [],
