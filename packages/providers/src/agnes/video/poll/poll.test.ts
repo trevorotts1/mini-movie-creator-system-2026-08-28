@@ -240,7 +240,7 @@ describe("AgnesVideoPollRunner — poll-only, resume at SUBMITTED (kill-poller t
     ]);
     const runner = new AgnesVideoPollRunner(client, store, { now: clock(), sleep: instantSleep });
 
-    await expect(runner.pollOnce("never-submitted")).rejects.toThrow(/no persisted providerTaskId/);
+    await expect(runner.pollOnce("never-submitted")).rejects.toThrow(/no persisted provider key/);
     expect(store.rows.get("never-submitted")?.state).toBe("SUBMITTING");
   });
 
@@ -336,5 +336,134 @@ describe("AgnesVideoPollRunner — poll-only, resume at SUBMITTED (kill-poller t
     expect(sleeps).toEqual([250, 250, 250]);
     expect(final.state).toBe("GENERATED_TEMPORARY");
     expect(final.pollCount).toBe(3);
+  });
+
+  // ── AGN-004 seam compatibility (QC regression) ──────────────────────────
+  // The submit layer persists the retrieval key as `providerJobId` (Agnes
+  // `video_id`) and declares `resultUrls`/`lastPolledAt` "owned by AGN-005".
+  // A kill-poller restart must resume THAT shape, not just this module's
+  // own fabricated record.
+
+  it("kill-poller resume on an AGN-004-shaped record: polls persisted providerJobId, never resubmits", async () => {
+    const calls = { keys: [] as Array<{ key: string; model?: string }> };
+    // First process polls once (in flight), then dies.
+    const firstProcess = scriptedClient([{ video_id: "vid_abc123", status: "in_progress" }], calls);
+    const agn004Record: AgnesVideoTaskRecord = {
+      ref: "S01E03:SC04:SH07",
+      state: "SUBMITTED",
+      // AGN-004 field names: providerJobId, requestHash, provider, no videoId/providerTaskId.
+      providerJobId: "vid_abc123",
+      requestHash: "hash-1",
+      provider: "agnes",
+      model: "agnes-video-2.5-flash",
+      createdAt: "2026-08-28T10:00:00.000Z",
+      updatedAt: "2026-08-28T10:00:00.000Z",
+    };
+    const store = memoryStore([{ ...agn004Record }]);
+    const runner1 = new AgnesVideoPollRunner(firstProcess, store, { now: clock(), sleep: instantSleep });
+    await runner1.pollOnce("S01E03:SC04:SH07");
+
+    // Restart: fresh client, same store → resumes the SAME job.
+    const secondProcess = scriptedClient([
+      { video_id: "vid_abc123", status: "completed", metadata: { url: "https://apihub.agnes-ai.com/generated/out.mp4" } },
+    ], calls);
+    const runner2 = new AgnesVideoPollRunner(secondProcess, store, { now: clock(), sleep: instantSleep });
+    const final = await runner2.runToTerminal("S01E03:SC04:SH07", { intervalMs: 1, timeoutMs: 10_000 });
+
+    expect(calls.keys.map((k) => k.key)).toEqual(["vid_abc123", "vid_abc123"]);
+    expect(calls.keys[0]?.model).toBe("agnes-video-2.5-flash");
+    expect(final.state).toBe("GENERATED_TEMPORARY");
+    expect(final.providerJobId).toBe("vid_abc123");
+    expect(final.requestHash).toBe("hash-1");
+    expect(final.provider).toBe("agnes");
+  });
+
+  it("every poll writes the AGN-004 seam fields: resultUrls and lastPolledAt", async () => {
+    const client = scriptedClient([
+      { video_id: "vid_abc123", status: "queued" },
+      { video_id: "vid_abc123", status: "completed", metadata: { url: "https://apihub.agnes-ai.com/generated/out.mp4" } },
+    ]);
+    const store = memoryStore([
+      {
+        ref: "shot-seam",
+        state: "SUBMITTED",
+        providerJobId: "vid_abc123",
+        model: "agnes-video-2.5-flash",
+        createdAt: "2026-08-28T10:00:00.000Z",
+        updatedAt: "2026-08-28T10:00:00.000Z",
+      },
+    ]);
+    const runner = new AgnesVideoPollRunner(client, store, { now: clock(), sleep: instantSleep });
+
+    const final = await runner.runToTerminal("shot-seam", { intervalMs: 1, timeoutMs: 10_000 });
+
+    expect(final.resultUrls).toEqual(["https://apihub.agnes-ai.com/generated/out.mp4"]);
+    expect(typeof final.lastPolledAt).toBe("string");
+    expect(final.lastPolledAt!.length).toBeGreaterThan(0);
+    expect(store.rows.get("shot-seam")?.resultUrls).toEqual(["https://apihub.agnes-ai.com/generated/out.mp4"]);
+    expect(store.rows.get("shot-seam")?.lastPolledAt).toBe(final.lastPolledAt);
+  });
+
+  it("resultUrls never duplicates a URL already persisted by the submit layer", async () => {
+    const client = scriptedClient([
+      { video_id: "vid_abc123", status: "completed", metadata: { url: "https://apihub.agnes-ai.com/generated/out.mp4" } },
+    ]);
+    const store = memoryStore([
+      {
+        ref: "shot-seam-2",
+        state: "SUBMITTED",
+        providerJobId: "vid_abc123",
+        resultUrls: ["https://apihub.agnes-ai.com/generated/out.mp4"],
+        createdAt: "2026-08-28T10:00:00.000Z",
+        updatedAt: "2026-08-28T10:00:00.000Z",
+      },
+    ]);
+    const runner = new AgnesVideoPollRunner(client, store, { now: clock(), sleep: instantSleep });
+
+    const final = await runner.runToTerminal("shot-seam-2", { intervalMs: 1, timeoutMs: 10_000 });
+
+    expect(final.resultUrls).toEqual(["https://apihub.agnes-ai.com/generated/out.mp4"]);
+  });
+
+  // ── Downstream-state guard (QC regression) ──────────────────────────────
+  // ARCHIVING/ARCHIVED/QC_*/APPROVED are owned downstream. Re-polling could
+  // stomp a completed result back to GENERATED_TEMPORARY.
+
+  it("refuses to poll a record in a downstream state (ARCHIVED) even with a key", async () => {
+    const calls = { keys: [] as Array<{ key: string; model?: string }> };
+    const client = scriptedClient([{ video_id: "vid_abc123", status: "completed" }], calls);
+    const store = memoryStore([
+      {
+        ref: "archived-shot",
+        state: "ARCHIVED",
+        providerJobId: "vid_abc123",
+        resultUrl: "https://apihub.agnes-ai.com/generated/out.mp4",
+        createdAt: "2026-08-28T10:00:00.000Z",
+        updatedAt: "2026-08-28T10:00:00.000Z",
+      },
+    ]);
+    const runner = new AgnesVideoPollRunner(client, store, { now: clock(), sleep: instantSleep });
+
+    await expect(runner.runToTerminal("archived-shot")).rejects.toThrow(/downstream state "ARCHIVED"/);
+    expect(calls.keys).toEqual([]);
+    expect(store.rows.get("archived-shot")?.state).toBe("ARCHIVED");
+  });
+
+  it("refuses to poll a pre-submit record (PLANNED) even with a key", async () => {
+    const calls = { keys: [] as Array<{ key: string; model?: string }> };
+    const client = scriptedClient([{ video_id: "vid_abc123", status: "completed" }], calls);
+    const store = memoryStore([
+      {
+        ref: "planned-shot",
+        state: "PLANNED",
+        providerJobId: "vid_abc123",
+        createdAt: "2026-08-28T10:00:00.000Z",
+        updatedAt: "2026-08-28T10:00:00.000Z",
+      },
+    ]);
+    const runner = new AgnesVideoPollRunner(client, store, { now: clock(), sleep: instantSleep });
+
+    await expect(runner.pollOnce("planned-shot")).rejects.toThrow(/downstream state "PLANNED"/);
+    expect(calls.keys).toEqual([]);
   });
 });

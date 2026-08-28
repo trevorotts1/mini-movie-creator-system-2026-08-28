@@ -105,6 +105,17 @@ export interface AgnesVideoFailure {
 /**
  * Durable record for one Agnes video job. Persisted by AGN-004 BEFORE
  * polling (spec §18); the poll runner reads it and never creates a job.
+ *
+ * SEAM COMPATIBILITY (AGN-004 → AGN-005): AGN-004 persists the same durable
+ * record under its own field names — `providerJobId` (the Agnes `video_id`),
+ * `resultUrls` (string array), `lastPolledAt`, `requestHash`, `provider`.
+ * This interface is a superset of that persisted shape so a record written
+ * by the submit layer polls and resumes WITHOUT any adapter: every
+ * AGN-004-authored field below is optional here, and the runner resolves
+ * retrieval keys and result URLs across both namings. AGN-004's types are
+ * not importable from this worktree (task branched pre-merge), so the
+ * compatible fields are declared explicitly; keep them in sync with
+ * `AgnesVideoJobRecord` at merge time.
  */
 export interface AgnesVideoTaskRecord {
   /** Business reference (e.g. "shot-42:keyframe-a"). Unique per store. */
@@ -121,12 +132,34 @@ export interface AgnesVideoTaskRecord {
    * retrieval parameter; falls back to {@link providerTaskId} when absent.
    */
   videoId?: string;
+  /**
+   * AGN-004's persisted name for the provider job ID (the Agnes `video_id`).
+   * Cross-seam alias of {@link videoId}: a record written by the submit
+   * layer carries THIS field, so the runner resolves it as the retrieval
+   * key. Without it, resume-at-SUBMITTED would see "no key" and dead-end.
+   */
+  providerJobId?: string;
   /** Provider model identifier; passed as `model_name` on retrieval. */
   model?: string;
   /** Submit payload kept for audit/manual re-check (written by AGN-004). */
   submitRequest?: unknown;
+  /** AGN-004 idempotency hash (CORE-013 `requestHash`); preserved untouched. */
+  requestHash?: string;
+  /** Provider family (AGN-004 persists `"agnes"`); preserved untouched. */
+  provider?: string;
   /** Temporary provider result URL captured on GENERATED_TEMPORARY. */
   resultUrl?: string;
+  /**
+   * AGN-004-declared array of temporary provider result URLs ("owned by
+   * AGN-005/AGN-008"). The runner appends each captured URL here so
+   * downstream archival/validation layers read the field AGN-004 promised.
+   */
+  resultUrls?: string[];
+  /**
+   * ISO-8601 last poll timestamp. AGN-004 declares this "owned by AGN-005";
+   * the runner writes it on every poll.
+   */
+  lastPolledAt?: string;
   /**
    * Expiration of {@link resultUrl}, ISO-8601, when the provider returns one.
    * NEVER invented: absent/undocumented → `null` (UNKNOWN per runbook §25).

@@ -82,9 +82,14 @@ export class AgnesVideoPollRunner {
    * - SUBMITTED / GENERATING with a retrieval key → returned as-is (resume
    *   polls the existing provider job).
    * - SUBMITTED stage hole (SUBMITTING) → promoted to SUBMITTED so polling
-   *   can resume; the persisted providerTaskId is what gets polled. If a
-   *   record somehow exists with no providerTaskId, this throws rather than
+   *   can resume; the persisted provider key is what gets polled. If a
+   *   record somehow exists with no provider key, this throws rather than
    *   silently resubmitting (double spend) — the submit layer must go first.
+   * - ARCHIVING / ARCHIVED / QC_PENDING / QC_FIXING / APPROVED → REFUSED with
+   *   a descriptive error. Those states are owned downstream (archival/QC);
+   *   polling them again could stomp a completed result back to
+   *   GENERATED_TEMPORARY or re-persist a stale URL. PLANNED / BUDGET_RESERVED
+   *   → REFUSED: polling belongs after the submit layer, never before.
    */
   async ensurePollable(ref: string): Promise<AgnesVideoTaskRecord> {
     const record = await this.store.load(ref);
@@ -96,9 +101,14 @@ export class AgnesVideoPollRunner {
     if (isAgnesPollTerminal(record.state)) {
       return record;
     }
+    if (!isPollVisibleState(record.state)) {
+      throw new Error(
+        `Agnes video task "${ref}" is in downstream state "${record.state}"; polling would regress it (archival/QC own this state)`,
+      );
+    }
     if (!this.retrievalKey(record)) {
       throw new Error(
-        `Agnes video task "${ref}" has no persisted providerTaskId; refusing to poll (would resubmit — use the submit layer first)`,
+        `Agnes video task "${ref}" has no persisted provider key; refusing to poll (would resubmit — use the submit layer first)`,
       );
     }
     if (record.state === "SUBMITTING") {
@@ -126,11 +136,21 @@ export class AgnesVideoPollRunner {
     const key = this.retrievalKey(record);
     if (!key) {
       throw new Error(
-        `Agnes video task "${ref}" has no persisted providerTaskId; refusing to poll (would resubmit)`,
+        `Agnes video task "${ref}" has no persisted provider key; refusing to poll (would resubmit)`,
       );
     }
     const info = await this.client.getTask(key, record.model ?? undefined);
     const mapped = mapAgnesToPipelineState(info);
+    const now = this.now();
+
+    // Populate the AGN-004 seam fields on every poll: `resultUrls` (array the
+    // submit layer declared "owned by AGN-005") and `lastPolledAt` (declared
+    // "owned by AGN-005"). Both preserve an existing captured URL (resume:
+    // a URL already on the record is never dropped, never duplicated).
+    const nextUrls = record.resultUrls ? [...record.resultUrls] : [];
+    if (mapped.resultUrl && !nextUrls.includes(mapped.resultUrl)) {
+      nextUrls.push(mapped.resultUrl);
+    }
 
     const updated: AgnesVideoTaskRecord = {
       ...record,
@@ -138,8 +158,10 @@ export class AgnesVideoPollRunner {
       resultUrl: mapped.resultUrl ?? record.resultUrl,
       urlExpiration: mapped.urlExpiration ?? record.urlExpiration,
       failure: mapped.failure ?? record.failure,
+      resultUrls: nextUrls,
+      lastPolledAt: now,
       pollCount: (record.pollCount ?? 0) + 1,
-      updatedAt: this.now(),
+      updatedAt: now,
     };
     await this.store.save(updated);
     return updated;
@@ -167,16 +189,28 @@ export class AgnesVideoPollRunner {
     return record;
   }
 
-  /** Agnes retrieval key: `videoId` preferred (same as provider task ID on
-   *  create responses), `providerTaskId` fallback. */
+  /** Agnes retrieval key. Preferred order: `videoId` (same as the provider
+   *  task ID on create responses), then `providerJobId` — the field name
+   *  AGN-004's submit layer actually persists the `video_id` under — then
+   *  `providerTaskId` (alias). Without the `providerJobId` fallback, a
+   *  real submit-layer record at SUBMITTED would dead-end at "no key". */
   private retrievalKey(record: AgnesVideoTaskRecord): string | undefined {
-    return record.videoId ?? record.providerTaskId;
+    return record.videoId ?? record.providerJobId ?? record.providerTaskId;
   }
 }
 
-/** Type guard: narrow a record state to the poll-visible subset. */
+/**
+ * Type guard: narrow a record state to the poll-visible subset — the states
+ * the poll runner accepts as input. SUBMITTING is included because the poll
+ * layer promotes it to SUBMITTED (crash window: the submit call landed but
+ * the process died before persisting SUBMITTED). Everything downstream
+ * (ARCHIVING, ARCHIVED, QC_PENDING, QC_FIXING, APPROVED) and pre-submit
+ * (PLANNED, BUDGET_RESERVED) is refused: re-polling could regress a
+ * completed record back to GENERATED_TEMPORARY.
+ */
 export function isPollVisibleState(state: AgnesPipelineState): boolean {
   return (
+    state === "SUBMITTING" ||
     state === "SUBMITTED" ||
     state === "GENERATING" ||
     isAgnesPollTerminal(state)

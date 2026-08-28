@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-005",
+  "phase": "PASS",
+  "commit": "308baf7",
+  "checksRun": "npx vitest run packages/providers/src/agnes/video/poll (25/25 PASS); npx vitest run packages/providers (65/65 PASS); npx tsc --noEmit (packages/providers, clean); secret/injection grep on owned paths (clean)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Seam fixes: retrievalKey now falls back to AGN-004's providerJobId (real resume would dead-end otherwise); pollOnce writes AGN-004 seam fields resultUrls + lastPolledAt (dedup); downstream/pre-submit states (ARCHIVING/ARCHIVED/QC_*/APPROVED/PLANNED/BUDGET_RESERVED) refused by ensurePollable to prevent state regression. Plus 5 regression tests.",
+  "blockers": []
+}
