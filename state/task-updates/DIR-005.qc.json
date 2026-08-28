@@ -1,7 +1,7 @@
 {
   "taskId": "DIR-005",
   "phase": "PASS",
-  "commit": "",
+  "commit": "7a9aaa8",
   "checksRun": "npx vitest run packages/scene-intelligence/src/runtime-estimator (37/37); npx tsc --noEmit -p packages/scene-intelligence; npx vitest run full repo (445/445)",
   "defectsFound": 4,
   "defectsFixed": 4,
