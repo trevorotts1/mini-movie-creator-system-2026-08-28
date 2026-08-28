@@ -2,6 +2,8 @@
   "taskId": "QC-002",
   "phase": "PASS",
   "commit": "3966596",
+  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
+  "rebaseCommit": "19c763a",
   "checksRun": "npx vitest run packages/qc/src/identity (21/21 PASS); npx vitest run packages/qc (21/21 PASS); npx vitest run full monorepo (25 files, 429/429 PASS); tsc --noEmit packages/qc + packages/character-library (clean); security pass on packages/qc/src/identity (no secrets, no exec/spawn, no fs I/O, untrusted story text interpolated into prompt only, fail-closed parse)",
   "defectsFound": 2,
   "defectsFixed": 2,
