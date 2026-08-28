@@ -1,7 +1,7 @@
 {
   "taskId": "SKL-001",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "836ecd07032c66e815f55e94053bfc92460b8ec8",
   "testsRun": "bash skills/mini-movie-creator/tests/run-tests.sh -> 46/46 passed (25 spec §27 behaviors teachable, SKILL.md 223 lines <= 500, references >= 60 lines each, secret-scan clean, mmcs-status.sh exit 0); bash skills/mini-movie-creator/scripts/mmcs-status.sh -> exit 0 against stub state; mutation proof RED->GREEN; documented mmcs verbs cross-checked against apps/cli registry (32 verbs, 0 unregistered)",
   "notes": "Canonical skill built: AgentSkills frontmatter SKILL.md (223 lines) + 4 references (workflow/approvals/providers/recovery) + scripts/mmcs-status.sh (repo-root walk-up, read-only, exit 0 on stub state) + tests/run-tests.sh harness with mutation proof",
   "blockers": [],
