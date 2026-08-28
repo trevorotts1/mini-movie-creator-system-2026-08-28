@@ -238,3 +238,98 @@ describe("outcome vocabulary", () => {
     expect(isClipOutcome(42)).toBe(false);
   });
 });
+
+describe("timestamp normalization", () => {
+  it("stores mixed-offset caller timestamps as comparable UTC instants", async () => {
+    const { store } = await tmpStore();
+    // same instant, different offsets — must normalize to the same string
+    await store.recordMany([
+      outcome({ occurredAt: "2026-08-05T00:00:00.000-05:00" }),
+      outcome({ occurredAt: "2026-08-05T05:00:00.000Z" }),
+    ]);
+    const listed = await store.list();
+    expect(listed[0]?.occurredAt).toBe("2026-08-05T05:00:00.000Z");
+    expect(listed[1]?.occurredAt).toBe("2026-08-05T05:00:00.000Z");
+  });
+
+  it("rejects caller timestamps that are not valid ISO 8601 instants", async () => {
+    const { store } = await tmpStore();
+    await expect(
+      store.record(outcome({ occurredAt: "tomorrow-ish" })),
+    ).rejects.toThrow(/valid ISO 8601 instant/);
+    await expect(store.record(outcome({ occurredAt: "" }))).rejects.toThrow(/occurredAt/);
+  });
+});
+
+describe("malformed store file", () => {
+  async function writeDoc(filePath: string, doc: unknown): Promise<void> {
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(doc), "utf8");
+  }
+
+  it("fails loudly on a corrupt outcome row instead of skewing rates", async () => {
+    const { filePath } = await tmpStore();
+    await writeDoc(filePath, {
+      formatVersion: 1,
+      outcomes: {
+        "1": {
+          id: 1,
+          characterId: MONICA,
+          model: AGNES,
+          referenceIds: ["ASSET_FACE"],
+          outcome: "KINDA-OK", // not in the vocabulary
+          shotId: null,
+          jobId: null,
+          reason: null,
+          occurredAt: "2026-08-01T00:00:00.000Z",
+        },
+      },
+      dedupeIndex: {},
+      nextId: 2,
+    });
+    const store = new RefpackMetricsStore({ filePath });
+    await expect(store.list()).rejects.toThrow(/malformed/);
+  });
+
+  it("fails loudly on a top-level shape mismatch", async () => {
+    const { filePath } = await tmpStore();
+    await writeDoc(filePath, { formatVersion: 2, outcomes: {}, dedupeIndex: {}, nextId: 1 });
+    const store = new RefpackMetricsStore({ filePath });
+    await expect(store.list()).rejects.toThrow(/malformed/);
+  });
+});
+
+describe("read accessors", () => {
+  it("get returns one outcome by id", async () => {
+    const { store } = await tmpStore();
+    await store.recordMany([
+      outcome({ referenceIds: ["ASSET_A"] }),
+      outcome({ referenceIds: ["ASSET_B"], outcome: "REJECTED" }),
+    ]);
+    expect((await store.get(2))?.referenceIds).toEqual(["ASSET_B"]);
+    expect(await store.get(99)).toBeUndefined();
+  });
+
+  it("listForCharacter filters by character (any model/reference)", async () => {
+    const { store } = await tmpStore();
+    await store.recordMany([
+      outcome({ characterId: MONICA, referenceIds: ["ASSET_A"] }),
+      outcome({ characterId: "CHAR_OTHER_002", referenceIds: ["ASSET_B"] }),
+    ]);
+    const monica = await store.listForCharacter(MONICA);
+    expect(monica).toHaveLength(1);
+    expect(monica[0]?.referenceIds).toEqual(["ASSET_A"]);
+  });
+
+  it("listForShot returns outcomes for one shot (repair-loop queries)", async () => {
+    const { store } = await tmpStore();
+    await store.recordMany([
+      outcome({ shotId: "SH01", referenceIds: ["ASSET_A"], outcome: "REJECTED" }),
+      outcome({ shotId: "SH01", referenceIds: ["ASSET_B"] }),
+      outcome({ shotId: "SH02", referenceIds: ["ASSET_A"] }),
+    ]);
+    const shot = await store.listForShot("SH01");
+    expect(shot).toHaveLength(2);
+    expect(shot.every((o) => o.shotId === "SH01")).toBe(true);
+  });
+});

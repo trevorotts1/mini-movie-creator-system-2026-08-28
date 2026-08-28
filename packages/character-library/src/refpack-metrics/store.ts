@@ -130,7 +130,7 @@ export class RefpackMetricsStore {
         shotId: input.shotId ?? null,
         jobId: input.jobId ?? null,
         reason: input.reason ?? null,
-        occurredAt: input.occurredAt ?? this.now().toISOString(),
+        occurredAt: normalizeTimestamp(input.occurredAt ?? this.now().toISOString()),
       };
       doc.outcomes[String(id)] = record;
       if (input.dedupeKey !== undefined) {
@@ -170,7 +170,7 @@ export class RefpackMetricsStore {
           shotId: input.shotId ?? null,
           jobId: input.jobId ?? null,
           reason: input.reason ?? null,
-          occurredAt: input.occurredAt ?? this.now().toISOString(),
+          occurredAt: normalizeTimestamp(input.occurredAt ?? this.now().toISOString()),
         };
         doc.outcomes[String(id)] = record;
         if (input.dedupeKey !== undefined) {
@@ -327,14 +327,19 @@ export class RefpackMetricsStore {
         parsed?.formatVersion !== 1 ||
         typeof parsed.outcomes !== "object" ||
         parsed.outcomes === null ||
+        Array.isArray(parsed.outcomes) ||
         typeof parsed.dedupeIndex !== "object" ||
         parsed.dedupeIndex === null ||
-        typeof parsed.nextId !== "number"
+        Array.isArray(parsed.dedupeIndex) ||
+        typeof parsed.nextId !== "number" ||
+        !Number.isInteger(parsed.nextId) ||
+        parsed.nextId < 1
       ) {
         throw new Error(
           `Refpack metrics store at ${this.filePath} is malformed (expected formatVersion 1)`,
         );
       }
+      validateOutcomeRows(parsed.outcomes, this.filePath);
       return {
         formatVersion: 1,
         outcomes: parsed.outcomes,
@@ -370,6 +375,37 @@ function sameSet(a: readonly string[], b: ReadonlySet<string>): boolean {
   return true;
 }
 
+/** Row-level validation: a corrupt outcome row silently skews the success
+ * rates DIR-013 consumes, so fail loudly instead of returning bad numbers. */
+function validateOutcomeRows(
+  outcomes: Record<string, RecordedOutcome>,
+  filePath: string,
+): void {
+  const fail = (why: string): never => {
+    throw new Error(`Refpack metrics store at ${filePath} is malformed: ${why}`);
+  };
+  for (const [key, row] of Object.entries(outcomes)) {
+    if (!/^\d+$/.test(key) || typeof row !== "object" || row === null) fail("bad outcome key");
+    if (typeof row.id !== "number" || String(row.id) !== key) fail(`outcome ${key}: id mismatch`);
+    if (typeof row.characterId !== "string" || row.characterId.length === 0) {
+      fail(`outcome ${key}: bad characterId`);
+    }
+    if (typeof row.model !== "string" || row.model.length === 0) {
+      fail(`outcome ${key}: bad model`);
+    }
+    if (!Array.isArray(row.referenceIds)) fail(`outcome ${key}: bad referenceIds`);
+    for (const refId of row.referenceIds) {
+      if (typeof refId !== "string" || refId.length === 0) {
+        fail(`outcome ${key}: bad referenceIds entry`);
+      }
+    }
+    if (!isClipOutcome(row.outcome)) fail(`outcome ${key}: bad outcome`);
+    if (typeof row.occurredAt !== "string" || Number.isNaN(Date.parse(row.occurredAt))) {
+      fail(`outcome ${key}: bad occurredAt`);
+    }
+  }
+}
+
 function assertValidInput(input: RecordedOutcomeInput): void {
   if (!input.characterId?.trim()) {
     throw new Error("characterId must be a non-empty string");
@@ -390,6 +426,21 @@ function assertValidInput(input: RecordedOutcomeInput): void {
       `outcome must be one of ACCEPTED | REJECTED, got: ${String(input.outcome)}`,
     );
   }
+}
+
+/** Normalize a caller-supplied or clock timestamp to a comparable instant.
+ * Mixed-offset strings (e.g. "…-05:00" vs "…Z") break plain string comparison
+ * in `at` cutoff queries ("-" < "Z" sorts offsets wrong), so every stored
+ * occurredAt is forced to a UTC ISO 8601 instant. */
+function normalizeTimestamp(value: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error("occurredAt must be a non-empty ISO 8601 string");
+  }
+  const ms = Date.parse(value);
+  if (Number.isNaN(ms)) {
+    throw new Error(`occurredAt is not a valid ISO 8601 instant, got: ${value}`);
+  }
+  return new Date(ms).toISOString();
 }
 
 function isNodeENOENT(err: unknown): boolean {
