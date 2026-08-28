@@ -95,3 +95,11 @@
 - [x] VID-008 merged then reverted (4e9e71e) — typecheck regression GraphicsViews.tsx(29,26) TS2345; task back to QC_FIXING
 - [x] SKL-002 merged then reverted (01d5505) — integrations/claude typecheck regression (node: imports without node types); task back to QC_FIXING
 - [x] Conflict/branch-blocked (11): CORE-007, DIR-002, QC-002, QC-003, QC-004, QC-010, REC-010, SKL-003, SKL-004, SKL-005, VID-005, VID-013 (12 total minus VID-008/SKL-002 which are reverts)
+
+## Batch 7 (2026-08-28T22:05:00Z)
+
+- [x] Batch-7 merged 19 QC-PASS tasks deps-first onto integration: CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, QC-003, QC-004, QC-010, SKL-003, SKL-004, SKL-005, VID-002, VID-005, VID-013 (range 38974b3..6d8cce1, pushed)
+- [x] Regression PASS: pnpm -r test exit 0 (openclaw 23/23, claude 27/27, cli 63/63), pnpm -r typecheck exit 0, repo-wide vitest 3188 passed / 1 skipped
+- [x] Conflict-blocked rebase required: QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts)
+- [x] Not admitted: REC-010 (deps REC-002..REC-005 unmerged)
+- [x] New unblocks: CORE-009, CORE-015 -> READY

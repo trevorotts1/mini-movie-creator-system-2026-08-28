@@ -1,0 +1,15 @@
+{
+  "taskId": "CORE-007",
+  "phase": "PASS",
+  "commit": "0fa4899c1ec2f9dd41ba8d33ef7ab61c64b83508",
+  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
+  "rebaseCommit": "7518549c247d4092f6845497275be6c90ba4613a",
+  "checksRun": "npx vitest run packages/database/src/repositories/jobs -> 3 files 26/26 PASS; npx vitest run packages/database -> 15 files 152/152 PASS; npx vitest run packages/providers -> 27 files 783/783 PASS; npx tsc --noEmit -p packages/database -> clean; tsc --noEmit on every packages/* -> clean; merge-tree --write-tree vs origin/integration -> 0 conflicts; security grep on owned paths (no exec/eval/spawn/secrets, all SQL parameterized) -> clean; spec §19 field count + §18 state enum verified by introspection tests",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed: JOB_SAFETY_FIELDS omitted request_hash (explicit §18 field; schema had it, constant did not) + regression test. Rebased onto integration 38974b3 (batch-6): barrels merged as append-only union (CORE-007 jobs/assets/provider exports + integration scenes/shots/references exports); duplicate re-exports (BaseRepository, CrudRepository, Repository, RowMapper, projectSchemaMigrations) deduped to single re-export; registry.ts band order 000/004/010/020/030; migrations.test.ts kept integration's registry-agnostic naming.",
+  "blockers": []
+}

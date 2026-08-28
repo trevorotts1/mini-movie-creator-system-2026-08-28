@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-010",
+  "phase": "BUILDER_DONE",
+  "commit": "51d7f7c",
+  "testsRun": "npx vitest run packages/providers/src/kie/__tests__ -> 4 files, 23/23 passed, 1 skipped (gated live smoke, no KIE_API_KEY/MMCS_LIVE_SMOKE in env); npx vitest run packages/providers/src/kie -> 60/60 passed + 1 skipped; npx tsc --noEmit -p packages/providers/tsconfig.json -> clean. Live smoke: gate verified — MMCS_LIVE_SMOKE=1 without KIE_API_KEY skips cleanly (never runs, never fails CI).",
+  "notes": "Mocked contract suite for the Kie stack: submit path (POST createTask wire shape + persist-before-poll save order), poll path (GET recordInfo + envelope unwrap + resultJson parsing), full runToTerminal happy path, resume-at-SUBMITTED/GENERATING (never resubmit), poll refusal without providerTaskId, KieTaskTimeoutError on deadline, fail->REJECTED with failCode string->number, success-no-urls->REJECTED, archive handoff record (urls+taskId+model+submitRequest+timestamps), GENERATED_TEMPORARY restart short-circuit, result URL shape matrix, client failure taxonomy across the seam (429 retry, 401 terminal no-key-leak, network exhaustion, adapter error propagation), runbook §21 state boundary matrix. Optional live smoke gated on MMCS_LIVE_SMOKE=1 + KIE_API_KEY, cheapest documented unit (Seedance 2 Mini 480p 4s, one createTask + one poll), skipped cleanly when absent.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

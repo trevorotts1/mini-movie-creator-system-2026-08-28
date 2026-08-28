@@ -1,17 +1,26 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T19:39:02Z
-**Session Type:** Batch Merge Cycle 6 Pushed
+**Updated:** 2026-08-28T22:05:00Z
+**Session Type:** Batch Merge Cycle 7 Pushed
 
 ---
 
 ## Current Status
 
-- **Phase:** Batch Merge Cycle 6 complete. 44 tasks merged, 13 conflict/branch-blocked, 2 merged-then-reverted to QC_FIXING (VID-008, SKL-002). Regression PASS after reverts. Pushed to origin/integration.
-- **Integration HEAD:** 01d5505 (== origin/integration)
-- **Regression Result:** PASS — `pnpm -r test` exit 0; `pnpm -r run typecheck` exit 0 (17/17 packages Done).
-- **Next Action:** QC-fix VID-008 (GraphicsViews.tsx(29,26) TS2345 FrameSize->number — envelopeAt expects number; fix on branch, re-QC with tsx-inclusive tsconfig) and SKL-002 (project-install.test.ts node: imports + import.meta.url without node types — add @types/node or exclude test from tsc). Rebase 13 conflict-blocked/no-branch tasks onto integration, then merge next cycle.
+- **Phase:** Batch Merge Cycle 7 complete. 19 tasks merged deps-first (CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, QC-003, QC-004, QC-010, SKL-003, SKL-004, SKL-005, VID-002, VID-005, VID-013 — QC-003/004/010, SKL-004, VID-002 conflict-aborted). Regression PASS. Pushed to origin/integration.
+- **Integration HEAD:** 6d8cce1 (== origin/integration)
+- **Regression Result:** PASS — `pnpm -r test` exit 0; `pnpm -r run typecheck` exit 0; repo-wide vitest 3188 passed / 1 skipped (159 files).
+- **Next Action:** Rebase conflict-blocked QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts) onto 6d8cce1. REC-010 waits on REC-002..REC-005 (all now READY). VID-008 and SKL-002 remain in QC_FIXING from batch 6. New unblocks: CORE-009, CORE-015 -> READY.
+
+## Batch 7 — Merged (14)
+- CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, SKL-003, SKL-005, VID-005, VID-013
+
+## Batch 7 — Conflict-Blocked (5, merge aborted, branch retains PASS)
+- QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts)
+
+## Batch 7 — Not Admitted
+- REC-010 (deps REC-002..REC-005 unmerged — all READY now)
 
 ## Batch 6 — Merged (44)
 - AGN-001, AGN-002, AGN-003, AGN-004, AGN-005, AGN-006, AGN-007, AGN-008, AGN-009, AGN-010, CHAR-015, CORE-006, DIR-001, DIR-004, DIR-005, DIR-006, DIR-007, DIR-009, DIR-010, DIR-011, DIR-012, DIR-013, DIR-014, GHL-012, KIE-007, QC-001, QC-006, QC-008, QC-009, QC-012, REC-008, SKL-001, SKL-006, SKL-007, VID-003, VID-004, VID-006, VID-007, VID-009, VID-010, VID-011, VID-012, VID-014, VID-016
