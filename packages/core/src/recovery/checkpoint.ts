@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
