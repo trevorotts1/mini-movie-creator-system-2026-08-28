@@ -1,7 +1,7 @@
 {
   "taskId": "VID-001",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "85e4096",
   "testsRun": "node --test remotion/tests/chess-assets.test.mjs (4/4 pass); cd remotion && npm run gen (ok) && npx tsc --noEmit (0 errors); npm audit (0 vulnerabilities: fast-uri 3.1.6, nanoid 3.3.18, postcss 8.5.26); render smoke Short1Chess --scale=1 (out/Short1Chess.mp4, h264 1080x1920 42s, ffprobe ok) + frames.mjs 30,600,1259 --scale=0.5 (PNGs read, board+pieces render)",
   "notes": "PF-1 fixed: cburnett 12-piece chess SVG set committed to media/library/chess/ with catalog.json + LICENSE.txt (GPL-2.0-or-later/BSD-3/GFDL tri-license attribution); shared kits in remotion/src/lib/ preserved; PF-2 fixed via npm audit fix in remotion lockfile",
   "blockers": [],
