@@ -140,6 +140,19 @@ describe("scenario 2 — worktree/branch reconciliation", () => {
     }
   });
 
+  it("reconciles with relative recorded paths correctly", async () => {
+    const { repoRoot, recorded } = await liveRecorded();
+    // Convert absolute paths to repo-relative paths
+    const relativeRecorded = recorded.map((w) => ({
+      ...w,
+      path: w.path.startsWith(repoRoot) ? w.path.slice(repoRoot.length).replace(/^\/+/, "") : w.path,
+    }));
+    const reconciliation = await reconcileWorktrees(repoRoot, relativeRecorded);
+    expect(reconciliation.ok).toBe(true);
+    expect(reconciliation.missing).toHaveLength(0);
+    expect(reconciliation.unexpected).toHaveLength(0);
+  });
+
   it("full scenario passes against the real repo", async () => {
     const { repoRoot } = await liveRecorded();
     const result = await simulateWorktreeReconciliation(repoRoot);

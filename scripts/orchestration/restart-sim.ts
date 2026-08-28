@@ -227,8 +227,8 @@ export interface KillPollEvidence {
   terminalState: KieTaskRecord | null;
 }
 
-function normalizeWorktreePath(p: string): string {
-  return resolve(p).replace(/\/+$/, "");
+function normalizeWorktreePath(repoRoot: string, p: string): string {
+  return resolve(repoRoot, p).replace(/\/+$/, "");
 }
 
 export async function reconcileWorktrees(
@@ -255,17 +255,17 @@ export async function reconcileWorktrees(
   }
   if (current.path) live.push({ path: current.path, branch: current.branch ?? null });
 
-  const liveByPath = new Map(live.map((w) => [resolve(w.path), w]));
+  const liveByPath = new Map(live.map((w) => [normalizeWorktreePath(repoRoot, w.path), w]));
   const missing: RecordedWorktree[] = [];
   for (const rec of recorded) {
-    const found = liveByPath.get(resolve(rec.path));
+    const found = liveByPath.get(normalizeWorktreePath(repoRoot, rec.path));
     if (!found || found.branch !== rec.branch) {
       missing.push(rec);
     }
   }
-  const recordedResolved = new Set(recorded.map((r) => resolve(r.path)));
+  const recordedResolved = new Set(recorded.map((r) => normalizeWorktreePath(repoRoot, r.path)));
   const unexpected = live
-    .filter((w) => !recordedResolved.has(resolve(w.path)))
+    .filter((w) => !recordedResolved.has(normalizeWorktreePath(repoRoot, w.path)))
     // The main checkout (no task branch) is never "unexpected".
     .filter((w) => w.branch !== null && w.branch !== "")
     .map((w) => ({ path: w.path, branch: w.branch as string }));
