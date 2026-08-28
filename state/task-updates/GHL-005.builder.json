@@ -1,7 +1,7 @@
 {
   "taskId": "GHL-005",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "656db33",
   "testsRun": "npx vitest run packages/media-storage/src/ghl/upload-hosted -> 1 file, 34/34 passed; npx tsc --noEmit -p packages/media-storage -> clean; full worktree vitest sweep 34/34",
   "notes": "Hosted URL ingest: archiveHostedUrl POSTs /medias/upload-file multipart (hosted=true, fileUrl, deterministic canonical name via buildCanonicalName spec-48 sanitizer [A-Za-z0-9._-], path-traversal-safe, lowercase single ext; parentId + optional altId/altType) via injected GhlUploadHttp transport (no credentials here, GHL-001 owns auth); parseUploadResponse handles fileId/id/_id/mediaId + url/mediaUrl/fileUrl/link variants incl nested data/file/media and bare-ID string bodies; verifyUrlReachable (HEAD default, GET option, AbortSignal timeout, fetch-injectable probe) must see 2xx before ARCHIVED; failures throw GhlIngestError with code INVALID_FILE_URL (scheme allowlist http/https, pre-flight) / MISSING_URL / UNREACHABLE carrying fileId+url so GHL-006 binary fallback can resume. Root packages/media-storage/src/index.ts left untouched (shared file, GHL-002/003/004 add their own barrels; note for merger to re-export ghl/upload-hosted/index.js from root barrel).",
   "blockers": [],
