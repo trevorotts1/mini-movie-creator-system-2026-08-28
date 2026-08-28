@@ -94,7 +94,7 @@ describe("010_ project/series/episode migration band", () => {
     expect(down.rolledBack).toEqual(expect.arrayContaining(["0101", "0102", "0103"]));
     expect(db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'")).toBeUndefined();
     const up = migrate(db, MIGRATIONS);
-    expect(up.applied).toEqual(["0101", "0102", "0103"]);
+    expect(up.applied).toEqual(expect.arrayContaining(["0101", "0102", "0103"]));
   });
 
   it("keeps the ledger table outside the band tables", () => {

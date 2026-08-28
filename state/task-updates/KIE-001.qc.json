@@ -1,0 +1,17 @@
+{
+  "taskId": "KIE-001",
+  "phase": "PASS",
+  "commit": "2dcb611",
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "rebaseCommit": "1ce78eaa3d5ad7b49137ad9d4a7415d91a28e3e6",
+  "checksRun": "npx vitest run --config packages/providers/vitest.config.mts -> 223/223 passed (client: 25/25); pnpm -r run typecheck -> clean; git merge-tree clean",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Fixed: origin guard on request path (absolute/protocol-relative path could redirect Bearer key to foreign host), exponential backoff uncapped (now clamped 30s like Retry-After), dead REDACTED const removed. Cross-checked KIE-010 contract copies of client/ are the pre-fix files — same 3 defects live there under KIE-010 ownership.",
+  "blockers": [
+    "KIE-010: task/TASK-KIE-010-kie-contract carries byte-identical copies of packages/providers/src/kie/client/* (client.ts, config.ts, errors.ts, index.ts, client.test.ts) that predate this QC fix — KIE-010 branch should rebase onto KIE-001's 2dcb611 or drop its client/ copy to avoid merge divergence and to inherit the origin-guard/backoff-cap fixes."
+  ]
+}

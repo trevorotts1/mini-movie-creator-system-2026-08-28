@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-014",
+  "phase": "PASS",
+  "commit": "23fb923f54135efc985871dcb64654a6bca46445",
+  "checksRun": "npx vitest run packages/character-library/src/asset-links -> 18/18 PASS; npx vitest run packages/character-library -> 117/117 PASS; tsc --noEmit (packages/character-library) clean; security scan of asset-links (no exec/network/secrets/unbounded retry) clean",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "QC fixed: caller-flagged stale refresh (stale option) forcing GHL manifest refresh past a durable record; replaced obfuscated conditional type with GhlRefreshRecord interface; added 3 regression tests (refreshOnStale no-op on complete record, stale:true refresh+persist, stale:true error path).",
+  "blockers": []
+}
