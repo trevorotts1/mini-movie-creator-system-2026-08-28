@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-006",
   "phase": "PASS",
-  "commit": "d4e61b4ad7d42d1f243a6751431791d09d805ea4",
+  "commit": "1a67f107947fdd0473394775e0c404dc4536f73f",
   "checksRun": "vitest run packages/character-library/src/appearance-versions (19/19 passed); tsc --noEmit -p packages/character-library (clean); security review (zero secrets, zero shell injection, safe regex)",
   "defectsFound": 0,
   "defectsFixed": 0,
