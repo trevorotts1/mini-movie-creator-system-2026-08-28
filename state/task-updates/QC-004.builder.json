@@ -1,7 +1,7 @@
 {
   "taskId": "QC-004",
   "phase": "BUILDER_DONE",
-  "commit": "e631176",
+  "commit": "1bbaadc",
   "testsRun": "npx vitest run packages/qc/src/continuity (18/18 PASS); npx vitest run packages/qc (18/18 PASS); npx tsc --noEmit -p packages/qc/tsconfig.json (clean)",
   "notes": "Continuity neighbor check in packages/qc/src/continuity/: neighbor pairs per scene ordered by sequenceIndex (location/time-of-day/wardrobe/hair/prop-vanish/state-mismatch) + Series Bible canon-at-the-time check (resolveBibleAppearance by effectiveEpisode, approved location day/night states); breakScene fixture flagged with all 9 finding codes, cleanScene control zero findings; self-contained bible snapshot injected by caller, no cross-package imports.",
   "blockers": [],
