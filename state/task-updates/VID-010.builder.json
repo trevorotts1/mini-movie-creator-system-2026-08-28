@@ -1,7 +1,7 @@
 {
   "taskId": "VID-010",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "8dc2377",
   "testsRun": "npx vitest run packages/remotion-runtime/src/layers/audio -> 3 files, 38/38 passed; npx vitest run (full worktree regression) -> 27 files, 446/446 passed; tsc --noEmit -p packages/remotion-runtime -> clean",
   "notes": "Audio/music/SFX timeline placement: plan (FISH-009 MixPlan-compatible data) -> placed frame timeline with upstream convention local_f = global_s*fps - sequence_from preserved; deterministic placement (same plan -> same frames); loop-friendliness enforced (bed seam fade-in==fade-out, last-frame==frame-0 window checks, no silent overflow truncation); sync verification re-derives every event's frame from its plan seconds; mount.ts bridges VID-003 sequence offsets (mountAudio/masterAudio + inverse conversions). Pure TS, zero new deps (remotion not installable in monorepo - placement math is data-only by design).",
   "blockers": [],
