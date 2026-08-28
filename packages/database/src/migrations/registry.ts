@@ -1,5 +1,6 @@
 import type { Migration } from "./types.js";
 import { baselineMigrations } from "./000-init/index.js";
+import { jobsAssetsMigrations } from "./004-jobs-assets/index.js";
 
 /**
  * The ordered MMCS migration list. Bands are appended by their owning
@@ -8,4 +9,4 @@ import { baselineMigrations } from "./000-init/index.js";
  * directory under `migrations/` and is registered here exactly once.
  * The runner rejects duplicate ids, so band collisions fail loudly.
  */
-export const MIGRATIONS: readonly Migration[] = [...baselineMigrations];
+export const MIGRATIONS: readonly Migration[] = [...baselineMigrations, ...jobsAssetsMigrations];

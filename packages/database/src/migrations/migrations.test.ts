@@ -184,13 +184,15 @@ describe("migration ordering and identity", () => {
   });
 });
 
-describe("shipped MIGRATIONS registry (000-init)", () => {
-  it("applies twice cleanly on a temp file DB and stays empty (band 000_ is framework-only)", () => {
+describe("shipped MIGRATIONS registry", () => {
+  it("applies twice cleanly and idempotently on a temp file DB (band 000_ is framework-only; later bands append as their tasks land)", () => {
     const db = freshDb();
+    const first = migrate(db, MIGRATIONS);
+    expect(first.applied).toEqual([...first.applied].sort());
     expect(migrate(db, MIGRATIONS).applied).toEqual([]);
     expect(migrate(db, MIGRATIONS).applied).toEqual([]);
-    const tables = db.all("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").map((r) => String(r["name"]));
-    expect(tables).toEqual([MIGRATIONS_TABLE]);
+    // The ledger records exactly what was applied, ascending.
+    expect(db.all(`SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY id`).map((r) => String(r["id"]))).toEqual(first.applied);
     db.close();
   });
 });

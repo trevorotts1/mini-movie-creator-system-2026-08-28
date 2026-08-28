@@ -29,8 +29,25 @@ export {
 } from "./migrations/index.js";
 
 export {
+  ASSET_MANIFEST_FIELDS,
+  ARCHIVAL_STATUSES,
   BaseRepository,
+  JOB_SAFETY_FIELDS,
+  JOB_STATES,
+  JOB_STATE_ORDER,
+  AssetRepository,
+  JobStateTransitionError,
+  ProviderJobRepository,
+  isLegalJobTransition,
+  type ArchivalStatus,
+  type AssetManifest,
+  type AssetManifestField,
+  type AssetPatch,
   type CrudRepository,
+  type ProviderJob,
+  type ProviderJobInput,
+  type ProviderJobPatch,
+  type ProviderJobState,
   type Repository,
   type RowMapper,
 } from "./repositories/index.js";
