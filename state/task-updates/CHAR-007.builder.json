@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-007",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "452ea7f",
   "testsRun": "npx vitest run packages/character-library/src/wardrobe -> 14 passed (14), Test Files 1 passed, exit 0; npx tsc --noEmit (packages/character-library) -> exit 0",
   "notes": "Wardrobe versions: per-character immutable version history with episode-point windows, active-wardrobe resolution (canon-at-the-time), change recording validates supersedes chain; DRAFT/REVIEW/REJECTED/RETIRED never resolve active.",
   "blockers": [],
