@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-004",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "67005b2",
   "testsRun": "npx vitest run apps/cli/src/commands/choose-character -> 20/20 passed; npx vitest run apps/cli -> 1 file, 20/20 passed; tsc --noEmit (apps/cli) -> exit 0",
   "notes": "Pure selection/retry CLI contract: choose-character <1|2|3|4> with 4=Try Again (3 NEW candidates), approve-character requires gate 3 (selection exists + ID match) and gate 2 upstream; invalid selections exit 1 with usage text; ports injected (gates/candidate flow/lock) so CORE-011 dispatcher wires handlers at integration; CommandSpec declared structurally identical to CORE-011's since dispatcher is not yet on integration.",
   "blockers": [],
