@@ -1,7 +1,7 @@
 {
   "taskId": "CAP-007",
   "phase": "BUILDER_DONE",
-  "commit": "941481181b90d57b6081e7fbd1822404f10d6386",
+  "commit": "28f6523a8247bea6a8890808d340b7422b060f09",
   "testsRun": "npx vitest run packages/capability-registry/src/llm-registry -> 33/33 pass; tsc --noEmit (capability-registry) -> clean",
   "notes": "Reasoning/vision LLM registry: 7 selection slots (director/writer/scriptCritic/imageQc/videoQc/continuityQc/finalQc), OpenRouter-compatible vendor/model IDs (not closed to presets), 4 build-time presets, MAX_REASONING effort resolver, direct-vs-frames video QC ingest route.",
   "blockers": [],
