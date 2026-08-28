@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-008",
+  "phase": "PASS",
+  "commit": "69fd8aa980ec3ce33bb86054ddd9256d8ac02c5f",
+  "checksRun": "npx --package=vitest@3.0.0 vitest run packages/providers/src/kie/temp-url (15 passed); pnpm --filter @mmcs/providers typecheck (clean); git diff origin/integration...HEAD (verified)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "Verified temporary URL persistence: persists provider URL + expiration before handoff, GHL-012 archival trigger fired, restart-at-GENERATED_TEMPORARY re-arms pending handoff without duplication, no regenerations, UNKNOWN expiration preserved when provider omits TTL.",
+  "blockers": []
+}
