@@ -1,7 +1,7 @@
 {
   "taskId": "CAP-004",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_COMMIT_SHA",
+  "commit": "da7c889",
   "testsRun": "npx vitest run packages/capability-registry/src/validators -> 1 file, 19/19 passed; tsc --noEmit -p packages/capability-registry -> clean",
   "notes": "Reference-count validator: pre-flight per-kind checks (images/videos/audio) + total maxFiles against a structural ReferenceCountProfile; Wan 3.0 baseline exported (10 images / 5 videos / 5 audio, total UNKNOWN) so >10 Wan images rejects before any provider call; null limit = UNKNOWN never enforced per runbook 16; malformed counts and malformed profile limits flagged; countReferences derives counts from request URL lists; exported via src/index.ts.",
   "blockers": [],
