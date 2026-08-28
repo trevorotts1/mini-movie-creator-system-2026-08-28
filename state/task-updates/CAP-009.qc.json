@@ -2,6 +2,8 @@
   "taskId": "CAP-009",
   "phase": "PASS",
   "commit": "677f00dab4482fc3a31b9e57d3e74f9fdac027a6",
+  "rebasedOnto": "c7d4892fd0c56a2534e5cd2d00a7e0b1d52bff66",
+  "rebaseCommit": "f89fec6de860e2bb1b0684afa5687cdd5bb6f9fc",
   "checksRun": "npx vitest run packages/capability-registry/src/verify apps/cli/src/commands/providers-verify (24/24 PASS, JSON-reporter verified); full-suite vitest run (exit 0); npx tsc --noEmit -p packages/capability-registry and -p apps/cli (clean); git merge-tree vs origin/integration (no conflicts); security scan of owned paths (no secrets, no network, no exec, env-presence-only)",
   "defectsFound": 0,
   "defectsFixed": 0,

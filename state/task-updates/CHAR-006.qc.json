@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-006",
+  "phase": "PASS",
+  "commit": "1a67f107947fdd0473394775e0c404dc4536f73f",
+  "checksRun": "vitest run packages/character-library/src/appearance-versions (19/19 passed); tsc --noEmit -p packages/character-library (clean); security review (zero secrets, zero shell injection, safe regex)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "sonnet-qc-char-006",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "Appearance versions verified: append-only history, base identity immutable, Monica E01-E08 braids v1 / E09 short v2 canon resolution green, 19/19 tests pass",
+  "blockers": []
+}

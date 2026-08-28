@@ -1,0 +1,10 @@
+{
+  "name": "@mmcs/integrations-claude",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code / claude-nine skill install wrappers for MMCS (spec §27)",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  }
+}

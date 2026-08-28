@@ -1,0 +1,15 @@
+{
+  "taskId": "CAP-005",
+  "phase": "PASS",
+  "commit": "bef402dd95adfbdf5fa4331fc1cc1657e2e9acd3",
+  "checksRun": "node_modules/.bin/vitest run packages/capability-registry/src/validators (33/33, JSON-verified); npx vitest run packages/capability-registry/src/validators (acceptance literal, exit 0); npx tsc --noEmit -p packages/capability-registry/tsconfig.json (clean); security pass on owned path (pure module, no I/O/shell/path ops, no secrets)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Fixed nullable incompatibleCombinations type mismatch vs CAP-001 schema (docstring claimed any MediaModelCapability satisfies ExclusiveModeCapability; widened to readonly string[] | null, added compile+runtime regression tests), removed dead pairs() helper; 31->33 tests green, tsc clean, acceptance command exit 0.",
+  "blockers": [
+    "CAP-002: seeded incompatibleCombinations entries in packages/capability-registry/src/data/kie.ts and agnes.ts are free-text prose (e.g. \"first_frame_url/last_frame_url + any reference_*_urls (mutually exclusive mode groups)\", \"mode=keyframe excludes images/audios/videos\", \"reference_file_urls + reference_link_urls\") and do not conform to CAP-005's \"+\"-joined mode-key grammar (ExclusiveModeKey tokens like referenceVideos); feeding CAP-002 seeds to validateExclusiveModes yields INVALID_INCOMPATIBLE_COMBINATION for every entry. Owning task CAP-002 must either rewrite seeds in mode-key grammar (e.g. \"firstFrame+multimodalReferences\") or CAP-005 must gain an agreed mapping layer — coordination needed before CAP-002 data is consumed by the validator. Verified against CAP-002 owned files in integration checkout, not edited."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-008",
+  "phase": "PASS",
+  "commit": "16d424c",
+  "checksRun": "pnpm vitest run packages/character-library/src/hair/hair-library.test.ts (12/12 passed); pnpm tsc --noEmit -p packages/character-library (clean); security pass",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "SONNET_QC_FIXER",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "Hair versioning verified: immutable append-only hair history per character, effective episode resolution (canon-at-the-time), no-overwrite guard on version names, retirement/promotion state transitions. 12/12 tests green.",
+  "blockers": []
+}
