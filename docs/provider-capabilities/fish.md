@@ -112,8 +112,11 @@ https://docs.fish.audio/api-reference/introduction — fetched 2026-08-28.
   Key never logged: errors carry only status/kind/scrubbed server message.
 - TTS model REQUIRED per call from config (`s2.1-pro-free` availability is
   recorded here but never defaulted).
-- Per-attempt timeout (default 30s), bounded retries (default 3) with
-  exponential backoff; retries network/timeout/429/5xx only.
+- Per-attempt timeout (default 30s), bounded retries (default 3, hard cap 10)
+  with exponential backoff capped at 30s per sleep (QC fix 2026-08-28);
+  retries network/timeout/429/5xx only; `Retry-After` honored, also capped.
+  Request paths are pinned to the configured origin — non-relative paths are
+  refused rather than followed with the bearer key attached (QC fix).
 - `POST /v1/tts` returns raw audio bytes; `POST /v1/tts/stream/with-timestamp`
   returns parsed SSE events (`audioBase64`, alignment segments, `chunkSeq`,
   `chunkAudioOffsetSec`).

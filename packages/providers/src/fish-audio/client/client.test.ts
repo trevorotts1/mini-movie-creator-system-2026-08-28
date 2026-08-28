@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   FISH_DEFAULT_BASE_URL,
+  FISH_MAX_BACKOFF_MS,
   FISH_TTS_MODELS,
   FishApiError,
   FishClient,
@@ -76,6 +77,17 @@ describe("resolveFishClientConfig", () => {
   it("rejects invalid numeric options", () => {
     expect(() => resolveFishClientConfig({ apiKey: "k", maxRetries: 0 })).toThrow(/maxRetries/);
     expect(() => resolveFishClientConfig({ apiKey: "k", timeoutMs: -1 })).toThrow(/timeoutMs/);
+  });
+
+  it("bounds maxRetries at FISH_MAX_RETRIES (QC regression)", () => {
+    expect(() => resolveFishClientConfig({ apiKey: "k", maxRetries: 11 })).toThrow(
+      /between 1 and 10/,
+    );
+    expect(() => resolveFishClientConfig({ apiKey: "k", maxRetries: 100 })).toThrow(
+      /between 1 and 10/,
+    );
+    // Boundary value stays accepted.
+    expect(resolveFishClientConfig({ apiKey: "k", maxRetries: 10 }).maxRetries).toBe(10);
   });
 
   it("records s2.1-pro-free as an available model id but does not default to it", () => {
@@ -243,6 +255,22 @@ describe("FishClient — response parsing", () => {
       expect(result.data).toBeInstanceOf(ArrayBuffer);
       expect(result.data.byteLength).toBe(4);
     }
+  });
+
+  it("maps a 2xx body that claims JSON but does not parse to non-retryable bad-response (QC regression)", async () => {
+    const { fetch, calls } = scriptedFetch([
+      new Response("{not-json", { status: 200, headers: { "Content-Type": "application/json" } }),
+      new Response("{not-json", { status: 200, headers: { "Content-Type": "application/json" } }),
+      new Response("{not-json", { status: 200, headers: { "Content-Type": "application/json" } }),
+    ]);
+    const client = makeClient(fetch);
+    const result = await client.request<unknown>({ method: "GET", path: "/model" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("bad-response");
+      expect(isRetryableError(result.error.kind)).toBe(false);
+    }
+    expect(calls).toHaveLength(1); // never retried: the body will not change
   });
 });
 
@@ -453,5 +481,108 @@ describe("FishClient — backoff behavior", () => {
     );
     await client.tts({ ...TTS_OK });
     expect(sleeps).toEqual([5000]);
+  });
+
+  it("caps exponential backoff at FISH_MAX_BACKOFF_MS even for large maxRetries (QC regression)", async () => {
+    const sleeps: number[] = [];
+    const script: Array<Response | Error> = [];
+    for (let i = 0; i < 9; i++) script.push(jsonResponse(500, { message: "boom" }));
+    script.push(audioResponse([1]));
+    const { fetch } = scriptedFetch(script);
+    const client = new FishClient(
+      {
+        apiKey: API_KEY,
+        baseUrl: "https://mock.fish.test",
+        maxRetries: 10,
+        retryBackoffMs: 1000,
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+      },
+      { fetch },
+    );
+    const result = await client.tts({ ...TTS_OK });
+    expect(result.ok).toBe(true);
+    // 1000*2^8 = 256000 uncapped; every sleep must be <= the hard cap.
+    expect(sleeps).toHaveLength(9);
+    for (const ms of sleeps) expect(ms).toBeLessThanOrEqual(FISH_MAX_BACKOFF_MS);
+  });
+
+  it("caps a huge Retry-After at FISH_MAX_BACKOFF_MS (QC regression)", async () => {
+    const sleeps: number[] = [];
+    const { fetch } = scriptedFetch([
+      jsonResponse(429, { message: "slow down" }, { "Retry-After": "86400" }),
+      audioResponse([1]),
+    ]);
+    const client = new FishClient(
+      {
+        apiKey: API_KEY,
+        baseUrl: "https://mock.fish.test",
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+      },
+      { fetch },
+    );
+    await client.tts({ ...TTS_OK });
+    expect(sleeps).toEqual([FISH_MAX_BACKOFF_MS]);
+  });
+});
+
+describe("FishClient — request-path origin pinning (QC regression)", () => {
+  it("throws instead of sending the bearer key to a foreign origin", async () => {
+    const { fetch, calls } = scriptedFetch([audioResponse([1])]);
+    const client = makeClient(fetch);
+    await expect(client.request({ method: "GET", path: "https://evil.example/steal" })).rejects.toThrow(
+      /refusing non-relative request path/,
+    );
+    expect(calls).toHaveLength(0); // the keyed fetch never ran
+  });
+
+  it("never follows protocol-relative paths off the configured origin", async () => {
+    const { fetch, calls } = scriptedFetch([jsonResponse(200, { items: [], total: 0 })]);
+    const client = makeClient(fetch);
+    const result = await client.request({ method: "GET", path: "//evil.example/steal" });
+    expect(result.ok).toBe(true);
+    // Reinterpreted as a path ON the configured origin — the key never leaves it.
+    expect(calls[0]!.url).toBe("https://mock.fish.test/evil.example/steal");
+  });
+
+  it("never follows backslash-escaped origin paths (\\ normalizes to / in WHATWG URLs)", async () => {
+    const { fetch, calls } = scriptedFetch([jsonResponse(200, { items: [], total: 0 })]);
+    const client = makeClient(fetch);
+    const result = await client.request({ method: "GET", path: "\\evil.example\\steal" });
+    expect(result.ok).toBe(true);
+    // Backslashes normalized to slashes BEFORE the origin decision: the call
+    // stays on the configured origin instead of escaping to evil.example.
+    expect(calls[0]!.url).toBe("https://mock.fish.test/evil.example/steal");
+  });
+
+  it("still accepts ordinary relative paths", async () => {
+    const { fetch, calls } = scriptedFetch([jsonResponse(200, { items: [], total: 0 })]);
+    const client = makeClient(fetch);
+    const result = await client.request({ method: "GET", path: "/model", query: { page_size: 1 } });
+    expect(result.ok).toBe(true);
+    expect(calls[0]!.url).toBe("https://mock.fish.test/model?page_size=1");
+  });
+});
+
+describe("FishClient — header value guard (QC regression)", () => {
+  it("rejects CR/LF in the model header before it reaches the wire", async () => {
+    const { fetch, calls } = scriptedFetch([audioResponse([1])]);
+    const client = makeClient(fetch);
+    await expect(
+      client.tts({ model: "s2.1-pro\r\nAuthorization: Bearer evil", text: "hi" } as never),
+    ).rejects.toThrow(/invalid model header value/);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("rejects an oversized model header value", async () => {
+    const { fetch, calls } = scriptedFetch([audioResponse([1])]);
+    const client = makeClient(fetch);
+    await expect(client.tts({ model: "x".repeat(300), text: "hi" } as never)).rejects.toThrow(
+      /invalid model header value/,
+    );
+    expect(calls).toHaveLength(0);
   });
 });

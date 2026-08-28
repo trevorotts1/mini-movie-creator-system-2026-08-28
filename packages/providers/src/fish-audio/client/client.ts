@@ -29,6 +29,7 @@ import {
 } from "./errors.js";
 import {
   resolveFishClientConfig,
+  FISH_MAX_BACKOFF_MS,
   type FishClientConfig,
   type FishTtsModel,
 } from "./config.js";
@@ -126,6 +127,18 @@ export interface FishModelQuery {
 }
 
 /**
+ * Guard caller-supplied header values (the `model` header) against header
+ * injection (CR/LF). fetch itself rejects these, but failing fast here keeps
+ * the error local and never reaches the wire.
+ */
+function assertSafeHeaderValue(value: string, name: string): string {
+  if (/[\r\n]/.test(value) || value.length > 256) {
+    throw new Error(`FishClient: invalid ${name} header value`);
+  }
+  return value;
+}
+
+/**
  * HTTP client for the Fish Audio API. One instance per configured key; safe
  * to share across the Fish adapters. Bearer auth from config; per-attempt
  * timeout; bounded retries on network/timeout/429/5xx with exponential
@@ -180,7 +193,7 @@ export class FishClient {
       try {
         const response = await this.fetchWithTimeout(req, url);
         if (response.ok) {
-          return { ok: true, data: (await this.parseBody(response)) as T };
+          return { ok: true, data: (await this.parseBody(response, attempt)) as T };
         }
         const error = await this.httpError(response, attempt);
         if (!isRetryableError(error.kind)) {
@@ -229,7 +242,7 @@ export class FishClient {
     return this.request<ArrayBuffer>({
       method: "POST",
       path: "/v1/tts",
-      headers: { model: request.model },
+      headers: { model: assertSafeHeaderValue(request.model, "model") },
       body: this.ttsBody(request),
     });
   }
@@ -246,7 +259,7 @@ export class FishClient {
     return this.request<FishTimestampStreamEvent[]>({
       method: "POST",
       path: "/v1/tts/stream/with-timestamp",
-      headers: { model: request.model, Accept: "text/event-stream" },
+      headers: { model: assertSafeHeaderValue(request.model, "model"), Accept: "text/event-stream" },
       body: this.ttsBody(request),
     });
   }
@@ -307,7 +320,18 @@ export class FishClient {
 
   private url(path: string, query?: Record<string, string | number | boolean | undefined>): string {
     const base = this.cfg.baseUrl.endsWith("/") ? this.cfg.baseUrl : this.cfg.baseUrl + "/";
-    const url = new URL(path.replace(/^\//, ""), base);
+    // Paths must stay on the configured origin: `new URL(absolutePath, base)`
+    // would happily follow a "https://evil.example/..." path and this client
+    // would attach the bearer key to that request. Treat every path as
+    // path-only and reject anything origin-shaped. Backslashes normalize to
+    // slashes in WHATWG URLs, so normalize them BEFORE stripping leading
+    // slashes — otherwise "\evil.example\x" would become a protocol-relative
+    // "//evil.example/x" leak when re-prefixed.
+    const raw = path.replace(/\\/g, "/").replace(/^\/+/, "");
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
+      throw new Error(`FishClient: refusing non-relative request path: ${path.slice(0, 32)}`);
+    }
+    const url = new URL(`/${raw}`, base);
     if (query) {
       for (const [key, value] of Object.entries(query)) {
         if (value !== undefined && value !== null && value !== "") {
@@ -351,11 +375,23 @@ export class FishClient {
   /**
    * Parse a 2xx body: JSON when the content type says JSON, otherwise raw
    * bytes (POST /v1/tts returns binary audio in the requested format).
+   * A 2xx body that claims JSON but does not parse is a protocol violation,
+   * not a wire failure — surface it as non-retryable `bad-response` instead of
+   * burning retries on a body that will never change.
    */
-  private async parseBody(response: Response): Promise<unknown> {
+  private async parseBody(response: Response, attempt: number): Promise<unknown> {
     const contentType = response.headers.get("content-type") ?? "";
     if (contentType.includes("application/json")) {
-      return response.json();
+      try {
+        return await response.json();
+      } catch (err) {
+        throw new FishApiError({
+          kind: "bad-response",
+          message: "Fish Audio API returned an unparseable JSON body",
+          status: response.status,
+          attempt,
+        });
+      }
     }
     if (contentType.startsWith("text/event-stream")) {
       const text = await response.text();
@@ -458,12 +494,12 @@ export class FishClient {
     return new FishApiError({ kind: "network", message: `Fish Audio request failed: ${detail}`, attempt });
   }
 
-  /** Exponential backoff; 429 honors a server Retry-After when sane. */
+  /** Exponential backoff, hard-capped; 429 honors a server Retry-After (also capped). */
   private backoffFor(attempt: number, error: FishApiError): number {
     if (error.kind === "rate-limited" && error.retryAfterSec !== undefined && error.retryAfterSec > 0) {
-      return Math.min(error.retryAfterSec * 1000, 30_000);
+      return Math.min(error.retryAfterSec * 1000, FISH_MAX_BACKOFF_MS);
     }
-    return this.cfg.retryBackoffMs * 2 ** (attempt - 1);
+    return Math.min(this.cfg.retryBackoffMs * 2 ** (attempt - 1), FISH_MAX_BACKOFF_MS);
   }
 
   /** Key-safe string form of this client's identity (for logs). */

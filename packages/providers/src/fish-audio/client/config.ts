@@ -38,6 +38,15 @@ export const FISH_DEFAULT_BASE_URL = "https://api.fish.audio";
 export const FISH_DEFAULT_TIMEOUT_MS = 30_000;
 export const FISH_DEFAULT_MAX_RETRIES = 3;
 export const FISH_DEFAULT_RETRY_BACKOFF_MS = 500;
+/** Upper bound on maxRetries: total attempts stay finite even with hostile config. */
+export const FISH_MAX_RETRIES = 10;
+/**
+ * Hard ceiling for any single sleep between attempts (QC fix 2026-08-28):
+ * without it the exponential path grows unboundedly with maxRetries
+ * (500ms * 2^19 ≈ 109h). Applies to both the exponential and the
+ * Retry-After backoff paths.
+ */
+export const FISH_MAX_BACKOFF_MS = 30_000;
 
 /**
  * TTS model IDs accepted by the `model` HTTP header (verified 2026-08-28,
@@ -55,8 +64,8 @@ export function resolveFishClientConfig(config: FishClientConfig): ResolvedFishC
     throw new Error("FishClientConfig.apiKey is required (engine config FISH_API_KEY)");
   }
   const maxRetries = config.maxRetries ?? FISH_DEFAULT_MAX_RETRIES;
-  if (!Number.isInteger(maxRetries) || maxRetries < 1) {
-    throw new Error("FishClientConfig.maxRetries must be a positive integer");
+  if (!Number.isInteger(maxRetries) || maxRetries < 1 || maxRetries > FISH_MAX_RETRIES) {
+    throw new Error(`FishClientConfig.maxRetries must be an integer between 1 and ${FISH_MAX_RETRIES}`);
   }
   const timeoutMs = config.timeoutMs ?? FISH_DEFAULT_TIMEOUT_MS;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
