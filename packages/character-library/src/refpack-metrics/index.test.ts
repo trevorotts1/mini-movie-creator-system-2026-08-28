@@ -184,6 +184,38 @@ describe("successRateByReference (character/model/reference combination query)",
     );
     expect(now).toMatchObject({ samples: 2, accepted: 1, rate: 0.5 });
   });
+
+  it("normalizes a mixed-offset cutoff before comparing to UTC rows", async () => {
+    const { store } = await tmpStore();
+    // Both rows stored as UTC. The cutoff is the same instant as
+    // "2026-08-05T05:00:00.000Z" expressed with a -05:00 offset: a raw string
+    // compare ("2026-08-05T00:00:00-05:00") sorts before every Z row and
+    // would wrongly exclude the boundary-accepted outcome at 05:00Z.
+    await store.recordMany([
+      outcome({ occurredAt: "2026-08-05T04:00:00.000Z", outcome: "REJECTED" }),
+      outcome({ occurredAt: "2026-08-05T05:00:00.000Z", outcome: "ACCEPTED" }),
+    ]);
+    const at = await store.successRateForReference(
+      MONICA,
+      AGNES,
+      "ASSET_MONICA_FACE_FRONT_MASTER_V1",
+      "2026-08-05T00:00:00.000-05:00",
+    );
+    expect(at).toMatchObject({ samples: 2, accepted: 1, rate: 0.5 });
+  });
+
+  it("rejects a cutoff that is not a valid ISO 8601 instant", async () => {
+    const { store } = await tmpStore();
+    await store.record(outcome());
+    await expect(
+      store.successRateForReference(
+        MONICA,
+        AGNES,
+        "ASSET_MONICA_FACE_FRONT_MASTER_V1",
+        "not-a-timestamp",
+      ),
+    ).rejects.toThrow(/valid ISO 8601 instant/);
+  });
 });
 
 describe("successRateForPack", () => {
@@ -212,6 +244,38 @@ describe("successRateForPack", () => {
       rejected: 0,
       rate: null,
     });
+  });
+
+  it("respects a decision-time cutoff (DIR-013 oracle shape) with a mixed-offset cutoff", async () => {
+    const { store } = await tmpStore();
+    await store.recordMany([
+      outcome({
+        referenceIds: ["ASSET_FACE", "ASSET_BODY"],
+        outcome: "ACCEPTED",
+        occurredAt: "2026-08-01T00:00:00.000Z",
+      }),
+      outcome({
+        referenceIds: ["ASSET_BODY", "ASSET_FACE"],
+        outcome: "REJECTED",
+        occurredAt: "2026-08-09T00:00:00.000Z",
+      }),
+    ]);
+    const before = await store.successRateForPack(
+      MONICA,
+      AGNES,
+      ["ASSET_BODY", "ASSET_FACE"],
+      "2026-08-05T00:00:00.000Z",
+    );
+    expect(before).toMatchObject({ samples: 1, accepted: 1, rate: 1 });
+    // Same instant as "2026-08-09T00:00:00.000Z", offset form — must include
+    // the 09Z rejected row at the boundary.
+    const atBoundary = await store.successRateForPack(
+      MONICA,
+      AGNES,
+      ["ASSET_BODY", "ASSET_FACE"],
+      "2026-08-08T19:00:00.000-05:00",
+    );
+    expect(atBoundary).toMatchObject({ samples: 2, accepted: 1, rejected: 1, rate: 0.5 });
   });
 
   it("lists all seen packs best-known first with accepted/rejected split", async () => {

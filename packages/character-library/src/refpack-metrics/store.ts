@@ -230,7 +230,10 @@ export class RefpackMetricsStore {
 
   /** Success rate for one specific character / model / reference combination.
    * When `at` is supplied, only outcomes recorded at or before that instant
-   * count (planner decision-time queries must not see the future). */
+   * count (planner decision-time queries must not see the future). The cutoff
+   * is normalized to a UTC instant before comparison, mirroring how stored
+   * occurredAt values are normalized — a mixed-offset cutoff string would
+   * otherwise sort against UTC rows incorrectly. */
   async successRateForReference(
     characterId: string,
     model: string,
@@ -238,12 +241,13 @@ export class RefpackMetricsStore {
     at?: string,
   ): Promise<SuccessRate> {
     const doc = await this.readDoc();
+    const cutoff = at === undefined ? undefined : normalizeTimestamp(at);
     let samples = 0;
     let accepted = 0;
     for (const outcome of Object.values(doc.outcomes)) {
       if (outcome.characterId !== characterId || outcome.model !== model) continue;
       if (!outcome.referenceIds.includes(referenceId)) continue;
-      if (at !== undefined && outcome.occurredAt > at) continue;
+      if (cutoff !== undefined && outcome.occurredAt > cutoff) continue;
       samples += 1;
       if (outcome.outcome === "ACCEPTED") accepted += 1;
     }
@@ -252,13 +256,17 @@ export class RefpackMetricsStore {
 
   /** Success rate for one exact reference pack (order-insensitive for
    * matching — the same set of references is the same pack). Rate null with
-   * zero samples; also returns the accepted/rejected split for reporting. */
+   * zero samples; also returns the accepted/rejected split for reporting.
+   * When `at` is supplied, only outcomes recorded at or before that instant
+   * count (mirrors the DIR-013 oracle's decision-time pack query). */
   async successRateForPack(
     characterId: string,
     model: string,
     referenceIds: readonly string[],
+    at?: string,
   ): Promise<PackSuccess> {
     const doc = await this.readDoc();
+    const cutoff = at === undefined ? undefined : normalizeTimestamp(at);
     const wanted = new Set(referenceIds);
     let samples = 0;
     let accepted = 0;
@@ -266,6 +274,7 @@ export class RefpackMetricsStore {
     for (const outcome of Object.values(doc.outcomes)) {
       if (outcome.characterId !== characterId || outcome.model !== model) continue;
       if (!sameSet(outcome.referenceIds, wanted)) continue;
+      if (cutoff !== undefined && outcome.occurredAt > cutoff) continue;
       samples += 1;
       matchedIds = outcome.referenceIds;
       if (outcome.outcome === "ACCEPTED") accepted += 1;
