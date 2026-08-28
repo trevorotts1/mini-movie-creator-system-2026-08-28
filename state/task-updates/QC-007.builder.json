@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-007",
+  "phase": "BUILDER_DONE",
+  "commit": "e04e087",
+  "testsRun": "npx vitest run packages/qc/src/routes/agnes-flash — 24/24 passed (exit 0); npx vitest run packages/qc — 24/24 passed; tsc --noEmit (packages/qc) clean",
+  "notes": "Flash acceptance route: PASS=KEEP_AS_FINAL (isFinalFootage=true, previewOnly=false, no preview disposition exists), likely-prompt-seed FAIL on attempt 1 → exactly one Flash retry (prompt unchanged, seed+1), identity/reference and provider/transport failures escalate to agnes-video-2.5 without consuming the retry, attempt-2 FAIL → ESCALATE to Agnes regular (QC-008 hop); stale agnes-video-v2.0 id refused; deps QC-006/AGN-006 unmerged on integration so route is self-contained (types local, aligned with AGN-006 worktree naming).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
