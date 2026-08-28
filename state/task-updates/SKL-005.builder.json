@@ -1,0 +1,9 @@
+{
+  "taskId": "SKL-005",
+  "phase": "BUILDER_DONE",
+  "commit": "342f07007fa41bf998ac4d73be6e1fd98f0d5a4c",
+  "testsRun": "cd integrations/openclaw && ../../node_modules/.bin/vitest run -> 2 files, 20/20 passed (packaging.test.ts + install.test.ts); npx tsc --noEmit -p integrations/openclaw -> clean; bash -n install.sh + mmcs-status.sh -> clean; secret-scan grep clean; LIVE: bash integrations/openclaw/install.sh -> rc0 (openclaw skills install --as mini-movie-creator --force via config-resolved workspace /Users/blackceomacmini/clawd), openclaw skills list shows mini-movie-creator (openclaw-workspace source), openclaw skills info resolves ~/clawd/skills/mini-movie-creator/SKILL.md, idempotent rerun no-op, uninstall+reinstall round-trip rc0, mmcs-status.sh wrapper reaches built mmcs CLI",
+  "notes": "OpenClaw packaging at integrations/openclaw/mini-movie-creator/ (SKILL.md thin control interface + 4 references + scripts/mmcs-status.sh wrapper; calls same mmcs CLI/DB, no engine fork, no secrets) + integrations/openclaw/install.sh (active workspace resolved from openclaw config agents.list default / agents.defaults.workspace via `openclaw config get` \u2014 NEVER guessed, exit 2 refuses to guess; primary form = current `openclaw skills install <dir> --as mini-movie-creator --force`, fallback = workspace placement <workspace>/skills/mini-movie-creator; scope-aware verify requires openclaw-workspace source so a global/managed install cannot fake workspace verification; backup-before-overwrite to <workspace>/.mmcs-skill-backups/ NOT inside skills/ because the watcher treats every skills/ dir with a SKILL.md as a skill and a .bak there shadows the live install in `openclaw skills info`; uninstall polls watcher before reporting). Tests hermetic via fake openclaw on PATH (never mutates live workspace).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
