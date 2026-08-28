@@ -67,9 +67,7 @@ const SHA256_PATTERN = /^[a-fA-F0-9]{64}$/;
 /** Version-level lifecycle: a version is drafted, approved as a whole, retired. */
 export const LOCATION_VERSION_STATES = ["DRAFT", "APPROVED", "RETIRED"] as const;
 
-export type LocationVersionState = (typeof LOCATION_VERSION_STATE_VALUES)[number];
-
-const LOCATION_VERSION_STATE_VALUES = ["DRAFT", "APPROVED", "RETIRED"] as const;
+export type LocationVersionState = (typeof LOCATION_VERSION_STATES)[number];
 
 /** Episode continuity point — season/episode the state is canon from. */
 export interface ContinuityPoint {
@@ -398,18 +396,45 @@ export function parseLocationMaster(value: unknown): LocationMaster {
     if (typeof version !== "object" || version === null) {
       throw new LocationLibraryError("INVALID_INPUT", "version must be an object");
     }
+    if (
+      typeof version.versionId !== "string" ||
+      version.versionId.trim().length === 0
+    ) {
+      throw new LocationLibraryError("INVALID_INPUT", "version versionId must be a non-empty string");
+    }
+    if (
+      !Number.isInteger(version.versionNumber) ||
+      (version.versionNumber as number) < 1
+    ) {
+      throw new LocationLibraryError(
+        "INVALID_INPUT",
+        `version ${version.versionId} versionNumber must be a positive integer`,
+      );
+    }
     if (!isContinuityPoint(version.effectiveFrom)) {
       throw new LocationLibraryError(
         "INVALID_INPUT",
-        `version ${String(version.versionId)} has an invalid effectiveFrom`,
+        `version ${version.versionId} has an invalid effectiveFrom`,
       );
     }
+    if (
+      typeof version.state !== "string" ||
+      !(LOCATION_VERSION_STATES as readonly string[]).includes(version.state)
+    ) {
+      throw new LocationLibraryError(
+        "INVALID_INPUT",
+        `version ${version.versionId} has an invalid state`,
+      );
+    }
+    assertOptionalString(version.description, `version ${version.versionId} description`);
     if (!Array.isArray(version.assets)) {
       throw new LocationLibraryError(
         "INVALID_INPUT",
-        `version ${String(version.versionId)} assets must be an array`,
+        `version ${version.versionId} assets must be an array`,
       );
     }
+    const seen = new Set<string>();
+    const seenAssetIds = new Set<string>();
     for (const asset of version.assets) {
       if (
         typeof asset !== "object" ||
@@ -420,8 +445,28 @@ export function parseLocationMaster(value: unknown): LocationMaster {
       ) {
         throw new LocationLibraryError(
           "INVALID_INPUT",
-          `version ${String(version.versionId)} has an invalid angle asset`,
+          `version ${version.versionId} has an invalid angle asset`,
         );
+      }
+      assertValidAssetId(asset.assetId);
+      const combo = `${asset.angle}/${asset.dayNight}`;
+      if (seen.has(combo)) {
+        throw new LocationLibraryError(
+          "INVALID_INPUT",
+          `version ${version.versionId} has duplicate assets for ${combo}`,
+        );
+      }
+      seen.add(combo);
+      if (seenAssetIds.has(asset.assetId)) {
+        throw new LocationLibraryError(
+          "INVALID_INPUT",
+          `version ${version.versionId} has duplicate assetId ${asset.assetId}`,
+        );
+      }
+      seenAssetIds.add(asset.assetId);
+      assertOptionalString(asset.notes, `asset ${asset.assetId} notes`);
+      if (asset.media !== null && asset.media !== undefined) {
+        validateMedia(asset.media, `asset ${asset.assetId} media`);
       }
     }
   }

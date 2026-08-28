@@ -27,14 +27,6 @@ function media(sha: string = SHA_A) {
   };
 }
 
-/** Build a version with all 6 angle x lighting assets approved. */
-function fullyApprovedAssets(version: ReturnType<ReturnType<typeof createLocationLibrary>["addVersion"]>) {
-  return version.assets.map((asset, index) => {
-    lib.attachMedia("LOC_MONICA_APT_001", version.versionId, asset.assetId, media(index % 2 === 0 ? SHA_A : SHA_B));
-    return lib.setAssetState("LOC_MONICA_APT_001", version.versionId, asset.assetId, "REVIEW");
-  });
-}
-
 let assetCounter = 0;
 
 const lib = createLocationLibrary();
@@ -164,6 +156,15 @@ describe("angle asset lifecycle", () => {
         dayNight: "day",
       }),
     ).toThrow(LocationLibraryError);
+    // Same assetId under a different combo is also rejected — assetIds must be
+    // unique within a version or attachMedia/setAssetState become ambiguous.
+    expect(() =>
+      lib.addAngleAsset("LOC_MONICA_APT_001", version.versionId, {
+        assetId: "AST_APT_WIDE_DAY",
+        angle: "medium",
+        dayNight: "day",
+      }),
+    ).toThrow(/already has asset/);
   });
 
   it("blocks approval until every angle x lighting combo has an approved asset", () => {
@@ -187,6 +188,43 @@ describe("angle asset lifecycle", () => {
     expect(() =>
       lib.setAssetState("LOC_MONICA_APT_001", version.versionId, assetId, "APPROVED"),
     ).toThrow(/MEDIA_REQUIRED/);
+  });
+
+  it("freezes assets once the version is approved (immutable history)", () => {
+    const fresh = createLocationLibrary();
+    fresh.createMaster({ locationId: "LOC_FROZEN_001", displayName: "frozen" });
+    fillAndApproveAssets(fresh, "LOC_FROZEN_001", "v1");
+    const anyAsset = fresh.requireMaster("LOC_FROZEN_001").versions[0]!.assets[0]!;
+    expect(() =>
+      fresh.setAssetState("LOC_FROZEN_001", "v1", anyAsset.assetId, "CANONICAL"),
+    ).toThrow(/immutable after approval/);
+    expect(() =>
+      fresh.attachMedia("LOC_FROZEN_001", "v1", anyAsset.assetId, media(SHA_B)),
+    ).toThrow(/immutable after approval/);
+    expect(() =>
+      fresh.addAngleAsset("LOC_FROZEN_001", "v1", {
+        assetId: "AST_FROZEN_NEW",
+        angle: "wide",
+        dayNight: "day",
+      }),
+    ).toThrow(/immutable after approval/);
+    expect(fresh.requireMaster("LOC_FROZEN_001").versions[0]!.assets[0]!.state).toBe("APPROVED");
+  });
+
+  it("promotes an asset to CANONICAL while its version is a draft", () => {
+    const fresh = createLocationLibrary();
+    fresh.createMaster({ locationId: "LOC_CANON_001", displayName: "canon" });
+    fresh.addAngleAsset("LOC_CANON_001", "v1", {
+      assetId: "AST_CANON_WIDE_DAY",
+      angle: "wide",
+      dayNight: "day",
+      media: media(),
+    });
+    fresh.setAssetState("LOC_CANON_001", "v1", "AST_CANON_WIDE_DAY", "REVIEW");
+    const approved = fresh.setAssetState("LOC_CANON_001", "v1", "AST_CANON_WIDE_DAY", "APPROVED");
+    expect(approved.state).toBe("APPROVED");
+    const promoted = fresh.setAssetState("LOC_CANON_001", "v1", "AST_CANON_WIDE_DAY", "CANONICAL");
+    expect(promoted.state).toBe("CANONICAL");
   });
 
   it("rejects invalid state transitions", () => {
@@ -367,5 +405,63 @@ describe("parse helpers", () => {
     expect(parseLocationMaster(JSON.parse(JSON.stringify(master))).locationId).toBe(locationId);
     expect(safeParseLocationMaster({ garbage: true })).toBeNull();
     expect(safeParseLocationMaster(master)).not.toBeNull();
+  });
+
+  it("rejects corrupted persisted masters", () => {
+    const { locationId } = seedApprovedMaster();
+    const good = JSON.parse(JSON.stringify(lib.requireMaster(locationId)));
+    const corrupt = (mutate: (m: Record<string, unknown>) => void) => {
+      const copy = JSON.parse(JSON.stringify(good)) as Record<string, unknown>;
+      mutate(copy);
+      return copy;
+    };
+    // garbage version state
+    expect(
+      safeParseLocationMaster(
+        corrupt((m) => {
+          (m.versions as Record<string, unknown>[])[0]!.state = "BANANA";
+        }),
+      ),
+    ).toBeNull();
+    // garbage versionNumber
+    expect(
+      safeParseLocationMaster(
+        corrupt((m) => {
+          (m.versions as Record<string, unknown>[])[0]!.versionNumber = "one";
+        }),
+      ),
+    ).toBeNull();
+    // duplicate angle x lighting assets
+    expect(
+      safeParseLocationMaster(
+        corrupt((m) => {
+          const assets = (m.versions as Record<string, unknown>[])[0]!.assets as Record<
+            string,
+            unknown
+          >[];
+          assets[1]!.assetId = assets[0]!.assetId;
+        }),
+      ),
+    ).toBeNull();
+    // invalid media sha256 on an asset
+    expect(
+      safeParseLocationMaster(
+        corrupt((m) => {
+          ((m.versions as Record<string, unknown>[])[0]!.assets as Record<string, unknown>[])[0]!.media = {
+            ghlFileId: "f",
+            ghlUrl: "https://ok.example.com/x.png",
+            sha256: "not-a-sha",
+          };
+        }),
+      ),
+    ).toBeNull();
+    // invalid asset id
+    expect(
+      safeParseLocationMaster(
+        corrupt((m) => {
+          ((m.versions as Record<string, unknown>[])[0]!.assets as Record<string, unknown>[])[0]!.assetId = "";
+        }),
+      ),
+    ).toBeNull();
   });
 });

@@ -15,6 +15,7 @@ import {
   compareContinuityPoints,
   findVersionApprovalGaps,
   isAssetUsable,
+  isContinuityPoint,
   isDayNightState,
   isLocationAngle,
   validateAddAngleAssetInput,
@@ -189,6 +190,13 @@ export class LocationLibraryService implements LocationLibrary {
         `version ${versionId} already has a ${validated.angle}/${validated.dayNight} asset (${duplicate.assetId})`,
       );
     }
+    const duplicateId = version.assets.find((candidate) => candidate.assetId === validated.assetId);
+    if (duplicateId) {
+      throw new LocationLibraryError(
+        "DUPLICATE_ANGLE_STATE",
+        `version ${versionId} already has asset ${validated.assetId}`,
+      );
+    }
     const asset: LocationAngleAsset = { ...validated, state: "DRAFT" };
     version.assets.push(asset);
     return asset;
@@ -233,6 +241,12 @@ export class LocationLibraryService implements LocationLibrary {
     nextState: AssetState,
   ): LocationAngleAsset {
     const version = this.requireVersion(locationId, versionId);
+    if (version.state === "APPROVED" || version.state === "RETIRED") {
+      throw new LocationLibraryError(
+        "INVALID_TRANSITION",
+        `version ${versionId} is ${version.state}; assets are immutable after approval`,
+      );
+    }
     const asset = version.assets.find((candidate) => candidate.assetId === assetId);
     if (!asset) {
       throw new LocationLibraryError(
@@ -312,7 +326,7 @@ export class LocationLibraryService implements LocationLibrary {
    */
   resolveVersion(locationId: string, at: ContinuityPoint): LocationMasterVersion {
     const master = this.requireMaster(locationId);
-    if (!isContinuityPointInput(at)) {
+    if (!isContinuityPoint(at)) {
       throw new LocationLibraryError(
         "INVALID_INPUT",
         "at must be a { season, episode } continuity point with values >= 1",
@@ -361,17 +375,6 @@ export class LocationLibraryService implements LocationLibrary {
     }
     return asset;
   }
-}
-
-function isContinuityPointInput(value: unknown): value is ContinuityPoint {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    Number.isInteger((value as ContinuityPoint).season) &&
-    (value as ContinuityPoint).season >= 1 &&
-    Number.isInteger((value as ContinuityPoint).episode) &&
-    (value as ContinuityPoint).episode >= 1
-  );
 }
 
 /** Factory matching surrounding packages' export style. */
