@@ -1,0 +1,13 @@
+{
+  "taskId": "FISH-008",
+  "phase": "PASS",
+  "commit": "b991996adfdef9d4d17165e36b513c0dba5a4731",
+  "checksRun": "pnpm exec vitest run packages/providers/src/fish-audio/normalize/ -> 31/31 PASS (2 files, 31 tests); pnpm run typecheck -> PASS (all workspace packages); pnpm -C packages/providers run typecheck -> PASS",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:40:00Z",
+  "notes": "FFmpeg two-pass loudness normalization verified. Deterministic arguments, configurable target LUFS, probe-before/after via ffprobe, safe execFile handling, 31/31 unit+fixture tests passing.",
+  "blockers": []
+}
