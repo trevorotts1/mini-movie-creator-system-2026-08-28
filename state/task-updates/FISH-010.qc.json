@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-010",
   "phase": "PASS",
-  "commit": "49239d6",
+  "commit": "cdae76e",
   "checksRun": "npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/fish-audio/config/config.test.ts (33/33 pass); pnpm -r run typecheck (clean 0 errors); security pass (no secrets, safe UTF-8 byte accounting, finite number validation)",
   "defectsFound": 0,
   "defectsFixed": 0,
