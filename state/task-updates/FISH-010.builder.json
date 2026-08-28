@@ -1,0 +1,9 @@
+{
+  "taskId": "FISH-010",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/providers/src/fish-audio/config -> 33/33 passed (exit 0); npx vitest run packages/providers -> 231/231 passed; npx vitest run (repo) -> 834/834 passed; npx tsc --noEmit in packages/providers -> clean (exit 0)",
+  "notes": "Fish model/cost config: resolveFishModelConfig (model REQUIRED from config, no default not even s2.1-pro-free; must be both FISH_TTS_MODELS-header-valid and CAP-002-seeded; config priceOverrides for repricing; autoLimitUsd), estimateFishTtsCost/toSpendEstimate/fishSpendDecision (per-million-UTF-8-byte pricing folded to per-byte, unrounded lines so cumulative $25 gate is not under-reported; unknown model -> estimatedCost null forced approval; feeds CORE-009 via registry SpendEstimate shape, mirrors KIE-007 pattern); countUtf8Bytes + estimateFishTtsCostForText helpers.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:45:00Z"
+}
