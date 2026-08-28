@@ -1,0 +1,15 @@
+{
+  "taskId": "CAP-010",
+  "phase": "PASS",
+  "commit": "af0716d1e2158adcb5bb0ac687ff7290a5811ba7",
+  "rebasedOnto": "9c90d715692c222597b6d65fe390704961152511",
+  "rebaseCommit": "c0d9d5d2be20091d89032e23e599e6761265c29f",
+  "checksRun": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true npx vitest run packages/capability-registry/src/observed-overrides (29/29 pass); pnpm -r run typecheck (all packages clean); security audit (no secrets, no injections, no path traversal)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Runtime observed capability overrides: RuntimeObservation/ObservedOverride provenance model with PROVISIONAL-only confidence from runtime; refineFacet refines UNKNOWN/PROVISIONAL while VERIFIED remains immutable on single transient failure; 3-distinct-day confirmed failure threshold for demotion; Agnes 2.5 runtime IDs + Agnes Video 2.0 recorded with live probe metadata; all 29 tests pass; typecheck clean across monorepo.",
+  "blockers": []
+}

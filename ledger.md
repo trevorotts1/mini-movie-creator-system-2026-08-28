@@ -177,3 +177,25 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 - 2026-08-28T19:38:52Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | VID-008 | typecheck regression (GraphicsViews.tsx(29,26) TS2345 FrameSize->number; invisible on branch because its tsconfig lacked the tsx include VID
 - 2026-08-28T19:38:52Z | BATCH_MERGE | merger | QC_FIXING | VID-008 | typecheck regression — merged then reverted, task back to fixing
 - 2026-08-28T19:38:52Z | BATCH_MERGE | merger | QC_FIXING | SKL-002 | typecheck regression — merged then reverted, task back to fixing
+
+- 2026-08-28T22:05:00Z | CAP-003 | merger | MERGED | batch-7 merge b698075 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | CAP-010 | merger | MERGED | batch-7 merge 8fed249 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | CORE-007 | merger | MERGED | batch-7 merge c6766d5 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | DIR-002 | merger | MERGED | batch-7 merge 044354d (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | FISH-003 | merger | MERGED | batch-7 merge 90cd17d (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | FISH-005 | merger | MERGED | batch-7 merge 218b266 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | FISH-006 | merger | MERGED | batch-7 merge 8be62a7 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | FISH-007 | merger | MERGED | batch-7 merge 0c9631a (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | KIE-010 | merger | MERGED | batch-7 merge 2a03767 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | QC-002 | merger | MERGED | batch-7 merge 0255884 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | QC-003 | merger | QC_PASS_CONFLICT | batch-7 conflict — merge aborted (rebase required)
+- 2026-08-28T22:05:00Z | QC-004 | merger | QC_PASS_CONFLICT | batch-7 conflict — merge aborted (rebase required)
+- 2026-08-28T22:05:00Z | QC-010 | merger | QC_PASS_CONFLICT | batch-7 conflict — merge aborted (rebase required)
+- 2026-08-28T22:05:00Z | SKL-003 | merger | MERGED | batch-7 merge 7c6a79f (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | SKL-004 | merger | QC_PASS_CONFLICT | batch-7 conflict — merge aborted (rebase required)
+- 2026-08-28T22:05:00Z | SKL-005 | merger | MERGED | batch-7 merge f1689ba (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | VID-002 | merger | QC_PASS_CONFLICT | batch-7 conflict — merge aborted (rebase required)
+- 2026-08-28T22:05:00Z | VID-005 | merger | MERGED | batch-7 merge b22a21f (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | VID-013 | merger | MERGED | batch-7 merge 6d8cce1 (pushed 6d8cce1)
+- 2026-08-28T22:05:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 unmerged — deferred to later batch
+- 2026-08-28T22:05:00Z | BATCH-7 | merger | REGRESSION_PASS | pnpm -r test 0, typecheck 0, repo vitest 3188 pass; pushed 38974b3..6d8cce1
