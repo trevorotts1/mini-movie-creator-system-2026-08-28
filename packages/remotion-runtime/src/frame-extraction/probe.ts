@@ -1,8 +1,6 @@
 /// <reference types="node" />
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
 import { open } from "node:fs/promises";
-import path from "node:path";
 import { promisify } from "node:util";
 
 import type { ClipFacts } from "./types.js";
@@ -53,10 +51,6 @@ function parseFps(value: string | undefined): number | undefined {
   return num / den;
 }
 
-function firstLine(stdout: string): string | undefined {
-  return stdout.trim().length > 0 ? stdout.trim().split("\n")[0] : undefined;
-}
-
 export function parseFfprobeJson(stdout: string): Omit<ClipFacts, "source"> {
   let parsed: unknown;
   try {
@@ -85,11 +79,6 @@ export function parseFfprobeJson(stdout: string): Omit<ClipFacts, "source"> {
     height: parseNonNegative(video.height as string | undefined, "height"),
     codec: typeof video.codec_name === "string" ? video.codec_name : undefined,
   };
-}
-
-/** One ffprobe call per field (json-free) — for probes run without -print_format json. */
-export function parseFfprobeField(stdout: string): number | undefined {
-  return parseNonNegative(firstLine(stdout), "field");
 }
 
 /** Probe codec/duration/fps/dimensions of a clip via ffprobe. */
@@ -130,15 +119,4 @@ export async function verifyPngFile(filePath: string, minBytes = 1): Promise<{ b
   } finally {
     await handle.close();
   }
-}
-
-/** Absolute binary path when resolvable from PATH; else the name as-is. */
-export function resolveBinaryPath(binary: string, searchPath: string = path.delimiter): string {
-  if (binary.includes("/") || binary.includes(path.sep)) return binary;
-  for (const dir of process.env.PATH?.split(searchPath) ?? []) {
-    if (dir.length === 0) continue;
-    const candidate = path.join(dir, binary);
-    if (existsSync(candidate)) return candidate;
-  }
-  return binary;
 }

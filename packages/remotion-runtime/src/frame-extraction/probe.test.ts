@@ -280,7 +280,7 @@ describe("extractFrames (real ffmpeg)", () => {
       plan: { mode: "timestamps", timestamps: [0, 0.25] },
     });
     expect(result.frames[0]!.filePath).toBe(path.join(outDir, "frames-f0000.png"));
-    // 0.25s at 30fps = frame 7 (7.5 rounds to 8 in float math; grid-snap gives 7).
+    // 0.25s at 30fps = 7.5 frames; local_f = global_s * fps rounds half up to 8.
     expect(result.frames[1]!.filePath).toBe(path.join(outDir, "frames-f0008.png"));
     // Files actually exist on disk.
     await stat(path.join(outDir, "frames-f0000.png"));
