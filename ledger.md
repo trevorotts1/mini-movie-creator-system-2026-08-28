@@ -58,3 +58,35 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 - 2026-08-28T14:38:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | KIE-001 | conflict on integration, branch retains PASS — rebasing required
 - 2026-08-28T14:38:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CAP-010 | conflict on integration, branch retains PASS — rebasing required
 - 2026-08-28T14:38:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CHAR-011 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | CAP-007 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | CAP-009 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | CORE-005 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | GHL-003 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | KIE-001 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | KIE-005 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | VID-001 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | CHAR-011 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | GHL-004 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | KIE-006 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | KIE-010 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | GHL-005 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | GHL-006 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | MERGED | GHL-011 | sha: 9dc1ba3-batch | batch 4 local merge (rolled back — regression FAIL)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | CAP-009 | batch 4 rollback CAUSE: apps/cli/src/commands/providers-verify/command.ts imports @mmcs/capability-registry — TS6059 rootDir break (package sources outside apps/cli rootDir src) — regression typecheck FAIL on integration 9dc1ba3; integration restored to 5cb2c2e (never pushed)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | CAP-007 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; fix CAP-009 import then re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | CORE-005 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | GHL-003 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | KIE-001 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | KIE-005 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | VID-001 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | CHAR-011 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | GHL-004 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | KIE-006 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | KIE-010 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | GHL-005 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | GHL-006 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_FIXING | GHL-011 | batch 4 rolled back with 13 siblings after CAP-009 typecheck regression (branches retain PASS; re-merge next cycle)
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CORE-006 | conflict on integration (merge aborted), branch retains PASS — rebasing required
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CORE-007 | conflict on integration (merge aborted), branch retains PASS — rebasing required
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CAP-010 | conflict on integration (merge aborted), branch retains PASS — rebasing required
+- 2026-08-28T15:26:14Z | BATCH_MERGE | merger | ROLLBACK | integration | batch 4 rolled back: 14 local merges reset to pre-batch sha 5cb2c2e (== origin/integration) after regression typecheck FAIL; tests passed 1193/1193+1skip but apps/cli TS6059 x ~12 from CAP-009 providers-verify cross-package import
