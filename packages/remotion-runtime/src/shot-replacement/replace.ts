@@ -178,14 +178,16 @@ export function diffPlans(
  * Apply ONE replacement to ONE shot. Every other segment is carried through
  * by reference to its existing object — provably untouched inputs.
  *
- * Trim semantics: the window is in SOURCE frames. `fit-slot` (default) fits
- * the source window to the shot's existing slot duration via the source fps;
- * `explicit` reflows downstream start frames but changes no other inputs.
+ * Trim semantics: the window is in SOURCE frames. `fit-slot` (default) keeps
+ * the shot's existing slot duration as the OUTPUT length — the window is
+ * fitted to supply exactly that many frames, with the source-fps conversion
+ * happening at the render seam (this module is pure, so it records the
+ * window and never resamples). `explicit` reflows downstream start frames
+ * but changes no other inputs.
  */
 export function replaceShot(
   plan: EpisodicShotPlan,
   replacement: ShotReplacement,
-  options: { readonly sourceFps?: number } = {},
 ): {
   readonly plan: EpisodicShotPlan;
   readonly replaced: ShotSegment;

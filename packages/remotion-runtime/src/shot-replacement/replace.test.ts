@@ -326,14 +326,14 @@ describe("retry — targeted scope (spec §20)", () => {
 describe("trim fit semantics", () => {
   it("source window length drives the fit message; slot duration governs output", () => {
     const plan = fixturePlan();
-    // 30fps episode, 120-frame slot, source at 60fps: 90 source frames at
-    // 60fps == 45 output frames; the fit happens at the render seam, so the
+    // 30fps episode, 120-frame slot, source at 60fps: the fit happens at the
+    // render seam (the pure engine records the source window only), so the
     // slot duration is unchanged and only SH02's inputs move.
-    const after = replaceShot(
-      plan,
-      { shotId: "SH02", trimInFrames: 0, trimOutFrames: 90 },
-      { sourceFps: 60 },
-    );
+    const after = replaceShot(plan, {
+      shotId: "SH02",
+      trimInFrames: 0,
+      trimOutFrames: 90,
+    });
     expect(after.diff.changedShotIds).toEqual(["SH02"]);
     expect(after.diff.durationDelta).toBe(0);
     const replaced = after.plan.segments.find((s) => s.shotId === "SH02")!;

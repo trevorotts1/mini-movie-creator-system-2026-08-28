@@ -185,6 +185,23 @@ describe("runRetryShot", () => {
     expect(replacement.reason).toBe("seed variation");
     expect(replacement.assetRef).toBeUndefined();
   });
+
+  it("rejects before queueing what the engine would unconditionally reject (QC regression)", () => {
+    const { ports, queued } = makePorts();
+    // --attempt 0: planRetryShot throws "positive integer" — must not queue.
+    expect(runRetryShot("SH01", ["--attempt", "0"], ports).exitCode).toBe(1);
+    // --duration 0: replaceShot throws "positive integer" under explicit policy — must not queue.
+    expect(runRetryShot("SH01", ["--duration", "0"], ports).exitCode).toBe(1);
+    // Empty trim window: replaceShot throws "must exceed" — must not queue.
+    expect(
+      runRetryShot("SH01", ["--trim-in", "50", "--trim-out", "50"], ports).exitCode,
+    ).toBe(1);
+    expect(
+      runRetryShot("SH01", ["--trim-in", "90", "--trim-out", "30"], ports).exitCode,
+    ).toBe(1);
+    // No spend ever reached the queue for any rejected input.
+    expect(queued).toEqual([]);
+  });
 });
 
 describe("makeRetryShotHandler", () => {

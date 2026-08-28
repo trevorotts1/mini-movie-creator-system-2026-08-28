@@ -216,6 +216,39 @@ export function runRetryShot(
     return { exitCode: 2, lines: [`[mmcs] retry-shot: ${options.parseError}`, USAGE_RETRY_SHOT] };
   }
   const shotId = rawId.trim();
+
+  // Mirror the engine's unconditional rejections BEFORE queueing spend — a
+  // job the engine would always throw on must never be queued as a false
+  // success (exit 1 = rejection, per the documented exit codes).
+  if (options.attempt !== undefined && options.attempt < 1) {
+    return {
+      exitCode: 1,
+      lines: [
+        `[mmcs] retry-shot: --attempt must be a positive integer, got ${options.attempt}`,
+      ],
+    };
+  }
+  if (options.durationInFrames !== undefined && options.durationInFrames < 1) {
+    return {
+      exitCode: 1,
+      lines: [
+        `[mmcs] retry-shot: --duration must be a positive integer, got ${options.durationInFrames}`,
+      ],
+    };
+  }
+  if (
+    options.trimInFrames !== undefined &&
+    options.trimOutFrames !== undefined &&
+    options.trimOutFrames <= options.trimInFrames
+  ) {
+    return {
+      exitCode: 1,
+      lines: [
+        `[mmcs] retry-shot: empty trim window — --trim-out (${options.trimOutFrames}) must exceed --trim-in (${options.trimInFrames})`,
+      ],
+    };
+  }
+
   const plan = ports.loadPlan(shotId);
   if (!plan) {
     return {
@@ -223,15 +256,8 @@ export function runRetryShot(
       lines: [`[mmcs] retry-shot: unknown shot id "${shotId}"`],
     };
   }
-  if (
-    options.asset === undefined &&
-    options.trimInFrames === undefined &&
-    options.trimOutFrames === undefined &&
-    options.durationInFrames === undefined
-  ) {
-    // No new inputs supplied: still a legal retry (regenerate same inputs),
-    // the generation lane owns provider-side seed variation.
-  }
+  // No new inputs supplied: still a legal retry (regenerate same inputs),
+  // the generation lane owns provider-side seed variation.
 
   const attempt = options.attempt ?? 1;
   const replacement: ShotReplacementLike = {
