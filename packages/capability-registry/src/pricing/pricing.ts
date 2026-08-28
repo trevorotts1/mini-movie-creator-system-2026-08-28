@@ -135,7 +135,12 @@ export function validatePricingProfile(profile: ModelPricingProfile): void {
   if (pricing.currency.length !== 3 || pricing.currency !== pricing.currency.toUpperCase()) {
     throw new PricingError("currency", profile);
   }
-  if (pricing.amount !== null && pricing.amount < 0) throw new PricingError("amount", profile);
+  // NaN/Infinity must be rejected: NaN < 0 is false, and an NaN amount would
+  // otherwise flow into estimates as NaN cost that isEstimable() counts as
+  // estimable — silently bypassing the $25 auto-spend gate (runbook §33).
+  if (pricing.amount !== null && (!Number.isFinite(pricing.amount) || pricing.amount < 0)) {
+    throw new PricingError("amount", profile);
+  }
 }
 
 /** Error carrying the invalid pricing field. */
@@ -160,6 +165,14 @@ export function estimateSpend(
   validatePricingProfile(profile);
   if (!Number.isFinite(request.units) || request.units < 0) {
     throw new PricingError("units", profile);
+  }
+  if (
+    request.quotaUsed !== undefined &&
+    (!Number.isFinite(request.quotaUsed) || request.quotaUsed < 0)
+  ) {
+    // A negative quotaUsed would inflate remaining allowance and turn paid
+    // units into phantom free ones; NaN would poison every downstream total.
+    throw new PricingError("quotaUsed", profile);
   }
   const included = profile.includedQuota.units ?? 0;
   const quotaUsed = request.quotaUsed ?? 0;
@@ -207,11 +220,6 @@ export function estimateSpend(
   };
 }
 
-/** True when this estimate can count toward an automatic-spend decision. */
-export function isEstimable(estimate: SpendEstimate): boolean {
-  return estimate.estimatedCost !== null;
-}
-
 /**
  * Apply the runbook §33 $25 rule to a queue of calls. Cumulative across ALL
  * queued calls (five workers cannot each approve $24.99): any single worker's
@@ -228,6 +236,36 @@ export function decideSpend(
   const alreadySpent = options.alreadySpent ?? 0;
   const autoLimit = options.autoLimitUsd ?? AUTO_SPEND_LIMIT_USD;
   const currency = options.currency ?? "USD";
+
+  if (!Number.isFinite(alreadySpent) || alreadySpent < 0) {
+    throw new PricingError("alreadySpent", {
+      provider: "budget",
+      modelId: "decideSpend",
+      kind: "reasoning",
+      pricing: { unit: null, amount: null, currency, quota: null, overage: null },
+      includedQuota: { units: null, resetPeriod: null, subscription: false },
+    });
+  }
+
+  const currencies = new Set(estimates.map((e) => e.currency));
+  if (currencies.size > 1) {
+    throw new PricingError("mixed currencies", {
+      provider: "budget",
+      modelId: "decideSpend",
+      kind: "reasoning",
+      pricing: { unit: null, amount: null, currency, quota: null, overage: null },
+      includedQuota: { units: null, resetPeriod: null, subscription: false },
+    });
+  }
+  if (currencies.size === 1 && estimates[0] !== undefined && estimates[0].currency !== currency) {
+    throw new PricingError("currency mismatch", {
+      provider: "budget",
+      modelId: "decideSpend",
+      kind: "reasoning",
+      pricing: { unit: null, amount: null, currency, quota: null, overage: null },
+      includedQuota: { units: null, resetPeriod: null, subscription: false },
+    });
+  }
 
   if (estimates.some((e) => !isEstimable(e))) {
     return {
@@ -255,6 +293,15 @@ export function decideSpend(
     currency,
     reason: `cumulative projected spend $${roundCents(projected).toFixed(2)} is below the $${autoLimit.toFixed(2)} auto limit`,
   };
+}
+
+/**
+ * True when this estimate can count toward an automatic-spend decision.
+ * NaN/Infinity costs are unestimable: they must block automatic spend like
+ * unknown pricing does, never auto-approve (NaN >= limit is false).
+ */
+export function isEstimable(estimate: SpendEstimate): boolean {
+  return estimate.estimatedCost !== null && Number.isFinite(estimate.estimatedCost);
 }
 
 /** Round money to cents to keep float noise out of cumulative totals. */

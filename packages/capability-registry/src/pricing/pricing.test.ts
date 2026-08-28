@@ -13,6 +13,7 @@ import {
   unknownPricingFixture,
   validatePricingProfile,
 } from "./index.js";
+import type { SpendEstimate } from "./index.js";
 
 describe("roundCents", () => {
   it("removes float noise from money math", () => {
@@ -101,6 +102,25 @@ describe("validatePricingProfile", () => {
       pricing: { unit: "per_image", amount: -1, currency: "USD", quota: null, overage: null },
     });
     expect(() => validatePricingProfile(negative)).toThrow(PricingError);
+  });
+
+  it("rejects NaN and Infinity amounts — they must not pass the negative check", () => {
+    // NaN < 0 is false, so a bare `< 0` check lets NaN through; an NaN amount
+    // would become an NaN estimate that the $25 gate auto-approves.
+    const nan = makeProfile({
+      provider: "x",
+      modelId: "m",
+      kind: "video",
+      pricing: { unit: "per_video_second", amount: Number.NaN, currency: "USD", quota: null, overage: null },
+    });
+    expect(() => validatePricingProfile(nan)).toThrow(PricingError);
+    const infinite = makeProfile({
+      provider: "x",
+      modelId: "m",
+      kind: "video",
+      pricing: { unit: "per_video_second", amount: Number.POSITIVE_INFINITY, currency: "USD", quota: null, overage: null },
+    });
+    expect(() => validatePricingProfile(infinite)).toThrow(PricingError);
   });
 });
 
@@ -228,6 +248,28 @@ describe("estimateSpend", () => {
       }),
     ).toThrow(PricingError);
   });
+
+  it("rejects negative and non-finite quotaUsed — no phantom free allowance", () => {
+    // quotaUsed: -30 would inflate remaining quota by 30 free units.
+    expect(() =>
+      estimateSpend(fixtures.wan, {
+        provider: "kie",
+        modelId: "wan-3.0",
+        kind: "video",
+        units: 10,
+        quotaUsed: -30,
+      }),
+    ).toThrow(PricingError);
+    expect(() =>
+      estimateSpend(fixtures.wan, {
+        provider: "kie",
+        modelId: "wan-3.0",
+        kind: "video",
+        units: 10,
+        quotaUsed: Number.NaN,
+      }),
+    ).toThrow(PricingError);
+  });
 });
 
 describe("decideSpend ($25 rule, runbook §33)", () => {
@@ -277,6 +319,33 @@ describe("decideSpend ($25 rule, runbook §33)", () => {
     expect(decision.allowed).toBe(false);
     expect(decision.requires).toBe("approval");
     expect(decision.projectedSpend).toBeNull();
+  });
+
+  it("treats non-finite estimatedCost as unestimable — NaN must not auto-approve", () => {
+    // NaN estimatedCost with a naive `!== null` check would pass isEstimable,
+    // and NaN >= 25 is false — silently bypassing the $25 gate.
+    const nanEstimate = { ...flash12(), estimatedCost: Number.NaN };
+    expect(isEstimable(nanEstimate)).toBe(false);
+    const decision = decideSpend([nanEstimate]);
+    expect(decision.allowed).toBe(false);
+    expect(decision.requires).toBe("approval");
+    expect(decision.projectedSpend).toBeNull();
+  });
+
+  it("rejects negative or non-finite alreadySpent", () => {
+    expect(() => decideSpend([flash12()], { alreadySpent: -1 })).toThrow(PricingError);
+    expect(() => decideSpend([flash12()], { alreadySpent: Number.NaN })).toThrow(PricingError);
+  });
+
+  it("rejects mixed-currency estimates instead of summing them silently", () => {
+    const eurCall: SpendEstimate = {
+      ...flash12(),
+      currency: "EUR",
+    };
+    expect(() => decideSpend([flash12(), eurCall])).toThrow(PricingError);
+    // A consistent non-USD queue must also declare its currency — no silent USD relabel.
+    expect(() => decideSpend([eurCall])).toThrow(PricingError);
+    expect(() => decideSpend([eurCall], { currency: "EUR" })).not.toThrow();
   });
 
   it("exposes the default auto limit as 25.00", () => {
