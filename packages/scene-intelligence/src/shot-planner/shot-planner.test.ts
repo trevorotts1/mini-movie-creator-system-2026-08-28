@@ -15,6 +15,7 @@ import {
   splitToWindow,
   TYPICAL_SHOT_COUNT_MAX,
   TYPICAL_SHOT_COUNT_MIN,
+  type PlannedScene,
   type ShotSpecificationRecord,
   type VideoModelConstraints,
 } from "./index.js";
@@ -363,7 +364,70 @@ describe("sequence renumbering", () => {
   });
 });
 
+describe("beat/starvation regression — shots must never exceed beats", () => {
+  const THREE_BEAT_SCENE: PlannedScene = {
+    ...FORTY_FIVE_SECOND_SCENE,
+    sceneId: "SC_THREE_BEAT",
+    beats: FORTY_FIVE_SECOND_SCENE.beats.slice(0, 3),
+  };
+
+  it("3-beat 45s scene with UNKNOWN limits yields 3 shots, not a crash", () => {
+    // Before the fix: planDurations honored the desired count (6) with only
+    // 3 beats → shots 4–6 had empty beat groups → TypeError on lead.type.
+    const result = planSceneShots(THREE_BEAT_SCENE, { model: UNKNOWN_LIMITS });
+    expect(result.shots).toHaveLength(3);
+    expect(result.warnings.some((w) => w.includes("beat"))).toBe(true);
+    const covered = result.shots.flatMap((s) => s.source_beat_ids).sort();
+    expect(covered).toEqual(["B01", "B02", "B03"]);
+    const sum = result.shots.reduce((s, x) => s + x.target_duration, 0);
+    expect(Math.abs(sum - 45)).toBeLessThanOrEqual(0.1);
+  });
+
+  it("3-beat 45s scene with a 12s-max model throws an actionable window error (4 shots needed > 3 beats)", () => {
+    // 45s needs ceil(45/12)=4 shots in a 4–12s window, but only 3 beats
+    // exist → must throw a validation error naming the fix, never a TypeError.
+    expect(() => planSceneShots(THREE_BEAT_SCENE, { model: AGNES_FLASH })).toThrow(
+      ShotPlannerValidationError,
+    );
+    try {
+      planSceneShots(THREE_BEAT_SCENE, { model: AGNES_FLASH });
+    } catch (e) {
+      expect((e as Error).message).toContain("add beats");
+    }
+  });
+});
+
 describe("input validation", () => {
+  it("rejects unsafe shotIdPrefix (asset-naming safety, spec §19)", () => {
+    expect(() =>
+      planSceneShots(FORTY_FIVE_SECOND_SCENE, {
+        model: AGNES_FLASH,
+        shotIdPrefix: "../evil",
+      }),
+    ).toThrow(ShotPlannerValidationError);
+    expect(() =>
+      planSceneShots(FORTY_FIVE_SECOND_SCENE, {
+        model: AGNES_FLASH,
+        shotIdPrefix: "SC04/../../escape",
+      }),
+    ).toThrow(ShotPlannerValidationError);
+  });
+
+  it("rejects NaN scene duration instead of emitting NaN durations", () => {
+    expect(() =>
+      planSceneShots(
+        { ...FORTY_FIVE_SECOND_SCENE, durationSeconds: Number.NaN },
+        { model: AGNES_FLASH },
+      ),
+    ).toThrow(ShotPlannerValidationError);
+    expect(() =>
+      planSceneShots(
+        { ...FORTY_FIVE_SECOND_SCENE, durationSeconds: Number.POSITIVE_INFINITY },
+        { model: AGNES_FLASH },
+      ),
+    ).toThrow(ShotPlannerValidationError);
+  });
+
   it("rejects empty-beat scenes and unsafe scene ids", () => {
     expect(() =>
       planSceneShots({ ...FORTY_FIVE_SECOND_SCENE, beats: [] }, { model: AGNES_FLASH }),

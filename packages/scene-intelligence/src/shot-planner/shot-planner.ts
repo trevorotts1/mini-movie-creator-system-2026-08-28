@@ -87,6 +87,9 @@ export function planSceneShots(
 ): PlannedSceneShots {
   validateScene(scene);
   const warnings: string[] = [];
+  if (options.shotIdPrefix !== undefined) {
+    validateShotIdPrefix(options.shotIdPrefix, scene.sceneId);
+  }
 
   const sceneDuration = round1(
     scene.durationSeconds > 0
@@ -100,7 +103,24 @@ export function planSceneShots(
   }
 
   const desired = desiredShotCount(sceneDuration);
-  const assignment = planDurations(sceneDuration, desired, options.model);
+  // Every shot needs at least one beat — never emit a shot with an empty
+  // beat group (that would leave lead camera/dialogue/action undefined).
+  const beatCount = scene.beats.length;
+  const clampedToBeats = Math.min(desired, beatCount);
+  if (clampedToBeats < desired) {
+    warnings.push(
+      `scene ${scene.sceneId} has ${beatCount} beats but a ${desired}-shot pace target — shot count clamped to ${clampedToBeats} (add beats or raise durationHintSeconds to get more shots)`,
+    );
+  }
+  const assignment = planDurations(sceneDuration, clampedToBeats, options.model);
+  if (assignment.shotCount > beatCount) {
+    // The model window forced more shots than there are beats (e.g. 45s in a
+    // 12s-max window needs ≥4 shots but the scene has 3). Fail loudly with an
+    // actionable message rather than emit empty-beat shots.
+    throw new ShotPlannerValidationError(
+      `scene ${scene.sceneId} has ${beatCount} beats but model ${options.model.modelId} window ${options.model.minDurationSeconds}–${options.model.maxDurationSeconds}s requires ${assignment.shotCount} shots to cover ${sceneDuration}s — add beats or pick a model with a wider window`,
+    );
+  }
   if (assignment.usedUnknownLimits) {
     warnings.push(
       `model ${options.model.modelId} duration limits UNKNOWN (null) — treated as unconstrained; verify against the capability registry before generation`,
@@ -326,9 +346,33 @@ function validateScene(scene: PlannedScene): void {
   if (!Array.isArray(scene.beats) || scene.beats.length === 0) {
     throw new ShotPlannerValidationError(`scene ${scene.sceneId} has no beats`);
   }
-  if (scene.durationSeconds !== undefined && scene.durationSeconds < 0) {
+  if (scene.durationSeconds !== undefined) {
+    if (!Number.isFinite(scene.durationSeconds)) {
+      throw new ShotPlannerValidationError(
+        `scene ${scene.sceneId} durationSeconds must be a finite number, got ${scene.durationSeconds}`,
+      );
+    }
+    if (scene.durationSeconds < 0) {
+      throw new ShotPlannerValidationError(
+        `scene ${scene.sceneId} durationSeconds must not be negative`,
+      );
+    }
+  }
+}
+
+/**
+ * Shot ids feed asset naming (spec §19) — the prefix must be as
+ * filename-safe as the scene id it defaults from.
+ */
+function validateShotIdPrefix(prefix: string, sceneId: string): void {
+  if (!/^[A-Za-z0-9_-]+$/.test(prefix)) {
     throw new ShotPlannerValidationError(
-      `scene ${scene.sceneId} durationSeconds must not be negative`,
+      `shotIdPrefix "${prefix}" must be filename-safe ([A-Za-z0-9_-]) for deterministic shot ids`,
+    );
+  }
+  if (prefix.length > 200) {
+    throw new ShotPlannerValidationError(
+      `shotIdPrefix for scene ${sceneId} exceeds 200 characters`,
     );
   }
 }
