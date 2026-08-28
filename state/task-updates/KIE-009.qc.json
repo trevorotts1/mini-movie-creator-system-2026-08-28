@@ -1,7 +1,7 @@
 {
   "taskId": "KIE-009",
   "phase": "PASS",
-  "commit": "",
+  "commit": "3323d6bed489ff1e9e05dfb6286cbbfec24acab1",
   "checksRun": "npx vitest run packages/providers/src/kie/errors -> 34 passed (34); npx vitest run (full suite) -> 34 passed; npx tsc --noEmit (packages/providers) -> rc 0; lint: repo has no eslint config (none run)",
   "defectsFound": 3,
   "defectsFixed": 3,
