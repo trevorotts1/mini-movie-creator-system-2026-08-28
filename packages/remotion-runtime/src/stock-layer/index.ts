@@ -1,10 +1,14 @@
 import {
+  assertLicenseSafe,
   assertStockAllowed,
   evaluateStockGuard,
+  StockLicenseError,
   StockPolicyViolationError,
   toStockGuardInput,
 } from "./guard.js";
 import {
+  createLicenseSafePlaceholder,
+  isLicenseSafe,
   isStockAllowedPurpose,
   STOCK_ALLOWED_PURPOSES,
   type StockClip,
@@ -52,6 +56,8 @@ export function placeStockShots(
       candidate.shotId,
     );
 
+    assertLicenseSafe(clip, candidate.shotId);
+
     const start = candidate.startSeconds ?? 0;
     placements.push({
       shotId: candidate.shotId,
@@ -64,8 +70,10 @@ export function placeStockShots(
 }
 
 export {
+  assertLicenseSafe,
   assertStockAllowed,
   evaluateStockGuard,
+  StockLicenseError,
   StockPolicyViolationError,
   toStockGuardInput,
 };
@@ -75,9 +83,16 @@ export type {
   StockGuardResult,
 } from "./guard.js";
 export { createStockAdapter } from "./adapters.js";
+export {
+  createLicenseSafePlaceholder,
+  isLicenseSafe,
+} from "./types.js";
 export type {
   ShotPurpose,
+  StockAcquisitionMethod,
   StockAllowedPurpose,
+  StockLicenseInfo,
+  StockLicenseKind,
   StockPolicyViolationReason,
   StockProviderId,
   VisualSourceType,

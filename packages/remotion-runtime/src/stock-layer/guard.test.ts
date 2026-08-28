@@ -1,25 +1,44 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assertLicenseSafe,
   assertStockAllowed,
+  createLicenseSafePlaceholder,
   createStockAdapter,
   evaluateStockGuard,
+  isLicenseSafe,
   placeStockShots,
   STOCK_ALLOWED_PURPOSES,
+  StockLicenseError,
   StockPolicyViolationError,
   toStockGuardInput,
 } from "./index.js";
-import type { StockPlacementCandidate } from "./index.js";
+import type {
+  StockClip,
+  StockPlacementCandidate,
+} from "./index.js";
 
-const CLIP = {
+const CLIP: StockClip = {
   id: "clip-1",
-  providerId: "pexels" as const,
+  providerId: "pexels",
   url: "https://example.com/city-timelapse.mp4",
   durationSeconds: 5,
   width: 1920,
   height: 1080,
   attribution: "Example Photographer / Pexels",
+  acquisition: "adapter-search",
+  license: {
+    kind: "pexels-license",
+    attribution: "Example Photographer / Pexels",
+    licenseUrl: "https://www.pexels.com/license/",
+    sourceUrl: "https://example.com/city-timelapse",
+    verifiedAt: "2026-08-28T00:00:00Z",
+  },
 };
+
+function unlicensedClip(overrides: Partial<StockClip> = {}): StockClip {
+  return { ...CLIP, id: "clip-unlicensed", license: { kind: "unknown" }, ...overrides };
+}
 
 function candidate(overrides: Partial<StockPlacementCandidate> = {}): StockPlacementCandidate {
   return {
@@ -213,6 +232,106 @@ describe("placeStockShots", () => {
     expect(() =>
       placeStockShots([candidate()], new Map(), [], { fps: NaN }),
     ).toThrow(RangeError);
+  });
+});
+
+describe("license gate (spec §19/§29 provenance)", () => {
+  it("accepts a clip with a real license kind", () => {
+    expect(isLicenseSafe(CLIP)).toBe(true);
+    expect(() => assertLicenseSafe(CLIP, "shot-1")).not.toThrow();
+  });
+
+  it("refuses unknown-license clips", () => {
+    expect(isLicenseSafe(unlicensedClip())).toBe(false);
+    expect(() => assertLicenseSafe(unlicensedClip(), "shot-3")).toThrow(
+      StockLicenseError,
+    );
+  });
+
+  it("refuses clips with no license record at all", () => {
+    const noLicense = { ...CLIP, license: undefined } as unknown as StockClip;
+    expect(isLicenseSafe(noLicense)).toBe(false);
+  });
+
+  it("refuses a missing clip outright", () => {
+    expect(isLicenseSafe(undefined)).toBe(false);
+  });
+
+  it("carries clipId and shotId on StockLicenseError", () => {
+    let caught: unknown;
+    try {
+      assertLicenseSafe(unlicensedClip({ id: "clip-x" }), "shot-7");
+    } catch (error) {
+      caught = error;
+    }
+    const err = caught as StockLicenseError;
+    expect(err).toBeInstanceOf(StockLicenseError);
+    expect(err.clipId).toBe("clip-x");
+    expect(err.shotId).toBe("shot-7");
+  });
+
+  it("blocks unlicensed clips from timeline placement", () => {
+    expect(() =>
+      placeStockShots(
+        [candidate({ shotId: "s1" })],
+        new Map([["s1", unlicensedClip()]]),
+        [],
+      ),
+    ).toThrow(StockLicenseError);
+  });
+
+  it("places licensed clips (gate is transparent when provenance exists)", () => {
+    const placements = placeStockShots(
+      [candidate({ shotId: "s1" })],
+      new Map([["s1", CLIP]]),
+      [],
+    );
+    expect(placements).toHaveLength(1);
+    expect(placements[0]!.clip.license.kind).toBe("pexels-license");
+  });
+});
+
+describe("license-safe placeholder (no binary committed)", () => {
+  it("marks provenance as placeholder + unknown", () => {
+    const clip = createLicenseSafePlaceholder({
+      id: "stock-s3-city",
+      providerId: "pexels",
+      sourceUrl: "https://www.pexels.com/video/city-night-12345/",
+      durationSeconds: 6,
+      attribution: "Pexels contributor (to credit after license check)",
+    });
+    expect(clip.acquisition).toBe("placeholder");
+    expect(clip.license.kind).toBe("unknown");
+    expect(clip.license.sourceUrl).toBe(
+      "https://www.pexels.com/video/city-night-12345/",
+    );
+    expect(clip.license.verifiedAt).toBeTruthy();
+    // The placeholder itself must NOT pass the license gate — it stands in
+    // for a download that has not happened yet.
+    expect(isLicenseSafe(clip)).toBe(false);
+  });
+
+  it("records sha256 when a real cleared download replaces it", () => {
+    const clip = createLicenseSafePlaceholder({
+      id: "stock-s3-city",
+      providerId: "pixabay",
+      sourceUrl: "https://pixabay.com/videos/ocean-waves-999/",
+      durationSeconds: 4,
+    });
+    const cleared: StockClip = {
+      ...clip,
+      url: "media/projects/S01E01/stock/s3_city.mp4",
+      acquisition: "manual-download",
+      license: {
+        ...clip.license,
+        kind: "pixabay-license",
+        licenseUrl: "https://pixabay.com/service/license-summary/",
+        sha256: "abc123",
+        verifiedAt: "2026-08-28T12:00:00Z",
+      },
+    };
+    expect(isLicenseSafe(cleared)).toBe(true);
+    expect(cleared.license.sha256).toBe("abc123");
   });
 });
 

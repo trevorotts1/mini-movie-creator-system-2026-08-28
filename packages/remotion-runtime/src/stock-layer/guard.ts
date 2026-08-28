@@ -1,7 +1,8 @@
-import type {
-  StockClip,
-  StockPlacementCandidate,
-  StockProviderId,
+import {
+  isLicenseSafe,
+  type StockClip,
+  type StockPlacementCandidate,
+  type StockProviderId,
 } from "./types.js";
 
 /**
@@ -99,6 +100,32 @@ export function assertStockAllowed(
       shotId,
       result.offendingCharacterIds ?? [],
     );
+  }
+}
+
+/** Error thrown when an unlicensed/unprovenanced clip reaches placement. */
+export class StockLicenseError extends Error {
+  readonly clipId: string;
+  readonly shotId: string;
+
+  constructor(clipId: string, shotId: string) {
+    super(
+      `Stock clip "${clipId}" for shot "${shotId}" has no license-safe provenance (license.kind "unknown" or missing); resolve the license before placement (spec §19/§29)`,
+    );
+    this.name = "StockLicenseError";
+    this.clipId = clipId;
+    this.shotId = shotId;
+  }
+}
+
+/**
+ * Assert a resolved clip carries license-safe provenance before it may be
+ * placed on the timeline (spec §29 media provenance). Throws
+ * `StockLicenseError` for `unknown`/missing license records.
+ */
+export function assertLicenseSafe(clip: StockClip, shotId: string): void {
+  if (!isLicenseSafe(clip)) {
+    throw new StockLicenseError(clip.id, shotId);
   }
 }
 
