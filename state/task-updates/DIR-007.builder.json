@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-007",
+  "phase": "BUILDER_DONE",
+  "commit": "e3aaf16",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/script-revision -> 17/17 PASS (1 file); npx tsc --noEmit -p packages/scene-intelligence/tsconfig.json -> clean",
+  "notes": "Script revision loop: critic findings -> targeted revision -> re-criticize; bounded by configurable maxIterations (default 3) with stop reasons converged/max_iterations/no_progress; versioned finding schema, severity-threshold actionability, scene-targeted scope, audit trail; 17 tests incl. fixture convergence test.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:30:00Z"
+}
