@@ -1,7 +1,7 @@
 {
   "taskId": "CORE-014",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "50c20d1",
   "testsRun": "npx vitest run packages/core/src/recovery -> 2 files, 18/18 passed (exit 0); tsc --noEmit -p tsconfig.base.json -> exit 0; kill -9 crash test verified non-vacuous via 10-iteration SIGKILL probe (tmp litter after 5/10 kills, checkpoint parseable 10/10)",
   "notes": "Recovery checkpoint service in packages/core/src/recovery/ (atomic-write.ts, checkpoint-schema.ts, checkpoint.ts, index.ts + 2 test files, 18 tests); state/ writers = checkpoint.schema.json (JSON Schema draft 2020-12, schemaVersion 1) + state/README.md documenting runbook section 5 field set, atomic temp+rename writes, reload of ready/active/qc/blocked/mergeQueue buckets via toResumeView; package barrel packages/core/src/index.ts untouched (integration-owned); local atomic-write copy avoids cross-task dependency on CORE-013 idempotency (integration may unify).",
   "blockers": [],
