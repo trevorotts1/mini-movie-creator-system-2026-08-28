@@ -1,9 +1,9 @@
 {
   "taskId": "CHAR-002",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "bda71d1678a17e15245b10754d2d0600ab241c11",
   "testsRun": "npx vitest run packages/character-library/src/identity-asset -> 18 passed (18); npx tsc --noEmit -p packages/character-library/tsconfig.json -> clean",
-  "notes": "identity-asset: full spec §9 canonical record (16 fields incl. dimensions split w/h, nullable GHL linkage until archival), createIdentityAsset + state lifecycle DRAFT→REVIEW→APPROVED→CANONICAL→RETIRED+REJECTED, IDENT_ASSET_ ID generator (1000-unique test), pure cache resolve/clear; root barrel left to CHAR-001 (package lead).",
+  "notes": "identity-asset: full spec \u00a79 canonical record (16 fields incl. dimensions split w/h, nullable GHL linkage until archival), createIdentityAsset + state lifecycle DRAFT\u2192REVIEW\u2192APPROVED\u2192CANONICAL\u2192RETIRED+REJECTED, IDENT_ASSET_ ID generator (1000-unique test), pure cache resolve/clear; root barrel left to CHAR-001 (package lead).",
   "blockers": [],
   "updatedAt": "2026-08-28T13:55:00Z"
 }
