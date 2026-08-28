@@ -1,7 +1,7 @@
 {
   "taskId": "REC-001",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "874c26c5a46b6d049d94a36092fe15029597fb9a",
   "testsRun": "npx vitest run packages/core/src/recovery -> 18/18 PASS (exit 0); npx vitest run scripts/orchestration/checkpoint.test.ts -> 25/25 PASS x3 runs (exit 0); tsx scripts/orchestration/checkpoint.ts --selftest -> CHECKPOINT SELFTEST PASS (exit 0); npx vitest run (full repo regression) -> 433/433 PASS; npx tsc --noEmit packages/core + scripts/orchestration/checkpoint*.ts clean",
   "notes": "scripts/orchestration/checkpoint.ts wiring layer over CORE-014 CheckpointService: spec §28 cadence events (material-transition, pre/post-compact, pre/post-batch-merge, pre-restart, session-end, after-recovery, watchdog-cycle), cross-process checkpoint.lock (mtime-stale takeover, token-guarded release), atomic write verified under 20 concurrent in-process + 6 concurrent OS-process writers, syncFromTasks reconciliation of state/ writers, CLI (--event/--sync/--selftest) for hooks REC-002..007 and loops REC-008/009; vitest.config.ts includes scripts/** tests. Note: tsx runner required (npx-cached tsx at ~/.npm/_npx/fd45a72a545557e9) — Node 26 strip-types does not resolve .js specifiers; blockers: none.",
   "blockers": [],
