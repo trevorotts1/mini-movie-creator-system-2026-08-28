@@ -34,3 +34,28 @@ export {
   type Repository,
   type RowMapper,
 } from "./repositories/index.js";
+
+export {
+  SqliteProjectRepository,
+  SqliteSeriesRepository,
+  SqliteEpisodeRepository,
+  formatEpisodeCode,
+  isValidAspectRatio,
+  ValidationError as SchemaValidationError,
+  projectSchemaMigrations,
+  type Project,
+  type ProjectKind,
+  type ProjectStatus,
+  type ProjectRepository,
+  type CreateProjectInput,
+  type UpdateProjectPatch,
+  type Series,
+  type SeriesRepository,
+  type CreateSeriesInput,
+  type UpdateSeriesPatch,
+  type Episode,
+  type EpisodeStatus,
+  type EpisodeRepository,
+  type CreateEpisodeInput,
+  type UpdateEpisodePatch,
+} from "./repositories/projects/index.js";

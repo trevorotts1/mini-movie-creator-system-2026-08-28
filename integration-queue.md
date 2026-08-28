@@ -27,13 +27,13 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 | Queue ID | Task ID | Branch / Worktree | Builder | Checker | QC Verdict | Target Branch | Status | Landed SHA |
 |---|---|---|---|---|---|---|---|---|
 | IQ-000 | WF00-01 | `main` (direct bootstrap) | ControlPlane | Self | PASS | `origin/main` | READY_TO_MERGE | Pending |
-
-| IQ-002 | CORE-001 | task/TASK-CORE-001-upstream-audit | CORE | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
-| IQ-003 | CAP-004 | task/TASK-CAP-004-reference-count | CAP | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
 | IQ-004 | CAP-007 | task/TASK-CAP-007-llm-registry | CAP | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
 | IQ-005 | CAP-009 | task/TASK-CAP-009-providers-verify | CAP | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
 | IQ-006 | CAP-010 | task/TASK-CAP-010-observed-overrides | CAP | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
-| IQ-007 | CHAR-007 | task/CHAR-007-wardrobe-versions | CHAR | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
 | IQ-008 | KIE-001 | task/TASK-KIE-001-kie-client | KIE | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
+| IQ-009 | CORE-005 | task/CORE-005-character-schema | CORE | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
+| IQ-010 | CORE-006 | task/CORE-006-scene-shot-schema | CORE | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
+| IQ-011 | CORE-007 | task/CORE-007-job-asset-schema | CORE | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
+| IQ-012 | CHAR-011 | task/CHAR-011-location-library | CHAR | Sonnet | PASS | `integration` | CONFLICT_REBASE | Pending |
 
 *(Batch merger agent processes admitted rows sequentially, executes git merge, tests on target branch, and updates `state/checkpoint.json`.)*

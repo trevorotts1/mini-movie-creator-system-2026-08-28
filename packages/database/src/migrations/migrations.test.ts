@@ -185,12 +185,18 @@ describe("migration ordering and identity", () => {
 });
 
 describe("shipped MIGRATIONS registry (000-init)", () => {
-  it("applies twice cleanly on a temp file DB and stays empty (band 000_ is framework-only)", () => {
+  // Band 000_ stays framework-only; later bands (010_, 020_, …) append to the
+  // shipped registry as their owning tasks land, so this test stays
+  // registry-agnostic: whatever is shipped, applying twice is idempotent and
+  // the ledger records exactly the ids applied, ascending.
+  it("applies twice cleanly and idempotently on a temp file DB", () => {
     const db = freshDb();
+    const first = migrate(db, MIGRATIONS);
+    expect(first.applied).toEqual([...first.applied].sort());
     expect(migrate(db, MIGRATIONS).applied).toEqual([]);
-    expect(migrate(db, MIGRATIONS).applied).toEqual([]);
+    expect(db.all(`SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY id`).map((r) => String(r["id"]))).toEqual(first.applied);
     const tables = db.all("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").map((r) => String(r["name"]));
-    expect(tables).toEqual([MIGRATIONS_TABLE]);
+    expect(tables).toContain(MIGRATIONS_TABLE);
     db.close();
   });
 });

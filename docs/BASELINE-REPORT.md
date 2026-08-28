@@ -412,3 +412,41 @@ then SFX audition (`python tools/mix_sfx.py <plan>`), then optional music bed
 | Render outputs | remotion/out/qa/*.png (13 comps verified, 1 fails per PF-1) |
 | Production repo | /Users/blackceomacmini/Projects/mini-movie-creator-system-2026-08-28 — read-only for this agent; only this report written (docs/BASELINE-REPORT.md) |
 | Production repo HEAD matches upstream | YES (773054b) |
+| Production repo HEAD matches upstream | YES (773054b) |
+---
+
+## 14. Upstream Audit — Package/Script Disposition Map (CORE-001, 2026-08-28)
+
+CORE-001 audited every upstream package, script, tool, skill, and media asset and
+recorded a keep | rewrite | drop disposition with reason in
+**docs/upstream-audit/preservation-map.md**.
+
+Verdicts:
+
+- **Everything upstream is kept or evolved — zero drops.** 11 Python tools, 3
+  Remotion scripts, 5 skills, 16 lib kits, 14 compositions, 3 data contracts
+  (`beats.json`, `character.json`, `sfx-plan.json`), and all `media/library/` +
+  `media/projects/` assets carry forward unchanged; `README.md` and `.env.example`
+  are the only `rewrite` targets (spec §33 docs; spec §26 env names), and the
+  upstream stub root `package-lock.json` is superseded by the MMCS pnpm scaffold.
+- **Scope demotions (tools stay functional, engine-of-record changes):**
+  `gen_voice.py` (ElevenLabs → Fish Audio §16), `gen_image.py` (Gemini →
+  capability-registry-selected image path §15), `gen_clip.py` (fal → Agnes/Kie §5).
+  Their env keys stay in `.env.example` per spec §26.
+- **PF-1 carried forward:** Short1Chess unrenderable — 12 chess SVGs missing
+  (`media/library/chess/` never committed upstream; `chess.tsx:213` references
+  them). MMCS fix owned by VID-001: commit a standard 12-piece SVG set (preferred)
+  or swap to inline SVG. Validated live: directory still absent on this tree.
+- **PF-2 carried forward:** 3 high npm audit findings (fast-uri, nanoid ≤3.3.17,
+  postcss ≤8.5.22) — `npm audit fix` inside `remotion/` scheduled after the
+  baseline pin per spec §2.
+- **Spec §2 reconciliation:** all ten verified baseline facts match the live tree —
+  Remotion 4.0.486, 14 comps @1080x1920@30, 13/14 smoke PASS, contracts present,
+  registry/frame-QA/render-scale facts, media split + gitignore rules, no upstream
+  test framework. No contradictions; no decisions.md deviation required.
+- **Validation:** `node docs/upstream-audit/validate.mjs` — 60/60 checks PASS
+  (inventory counts + per-item coverage + PF-1/PF-2 presence + live-tree
+  cross-check). Acceptance command passes: `test -s
+  docs/upstream-audit/preservation-map.md && grep -q "PF-1"
+  docs/upstream-audit/preservation-map.md`.
+
