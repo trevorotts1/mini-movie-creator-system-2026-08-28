@@ -117,14 +117,29 @@ function pad3(n: number): string {
   return String(n).padStart(3, "0");
 }
 
+/**
+ * Does the prose mention the character? Full name first, then any name part
+ * of at least 4 characters (avoids matching stop-word names like "The").
+ */
+function nameAppearsInText(name: string, text: string): boolean {
+  if (text.includes(name)) return true;
+  return name
+    .split(/\s+/)
+    .filter((part) => part.length >= 4)
+    .some((part) => text.includes(part));
+}
+
 /** Parse heading "INT. OFFICE - DAY" into its three parts. */
 export function parseSceneHeading(heading: string): {
   interiorExterior: "INT" | "EXT";
   location: string;
   timeOfDay: string;
 } {
+  // Greedy location: sluglines may carry sublocations ("INT. OFFICE - LAB - DAY");
+  // splitting on the LAST " - " keeps them in the location and the time-of-day
+  // as the final segment.
   const match =
-    /^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s+(.+?)\s+-\s+(.+)$/i.exec(heading.trim());
+    /^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s+(.+)\s+-\s+(.+)$/i.exec(heading.trim());
   if (!match) {
     throw new ScreenplayParseError(
       `scene heading must match "INT./EXT. LOCATION - TIME", got: ${JSON.stringify(heading)}`,
@@ -155,10 +170,13 @@ export function parseScreenplayResponse(
     responseCharacterCount: number;
     generatedAt: string;
     fallbackTitle: string;
+    fallbackLogline: string;
   },
 ): Screenplay {
   const title = requireStringOrFallback(raw, "title", context.fallbackTitle);
-  const logline = requireStringOrFallback(raw, "logline", "");
+  // Logline: prefer the writer's version; fall back to the approved concept's
+  // (an omitted logline is not a structural violation — the concept carries it).
+  const logline = requireStringOrFallback(raw, "logline", context.fallbackLogline);
   const scenesRaw = requireArray(raw, "scenes");
   const charactersRaw = requireArray(raw, "characters");
   if (scenesRaw.length === 0) {
@@ -179,8 +197,13 @@ export function parseScreenplayResponse(
     const heading = requireString(scene, "heading");
     const parts = parseSceneHeading(heading);
 
-    const dialogueRaw = Array.isArray(scene.dialogue) ? scene.dialogue : [];
-    const dialogue: ScreenplayDialogueLine[] = dialogueRaw.map(
+    const dialogueRaw = scene.dialogue;
+    if (dialogueRaw !== undefined && !Array.isArray(dialogueRaw)) {
+      throw new ScreenplayParseError(
+        `scenes[${index}] (${sceneId}) field "dialogue" must be an array when present`,
+      );
+    }
+    const dialogue: ScreenplayDialogueLine[] = (dialogueRaw ?? []).map(
       (lineEntry, lineIndex) => {
         if (
           lineEntry === null ||
@@ -221,7 +244,7 @@ export function parseScreenplayResponse(
 
     const synopsisRaw = scene.synopsis;
     const synopsis =
-      typeof synopsisRaw === "string" ? synopsisRaw : "";
+      typeof synopsisRaw === "string" ? synopsisRaw.trim() : "";
     if (synopsis === "" && dialogue.length === 0) {
       throw new ScreenplayParseError(
         `scenes[${index}] (${sceneId}) must have at least one of synopsis or dialogue`,
@@ -252,7 +275,16 @@ export function parseScreenplayResponse(
       synopsis,
       characterNames: Array.from(
         new Set([
-          ...dialogue.map((line) => line.characterName),
+          ...characters
+            .filter(
+              (character) =>
+                (synopsis !== "" &&
+                  nameAppearsInText(character.name, synopsis)) ||
+                dialogue.some(
+                  (line) => line.characterName === character.name,
+                ),
+            )
+            .map((character) => character.name),
         ]),
       ),
       dialogue,
@@ -313,10 +345,16 @@ function parseCharacters(
       }
       seen.add(name);
       const roleRaw = character.role;
-      const role =
-        roleRaw === "lead" || roleRaw === "supporting" || roleRaw === "cameo"
-          ? roleRaw
-          : "supporting";
+      const validRoles = ["lead", "supporting", "cameo"] as const;
+      if (
+        typeof roleRaw !== "string" ||
+        !(validRoles as readonly string[]).includes(roleRaw)
+      ) {
+        throw new ScreenplayParseError(
+          `characters[${index}] field "role" must be one of lead|supporting|cameo, got ${JSON.stringify(roleRaw)}`,
+        );
+      }
+      const role = roleRaw as "lead" | "supporting" | "cameo";
       const description =
         typeof character.description === "string" ? character.description : "";
       const isNew = character.isNew === true;

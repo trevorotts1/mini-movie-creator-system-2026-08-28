@@ -168,6 +168,8 @@ describe("composeScreenplayPrompt", () => {
     expect(messages[1]!.content).toContain("The Missing Ledger");
     expect(messages[1]!.content).toContain("Monica Bennett");
     expect(messages[1]!.content).toContain('"suggestedScenes": 8');
+    // The output contract names its schema version (was accepted but unused).
+    expect(messages[0]!.content).toContain(SCREENPLAY_SCHEMA_VERSION);
   });
 
   it("prompt character count matches the exact joined length (spec §6)", () => {
@@ -231,6 +233,22 @@ describe("parseSceneHeading", () => {
     });
   });
 
+  it("keeps sublocations in the location, time-of-day is the last segment", () => {
+    // Sluglines routinely carry sublocations ("INT. OFFICE - LAB - DAY");
+    // splitting on the FIRST " - " used to swallow "OPEN OFFICE" into the
+    // time-of-day field.
+    expect(parseSceneHeading("INT. HALLORAN ACCOUNTING - OPEN OFFICE - DAY")).toEqual({
+      interiorExterior: "INT",
+      location: "HALLORAN ACCOUNTING - OPEN OFFICE",
+      timeOfDay: "DAY",
+    });
+    expect(parseSceneHeading("EXT. DOCKS - WAREHOUSE ROOF - NIGHT")).toEqual({
+      interiorExterior: "EXT",
+      location: "DOCKS - WAREHOUSE ROOF",
+      timeOfDay: "NIGHT",
+    });
+  });
+
   it("rejects malformed headings", () => {
     expect(() => parseSceneHeading("Office, day")).toThrow(ScreenplayParseError);
     expect(() => parseSceneHeading("INT OFFICE DAY")).toThrow(ScreenplayParseError);
@@ -248,6 +266,7 @@ describe("parseScreenplayResponse", () => {
       responseCharacterCount: raw === null ? 0 : 456,
       generatedAt: "2026-08-28T12:00:00.000Z",
       fallbackTitle: "The Missing Ledger",
+      fallbackLogline: "approved-concept logline",
     });
     expect(screenplay.scenes[0]!.sceneId).toBe("SC001");
     expect(screenplay.scenes[1]!.sequenceIndex).toBe(2);
@@ -256,7 +275,7 @@ describe("parseScreenplayResponse", () => {
     expect(screenplay.metadata.schemaVersion).toBe(SCREENPLAY_SCHEMA_VERSION);
   });
 
-  it("derives scene characterNames from dialogue", () => {
+  it("derives scene characterNames from dialogue and action prose", () => {
     const raw = parseWriterJson(goodWriterJson());
     const screenplay = parseScreenplayResponse(raw, {
       conceptId: "CONC_TEST_001",
@@ -266,9 +285,11 @@ describe("parseScreenplayResponse", () => {
       responseCharacterCount: 1,
       generatedAt: "2026-08-28T12:00:00.000Z",
       fallbackTitle: "The Missing Ledger",
+      fallbackLogline: "approved-concept logline",
     });
     expect(screenplay.scenes[0]!.characterNames).toEqual(["Monica Bennett"]);
-    expect(screenplay.scenes[1]!.characterNames).toEqual([]);
+    // Action-only scene: cast present in the prose, no dialogue required.
+    expect(screenplay.scenes[1]!.characterNames).toEqual(["Marcus Webb"]);
   });
 
   it("rejects dialogue speakers missing from the cast", () => {
@@ -299,6 +320,58 @@ describe("parseScreenplayResponse", () => {
     expect(() => parseScreenplayResponse(empty, baseContext())).toThrow(
       /at least one of synopsis or dialogue/,
     );
+  });
+
+  it("rejects whitespace-only synopsis when no dialogue exists", () => {
+    const blank = JSON.parse(goodWriterJson()) as Record<string, unknown>;
+    const scene0 = (blank.scenes as Record<string, unknown>[])[0] as Record<string, unknown>;
+    scene0.synopsis = "   \n  ";
+    scene0.dialogue = [];
+    expect(() => parseScreenplayResponse(blank, baseContext())).toThrow(
+      /at least one of synopsis or dialogue/,
+    );
+  });
+
+  it("rejects a dialogue field present but not an array (no silent repair)", () => {
+    const bad = JSON.parse(goodWriterJson()) as Record<string, unknown>;
+    ((bad.scenes as Record<string, unknown>[])[0] as Record<string, unknown>).dialogue =
+      "Monica: oops, prose instead of array";
+    expect(() => parseScreenplayResponse(bad, baseContext())).toThrow(
+      /"dialogue" must be an array when present/,
+    );
+  });
+
+  it("rejects invalid cast roles instead of silently downgrading", () => {
+    const bad = JSON.parse(goodWriterJson()) as Record<string, unknown>;
+    const cast = bad.characters as Record<string, unknown>[];
+    (cast[1] as Record<string, unknown>).role = "protagonist";
+    expect(() => parseScreenplayResponse(bad, baseContext())).toThrow(
+      /role" must be one of lead\|supporting\|cameo/,
+    );
+  });
+
+  it("derives characterNames from action prose and dialogue together", () => {
+    const raw = parseWriterJson(goodWriterJson());
+    const screenplay = parseScreenplayResponse(raw, baseContext());
+    // Scene 2 has no dialogue; Marcus is present via the synopsis text.
+    expect(screenplay.scenes[1]!.characterNames).toEqual(["Marcus Webb"]);
+    // Scene 1 mentions Monica in synopsis AND dialogue — deduped.
+    expect(screenplay.scenes[0]!.characterNames).toEqual(["Monica Bennett"]);
+  });
+
+  it("falls back to the approved concept logline when the writer omits it", () => {
+    // An omitted logline is not a structural violation — the approved concept
+    // carries one; a missing logline used to hard-fail the whole response.
+    const noLogline = JSON.parse(goodWriterJson()) as Record<string, unknown>;
+    delete noLogline.logline;
+    const screenplay = parseScreenplayResponse(noLogline, baseContext());
+    expect(screenplay.logline).toBe(baseContext().fallbackLogline);
+  });
+
+  it("still carries the writer logline when present", () => {
+    const raw = parseWriterJson(goodWriterJson());
+    const screenplay = parseScreenplayResponse(raw, baseContext());
+    expect(screenplay.logline).toContain("ledger is cooked");
   });
 });
 
@@ -428,6 +501,32 @@ describe("generateScreenplay — failure normalization", () => {
       generateScreenplay(approvedConcept(), writer, { now: NOW }),
     ).rejects.toBeInstanceOf(ScreenplayParseError);
   });
+
+  it("normalizes a null response from a misbehaving client", async () => {
+    const writer = mockWriter(() => null as unknown as WriterModelResponse);
+    await expect(
+      generateScreenplay(approvedConcept(), writer, { now: NOW }),
+    ).rejects.toBeInstanceOf(WriterModelError);
+  });
+
+  it("rejects an out-of-range temperature before any writer call", async () => {
+    const writer = mockWriter(() => ({ text: goodWriterJson() }));
+    await expect(
+      generateScreenplay(approvedConcept(), writer, { now: NOW, temperature: 3 }),
+    ).rejects.toBeInstanceOf(WriterModelError);
+    expect(writer.requests).toHaveLength(0);
+  });
+
+  it("rejects a non-string reasoningEffort before any writer call", async () => {
+    const writer = mockWriter(() => ({ text: goodWriterJson() }));
+    await expect(
+      generateScreenplay(approvedConcept(), writer, {
+        now: NOW,
+        reasoningEffort: 7 as unknown as string,
+      }),
+    ).rejects.toBeInstanceOf(WriterModelError);
+    expect(writer.requests).toHaveLength(0);
+  });
 });
 
 /** Helper: exact character count of the joined messages (mirrors generator). */
@@ -447,5 +546,7 @@ function baseContext() {
     responseCharacterCount: 1,
     generatedAt: "2026-08-28T12:00:00.000Z",
     fallbackTitle: "The Missing Ledger",
+    fallbackLogline:
+      "When an accountant discovers her firm's ledger is cooked, she must expose the fraud before she becomes the next entry.",
   };
 }

@@ -12,10 +12,7 @@
  * generator never parses instructions out of story text.
  */
 
-import type {
-  ApprovedConcept,
-  ConceptCharacterSeed,
-} from "./types.js";
+import type { ApprovedConcept } from "./types.js";
 import type { WriterModelMessage } from "./writer-model.js";
 
 /** Reasonable bounds on scene count guidance derived from target runtime. */
@@ -73,12 +70,6 @@ export function validateConceptShape(concept: ApprovedConcept): void {
   suggestedSceneCount(concept.targetRuntimeSeconds);
 }
 
-/** Serialize one character seed into the payload block. */
-function renderCharacterSeed(seed: ConceptCharacterSeed): string {
-  const isNew = seed.isNew ? " new-character" : "";
-  return `- name: ${seed.name}${isNew}\n  description: ${seed.description ?? ""}`;
-}
-
 /** Compose the exact system + user messages for one screenplay generation. */
 export function composeScreenplayPrompt(
   concept: ApprovedConcept,
@@ -91,7 +82,7 @@ export function composeScreenplayPrompt(
     "You convert ONE approved concept into a structured screenplay.",
     "",
     "OUTPUT CONTRACT — respond with ONLY a JSON object (no markdown fence, no",
-    "commentary) matching exactly this schema:",
+    `commentary) matching exactly this schema (contract version ${options.schemaVersion}):`,
     "{",
     '  "title": string,',
     '  "logline": string,',

@@ -89,7 +89,25 @@ export async function generateScreenplay(
     options.reasoningEffort === undefined
       ? "MAX_REASONING"
       : options.reasoningEffort;
+  if (
+    reasoningEffort !== null &&
+    (typeof reasoningEffort !== "string" || reasoningEffort.trim() === "")
+  ) {
+    throw new WriterModelError(
+      `reasoningEffort must be a non-empty string or null, got ${JSON.stringify(reasoningEffort)}`,
+    );
+  }
   const temperature = options.temperature ?? 0.4;
+  if (
+    typeof temperature !== "number" ||
+    !Number.isFinite(temperature) ||
+    temperature < 0 ||
+    temperature > 2
+  ) {
+    throw new WriterModelError(
+      `temperature must be a finite number in [0, 2], got ${JSON.stringify(temperature)}`,
+    );
+  }
   const modelId = options.writerModelId ?? "mmcs-writer/default";
 
   let response;
@@ -107,7 +125,17 @@ export async function generateScreenplay(
     );
   }
 
+  if (response === null || typeof response !== "object") {
+    throw new WriterModelError(
+      "writer model returned no response object",
+    );
+  }
   const responseText = response.text;
+  if (typeof responseText !== "string") {
+    throw new WriterModelError(
+      "writer model response must carry a string `text` field",
+    );
+  }
   const writerModelId = response.modelId ?? modelId;
   const raw = parseWriterJson(responseText);
 
@@ -120,5 +148,6 @@ export async function generateScreenplay(
     responseCharacterCount: responseText.length,
     generatedAt: now(),
     fallbackTitle: concept.title,
+    fallbackLogline: concept.logline,
   });
 }
