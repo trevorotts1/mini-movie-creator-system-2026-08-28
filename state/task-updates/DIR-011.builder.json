@@ -1,7 +1,7 @@
 {
   "taskId": "DIR-011",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "aa410d4",
   "testsRun": "npx vitest run packages/scene-intelligence/src/scene-master -> 21 passed (21), 0 failed; npx tsc --noEmit -p packages/scene-intelligence clean; full-worktree npx vitest run -> 377 passed, 3 files fail on pre-existing missing deps (commander, zod) absent from this worktree's node_modules — unrelated to scene-master",
   "notes": "scene-master/: classifySceneMasterNeed flags important multi-character scenes (multi-character + importance score from flag/dialogue/two-shots); SceneMasterSpec carries identities (identity+hair+wardrobe versions), room/location, lighting, props, positions (1:1 with identities); createInternalStoryboardImage stamps NON_PROVIDER_INPUT and isProviderEligibleImage/assertNotProviderInput/filterProviderEligibleImages enforce internal storyboards never reach providers; DRAFT specs ineligible, only approveSceneMasterSpec flips eligibility",
   "blockers": [],
