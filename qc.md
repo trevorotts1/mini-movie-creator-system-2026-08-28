@@ -99,3 +99,5 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T~20:00Z | REC-009 | REC-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
 | 2026-08-28T~20:00Z | VID-001 | VID-001 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
 | 2026-08-28T~20:00Z | VID-015 | VID-015 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T19:38:52Z | VID-008 | regression | merger | REVERTED | 3+1 (typecheck regression surfaced post-merge) | 0 | QC_FIXING — typecheck regression: GraphicsViews.tsx(29,26) TS2345 FrameSize->number; invisible on branch because its tsconfig lacked |
+| 2026-08-28T19:38:52Z | SKL-002 | regression | merger | REVERTED | 0+1 (typecheck regression surfaced post-merge) | 0 | QC_FIXING — typecheck regression: integrations/claude/src/project-install.test.ts uses node: imports + import.meta.url without node  |
