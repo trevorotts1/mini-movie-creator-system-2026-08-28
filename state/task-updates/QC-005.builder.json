@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-005",
+  "phase": "BUILDER_DONE",
+  "commit": "3a3f548",
+  "testsRun": "npx vitest run packages/qc/src/route -> 1 file, 22/22 passed; npx tsc --noEmit -p packages/qc/tsconfig.json -> clean; real-ffmpeg smoke (testsrc 2s@10fps): default ffprobe+extract path probed {duration 2, fps 10} and verified 4 PNGs (qc-frame-f0000/f0005/f0010/f0014)",
+  "notes": "Route selection + both branches in packages/qc/src/route/: selectQcRoute reads structural QcVisionModelProfile (drops into CAP-002 ReasoningModelCapabilitySeed: videoInput -> video-direct, vision-only -> extracted-frames, neither -> unavailable mapped to human REVIEW per spec 20; undocumented capability reads as false; forceVideoExtraction demotes video-direct but never invents capability); frames.ts FFmpeg fallback with upstream frames.mjs discipline (integer frame numbers, <stem>-f<NNNN>.png, one ffmpeg call per frame with exact -ss seek, every PNG verified exists/non-empty/PNG-magic, injectable probeFacts+dumpFrame ports, defaults run real ffprobe/ffmpeg); runShotReview executes the decided route with injected video/frame reviewer ports, returns review:null on unavailable. NOTE for merger: packages/qc/src/index.ts is scaffold-only on integration and outside my owned paths — wire 'export * from \"./route/index.js\"' (or equivalent barrel) when QC-001/QC-002 land, since all sibling modules need one index merge.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:50:00Z"
+}
