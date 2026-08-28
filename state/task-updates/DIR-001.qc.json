@@ -1,7 +1,7 @@
 {
   "taskId": "DIR-001",
   "phase": "PASS",
-  "commit": "41068c763642b7245c97b4c6e61e54dd3ea62384",
+  "commit": "c2bcdf6b2fd0d353e391e7a4775b7f79a7407a12",
   "checksRun": "npx vitest run packages/scene-intelligence/src/intake (27 passed); npx vitest run full repo (435 passed, 25 files); npx tsc --noEmit packages/scene-intelligence (clean); git grep secret patterns packages/scene-intelligence/src (rc=1 no match); byte-scan for stray control chars (none)",
   "defectsFound": 3,
   "defectsFixed": 3,
