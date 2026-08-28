@@ -1,0 +1,14 @@
+{
+  "taskId": "CAP-009",
+  "phase": "PASS",
+  "commit": "677f00dab4482fc3a31b9e57d3e74f9fdac027a6",
+  "checksRun": "npx vitest run packages/capability-registry/src/verify apps/cli/src/commands/providers-verify (24/24 PASS, JSON-reporter verified); full-suite vitest run (exit 0); npx tsc --noEmit -p packages/capability-registry and -p apps/cli (clean); git merge-tree vs origin/integration (no conflicts); security scan of owned paths (no secrets, no network, no exec, env-presence-only)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Provider verify verified green: 24/24 tests (17 verify + 7 CLI wiring), typecheck clean, transient-never-rewrites-VERIFIED rule tested at throw/ok:false/timeout/per-field levels, applyOverrides immutable + verifiedFacts protected, env loader exposes presence only; merge-tree vs integration clean (index.ts one-line exports merge trivially).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T14:55:00Z"
+}
