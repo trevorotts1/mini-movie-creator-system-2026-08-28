@@ -1,7 +1,7 @@
 {
   "taskId": "GHL-003",
   "phase": "PASS",
-  "commit": "6a51a1d504bc90b86718c29a53b4630e7e37fa34",
+  "commit": "11753dabbdc3bf4692e4515a10518e8ab2d07a52",
   "checksRun": "npx vitest run --config packages/media-storage/src/ghl/folders/vitest.config.mts; npx tsc --noEmit -p packages/media-storage/tsconfig.json",
   "defectsFound": 4,
   "defectsFixed": 4,
