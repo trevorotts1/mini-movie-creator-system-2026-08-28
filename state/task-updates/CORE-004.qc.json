@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-004",
+  "phase": "PASS",
+  "commit": "0bf2d70",
+  "checksRun": "npx vitest run packages/database/src/repositories/projects => 20 passed; npx vitest run packages/database => 5 files, 56 passed; npx tsc --noEmit (packages/database) => 0 errors; lint: no eslint config exists in repo (nothing to run); security pass on owned paths (SQL parameterized, error-only interpolation, no fs/secrets/retries) => clean.",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed CORE-003-owned stale shipped-registry test (registry-agnostic formulation matching CORE-005/006/007), added series/project consistency + unknown-series guards to episode create (denormalized project_id corruption), fixed explicit-null aspectRatioOverride storing '16:9' instead of NULL inherit; regression tests added; 56/56 green.",
+  "blockers": []
+}

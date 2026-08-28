@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-005",
+  "phase": "PASS",
+  "commit": "74dca85",
+  "checksRun": "vitest run packages/providers/src/kie/wan (34/34 passing in wan.test.ts) && pnpm -r run typecheck (clean)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T17:10:00Z",
+  "notes": "Wan 3.0 capability profile, validation, request building, cost estimator, adapter verified clean against live schema/pricing/limits; all 34 tests pass, typecheck clean.",
+  "blockers": []
+}

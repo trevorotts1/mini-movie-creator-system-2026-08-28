@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-007",
+  "phase": "PASS",
+  "commit": "e1bf0112c3eb15b15ef7c3222ccd5ec3ce00ace8",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/script-revision (25/25 PASS); npx vitest run packages/scene-intelligence (25/25 PASS); npx tsc --noEmit in packages/scene-intelligence (exit 0); security grep on owned paths (no eval/exec/fs/env/secrets, no unbounded loops)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:30:00Z",
+  "notes": "Harden validateReport against null/primitive findings (RevisionLoopError, not TypeError), dedupe+filter affectedSceneIds, drop dead lastFindings, fix context pass-through doc; regression tests added; 25/25 green, tsc clean.",
+  "blockers": []
+}

@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-010",
+  "phase": "PASS",
+  "commit": "cfa3225346d405e55a2b8523ea9cc0cb49bfad00",
+  "checksRun": "vitest run packages/media-storage/src/episode-folders (17/17 pass across 2 test suites), tsc --noEmit in packages/media-storage (0 errors), security scan on paths (clean, no secrets/shell injection/unbounded loops)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:50:00Z",
+  "notes": "QC PASS: Series/<Name>/Season 01/S01E01 - <Title>/ subtree ensured, 9 subfolders persisted in SQLite, folderNameOverride honored, idempotent re-run verified green.",
+  "blockers": []
+}

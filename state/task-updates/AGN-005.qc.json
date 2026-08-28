@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-005",
+  "phase": "PASS",
+  "commit": "7a56254",
+  "checksRun": "npx vitest run packages/providers/src/agnes/video/poll (26/26 PASS); npx vitest run packages/providers (66/66 PASS); npx tsc --noEmit (packages/providers, clean); secret/injection/path-traversal grep on owned paths (clean)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Round 2 QC: (1) committed qc.json pointed at dangling sha 308baf7 (reflog amend orphan, on no branch) — re-stamped to the final merge commit; (2) extractUrlExpiration converted 0/negative epoch sentinels to 1970 ISO timestamps — now treated as absent, +1 regression test; (3+4) carried from round 1: providerJobId seam fallback + downstream-state guard, verified against AGN-004's real AgnesVideoJobRecord field names in worktrees/AGN-004.",
+  "blockers": []
+}

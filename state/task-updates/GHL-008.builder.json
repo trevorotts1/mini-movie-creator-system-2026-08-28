@@ -1,0 +1,9 @@
+{
+  "taskId": "GHL-008",
+  "phase": "BUILDER_DONE",
+  "commit": "b6562d705473ff58fad0520a29fb3af81ebdac7c",
+  "testsRun": "npx vitest run packages/media-storage/src/manifest -> 33/33 PASS (2 files); npx tsc --noEmit (packages/media-storage) -> clean; full suite npx vitest run -> 834/834 PASS (43 files) regression green",
+  "notes": "Asset manifest integration at packages/media-storage/src/manifest/ (7 files): spec §19 record types (ASSET_MANIFEST_FIELDS = exactly the 26 fields in spec order) + AssetManifestError; AssetRepository on the SqliteDatabase seam (CRUD + resolve + findByProviderTaskId + findByCharacter, JSON columns serialized at the edge, identity/createdAt immutable on update) — assets table itself owned by CORE-007 band 004_, tests create the identical DDL; MediaStore abstraction (BaseMediaStore/MediaStore: kind, archiveAsset, resolveAsset, getAsset, updateAsset) with injected ingest so no credentials live here; GoHighLevelMediaStore V1 implementation (kind gohighlevel, hosted-first ingest wired to GHL-005 contract with binary fallback per GHL-006 contract carrying the SHA-256 checksum, configuration error when neither wired, idempotent re-archive never re-uploads a record that already carries verified ghlFileId+ghlUrl); acceptance covered: full §19 record written with ghl_file_id/ghl_folder_id/ghl_url/checksum + archivedAt, resolve-after-local-cache-removal test passes via DB (cache file + dir rmSync'd, then resolveAsset returns durable linkage, plus a fresh-connection restart-survival test), unverified ingest results rejected (never ARCHIVED), 33 manifest tests green, full-repo regression 834/834 green",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:45:00Z"
+}

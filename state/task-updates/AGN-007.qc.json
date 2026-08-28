@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-007",
+  "phase": "PASS",
+  "commit": "f889973",
+  "checksRun": "npx vitest run --config packages/providers/src/agnes/profiles/regular/vitest.config.mts (52/52 tests passed across runtime model ID discovery, capability limits, UNKNOWN discipline, detectRegularMode, validateAgnesRegularInput, reference-video path, buildAgnesRegularRequest, submitAgnesRegular, retrieval URL); npx tsc -p tsconfig.base.json --noEmit (clean 0 errors); security pass clean (no secrets, no shell injection, pure validation/builder/adapter logic, strict URL protocol validation http/https/asset).",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "Agnes Video 2.5 regular profile verified: 4–12s duration, ≤5 free-allowance reference images with excess image count calculation, reference-video support exercised in mocked client tests, 720P/960P/2K sizes, prompt ceiling UNKNOWN preserved. 52/52 tests green, tsc clean, security pass clean.",
+  "blockers": []
+}
