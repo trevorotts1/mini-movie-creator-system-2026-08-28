@@ -90,10 +90,18 @@ export class FfprobeVerifier implements MediaVerifier {
         "-show_streams",
         filePath,
       ]);
-      const parsed = JSON.parse(stdout) as {
+      let parsed: {
         format?: { format_name?: string; duration?: string };
         streams?: Array<{ codec_type?: string; codec_name?: string }>;
       };
+      try {
+        parsed = JSON.parse(stdout) as typeof parsed;
+      } catch (cause) {
+        throw new DecodeError(
+          "ffprobe returned non-JSON output",
+          `parse error: ${cause instanceof Error ? cause.message : String(cause)}\n${stdout.slice(0, 500)}`,
+        );
+      }
       const streams = (parsed.streams ?? []).map((s) => ({
         codecType: s.codec_type,
         codecName: s.codec_name,

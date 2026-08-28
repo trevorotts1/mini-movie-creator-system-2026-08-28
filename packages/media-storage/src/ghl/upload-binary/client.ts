@@ -14,7 +14,9 @@
  *  - verifyUrl       → GET <storageUrl> reachability check
  *  - probe/decode    → ffprobe/ffmpeg local verification (verify.ts)
  */
-import type { MediaKind } from "./media-kind.js";
+import { GENERAL_LIMIT_BYTES, VIDEO_LIMIT_BYTES, limitForKind } from "./limits.js";
+
+export { GENERAL_LIMIT_BYTES, VIDEO_LIMIT_BYTES, limitForKind };
 
 export interface DownloadedFile {
   /** Raw bytes of the downloaded asset. */
@@ -82,14 +84,6 @@ export interface VerifyUrlResult {
   status?: number;
   /** URL actually served (e.g. after redirect) for the integrity compare. */
   servedUrl?: string;
-}
-
-/** Size limits in bytes: 25 MB general / 500 MB video (spec §17.4). */
-export const GENERAL_LIMIT_BYTES = 25 * 1024 * 1024;
-export const VIDEO_LIMIT_BYTES = 500 * 1024 * 1024;
-
-export function limitForKind(kind: MediaKind): number {
-  return kind === "video" ? VIDEO_LIMIT_BYTES : GENERAL_LIMIT_BYTES;
 }
 
 /**

@@ -149,6 +149,20 @@ describe("BinaryFallbackUploader — spec §17.4 full fallback sequence", () => 
     expect(verifier.verified[0]!.path.endsWith(".mp4")).toBe(true);
   });
 
+  it("traversal-style name (../x.mp4) is neutralized to a safe temp basename", async () => {
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    const result = await uploader.archive(
+      makeInput(providerUrl, data, { name: "../x.mp4" }),
+    );
+    expect(result.state).toBe("ARCHIVED");
+    // Verifier received a temp path whose basename is x.mp4, never .. escaped.
+    expect(verifier.verified[0]!.path.endsWith("x.mp4")).toBe(true);
+    expect(verifier.verified[0]!.path.includes("..")).toBe(false);
+    // The canonical name is preserved on the upload itself (spec §19).
+    expect(client.uploadCalls[0]!.input.name).toBe("../x.mp4");
+  });
+
   it("uploads the exact downloaded bytes with correct multipart fields", async () => {
     const uploader = new BinaryFallbackUploader({ client, verifier });
     await uploader.archive(makeInput(providerUrl, data));
@@ -196,13 +210,28 @@ describe("BinaryFallbackUploader — failure paths (never mark ARCHIVED)", () =>
     expect(client.uploadCalls).toHaveLength(0);
   });
 
-  it("decode verification failure → no upload attempted", async () => {
+  it("zero-byte download → download-failed (expired-URL empty body never ARCHIVED)", async () => {
+    const url = "https://temp.provider.test/empty.mp4";
+    client.providerAssets.set(url, new Uint8Array(0));
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    await expect(uploader.archive(makeInput(url, new Uint8Array(0)))).rejects.toMatchObject({
+      reason: "download-failed",
+    });
+    expect(client.uploadCalls).toHaveLength(0);
+    expect(verifier.verified).toHaveLength(0);
+  });
+
+  it("decode verification failure → GhlUploadError decode-failed, no upload attempted", async () => {
     verifier.fail = true;
     const uploader = new BinaryFallbackUploader({ client, verifier });
 
-    await expect(uploader.archive(makeInput(providerUrl, data))).rejects.toThrow(
-      /decode failed/,
-    );
+    const attempt = uploader.archive(makeInput(providerUrl, data));
+    await expect(attempt).rejects.toMatchObject({
+      name: "GhlUploadError",
+      reason: "decode-failed",
+    });
+    await expect(attempt).rejects.toThrow(/decode failed/);
     expect(client.uploadCalls).toHaveLength(0);
   });
 

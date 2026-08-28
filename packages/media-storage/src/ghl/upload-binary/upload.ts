@@ -105,6 +105,11 @@ export class BinaryFallbackUploader {
         `Failed to download ${input.providerUrl}: ${cause instanceof Error ? cause.message : String(cause)}`,
       );
     }
+    if (downloaded.data.byteLength === 0) {
+      // Expired/unusable provider URLs can return an empty body; archiving
+      // that would destroy the only copy of a paid asset.
+      throw new GhlUploadError("download-failed", "Downloaded 0 bytes (empty body)");
+    }
     if (downloaded.data.byteLength > limit) {
       throw new GhlUploadError(
         "size-limit",
@@ -121,7 +126,15 @@ export class BinaryFallbackUploader {
     try {
       const filePath = join(dir, safeTempName(input.name));
       await writeFile(filePath, downloaded.data);
-      await verifier.verify(filePath, input.kind);
+      try {
+        await verifier.verify(filePath, input.kind);
+      } catch (cause) {
+        if (cause instanceof GhlUploadError) throw cause;
+        throw new GhlUploadError(
+          "decode-failed",
+          `Local decode verification failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+        );
+      }
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -214,5 +227,6 @@ export async function archiveViaBinaryFallback(
 /** Temp file name for the local decode-verify pass: basename only, no traversal. */
 function safeTempName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "asset.bin";
-  return base.length > 0 ? base : "asset.bin";
+  if (base.length === 0 || base === "." || base === "..") return "asset.bin";
+  return base;
 }

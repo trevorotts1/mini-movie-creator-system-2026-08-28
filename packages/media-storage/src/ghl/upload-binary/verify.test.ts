@@ -99,6 +99,38 @@ describe("FfprobeVerifier (real binaries)", () => {
     await expect(verifier.verify(audioOnly, "video")).rejects.toThrow(/no video stream/);
   });
 
+  it("audio kind decodes via ffmpeg null pass and reports its format", async () => {
+    if (!ffmpegAvailable) return;
+    const audio = join(dir, "voice.mp3");
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        "ffmpeg",
+        [
+          "-v",
+          "error",
+          "-f",
+          "lavfi",
+          "-i",
+          "sine=frequency=440:duration=0.5",
+          "-y",
+          audio,
+        ],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+    const verifier = new FfprobeVerifier();
+    const probe = await verifier.verify(audio, "audio");
+    expect(probe.format).toBe("audio");
+  });
+
+  it("audio kind rejects garbage bytes", async () => {
+    if (!ffmpegAvailable) return;
+    const garbage = join(dir, "garbage.mp3");
+    await writeFile(garbage, new Uint8Array(64).fill(0x11));
+    const verifier = new FfprobeVerifier();
+    await expect(verifier.verify(garbage, "audio")).rejects.toBeInstanceOf(DecodeError);
+  });
+
   it("generic kind skips decode (no ffmpeg contract for opaque blobs)", async () => {
     const opaque = join(dir, "opaque.bin");
     await writeFile(opaque, new Uint8Array([1, 2, 3]));
