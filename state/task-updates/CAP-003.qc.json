@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-003",
+  "phase": "PASS",
+  "commit": "24ea03660ec55ddac2f668d7be361578343dd790",
+  "checksRun": "npx vitest run packages/capability-registry/src/validators (51/51 PASS, 18 character-count + 33 exclusive-modes); npx vitest run packages/capability-registry (155/155 PASS, no regressions in data/schema/pricing/max-reasoning); npx tsc --noEmit -p packages/capability-registry/tsconfig.json (clean); pnpm -r --filter @mmcs/capability-registry run typecheck (clean); adversarial probe suite (7 extra edge cases: full CAP-002 seed record accepted, INVALID_LIMIT limitUnknown:false, exact-boundary pass + off-by-one reject, zero-limit semantics, surrogate-pair split across segments counted as 2 units, non-string segment throws, 5M-char known-limit reject under 2s) all green; security pass on owned paths (pure module, no I/O/shell/exec/eval/fs/path/process, no secrets, no unbounded work, messages never embed prompt content); cross-checked convention against KIE-006 (WAN_MAX_PROMPT_CHARS=20_000, UTF-16 code units, strict >, same PROMPT_TOO_LONG code) and CAP-002 data types (prompt.hardMaxCharacters: number|null) — consistent.",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Independent verification green first pass: exact UTF-16 counting (string + ordered segments, no injected separators), rejects > hard max with PROMPT_TOO_LONG before any provider call (Wan 20,001 rejected), passes at ANY size when hardMaxCharacters null (never invents a limit), INVALID_LIMIT on corrupt non-finite/negative limits, boundary value legal, messages prompt-content-free. validators/index.ts barrel not yet exporting character-count (nor reference-count) — consistent with ownership rule 6: barrels wired at batch merge by integration/CAP-010, not a task defect.",
+  "blockers": []
+}
