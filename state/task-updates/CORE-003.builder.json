@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-003",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/database/src/migrations -> 15/15 pass (exit 0); npx vitest run packages/database/src -> 30/30 pass across 3 files (exit 0); npx tsc --noEmit -p packages/database/tsconfig.json -> exit 0",
+  "notes": "SQLite connection (node:sqlite DatabaseSync, WAL+foreign_keys+busy_timeout) + idempotent migration runner with ledger table mmcs_migrations, atomic per-migration transactions, pre-flight rollback with rollbackTo subset, empty baseline band 000-init, Repository/BaseRepository/CrudRepository interfaces exported; no new dependencies (Node built-in driver) so no lockfile change needed",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
