@@ -1,0 +1,15 @@
+{
+  "taskId": "VID-008",
+  "phase": "PASS",
+  "commit": "8a26c40",
+  "checksRun": "npx tsc --noEmit -p packages/remotion-runtime (RC=0, views now in program); npx vitest run packages/remotion-runtime/src/layers/graphics (93/93 PASS); npx vitest run packages/remotion-runtime (93/93); full worktree npx vitest run (29 files, 501/501 PASS); pnpm -r run typecheck at repo root (partial: apps/web + integrations/claude + integrations/openclaw fail — tsconfig.json absent on this branch, present on origin/integration; see blockers); security grep on owned paths (no innerHTML/eval/exec/env/fs, no secrets, story text renders as React children only); lint: no package defines a lint script, typecheck is the repo's enforcement layer",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T22:30:00Z",
+  "notes": "Cycle 2 (re-admission after IQ-B6C revert): fixed envelopeAt TS2345 — itemStyle was passing FrameSize (canvas geometry) into envelopeAt(frame: number); now itemStyle(it, frame: number, canvas: FrameSize, safe) with useCurrentFrame() feeding the timeline frame. Fixed branch tsconfig scaffold: added src/**/*.tsx + test.tsx include and jsx react-jsx, matching integration shape VID-004 ships (commit 64cd5e9) — views were silently untypechecked before, so QC tsc clean was branch-only. Previous cycle's 'views excluded by design' note was wrong per current contract. No consumers of GraphicsItemView/GraphicsLayer/CreditsView/ComposedGraphicsLayer on integration; merge dry-run applies with zero conflicts.",
+  "blockers": [
+    "BATCH-MERGE/control: pnpm -r run typecheck at repo root cannot go green on task/VID-008-graphics-layer (483 commits stale) because apps/web/tsconfig.json, integrations/claude/tsconfig.json, integrations/openclaw/tsconfig.json exist only on origin/integration (added in batch-merge cycle 3, commit 5cb2c2e) — tsc with no tsconfig prints help and exits 1. Not VID-008-owned paths per runbook §55; dry-run git merge --no-commit --no-ff origin/integration applies with ZERO conflicts, so the batch merger resolves it by taking integration's versions."
+  ]
+}

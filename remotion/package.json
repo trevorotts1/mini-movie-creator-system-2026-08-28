@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "description": "Remotion project for the AI Video Editor — renders VidTSX-style shots in bulk.",
   "scripts": {
-    "gen": "node scripts/gen-registry.mjs",
-    "studio": "node scripts/gen-registry.mjs && remotion studio src/index.ts",
-    "render": "node scripts/gen-registry.mjs && node scripts/render-all.mjs",
-    "still": "node scripts/gen-registry.mjs && node scripts/render-all.mjs --still"
+    "gen": "node scripts/gen-registry.mjs && node scripts/gen-episodic-registry.mjs",
+    "gen:episodic": "node scripts/gen-episodic-registry.mjs",
+    "studio": "node scripts/gen-registry.mjs && node scripts/gen-episodic-registry.mjs && remotion studio src/index.ts",
+    "render": "node scripts/gen-registry.mjs && node scripts/gen-episodic-registry.mjs && node scripts/render-all.mjs",
+    "still": "node scripts/gen-registry.mjs && node scripts/gen-episodic-registry.mjs && node scripts/render-all.mjs --still"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.486",

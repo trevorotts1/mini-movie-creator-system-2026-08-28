@@ -40,3 +40,21 @@
 
 ## Batch 4 — Rolled Back (regression FAIL, superseded by batch 5)
 - 14 merged locally then reverted: CAP-009 TS6059 rootDir break in apps/cli providers-verify command (fixed on branch 7f4561d; re-merged clean in batch 5)
+
+## Batch 8 — Merged (2026-08-28T19:57Z, integration 0e9b00e..b43743a, control da5cc75, pushed)
+- SKL-004 (fef49fc), VID-002 (a8fa4ea), QC-003 (692b20f), QC-004 (b43743a)
+- Regression PASS: vitest areas=ALL 3188 passed / 1 skipped
+- Corrected batch-7 over-stamps: QC-003/004/010, SKL-004, VID-002 were marked MERGED in batch-7 control commit but content never landed — statuses restored, all re-merged for real in batch-8
+- VID-002 branch pointer fixed task/VID-002-episodic-registry -> task/TASK-VID-002-episodic-registry
+
+## Batch 8 — Still Blocked
+- QC-010: PASS (rebased, merge-tree clean pre-check) but conflict surfaced during batch merge on packages/qc/src/index.ts — rebase required again
+- REC-010: QC PASS but deps REC-002..005 have no branches/worktrees — admission rule 6
+- VID-008: PASS but 1 open blocker (root pnpm -r typecheck tsconfig gap) + merge-tree conflict (GraphicsViews.tsx modify/delete, tsconfig.json)
+- SKL-002: fixer committed (task #23) but no QC PASS file yet — re-enters when QC runs
+- WF00-01: bootstrap IQ-000 row only — no branch, no worktree, no QC file; engine correctly rejects
+
+## Next action
+- QC-010 rebase fixer: merge origin/integration (da5cc75) into task/TASK-QC-010-wan-fallback, resolve packages/qc/src/index.ts, verify green, stamp qc record
+- REC-002..005: build + QC (REC-010 and REC-011 depend on them)
+- VID-008: resolve GraphicsViews.tsx modify/delete (integration deleted the file) + close root-tsconfig blocker, then re-QC

@@ -103,3 +103,12 @@
 - [x] Conflict-blocked rebase required: QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts)
 - [x] Not admitted: REC-010 (deps REC-002..REC-005 unmerged)
 - [x] New unblocks: CORE-009, CORE-015 -> READY
+
+## Batch 8 (2026-08-28T19:57Z)
+- [x] Merged: SKL-004 (fef49fc), VID-002 (a8fa4ea), QC-003 (692b20f), QC-004 (b43743a) — no-ff merges, evidence logs/merges/2026-08-28T19-57-36-207Z-batch-merge.json
+- [x] Regression PASS: vitest areas=ALL 3188 passed / 1 skipped
+- [x] Pushed: 0e9b00e..b43743a + control da5cc75
+- [x] Batch-7 over-stamps corrected (QC-003/004/010, SKL-004, VID-002 never actually landed)
+- [x] Conflict-blocked rebase required: QC-010 (packages/qc/src/index.ts)
+- [x] Not admitted: REC-010 (deps REC-002..005 no branches/QC), WF00-01 (no branch/QC), SKL-002 (no QC PASS yet)
+- [x] VID-008 blocked: conflict (GraphicsViews.tsx, tsconfig.json) + 1 open blocker

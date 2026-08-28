@@ -120,3 +120,9 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T22:05:00Z | VID-002 | Episodic composition registry | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
 | 2026-08-28T22:05:00Z | VID-005 | Generated clip layer | qc-batch (adopted) | PASS | 1 | 1 | PASS — merged batch-7 |
 | 2026-08-28T22:05:00Z | VID-013 | Selective shot replacement | qc-batch (adopted) | PASS | 2 | 2 | PASS — merged batch-7 |
+
+| 2026-08-28T19:57:36Z | SKL-004 | Claude-nine verification | merger | PASS | 2 | 2 | PASS — merged batch-8 (fef49fc); batch-7 row over-stamped, corrected |
+| 2026-08-28T19:57:36Z | VID-002 | Episodic composition registry | merger | PASS | 0 | 0 | PASS — merged batch-8 (a8fa4ea); batch-7 row over-stamped, corrected |
+| 2026-08-28T19:57:36Z | QC-003 | Wardrobe/hair/prop checks | merger | PASS | 0 | 0 | PASS — merged batch-8 (692b20f); batch-7 row over-stamped, corrected |
+| 2026-08-28T19:57:36Z | QC-004 | Continuity neighbor check | merger | PASS | 1 | 1 | PASS — merged batch-8 (b43743a); batch-7 row over-stamped, corrected |
+| 2026-08-28T19:57:36Z | QC-010 | Wan hero/complex fallback | merger | PASS | 7 | 7 | PASS — batch-8 conflict-blocked (packages/qc/src/index.ts), rebase required |

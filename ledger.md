@@ -199,3 +199,10 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 - 2026-08-28T22:05:00Z | VID-013 | merger | MERGED | batch-7 merge 6d8cce1 (pushed 6d8cce1)
 - 2026-08-28T22:05:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 unmerged — deferred to later batch
 - 2026-08-28T22:05:00Z | BATCH-7 | merger | REGRESSION_PASS | pnpm -r test 0, typecheck 0, repo vitest 3188 pass; pushed 38974b3..6d8cce1
+2026-08-28T19:57:36.212Z | SKL-004 | batch-merge | MERGED | fef49fcb5a61f8ee99a58e73c854e4aacd44e791
+2026-08-28T19:57:36.212Z | VID-002 | batch-merge | MERGED | a8fa4ea5aa71d4ecbc1eb8065179c7dc663d7009
+2026-08-28T19:57:36.212Z | QC-003 | batch-merge | MERGED | 692b20f9f83fc934ab561668026b0c610a350a88
+2026-08-28T19:57:36.212Z | QC-004 | batch-merge | MERGED | b43743aefded95186bd5bf1c83a02f2e243a8855
+2026-08-28T19:57:36.212Z | QC-010 | batch-merge | CONFLICT | conflict surfaced during batch — skipped; resolvers handle it
+2026-08-28T19:57:36.212Z | BATCH-MERGE | batch-merge | REGRESSION | PASS areas=ALL
+- 2026-08-28T19:57:36Z | BATCH-8 | merger | MERGED | 4 merged (SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a), 1 conflict-blocked (QC-010), regression PASS 3188 tests, pushed 0e9b00e..b43743a + control da5cc75; batch-7 over-stamps corrected

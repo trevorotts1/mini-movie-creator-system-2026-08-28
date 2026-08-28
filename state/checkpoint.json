@@ -3,7 +3,7 @@
   "project_id": "mmcs",
   "timestamp": "2026-08-28T20:05:00Z",
   "current_main_sha": "773054bebbe460de0f31dcfda5315970b1c8b4f2",
-  "current_integration_sha": "edc6c51e2a4dcd49d7c156bdfa9f73cd05580260",
+  "current_integration_sha": "b43743aefded95186bd5bf1c83a02f2e243a8855",
   "active_dependency_wave": 1,
   "ready_task_ids": [
     "CORE-008",
@@ -138,5 +138,7 @@
       "pnpmRTest": "PASS",
       "typecheck": "PASS (17/17 Done)"
     }
-  }
+  },
+  "lastMergeAt": "2026-08-28T19:57:36.194Z",
+  "lastKnownGoodCommit": "b43743aefded95186bd5bf1c83a02f2e243a8855"
 }
