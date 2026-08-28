@@ -13,6 +13,7 @@ export {
   linkCoversEpisode,
 } from "./types.js";
 export {
+  DuplicateCastLinkError,
   NotInCastError,
   UnknownCharacterError,
   type GlobalCharacterReader,

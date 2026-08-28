@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CastService,
+  DuplicateCastLinkError,
   InMemoryGlobalCharacterReader,
   InMemorySeriesCastStore,
   InvalidCastRangeError,
@@ -125,6 +126,63 @@ describe("global library ↔ per-series cast join", () => {
       "CHAR_MARCUS_HALE_001",
       "CHAR_MONICA_BENNETT_001",
     ]);
+  });
+
+  it("rejects linking a character that is already in the cast with a DuplicateCastLinkError", async () => {
+    // Regression: the store used to throw NotInCastError ("is not in the
+    // cast") for a character that IS in the cast — a factually inverted
+    // error for the duplicate-link case.
+    const { service } = harness();
+    await service.linkCharacter({
+      seriesId: "S1",
+      characterId: "CHAR_MONICA_BENNETT_001",
+    });
+    await expect(
+      service.linkCharacter({
+        seriesId: "S1",
+        characterId: "CHAR_MONICA_BENNETT_001",
+      }),
+    ).rejects.toBeInstanceOf(DuplicateCastLinkError);
+    // Same character stays castable in another series — not a duplicate.
+    await service.linkCharacter({
+      seriesId: "S2",
+      characterId: "CHAR_MONICA_BENNETT_001",
+    });
+    expect((await service.listCast("S2")).map((l) => l.characterId)).toEqual([
+      "CHAR_MONICA_BENNETT_001",
+    ]);
+  });
+
+  it("store keys cannot collide for series IDs containing separator text", async () => {
+    // Regression: the composite key was `${seriesId} ${characterId}`; a
+    // seriesId containing the raw separator could alias two distinct pairs.
+    const store = new InMemorySeriesCastStore();
+    const makeLink = (seriesId: string, characterId: string): SeriesCastLink => ({
+      seriesId,
+      characterId,
+      status: "series-regular",
+      effectiveFrom: null,
+      effectiveUntil: null,
+      appearanceVersion: null,
+      voiceProfileId: null,
+      linkedAt: "2026-01-01T00:00:00.000Z",
+    });
+    await store.add(makeLink("S 1", "CHAR_A_ONE_001"));
+    await store.add(makeLink("S", "CHAR_B_TWO_001"));
+    const pairs = (await store.listBySeries("S 1")).map(
+      (l) => `${l.seriesId}|${l.characterId}`,
+    );
+    expect(pairs).toEqual(["S 1|CHAR_A_ONE_001"]);
+    const sOnly = (await store.listBySeries("S")).map(
+      (l) => `${l.seriesId}|${l.characterId}`,
+    );
+    expect(sOnly).toEqual(["S|CHAR_B_TWO_001"]);
+    await expect(
+      store.get("S 1", "CHAR_A_ONE_001"),
+    ).resolves.not.toBeNull();
+    await expect(
+      store.get("S", "CHAR_B_TWO_001"),
+    ).resolves.not.toBeNull();
   });
 });
 

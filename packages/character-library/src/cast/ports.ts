@@ -27,6 +27,16 @@ export class NotInCastError extends Error {
   }
 }
 
+/** Thrown when adding a cast link that already exists for that character. */
+export class DuplicateCastLinkError extends Error {
+  constructor(seriesId: string, characterId: string) {
+    super(
+      `Character ${characterId} is already in the cast of series ${seriesId}`,
+    );
+    this.name = "DuplicateCastLinkError";
+  }
+}
+
 /**
  * Read side of the Global Character Library. Cast links join BY ID into this
  * library; nothing here can create or delete a global character, so removing
