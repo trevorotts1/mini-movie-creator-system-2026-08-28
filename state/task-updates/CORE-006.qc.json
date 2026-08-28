@@ -2,6 +2,8 @@
   "taskId": "CORE-006",
   "phase": "PASS",
   "commit": "cdcb8cab303ac62e7fe68b0b687346f9bbd61ca9",
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "rebaseCommit": "87f4767f9ded5c2c998d0e2698481bac8c9bf9a8",
   "checksRun": "node node_modules/vitest/vitest.mjs run packages/database/src/repositories/shots -> 7/7 PASS (acceptance, exit 0); node node_modules/vitest/vitest.mjs run packages/database -> 21 suites 51/51 PASS; node node_modules/vitest/vitest.mjs run (full workspace) -> 97 suites 309/309 PASS; pnpm run typecheck -C packages/database (tsc --noEmit) -> exit 0; lint: no lint script exists in repo (root pnpm -r run lint fails -r: no package has lint script; pre-existing repo-wide, not this task); security grep on owned paths (030-scenes-shots, repositories/scenes|shots|references): no secrets, no exec/spawn/eval, no .only/.skip; git merge-tree origin/integration HEAD -> clean merge, no conflicts; migration ids 0301-0303 collision-free vs integration bands",
   "defectsFound": 0,
   "defectsFixed": 0,
