@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-002",
   "phase": "PASS",
-  "commit": "",
+  "commit": "b40ee03e512d8a2e26268357cd8aff7cce52345b",
   "checksRun": "npx vitest run packages/providers/src/fish-audio/voice-profiles; cd packages/providers && npx tsc --noEmit; security review of owned paths",
   "defectsFound": 6,
   "defectsFixed": 6,
