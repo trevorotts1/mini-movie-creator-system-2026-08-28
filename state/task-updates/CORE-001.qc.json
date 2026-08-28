@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-001",
+  "phase": "PASS",
+  "commit": "b57a128c38ade40e8e05ffdf3f0451b74f6f8c6a",
+  "checksRun": "node docs/upstream-audit/validate.mjs; test -s docs/upstream-audit/preservation-map.md && grep -q PF-1 docs/upstream-audit/preservation-map.md",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "Upstream preservation map verified complete (zero drops, PF-1/PF-2 carried, spec §2 facts matched, validate script 60/60 checks PASS).",
+  "blockers": []
+}
