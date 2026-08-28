@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-004",
+  "phase": "PASS",
+  "commit": "e907a5f5f71cd31b6e90a3af332b7dbb33515a4e",
+  "checksRun": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true npx vitest run packages/capability-registry/src/validators (19/19 passed); npx tsc --noEmit -p packages/capability-registry (clean); security pass clean",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Pre-flight reference-count validator verified: Wan 3.0 baseline (>10 images rejects before provider call), per-kind images/videos/audio and maxFiles total limits enforced, UNKNOWN (null) limits unconstrained per runbook §16, zero references allowed, malformed counts flagged; tsc clean; vitest 19/19 green.",
+  "blockers": []
+}
