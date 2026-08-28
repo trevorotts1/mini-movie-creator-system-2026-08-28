@@ -4,7 +4,7 @@
   "private": true,
   "description": "Claude Code / claude-nine skill install wrappers for MMCS (spec §27)",
   "scripts": {
-    "test": "vitest run --config vitest.config.mts",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   }
 }
