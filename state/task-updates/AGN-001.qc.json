@@ -1,7 +1,7 @@
 {
   "taskId": "AGN-001",
   "phase": "PASS",
-  "commit": "PENDING_COMMIT",
+  "commit": "a08f02a0dd7f71c476c327cf7977e879cd4b5159",
   "checksRun": "npx vitest run packages/providers/src/agnes/client (38/38 PASS); npx vitest run packages/providers (78/78 PASS); npx tsc --noEmit -p packages/providers (clean); security pass: no console/env/exec, no real secrets, retry/timeout caps, host pinning, POST non-idempotent no-auto-retry",
   "defectsFound": 3,
   "defectsFixed": 3,
