@@ -1,13 +1,15 @@
 {
   "taskId": "SKL-004",
   "phase": "PASS",
-  "commit": "",
+  "commit": "fda43aa",
   "checksRun": "bash integrations/claude/nine-verify.sh -> PASS=12 FAIL=0 (real-skill step 6 skip recorded, SKL-001 merge pending); bash integrations/claude/nine-verify.sh with canonical skill content from task/SKL-001-canonical-skill extracted into worktree skills/ -> PASS=13 FAIL=0 incl. step 6 real /mini-movie-creator live probe; bash integrations/claude/nine-verify.sh --selftest -> PASS=5 FAIL=0; npx vitest run integrations/claude --config apps/cli/vitest.config.ts -> 15 passed; npx tsc --noEmit -p integrations/claude/tsconfig.json -> clean; shellcheck -S warning nine-verify.sh -> clean; npx vitest run --config apps/cli/vitest.config.ts apps/cli (regression) -> 13 passed",
   "defectsFound": 2,
   "defectsFixed": 2,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T19:00:00Z",
-  "notes": "Added step 6: fresh claude-nine session invokes the REAL /mini-movie-creator skill and calls the mmcs engine (SKL-004 acceptance) — proven live PASS=13 with canonical SKL-001 content, recorded skip (never pass) until SKL-001 merges; doc updated with recorded evidence and 3 model calls.",
-  "blockers": ["SKL-001: canonical skill (skills/mini-movie-creator) not yet merged into integration — step 6 of nine-verify.sh records a skip until it lands"]
+  "notes": "Added step 6: fresh claude-nine session invokes the REAL /mini-movie-creator skill and calls the mmcs engine (SKL-004 acceptance) \u2014 proven live PASS=13 with canonical SKL-001 content, recorded skip (never pass) until SKL-001 merges; doc updated with recorded evidence and 3 model calls.",
+  "blockers": [
+    "SKL-001: canonical skill (skills/mini-movie-creator) not yet merged into integration \u2014 step 6 of nine-verify.sh records a skip until it lands"
+  ]
 }
