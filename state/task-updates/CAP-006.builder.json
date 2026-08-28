@@ -1,0 +1,9 @@
+{
+  "taskId": "CAP-006",
+  "phase": "BUILDER_DONE",
+  "commit": "0377cc502c8e057b1414198f1ebfbbaeb9041706",
+  "testsRun": "npx vitest run packages/capability-registry/src/pricing -> 21/21 passed; npx tsc --noEmit -p packages/capability-registry -> clean",
+  "notes": "Pricing/quota model: PricingProfile (unit/amount/currency/quota/overage, UNKNOWN null never guessed), parseIncludedQuota (quota free-text -> structured units/resetPeriod), estimateSpend (quota-first deduction, basis quota_covered/partial_quota/priced_per_unit/unknown_pricing/unknown_unit), decideSpend ($25 cumulative auto limit runbook 33, unknown pricing always approval-required, cumulative across workers), fixture profiles for Agnes Flash/regular, Seedance, Wan, image, Fish voice. Self-contained under src/pricing/ (no zod, no root index.ts edit — CAP-001 owns both in parallel); merger should add `export * from \"./pricing/index.js\";` to packages/capability-registry/src/index.ts.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
