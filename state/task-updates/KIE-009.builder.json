@@ -1,7 +1,7 @@
 {
   "taskId": "KIE-009",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "c11e090",
   "testsRun": "npx vitest run packages/providers/src/kie/errors -> 30 passed (30); npx vitest run (full suite) -> 30 passed; tsc --noEmit packages/providers -> rc 0",
   "notes": "Unified Kie failure taxonomy (retryable/fatal/quota) in packages/providers/src/kie/errors/: classifyKieHttpFailure, classifyKieTaskFailure, normalizeKieFailure (single front door, duck-types KIE-001 KieApiError), redactSecrets/redactDeep choke point so no API key/Authorization/token reaches any message/detail/log line; failureToLogLine helper.",
   "blockers": [],
