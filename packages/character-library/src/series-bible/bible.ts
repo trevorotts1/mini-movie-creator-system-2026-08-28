@@ -7,7 +7,7 @@
  * episodes complete — they never need Gate 6.
  */
 
-import { baseCanon, SeriesBibleError } from "./canon.js";
+import { baseCanon, episodeNumber, SeriesBibleError } from "./canon.js";
 import type {
   CanonChange,
   CanonState,
@@ -58,6 +58,17 @@ export function proposeCanonChange(
       `canon change ${change.changeId} proposes no mutations`,
     );
   }
+  // Validate the episode code up front: canonAtEpisode replays filter on
+  // episodeNumber(effectiveEpisode), so a malformed code proposed now would
+  // poison every historical read performed later.
+  episodeNumber(change.effectiveEpisode);
+  if (
+    bible.canonChanges.some((c) => c.changeId === change.changeId)
+  ) {
+    throw new SeriesBibleError(
+      `canon change ID already used: ${change.changeId}`,
+    );
+  }
   const staged: CanonChange = { ...change, status: "PROPOSED" };
   bible.canonChanges.push(staged);
   return staged;
@@ -82,12 +93,22 @@ export function addEpisodeSummary(
   return summary;
 }
 
-/** All prior-episode summaries for episodes before the queried one. */
+/**
+ * All prior-episode summaries for episodes before the queried one. Orders
+ * numerically (episodeNumber), never lexicographically — "S10E01" is after
+ * "S02E05" even though its string sorts first.
+ */
 export function episodeSummariesBefore(
   bible: SeriesBible,
   episode: string,
 ): EpisodeSummary[] {
-  return bible.episodeSummaries.filter((s) => s.episode < episode);
+  const query = episodeNumber(episode);
+  return bible.episodeSummaries
+    .filter((s) => {
+      const candidate = episodeNumber(s.episode);
+      return candidate < query;
+    })
+    .sort((a, b) => episodeNumber(a.episode) - episodeNumber(b.episode));
 }
 
 /** Append one in-world timeline event (spec §10 "timeline"). */

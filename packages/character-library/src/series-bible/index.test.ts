@@ -179,6 +179,76 @@ describe("propose/approve canon changes — Gate 6 (spec §3.6, §10)", () => {
       /character already in series cast/,
     );
   });
+
+  it("rejects a duplicate change ID at propose time (no shadow records)", () => {
+    const bible = seedBible();
+    proposeCanonChange(bible, {
+      changeId: "CC_TWINS",
+      description: "first",
+      effectiveEpisode: "S01E02",
+      proposedAt: "2026-08-02T00:00:00Z",
+      mutations: [{ op: "set_premise", premise: "first wins" }],
+    });
+    expect(() =>
+      proposeCanonChange(bible, {
+        changeId: "CC_TWINS",
+        description: "shadow of the first",
+        effectiveEpisode: "S01E03",
+        proposedAt: "2026-08-03T00:00:00Z",
+        mutations: [{ op: "set_premise", premise: "shadow wins" }],
+      }),
+    ).toThrow(/already used/);
+    // Approving the ID resolves to exactly one record — the first.
+    approveCanonChange(bible, "CC_TWINS", "2026-08-02T01:00:00Z");
+    expect(currentCanon(bible).premise).toBe("first wins");
+  });
+
+  it("rejects a malformed effectiveEpisode at propose time (cannot poison later reads)", () => {
+    const bible = seedBible();
+    expect(() =>
+      proposeCanonChange(bible, {
+        changeId: "CC_BAD_EP",
+        description: "bad episode code",
+        effectiveEpisode: "E09",
+        proposedAt: "2026-08-02T00:00:00Z",
+        mutations: [{ op: "set_premise", premise: "never lands" }],
+      }),
+    ).toThrow(/S<season>E<episode>/);
+    expect(bible.canonChanges.some((c) => c.changeId === "CC_BAD_EP")).toBe(false);
+  });
+
+  it("rejects approval when the change would crash a historical replay (resolve before open)", () => {
+    const bible = seedBible();
+    // Thread opens effective E05; resolve claims effective E03 — valid
+    // against live canon but a canonAtEpisode("S01E03") replay would apply
+    // the resolve to a bible without the open and throw.
+    proposeCanonChange(bible, {
+      changeId: "CC_OPEN_E05",
+      description: "open the thread",
+      effectiveEpisode: "S01E05",
+      proposedAt: "2026-08-05T00:00:00Z",
+      mutations: [
+        {
+          op: "open_plot_thread",
+          thread: { threadId: "PT_ORDER", description: "ordering trap", openedEpisode: "S01E05", status: "open" },
+        },
+      ],
+    });
+    approveCanonChange(bible, "CC_OPEN_E05", "2026-08-05T01:00:00Z");
+    proposeCanonChange(bible, {
+      changeId: "CC_RESOLVE_E03",
+      description: "resolve it retroactively too early",
+      effectiveEpisode: "S01E03",
+      proposedAt: "2026-08-06T00:00:00Z",
+      mutations: [{ op: "resolve_plot_thread", threadId: "PT_ORDER", resolvedEpisode: "S01E03" }],
+    });
+    expect(() => approveCanonChange(bible, "CC_RESOLVE_E03", "2026-08-06T01:00:00Z")).toThrow(
+      /cannot resolve unknown plot thread/,
+    );
+    // The failed approval left the change PROPOSED — canon untouched.
+    expect(bible.canonChanges.find((c) => c.changeId === "CC_RESOLVE_E03")?.status).toBe("PROPOSED");
+    expect(currentCanon(bible).plotThreads[0]?.status).toBe("open");
+  });
 });
 
 describe("canonAtEpisode — historical episodes read canon-at-time (spec §10)", () => {
@@ -275,6 +345,23 @@ describe("episode summaries + timeline — append-only records", () => {
     expect(() => addEpisodeSummary(bible, { episode: "S01E01", summary: "   " })).toThrow(/non-empty/);
     addEpisodeSummary(bible, { episode: "S01E01", summary: "The loop." });
     expect(() => addEpisodeSummary(bible, { episode: "S01E01", summary: "again" })).toThrow(/already recorded/);
+  });
+
+  it("orders summaries numerically, not lexicographically (QC regression)", () => {
+    const bible = seedBible();
+    addEpisodeSummary(bible, { episode: "S10E01", summary: "season ten opener" });
+    addEpisodeSummary(bible, { episode: "S02E05", summary: "season two mid" });
+    // Lexicographic order would place "S10E01" before "S02E05" and before
+    // every S0x query — numeric episode order must win.
+    const before = episodeSummariesBefore(bible, "S03E01");
+    expect(before.map((s) => s.episode)).toEqual(["S02E05"]);
+    expect(episodeSummariesBefore(bible, "S10E01").map((s) => s.episode)).toEqual(["S02E05"]);
+    expect(episodeSummariesBefore(bible, "S11E01")).toHaveLength(2);
+    expect(episodeSummariesBefore(bible, "S11E01").map((s) => s.episode)).toEqual([
+      "S02E05",
+      "S10E01",
+    ]);
+    expect(() => episodeSummariesBefore(bible, "not-an-episode")).toThrow(SeriesBibleError);
   });
 
   it("records timeline events with unique IDs", () => {

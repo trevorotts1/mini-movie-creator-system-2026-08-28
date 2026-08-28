@@ -192,9 +192,16 @@ function nextCanonVersion(bible: SeriesBible): number {
 /**
  * Approve a proposed canon change (Gate 6 sign-off happened outside this
  * call). The bible's `base` is never mutated: canon is always the replay of
- * approved changes, so approval only (1) validates the mutations against
- * the canon that would result — throwing keeps the change PROPOSED — and
- * (2) stamps APPROVED + sequential canonVersion + decidedAt.
+ * approved changes, so approval only (1) validates the mutations — throwing
+ * keeps the change PROPOSED — and (2) stamps APPROVED + sequential
+ * canonVersion + decidedAt.
+ *
+ * Validation replays every canon-at-time read the change could ever join:
+ * its own effective episode, every already-approved episode at or after it,
+ * and the live canon. Validating only against live canon is not enough — a
+ * change can be valid live yet crash historical replays (e.g. resolving a
+ * plot thread effective E03 when the thread opens effective E05: replay at
+ * E03 applies the resolve to a bible without the open and throws).
  */
 export function approveCanonChange(
   bible: SeriesBible,
@@ -210,9 +217,29 @@ export function approveCanonChange(
       `canon change ${changeId} already decided (${change.status})`,
     );
   }
-  const scratch = currentCanon(bible);
+  const effective = episodeNumber(change.effectiveEpisode);
+  const checkpoints = new Set<string>([change.effectiveEpisode]);
+  for (const other of bible.canonChanges) {
+    if (
+      other === change ||
+      other.status !== "APPROVED" ||
+      other.canonVersion === undefined
+    ) {
+      continue;
+    }
+    if (episodeNumber(other.effectiveEpisode) >= effective) {
+      checkpoints.add(other.effectiveEpisode);
+    }
+  }
+  for (const checkpoint of checkpoints) {
+    const scratch = canonAtEpisode(bible, checkpoint);
+    for (const mutation of change.mutations) {
+      applyCanonMutation(scratch, mutation);
+    }
+  }
+  const live = currentCanon(bible);
   for (const mutation of change.mutations) {
-    applyCanonMutation(scratch, mutation);
+    applyCanonMutation(live, mutation);
   }
   change.status = "APPROVED";
   change.decidedAt = decidedAt;
