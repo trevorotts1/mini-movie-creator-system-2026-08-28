@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-013",
+  "phase": "BUILDER_DONE",
+  "commit": "4391d2b",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/shot-replacement => 17/17 passed; npx vitest run apps/cli --config apps/cli/vitest.config.ts => 29/29 passed (incl. retry-shot command + dispatcher wiring); full repo npx vitest run => 27 files 441/441 passed; tsc --noEmit remotion-runtime + cli => exit 0",
+  "notes": "Pure shot-replacement engine in packages/remotion-runtime/src/shot-replacement/ (replaceShot with fit-slot/explicit duration policies, diffPlans composition diff keyed by stable shotId — changed/unchanged/reflowed, reflow never manufactures input changes; planRetryShot/applyRetryShot scope regeneration to exactly the named shot per spec §20) + apps/cli/src/commands/retry-shot/ wiring for mmcs retry-shot <id> via injected ports (RETRY_SHOT_SPEC merges over CORE-011 stub at integration; refuses spend without wired runner). Acceptance proven: replaceShot tests assert diff.changedShotIds === [target] only, unaffected segments pass through BY REFERENCE, explicit-duration reflow shifts downstream start frames with inputs identical.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
