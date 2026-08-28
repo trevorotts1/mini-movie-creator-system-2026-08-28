@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-008",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_COMMIT",
+  "commit": "404fa85",
   "testsRun": "npx vitest run packages/providers/src/fish-audio/normalize → 31/31 PASS (2 files); npx vitest run packages/providers → 229/229 PASS (9 files); npx tsc --noEmit -p packages/providers/tsconfig.json → clean",
   "notes": "Two-pass ffmpeg loudnorm (measure JSON → static-gain linear apply); target LUFS/TP/LRA configurable, args deterministic (pure function of options+measurements, paths last, bitexact); probe-before/after via ffprobe on both sides; loudnorm target_offset fed back as apply offset (hand-computed offset double-applies gain — verified against ffmpeg 8.1.1); output default 48kHz stereo pcm_s16le wav; fixture WAV tests skip cleanly without ffmpeg.",
   "blockers": [],
