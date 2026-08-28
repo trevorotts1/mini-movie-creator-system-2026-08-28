@@ -1,9 +1,9 @@
 {
   "taskId": "AGN-004",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
-  "testsRun": "npx vitest run packages/providers/src/agnes/video/submit — 32 passed (32), 1 file; full suite npx vitest run — 440 passed (440), 25 files; tsc --noEmit -p packages/providers clean",
-  "notes": "Agnes video submit: AgnesVideoSubmitter runs spec §5 chain (profile → char count (UNKNOWN preserved, never enforced) → references → modes (CAP-005 + Agnes rules) → duration/resolution) → budget reservation → submit; request persisted BUDGET_RESERVED before provider call, providerJobId persisted on SUBMITTED before any poll; module holds no poll method (poll is AGN-005) so persist-before-poll is structural; SQLite store over provider_jobs + in-memory store for tests.",
+  "commit": "9c44bf97b26f656f71ef016427c508415b717c55",
+  "testsRun": "npx vitest run packages/providers/src/agnes/video/submit \u2014 32 passed (32), 1 file; full suite npx vitest run \u2014 440 passed (440), 25 files; tsc --noEmit -p packages/providers clean",
+  "notes": "Agnes video submit: AgnesVideoSubmitter runs spec \u00a75 chain (profile \u2192 char count (UNKNOWN preserved, never enforced) \u2192 references \u2192 modes (CAP-005 + Agnes rules) \u2192 duration/resolution) \u2192 budget reservation \u2192 submit; request persisted BUDGET_RESERVED before provider call, providerJobId persisted on SUBMITTED before any poll; module holds no poll method (poll is AGN-005) so persist-before-poll is structural; SQLite store over provider_jobs + in-memory store for tests.",
   "blockers": [],
   "updatedAt": "2026-08-28T15:55:00Z"
 }
