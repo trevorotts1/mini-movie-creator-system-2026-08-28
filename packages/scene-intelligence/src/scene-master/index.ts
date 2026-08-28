@@ -125,9 +125,13 @@ export function classifySceneMasterNeed(
 ): SceneMasterNeed {
   const minCharacters = options.minCharacters ?? 2;
   const threshold = options.importanceThreshold ?? 2;
+  requireNonEmpty(scene.sceneId, "sceneId");
+  requireArray(scene.characters, "scene.characters");
   const characters = [...new Set(scene.characters)];
-  if (scene.sceneId.length === 0) {
-    throw new SceneMasterError("sceneId must be non-empty");
+  if (scene.importance !== undefined && !(scene.importance in IMPORTANCE_BASE_SCORE)) {
+    throw new SceneMasterError(
+      `scene ${scene.sceneId} has unknown importance "${String(scene.importance)}" (expected low | normal | high | hero)`,
+    );
   }
 
   const speaking = new Set(scene.speakingCharacters ?? []);
@@ -277,9 +281,30 @@ export interface SceneMasterSpec {
 }
 
 function requireNonEmpty(value: string, label: string): void {
-  if (value.length === 0) {
-    throw new SceneMasterError(`${label} must be non-empty`);
+  if (typeof value !== "string" || value.length === 0) {
+    throw new SceneMasterError(`${label} must be a non-empty string`);
   }
+}
+
+function requireArray<T>(value: readonly T[] | undefined, label: string): readonly T[] {
+  if (!Array.isArray(value)) {
+    throw new SceneMasterError(`${label} must be an array`);
+  }
+  return value;
+}
+
+function requireObject<T extends object>(value: T | undefined, label: string): T {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new SceneMasterError(`${label} must be an object`);
+  }
+  return value;
+}
+
+function requireElement<T extends object>(value: T | undefined, label: string): T {
+  if (typeof value !== "object" || value === null) {
+    throw new SceneMasterError(`${label} must be an object`);
+  }
+  return value;
 }
 
 /**
@@ -289,13 +314,23 @@ function requireNonEmpty(value: string, label: string): void {
  */
 export function createSceneMasterSpec(input: SceneMasterSpecInput): SceneMasterSpec {
   requireNonEmpty(input.sceneId, "sceneId");
-  if (input.identities.length === 0) {
+  const identities = requireArray(input.identities, "identities");
+  const props = requireArray(input.props, "props");
+  const positions = requireArray(input.positions, "positions");
+  const room = requireObject(input.room, "room");
+  const lighting = requireObject(input.lighting, "lighting");
+  if (identities.length === 0) {
     throw new SceneMasterError(
       `scene master for ${input.sceneId} requires at least one identity`,
     );
   }
   const seen = new Set<string>();
-  for (const identity of input.identities) {
+  const validIdentities: SceneMasterIdentity[] = [];
+  for (const rawIdentity of identities) {
+    const identity = requireElement(
+      rawIdentity as SceneMasterIdentity | undefined,
+      "identities entry",
+    );
     requireNonEmpty(identity.characterId, "characterId");
     requireNonEmpty(identity.identityVersion, "identityVersion");
     requireNonEmpty(identity.wardrobeVersion, "wardrobeVersion");
@@ -305,19 +340,22 @@ export function createSceneMasterSpec(input: SceneMasterSpecInput): SceneMasterS
       );
     }
     seen.add(identity.characterId);
+    validIdentities.push(identity);
   }
 
-  requireNonEmpty(input.room.roomName, "room.roomName");
-  requireNonEmpty(input.lighting.scheme, "lighting.scheme");
-  for (const prop of input.props) {
+  requireNonEmpty(room.roomName, "room.roomName");
+  requireNonEmpty(lighting.scheme, "lighting.scheme");
+  for (const rawProp of props) {
+    const prop = requireElement(rawProp as SceneMasterProp | undefined, "prop");
     requireNonEmpty(prop.name, "prop.name");
-  }
-  if (!Array.isArray(input.props)) {
-    throw new SceneMasterError("props must be an array");
   }
 
   const positionsByCharacter = new Map<string, number>();
-  for (const position of input.positions) {
+  for (const rawPosition of positions) {
+    const position = requireElement(
+      rawPosition as SceneMasterPosition | undefined,
+      "position",
+    );
     requireNonEmpty(position.characterId, "position.characterId");
     if (!seen.has(position.characterId)) {
       throw new SceneMasterError(
@@ -332,7 +370,7 @@ export function createSceneMasterSpec(input: SceneMasterSpecInput): SceneMasterS
     }
     positionsByCharacter.set(position.characterId, count + 1);
   }
-  for (const identity of input.identities) {
+  for (const identity of validIdentities) {
     if (!positionsByCharacter.has(identity.characterId)) {
       throw new SceneMasterError(
         `missing position for character ${identity.characterId}`,
@@ -343,11 +381,11 @@ export function createSceneMasterSpec(input: SceneMasterSpecInput): SceneMasterS
   return {
     sceneId: input.sceneId,
     ...(input.episodeCode !== undefined ? { episodeCode: input.episodeCode } : {}),
-    identities: input.identities,
-    room: input.room,
-    lighting: input.lighting,
-    props: input.props,
-    positions: input.positions,
+    identities: validIdentities,
+    room,
+    lighting,
+    props,
+    positions,
     ...(input.note !== undefined ? { note: input.note } : {}),
     approvalState: "DRAFT",
     providerReferenceEligible: false,
@@ -396,13 +434,18 @@ export function isProviderEligibleImage(
   return image.providerInput === true;
 }
 
-/** Throw if a non-provider-input image is about to reach a provider. */
+/**
+ * Throw if a PROVIDER-ELIGIBLE image is about to be used as an internal
+ * planning image (e.g. in an internal storyboard record) — internal planning
+ * images must never be eligible for provider input. Guard callers that must
+ * only ever hand planning-internal images forward.
+ */
 export function assertNotProviderInput(
   image: Pick<InternalImageRecord, "assetId" | "providerInput" | "usageMarker">,
 ): void {
   if (!isProviderEligibleImage(image)) return;
   throw new SceneMasterError(
-    `image ${image.assetId} is marked as provider input but internal planning images must never be sent to a provider`,
+    `image ${image.assetId} is provider-eligible and must never be treated as an internal planning image`,
   );
 }
 
@@ -473,7 +516,7 @@ export function planSceneMasters(
       };
     }
 
-    const identities: SceneMasterIdentity[] = scene.characters.map(
+    const identities: SceneMasterIdentity[] = [...new Set(scene.characters)].map(
       (characterId) => {
         const appearance = options.resolveAppearance(characterId);
         if (appearance === undefined) {

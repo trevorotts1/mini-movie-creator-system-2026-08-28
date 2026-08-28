@@ -132,6 +132,36 @@ describe("classifySceneMasterNeed", () => {
       classifySceneMasterNeed({ sceneId: "", characters: [MONICA, MARCUS], importance: "high" }),
     ).toThrow(SceneMasterError);
   });
+
+  it("rejects a missing or non-array characters list with SceneMasterError, not a TypeError", () => {
+    expect(() =>
+      classifySceneMasterNeed({
+        sceneId: "SC03",
+        characters: undefined as unknown as string[],
+        importance: "high",
+      }),
+    ).toThrow(/scene.characters must be an array/);
+    expect(() =>
+      classifySceneMasterNeed({
+        sceneId: "SC03",
+        characters: "Monica,Marcus" as unknown as string[],
+        importance: "high",
+      }),
+    ).toThrow(/scene.characters must be an array/);
+  });
+
+  it("rejects an unknown importance level instead of producing a NaN score", () => {
+    expect(() =>
+      classifySceneMasterNeed({
+        sceneId: "SC03",
+        characters: [MONICA, MARCUS],
+        importance: "critical" as unknown as "high",
+      }),
+    ).toThrow(/unknown importance/);
+    // NaN score would silently fall below the threshold and drop the flag.
+    const need = classifySceneMasterNeed(twoCharacterScene());
+    expect(Number.isFinite(need.signals.importanceScore)).toBe(true);
+  });
 });
 
 describe("createSceneMasterSpec", () => {
@@ -203,6 +233,121 @@ describe("createSceneMasterSpec", () => {
         positions: [{ characterId: MONICA, position: "center" }],
       }),
     ).toThrow(/prop.name/);
+  });
+
+  it("rejects missing array fields with SceneMasterError, not a TypeError", () => {
+    const base = {
+      sceneId: "SC03",
+      room: { roomName: "newsroom" },
+      lighting: { scheme: "daylight" },
+    };
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        identities: [{ characterId: MONICA, identityVersion: "v1", wardrobeVersion: "w1" }],
+        positions: [{ characterId: MONICA, position: "center" }],
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/props must be an array/);
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        props: [],
+        positions: [{ characterId: MONICA, position: "center" }],
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/identities must be an array/);
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        identities: [{ characterId: MONICA, identityVersion: "v1", wardrobeVersion: "w1" }],
+        props: [],
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/positions must be an array/);
+  });
+
+  it("rejects non-string required fields with SceneMasterError, not a TypeError", () => {
+    expect(() =>
+      createSceneMasterSpec({
+        sceneId: "SC03",
+        identities: [
+          { characterId: 123 as unknown as string, identityVersion: "v1", wardrobeVersion: "w1" },
+        ],
+        room: { roomName: "newsroom" },
+        lighting: { scheme: "daylight" },
+        props: [],
+        positions: [{ characterId: MONICA, position: "center" }],
+      }),
+    ).toThrow(/characterId must be a non-empty string/);
+    expect(() =>
+      createSceneMasterSpec({
+        sceneId: "SC03",
+        identities: [{ characterId: MONICA, identityVersion: "v1", wardrobeVersion: "w1" }],
+        room: { roomName: "newsroom" },
+        lighting: { scheme: "" },
+        props: [],
+        positions: [{ characterId: MONICA, position: "center" }],
+      }),
+    ).toThrow(/lighting.scheme must be a non-empty string/);
+  });
+
+  it("rejects non-object array entries with SceneMasterError, not a TypeError", () => {
+    const base = {
+      sceneId: "SC03",
+      room: { roomName: "newsroom" },
+      lighting: { scheme: "daylight" },
+    };
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        identities: [null as unknown as { characterId: string }],
+        props: [],
+        positions: [{ characterId: MONICA, position: "center" }],
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/identities entry must be an object/);
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        identities: [{ characterId: MONICA, identityVersion: "v1", wardrobeVersion: "w1" }],
+        props: [42 as unknown as { name: string }],
+        positions: [{ characterId: MONICA, position: "center" }],
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/prop must be an object/);
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        identities: [{ characterId: MONICA, identityVersion: "v1", wardrobeVersion: "w1" }],
+        props: [],
+        positions: [null as unknown as { characterId: string }],
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/position must be an object/);
+  });
+
+  it("rejects missing or non-object room/lighting with SceneMasterError, not a TypeError", () => {
+    const base = {
+      sceneId: "SC03",
+      identities: [{ characterId: MONICA, identityVersion: "v1", wardrobeVersion: "w1" }],
+      props: [],
+      positions: [{ characterId: MONICA, position: "center" }],
+    };
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        lighting: { scheme: "daylight" },
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/room must be an object/);
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        lighting: null as unknown as { scheme: string },
+        room: { roomName: "newsroom" },
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/lighting must be an object/);
+    expect(() =>
+      createSceneMasterSpec({
+        ...base,
+        room: ["newsroom"] as unknown as { roomName: string },
+        lighting: { scheme: "daylight" },
+      } as unknown as Parameters<typeof createSceneMasterSpec>[0]),
+    ).toThrow(/room must be an object/);
   });
 
   it("rejects duplicate identities and duplicate positions", () => {
@@ -309,7 +454,7 @@ describe("internal storyboard images are never provider input", () => {
         providerInput: true,
         usageMarker: "PROVIDER_INPUT",
       }),
-    ).toThrow(/internal planning images must never be sent to a provider/);
+    ).toThrow(/provider-eligible and must never be treated as an internal planning image/);
   });
 
   it("filterProviderEligibleImages drops every internal storyboard", () => {
@@ -406,5 +551,26 @@ describe("planSceneMasters", () => {
         { resolveAppearance: () => undefined },
       ),
     ).toThrow(/no appearance resolution for character/);
+  });
+
+  it("dedupes repeated characters in a flagged scene into one identity per character", () => {
+    const duplicated = { ...twoCharacterScene(), characters: [MONICA, MARCUS, MONICA] };
+    const plans = planSceneMasters(
+      [duplicated],
+      { roomName: "newsroom" },
+      { scheme: "fluorescents" },
+      [],
+      [
+        { characterId: MONICA, position: "center-left" },
+        { characterId: MARCUS, position: "center-right" },
+      ],
+      { resolveAppearance: appearance },
+    );
+    expect(plans[0]?.requiresSceneMaster).toBe(true);
+    expect(plans[0]?.spec?.identities).toHaveLength(2);
+    expect(plans[0]?.spec?.identities.map((identity) => identity.characterId)).toEqual([
+      MONICA,
+      MARCUS,
+    ]);
   });
 });
