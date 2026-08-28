@@ -1,7 +1,7 @@
 {
   "taskId": "AGN-004",
   "phase": "PASS",
-  "commit": "9ad42fad2b8623b30e586b230ec7d5359351fda6",
+  "commit": "d758647480c98360d70c30c36984231ea2dac415",
   "checksRun": "npx vitest run packages/providers/src/agnes/video/submit (36/36 pass); npx vitest run (full suite 444/444 pass); tsc --noEmit -p packages/providers + packages/core + packages/database + packages/capability-registry (clean); security grep (no secrets, fixed-string DDL only, no shell injection, no path traversal, no retry loops)",
   "defectsFound": 3,
   "defectsFixed": 3,
