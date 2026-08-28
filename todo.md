@@ -36,9 +36,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-001-upstream-audit
   - Worktree: worktrees/TASK-CORE-001/
   - Acceptance: docs/upstream-audit/preservation-map.md exists and lists every upstream package/script/tool with keep|rewrite|drop + reason; PF-1 and PF-2 carried forward; decisions reconciled against spec §2 facts; verified by `test -s docs/upstream-audit/preservation-map.md && grep -q "PF-1" docs/upstream-audit/preservation-map.md`.
-  - Status: READY
+  - Status: PASS
 
-- [ ] TASK-CORE-002 — Target monorepo/module layout
+- [x] TASK-CORE-002 — Target monorepo/module layout
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -47,9 +47,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-002-monorepo-layout
   - Worktree: worktrees/TASK-CORE-002/
   - Acceptance: all 11 packages + 3 apps + 2 integrations dirs exist with package.json; `npm install && npx tsc --noEmit -p tsconfig.base.json` passes; `node -e "require('./package.json').workspaces"` lists packages/*.
-  - Status: READY
+  - Status: PASS
 
-- [ ] TASK-CORE-003 — SQLite connection + migrations runner
+- [x] TASK-CORE-003 — SQLite connection + migrations runner
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -58,7 +58,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-003-sqlite-migrations
   - Worktree: worktrees/TASK-CORE-003/
   - Acceptance: migration runner applies + rolls back idempotently; repository interfaces exported; `npx vitest run packages/database/src/migrations` green (includes open/close/transaction/migration-order tests on a temp file DB).
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CORE-004 — Project/series/episode schema
   - Workflow: WF01
@@ -69,7 +69,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-004-project-schema
   - Worktree: worktrees/TASK-CORE-004/
   - Acceptance: migrations create projects/series/episodes tables incl. aspect-ratio + per-episode override fields (spec §23); repositories CRUD-tested; `npx vitest run packages/database/src/repositories/projects` green.
-  - Status: BLOCKED
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CORE-005 — Character/location/appearance schema
   - Workflow: WF01
@@ -80,7 +80,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-005-character-schema
   - Worktree: worktrees/TASK-CORE-005/
   - Acceptance: tables for characters, identity versions (immutable history), appearance versions w/ effective-episode, locations/props; GHL file/folder ID + sha256 columns present (spec §9); `npx vitest run packages/database/src/repositories/characters` green incl. version-history immutability test.
-  - Status: BLOCKED
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CORE-006 — Scene/shot/reference schema
   - Workflow: WF01
@@ -91,7 +91,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-006-scene-shot-schema
   - Worktree: worktrees/TASK-CORE-006/
   - Acceptance: shot table carries every field of spec §12 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.
-  - Status: BLOCKED
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CORE-007 — Provider job/asset schema
   - Workflow: WF01
@@ -102,7 +102,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-007-job-asset-schema
   - Worktree: worktrees/TASK-CORE-007/
   - Acceptance: provider_jobs + assets tables carry every field of spec §19 asset manifest (all 26 fields asserted by introspection test) and §18 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.
-  - Status: BLOCKED
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CORE-008 — Approval state machine + gates
   - Workflow: WF01
@@ -126,7 +126,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: $24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger — run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.
   - Status: BLOCKED
 
-- [ ] TASK-CORE-010 — Config/env validation loader
+- [x] TASK-CORE-010 — Config/env validation loader
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -137,7 +137,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: loads + zod-validates AGNES_API_KEY, KIE_API_KEY, FISH_API_KEY, GHL_ACCESS_TOKEN, GHL_LOCATION_ID, OPENROUTER_API_KEY, NINEROUTER_URL, NINEROUTER_KEY, AUTO_SPEND_LIMIT_USD (default 25.00); missing-var error names the variable; .env.example has names+descriptions only; `npx vitest run packages/core/src/config` green; `git check-ignore .env` exits 0.
   - Status: READY
 
-- [ ] TASK-CORE-011 — `mmcs` CLI bootstrap
+- [x] TASK-CORE-011 — `mmcs` CLI bootstrap
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -148,7 +148,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: command registry + argument parsing for the full verb list in spec §24 (doctor, status, create-series … recover) with stub handlers; `npx vitest run apps/cli` green; `node apps/cli/dist/index.js doctor` exits 0 (or documented stub output).
   - Status: READY
 
-- [ ] TASK-CORE-012 — Structured logging
+- [x] TASK-CORE-012 — Structured logging
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -159,7 +159,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: structured JSON logger with levels + task-id/agent fields; redaction hook that scrubs values matching token/key patterns (test proves a fake API key never reaches output); `npx vitest run packages/core/src/logging` green.
   - Status: READY
 
-- [ ] TASK-CORE-013 — Idempotency primitives
+- [x] TASK-CORE-013 — Idempotency primitives
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -170,7 +170,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: atomic file write (temp+rename), request-hash idempotency keys, once-only execution guard; duplicate submit attempt returns original result; `npx vitest run packages/core/src/idempotency` green incl. crash-mid-write test.
   - Status: READY
 
-- [ ] TASK-CORE-014 — Recovery checkpoint service
+- [x] TASK-CORE-014 — Recovery checkpoint service
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -194,7 +194,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
 
 ## WF02 — SERIES BIBLE / CHARACTER
 
-- [ ] TASK-CHAR-001 — Global character stable IDs
+- [x] TASK-CHAR-001 — Global character stable IDs
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -205,7 +205,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: `CHAR_<NAME>_<NNN>` stable business-ID generator + validator (spec §9); never display-name-keyed; collision test proves 1000 generated IDs unique; `npx vitest run packages/character-library/src/ids` green.
   - Status: READY
 
-- [ ] TASK-CHAR-002 — Canonical identity asset metadata
+- [x] TASK-CHAR-002 — Canonical identity asset metadata
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -225,7 +225,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-003-candidate-flow
   - Worktree: worktrees/TASK-CHAR-003/
   - Acceptance: new character request produces exactly 3 candidates as DRAFT/REVIEW; Try Again creates 3 NEW candidates; rejected candidates never selectable (state-machine test); `npx vitest run packages/character-library/src/candidates` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CHAR-004 — Selection/retry UI-CLI contract
   - Workflow: WF02
@@ -236,7 +236,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-004-selection-contract
   - Worktree: worktrees/TASK-CHAR-004/
   - Acceptance: `mmcs choose-character <1|2|3|4>` maps 4=Try Again; `mmcs approve-character <id>` requires gate 3; invalid selections rejected with usage text; `npx vitest run apps/cli/src/commands/choose-character` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CHAR-005 — Lock/canonical state transition
   - Workflow: WF02
@@ -249,7 +249,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: LOCK CHARACTER approval → candidate asset states transition DRAFT→APPROVED→CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.
   - Status: BLOCKED
 
-- [ ] TASK-CHAR-006 — Appearance versions (effective episode)
+- [x] TASK-CHAR-006 — Appearance versions (effective episode)
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -269,9 +269,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-007-wardrobe-versions
   - Worktree: worktrees/TASK-CHAR-007/
   - Acceptance: wardrobe states versioned per character; active-wardrobe resolution for an episode continuity point; `npx vitest run packages/character-library/src/wardrobe` green.
-  - Status: READY
+  - Status: PASS
 
-- [ ] TASK-CHAR-008 — Hair versions
+- [x] TASK-CHAR-008 — Hair versions
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -280,9 +280,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-008-hair-versions
   - Worktree: worktrees/TASK-CHAR-008/
   - Acceptance: hair states versioned per character; change never overwrites identity history; `npx vitest run packages/character-library/src/hair` green.
-  - Status: READY
+  - Status: PASS
 
-- [ ] TASK-CHAR-009 — Fish voice binding
+- [x] TASK-CHAR-009 — Fish voice binding
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -291,7 +291,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-009-voice-binding
   - Worktree: worktrees/TASK-CHAR-009/
   - Acceptance: voice profile record per spec §16 (character ID, Fish voice/reference ID, model, pace, emotion/style, pronunciation dictionary, proper nouns, test sample status, approval state); recurring character voice never randomly changes across episodes (determinism test); `npx vitest run packages/character-library/src/voice-binding` green.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CHAR-010 — Series cast links
   - Workflow: WF02
@@ -302,7 +302,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-010-cast-links
   - Worktree: worktrees/TASK-CHAR-010/
   - Acceptance: global library ↔ per-series cast join; cast resolution by episode; removing series cast never deletes global character; `npx vitest run packages/character-library/src/cast` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CHAR-011 — Recurring location library
   - Workflow: WF02
@@ -313,7 +313,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-011-location-library
   - Worktree: worktrees/TASK-CHAR-011/
   - Acceptance: location masters with approved wide/medium/reverse angles + day/night states; resolution by episode continuity point; `npx vitest run packages/character-library/src/locations` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CHAR-012 — Series Bible events
   - Workflow: WF02
@@ -324,7 +324,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-012-series-bible
   - Worktree: worktrees/TASK-CHAR-012/
   - Acceptance: bible stores premise, world rules, characters, relationships, locations, wardrobe, props, visual style, camera language, voice profiles, timeline, episode summaries, plot threads, versioned canon changes (spec §10); historical episodes read canon-at-time; `npx vitest run packages/character-library/src/series-bible` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CHAR-013 — Canon proposal approval (gate 6)
   - Workflow: WF02
@@ -346,7 +346,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-014-asset-links
   - Worktree: worktrees/TASK-CHAR-014/
   - Acceptance: canonical GHL file ID + URL + checksum resolved verbatim in downstream reference plans; stale-link refresh via manifest; local-cache-removal resolution test passes against mocked GHL; `npx vitest run packages/character-library/src/asset-links` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-CHAR-015 — Character reference-pack metrics
   - Workflow: WF02
@@ -528,7 +528,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
 
 ## WF09A — MODEL REGISTRY / CAPABILITIES (CAP-* live in WF09)
 
-- [ ] TASK-CAP-001 — Capability schema
+- [x] TASK-CAP-001 — Capability schema
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -539,7 +539,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: MediaModelCapability TS interface + zod schema exactly per spec §5 (all fields incl. confidence enum VERIFIED/PROVISIONAL/UNKNOWN, incompatibleCombinations); separate registry kinds for reasoning/vision/image/video/voice/storage; `npx vitest run packages/capability-registry/src/schema` green.
   - Status: READY
 
-- [ ] TASK-CAP-002 — Capability source/date/confidence data
+- [x] TASK-CAP-002 — Capability source/date/confidence data
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -570,7 +570,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-004-reference-count
   - Worktree: worktrees/TASK-CAP-004/
   - Acceptance: rejects too many Wan reference images (>10) before call; validates images/videos/audio counts per profile; `npx vitest run packages/capability-registry/src/validators` green incl. reference tests.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CAP-005 — Mutually-exclusive-mode validator
   - Workflow: WF09
@@ -581,7 +581,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-005-exclusive-modes
   - Worktree: worktrees/TASK-CAP-005/
   - Acceptance: rejects first/last-frame combined with multimodal references (Wan); validates incompatibleCombinations generically; `npx vitest run packages/capability-registry/src/validators` green incl. mode tests.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-CAP-006 — Pricing/quota model
   - Workflow: WF09
@@ -592,7 +592,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-006-pricing-model
   - Worktree: worktrees/TASK-CAP-006/
   - Acceptance: per-model pricing_unit/current_price/quota/overage consumed by cost estimate; spend estimation test against fixture profiles; `npx vitest run packages/capability-registry/src/pricing` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-CAP-007 — Reasoning/vision model registry
   - Workflow: WF09
@@ -603,7 +603,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-007-llm-registry
   - Worktree: worktrees/TASK-CAP-007/
   - Acceptance: OpenRouter-compatible selection; separate slots for director/writer/script-critic/image-QC/video-QC/continuity-QC/final-QC; any compatible model ID accepted (not closed to 4 presets); `npx vitest run packages/capability-registry/src/llm-registry` green.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CAP-008 — MAX_REASONING mapper
   - Workflow: WF09
@@ -614,7 +614,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-008-max-reasoning
   - Worktree: worktrees/TASK-CAP-008/
   - Acceptance: MAX_REASONING logical config maps per-adapter to highest supported reasoning effort; never sends literal "max" to endpoints that reject it (adapter table test); `npx vitest run packages/capability-registry/src/max-reasoning` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-CAP-009 — Provider health/verify command
   - Workflow: WF09
@@ -625,7 +625,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-009-providers-verify
   - Worktree: worktrees/TASK-CAP-009/
   - Acceptance: `mmcs providers verify` reports configured vs documented vs runtime-observed capability + last verified date + discrepancy warning; transient failure never silently rewrites VERIFIED (test); `npx vitest run packages/capability-registry/src/verify` green.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CAP-010 — Runtime observed capability overrides
   - Workflow: WF09
@@ -636,7 +636,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-010-observed-overrides
   - Worktree: worktrees/TASK-CAP-010/
   - Acceptance: runtime-discovered model IDs/limits refine profiles with PROVISIONAL confidence + provenance; VERIFIED values immutable on one transient failure (test); Agnes 2.5 runtime IDs recorded with source/date; `npx vitest run packages/capability-registry/src/observed-overrides` green.
-  - Status: READY
+  - Status: PASS
 
 ## WF04 — AGNES / IMAGE / VIDEO
 
@@ -761,7 +761,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-001-kie-client
   - Worktree: worktrees/TASK-KIE-001/
   - Acceptance: HTTP client, bearer auth from config, timeouts/retries, key never logged; current docs.kie.ai schema facts recorded in docs/provider-capabilities/kie.md with URLs + date; `npx vitest run packages/providers/src/kie/client` green (mocked).
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-KIE-002 — Generic task submit/poll
   - Workflow: WF05
@@ -772,7 +772,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-002-kie-task
   - Worktree: worktrees/TASK-KIE-002/
   - Acceptance: generic Kie task abstraction: persist task ID before polling; resume-at-SUBMITTED polls existing task (no resubmit test); state mapping to §18 machine; `npx vitest run packages/providers/src/kie/task` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-KIE-003 — Seedance 2.0 Mini profile
   - Workflow: WF05
@@ -783,7 +783,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-003-seedance-profile
   - Worktree: worktrees/TASK-KIE-003/
   - Acceptance: Seedance 2.0 Mini adapter per live Kie schema (verify at build; record in docs/provider-capabilities/kie.md); generation modes tracked separately (first-frame I2V / first+last I2V / multimodal-reference); unstated numeric limits stay UNKNOWN/PROVISIONAL; `npx vitest run packages/providers/src/kie/seedance` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-KIE-004 — Seedance modes/validation
   - Workflow: WF05
@@ -794,7 +794,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-004-seedance-modes
   - Worktree: worktrees/TASK-KIE-004/
   - Acceptance: mutually exclusive modes never combined (pre-flight rejection test); mode selected explicitly per request; `npx vitest run packages/providers/src/kie/seedance/validation` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-KIE-005 — Wan 3.0 profile
   - Workflow: WF05
@@ -805,7 +805,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-005-wan-profile
   - Worktree: worktrees/TASK-KIE-005/
   - Acceptance: Wan 3.0 adapter after live schema/pricing/limits verification recorded in registry (baseline: 20,000-char prompt, ≤10 ref images, ≤5 ref videos, ≤5 ref audio, ≤30s, 480p/720p/1080p — verify, never trust static doc over newer docs); `npx vitest run packages/providers/src/kie/wan` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-KIE-006 — Wan multimodal validation
   - Workflow: WF05
@@ -816,7 +816,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-006-wan-validation
   - Worktree: worktrees/TASK-KIE-006/
   - Acceptance: >20,000-char prompt rejected BEFORE provider call; >10 reference images rejected before call; first/last-frame vs multimodal incompatibility enforced; `npx vitest run packages/providers/src/kie/wan/validation` green (spec §32 media-capability acceptance).
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-KIE-007 — Kie cost calculator
   - Workflow: WF05
@@ -849,7 +849,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-009-kie-errors
   - Worktree: worktrees/TASK-KIE-009/
   - Acceptance: all Kie error shapes normalized to one error taxonomy (retryable/fatal/quota); no raw error leakage into logs with secrets; `npx vitest run packages/providers/src/kie/errors` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-KIE-010 — Contract/smoke tests
   - Workflow: WF05
@@ -860,7 +860,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-010-kie-contract
   - Worktree: worktrees/TASK-KIE-010/
   - Acceptance: full mocked contract suite (submit/poll/resume/fail/archive handoff); optional live smoke gated behind credentials + $25 rule, skipped cleanly when absent; `npx vitest run packages/providers/src/kie/__tests__` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 ## WF06 — FISH AUDIO / AUDIO / CAPTIONS
 
@@ -873,7 +873,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-001-fish-client
   - Worktree: worktrees/TASK-FISH-001/
   - Acceptance: HTTP client, auth from config, timeouts/retries, key never logged; current docs verified + recorded in docs/provider-capabilities/fish.md with URLs + date; s2.1-pro-free availability recorded but NOT assumed (config-driven model selection); `npx vitest run packages/providers/src/fish-audio/client` green (mocked).
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-FISH-002 — Voice profile management
   - Workflow: WF06
@@ -884,7 +884,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-002-voice-profiles
   - Worktree: worktrees/TASK-FISH-002/
   - Acceptance: create/persist/list voice profiles per spec §16 fields; profile bound to character ID; test-sample status tracked; `npx vitest run packages/providers/src/fish-audio/voice-profiles` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-FISH-003 — TTS generation
   - Workflow: WF06
@@ -906,7 +906,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-004-pronunciation
   - Worktree: worktrees/TASK-FISH-004/
   - Acceptance: per-character pronunciation dictionary + proper-noun list applied to TTS requests; dictionary versioned; `npx vitest run packages/providers/src/fish-audio/pronunciation` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-FISH-005 — Dialogue cache
   - Workflow: WF06
@@ -917,7 +917,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-005-dialogue-cache
   - Worktree: worktrees/TASK-FISH-005/
   - Acceptance: same text+voice+model request returns cached asset (idempotency test); cache keyed by request hash; `npx vitest run packages/providers/src/fish-audio/cache` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-FISH-006 — Alignment/timestamps
   - Workflow: WF06
@@ -985,7 +985,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-001-ghl-auth
   - Worktree: worktrees/TASK-GHL-001/
   - Acceptance: bearer token + `Version: v3` header from config; token never logged (redaction test); current official docs verified + recorded in docs/provider-capabilities/ghl.md with URLs + date; `npx vitest run packages/media-storage/src/ghl/auth` green (mocked).
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-002 — List/search media
   - Workflow: WF07
@@ -996,7 +996,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-002-ghl-list
   - Worktree: worktrees/TASK-GHL-002/
   - Acceptance: `GET /medias/files` with location context (altType=location, altId) lists/searches files + folders; pagination handled; folder-resolution by exact name (test: find "Convert and Flow"); `npx vitest run packages/media-storage/src/ghl/list` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-003 — Create folder
   - Workflow: WF07
@@ -1007,7 +1007,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-003-ghl-create-folder
   - Worktree: worktrees/TASK-GHL-003/
   - Acceptance: `POST /medias/folder` {altId, altType:"location", name, parentId?}; returned folder ID persisted; search-before-create (duplicate-root prevention test); `npx vitest run packages/media-storage/src/ghl/folders` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-004 — Idempotent Convert and Flow tree
   - Workflow: WF07
@@ -1018,7 +1018,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-004-ghl-tree
   - Worktree: worktrees/TASK-GHL-004/
   - Acceptance: full spec §17 tree (Convert and Flow / Character Library / Series / Standalone Movies + 01–09 episode subfolders) created idempotently; second run creates zero duplicates (test against mocked API recording calls); `npx vitest run packages/media-storage/src/ghl/tree` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-005 — Hosted URL ingest
   - Workflow: WF07
@@ -1029,7 +1029,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-005-ghl-hosted
   - Worktree: worktrees/TASK-GHL-005/
   - Acceptance: `POST /medias/upload-file` multipart hosted=true + fileUrl + deterministic canonical name + parentId; returns fileId + storage URL stored; GHL URL reachability verified before ARCHIVED; `npx vitest run packages/media-storage/src/ghl/upload-hosted` green (mocked).
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-006 — Binary fallback upload
   - Workflow: WF07
@@ -1040,7 +1040,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-006-ghl-binary
   - Worktree: worktrees/TASK-GHL-006/
   - Acceptance: hosted ingest failure → immediate download → checksum → ffprobe/decode verify → binary upload (25 MB general / 500 MB video limits enforced) → returned ID/URL verified → integrity compare before ARCHIVED; size-limit rejection test; `npx vitest run packages/media-storage/src/ghl/upload-binary` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-007 — URL/file validation
   - Workflow: WF07
@@ -1051,7 +1051,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-007-ghl-validation
   - Worktree: worktrees/TASK-GHL-007/
   - Acceptance: remote download URL validation (spec §29: scheme allowlist, no SSRF to private ranges); MIME/file-type + file-size checks; path-traversal-safe filenames; `npx vitest run packages/media-storage/src/ghl/validation` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-008 — Asset manifest integration
   - Workflow: WF07
@@ -1095,7 +1095,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-011-ghl-retry
   - Worktree: worktrees/TASK-GHL-011/
   - Acceptance: bounded retry with backoff; retry never creates duplicate GHL files (idempotency-key test); archival never triggers regeneration (spec §17.5); `npx vitest run packages/media-storage/src/ghl/retry` green.
-  - Status: READY
+  - Status: BUILDER_DONE
 
 - [ ] TASK-GHL-012 — Provider temporary URL emergency archival
   - Workflow: WF07

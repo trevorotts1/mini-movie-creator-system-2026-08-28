@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-010",
+  "phase": "PASS",
+  "commit": "039abb6",
+  "checksRun": "npx vitest run packages/core/src/config && pnpm --filter @mmcs/core exec tsc --noEmit && git check-ignore .env && git check-ignore .env.example (exit 1)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "QC verified: 9 contract env vars + AUTO_SPEND_LIMIT_USD default 25.00, zod validation, value-free named errors, .env.example clean, .env gitignored, 17/17 tests pass, tsc clean",
+  "blockers": []
+}

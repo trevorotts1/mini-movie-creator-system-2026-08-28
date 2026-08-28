@@ -1,0 +1,9 @@
+{
+  "taskId": "CAP-002",
+  "phase": "BUILDER_DONE",
+  "commit": "946f130",
+  "testsRun": "npx vitest run packages/capability-registry/src/data -> 1 file, 34/34 passed; npx tsc --noEmit -p packages/capability-registry -> clean",
+  "notes": "Seeded capability profiles with provenance triple (lastVerifiedAt 2026-08-28 + sourceUrls + confidence): Agnes video-2.5-flash/2.5/image-2.1-flash (VERIFIED, live wiki docs), Kie seedance-2-mini + wan/3-0-video + prime (VERIFIED, live OpenAPI schemas + kie.ai pricing), Fish s2.1 family (VERIFIED, live docs: $15/M UTF-8 bytes, s2.1-mini/turbo do not exist in the enum), reasoning/vision GLM 5.3 Flash + DeepSeek V4 Flash Vision Exp + Qwen 3.8 Flash + Gemini 3.7 Flash (PROVISIONAL from OpenRouter catalog with per-model effort ladders). UNKNOWN preserved: Agnes hard prompt ceiling null (test asserts it is null AND not Kie's 20000), Fish char limit null, Agnes reference-count nulls where unstated. docs/provider-capabilities/: one file per provider family + README.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
