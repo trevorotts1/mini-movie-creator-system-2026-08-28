@@ -3,7 +3,7 @@
   "phase": "PASS",
   "commit": "fda43aa",
   "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
-  "rebaseCommit": "TBD",
+  "rebaseCommit": "0fe1de9",
   "checksRun": "bash integrations/claude/nine-verify.sh -> PASS=12 FAIL=0 (real-skill step 6 skip recorded, SKL-001 merge pending); bash integrations/claude/nine-verify.sh with canonical skill content from task/SKL-001-canonical-skill extracted into worktree skills/ -> PASS=13 FAIL=0 incl. step 6 real /mini-movie-creator live probe; bash integrations/claude/nine-verify.sh --selftest -> PASS=5 FAIL=0; npx vitest run integrations/claude --config apps/cli/vitest.config.ts -> 15 passed; npx tsc --noEmit -p integrations/claude/tsconfig.json -> clean; shellcheck -S warning nine-verify.sh -> clean; npx vitest run --config apps/cli/vitest.config.ts apps/cli (regression) -> 13 passed",
   "defectsFound": 2,
   "defectsFixed": 2,
