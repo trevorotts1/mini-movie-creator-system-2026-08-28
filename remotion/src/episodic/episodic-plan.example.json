@@ -1,0 +1,33 @@
+{
+  "series": {
+    "id": "ser_example",
+    "title": "Example Series",
+    "fps": 30,
+    "width": 1920,
+    "height": 1080
+  },
+  "episodes": [
+    {
+      "id": "ep_example_101",
+      "seasonNumber": 1,
+      "episodeNumber": 1,
+      "scenes": [
+        {
+          "sceneId": "sc_101_01",
+          "sequenceIndex": 1,
+          "shots": [
+            { "shotId": "sh_101_0101", "sequenceIndex": 1, "targetDurationSeconds": 4 },
+            { "shotId": "sh_101_0102", "sequenceIndex": 2, "targetDurationSeconds": 3 }
+          ]
+        },
+        {
+          "sceneId": "sc_101_02",
+          "sequenceIndex": 2,
+          "shots": [
+            { "shotId": "sh_101_0201", "sequenceIndex": 1, "targetDurationSeconds": 6 }
+          ]
+        }
+      ]
+    }
+  ]
+}

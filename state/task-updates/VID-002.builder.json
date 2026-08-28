@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-002",
+  "phase": "BUILDER_DONE",
+  "commit": "72ddc3a",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/registry -> 17/17 pass (exit 0); npx vitest run (full suite) -> 425/425 pass across 25 files (exit 0); npx tsc --noEmit -p packages/remotion-runtime/tsconfig.json -> exit 0; npx tsc --noEmit -p remotion/tsconfig.json -> exit 0; npm run gen (remotion/, extended) -> upstream shot registry + episodic registry generated, exit 0",
+  "notes": "Episodic composition registry: packages/remotion-runtime/src/registry/ (EpisodicPlan types + buildEpisodeCompositionRegistry resolving series/episode/scene/shot -> one composition per episode with cumulative sequenceFrom frame offsets preserving the upstream local_f = global_s * fps - sequence_from convention, plan validation with typed RegistryPlanError, episode-code/composition-id lookups); remotion/src/episodic/ (EpisodeComposition host component + local contract types + example plan) + scripts/gen-episodic-registry.mjs; npm run gen extended (upstream gen-registry.mjs still runs first). Registry consumes a plain DB-shaped plan (CORE-004 episodes + CORE-006 scenes/shots row subset) — no DB dependency, so no coupling to those still-unmerged bands.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

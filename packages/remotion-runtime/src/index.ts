@@ -3,6 +3,9 @@ export const MMCS_REMOTION_RUNTIME = "@mmcs/remotion-runtime scaffold marker";
 export * from "./ffprobe/index.js";
 export * from "./frame-extraction/index.js";
 
+// VID-002 — episodic composition registry (QC PASS).
+export * from "./registry/index.js";
+
 // VID-013 — selective shot replacement (spec §20/§21/§32).
 export {
   SHOT_LAYER_KINDS,
