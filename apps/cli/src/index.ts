@@ -1,61 +1,38 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+// `mmcs` CLI entry point (spec §24, CORE-011).
+//
+// Thin bootstrap: registers the command surface from the dispatch registry and
+// hands argv to the dispatcher. No business logic lives here — commands are
+// stubs until their owning tasks wire real handlers under src/commands/.
 
-const program = new Command();
+import { dispatch } from "./dispatch/dispatcher.js";
+import { buildRegistry } from "./dispatch/registry.js";
 
-program
-  .name("mmcs")
-  .description("Mini Movie Creator System — stable, scriptable CLI (spec §24)");
+export async function main(
+  argv: readonly string[] = process.argv.slice(2),
+): Promise<number> {
+  // Registry is built once and kept importable for tests and the API app.
+  void buildRegistry;
+  const { exitCode, error } = await dispatch(argv);
+  if (error) process.stderr.write(`[mmcs] ${error}\n`);
+  return exitCode;
+}
 
-// --- pipeline lifecycle ---
-program.command("doctor").description("Check environment, providers, and config health");
-program.command("status").description("Show project/series/episode state and approval gates");
-program.command("create-series").description("Create a new series with persistent defaults");
-program.command("create-episode").description("Create a new episode in a series");
-program
-  .command("develop-concept")
-  .description("Develop a concept for approval (STOP at concept gate)");
-program.command("approve concept").description("Approve the developed concept");
-program
-  .command("write-script")
-  .description("Write the script for the episode (STOP at script gate)");
-program.command("approve script").description("Approve the written script");
-program.command("cast").description("Generate character candidates");
-program
-  .command("choose-character <candidate>")
-  .description("Choose a character candidate for refinement");
-program.command("approve-character <id>").description("Approve a character version");
-program.command("storyboard").description("Generate storyboard/shot plan");
-program.command("approve-storyboard").description("Approve the storyboard");
-program
-  .command("estimate")
-  .description("Estimate cost and duration of the generation plan");
-program.command("generate").description("Generate all shots for the episode");
-program.command("generate-shot <id>").description("Generate a single shot");
-program.command("retry-shot <id>").description("Retry a failed shot");
-program.command("qc").description("Run QC on generated assets");
-program
-  .command("rough-cut")
-  .description("Assemble the rough cut (STOP at rough-cut gate)");
-program.command("approve rough-cut").description("Approve the rough cut");
-program.command("final").description("Produce the final render");
-program.command("canon review").description("Review series canon/continuity");
-program.command("canon approve").description("Approve canon updates");
+// Run only when executed directly (not under vitest / import).
+const invokedDirectly =
+  typeof process !== "undefined" &&
+  process.argv[1] !== undefined &&
+  import.meta.url === new URL(`file://${process.argv[1]}`).href;
 
-// --- providers, models, characters, storage ---
-program.command("providers").description("List configured providers");
-program
-  .command("providers verify")
-  .description("Verify configured/documented/observed capability per provider");
-program.command("models").description("List models available per provider");
-program.command("character list").description("List characters in the library");
-program.command("character show <id>").description("Show a character and its versions");
-program.command("storage status").description("Show media storage backend status");
-
-// --- recovery ---
-program.command("recover").description("Resume interrupted pipeline work safely");
-
-program.parseAsync(process.argv).catch((err: unknown) => {
-  console.error(err);
-  process.exit(1);
-});
+if (invokedDirectly) {
+  main()
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((err: unknown) => {
+      process.stderr.write(
+        `[mmcs] unexpected failure: ${err instanceof Error ? err.message : String(err)}\n`,
+      );
+      process.exitCode = 1;
+    });
+}
