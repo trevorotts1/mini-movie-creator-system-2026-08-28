@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mmcs/capability-registry": "workspace:*",
     "commander": "^14.0.0"
   }
 }
