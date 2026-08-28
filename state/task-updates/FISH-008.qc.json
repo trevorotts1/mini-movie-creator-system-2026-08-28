@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-008",
   "phase": "PASS",
-  "commit": "b991996adfdef9d4d17165e36b513c0dba5a4731",
+  "commit": "19f787f3d4c96c39a09b9df2ee7bc73d391e1fa4",
   "checksRun": "pnpm exec vitest run packages/providers/src/fish-audio/normalize/ -> 31/31 PASS (2 files, 31 tests); pnpm run typecheck -> PASS (all workspace packages); pnpm -C packages/providers run typecheck -> PASS",
   "defectsFound": 0,
   "defectsFixed": 0,
