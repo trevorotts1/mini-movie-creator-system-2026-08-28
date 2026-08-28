@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-005",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_STAMP",
+  "commit": "d37dfe7",
   "testsRun": "npx vitest run packages/providers/src/fish-audio/cache -> 2 files, 25/25 passed; npx tsc --noEmit -p packages/providers/tsconfig.json -> clean. All mocked (memory fs seam); no FISH_API_KEY needed, no network.",
   "notes": "Dialogue cache: versioned SHA-256 request-hash key (text+voice+model+params, order-independent, voice-array order significant), durable one-file-per-key JSON store with audio base64, getOrSynthesize idempotency with persist-before-resolve + single-flight (concurrent same-request = one synthesis), corrupt/foreign entries count as miss, hostile story text hashed-never-executed, validated hex keys used in paths only.",
   "blockers": [],
