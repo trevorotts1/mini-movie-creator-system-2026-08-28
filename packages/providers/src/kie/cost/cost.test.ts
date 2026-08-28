@@ -136,6 +136,34 @@ describe("estimateKieVideoCost — unknown pricing never guessed", () => {
     expect(estimate.estimatedCost).toBeNull();
   });
 
+  it("treats a negative or non-finite pricing row as unknown, never a priced estimate", () => {
+    const poisoned = {
+      [KIE_WAN_3_0_VIDEO.modelId]: {
+        ...KIE_WAN_3_0_VIDEO,
+        pricingDetail: { ...KIE_WAN_3_0_VIDEO.pricingDetail, "480P": -0.04 },
+      },
+    };
+    const negative = estimateKieVideoCost(
+      { modelId: KIE_WAN_3_0_VIDEO.modelId, resolution: "480P", outputSeconds: 5 },
+      poisoned,
+    );
+    expect(negative.basis).toBe("unknown_resolution");
+    expect(negative.estimatedCost).toBeNull();
+
+    const poisonedNaN = {
+      [KIE_WAN_3_0_VIDEO.modelId]: {
+        ...KIE_WAN_3_0_VIDEO,
+        pricingDetail: { ...KIE_WAN_3_0_VIDEO.pricingDetail, "480P": Number.NaN },
+      },
+    };
+    const nan = estimateKieVideoCost(
+      { modelId: KIE_WAN_3_0_VIDEO.modelId, resolution: "480P", outputSeconds: 5 },
+      poisonedNaN,
+    );
+    expect(nan.basis).toBe("unknown_resolution");
+    expect(nan.estimatedCost).toBeNull();
+  });
+
   it("rejects invalid requests before estimating", () => {
     expect(() => estimateKieVideoCost({ modelId: "  ", resolution: "480p", outputSeconds: 5 })).toThrow(KieCostError);
     expect(() => estimateKieVideoCost({ modelId: "wan/3-0-video", resolution: "", outputSeconds: 5 })).toThrow(KieCostError);
@@ -145,6 +173,13 @@ describe("estimateKieVideoCost — unknown pricing never guessed", () => {
     ).toThrow(KieCostError);
     expect(() =>
       estimateKieVideoCost({ modelId: "wan/3-0-video", resolution: "480P", outputSeconds: Number.NaN }),
+    ).toThrow(KieCostError);
+    // Non-string ids/resolutions must throw KieCostError, not a raw TypeError from .trim().
+    expect(() =>
+      estimateKieVideoCost({ modelId: 42 as unknown as string, resolution: "480p", outputSeconds: 5 }),
+    ).toThrow(KieCostError);
+    expect(() =>
+      estimateKieVideoCost({ modelId: "wan/3-0-video", resolution: null as unknown as string, outputSeconds: 5 }),
     ).toThrow(KieCostError);
   });
 });

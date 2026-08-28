@@ -115,14 +115,19 @@ function lookupPricePerSecond(
   if (!detail) return null;
   const keys = Object.keys(detail);
   const wanted = resolution.trim().toLowerCase();
-  if (keys.some((key) => key.toLowerCase().endsWith("-with-video-input"))) {
+  let key: string | undefined;
+  if (keys.some((candidate) => candidate.toLowerCase().endsWith("-with-video-input"))) {
     // Seedance-style table: rate depends on whether reference video is billed in.
     const suffix = withVideoInput ? "with-video-input" : "no-video-input";
-    const key = keys.find((candidate) => candidate.toLowerCase() === `${wanted}-${suffix}`);
-    return key === undefined ? null : (detail[key] ?? null);
+    key = keys.find((candidate) => candidate.toLowerCase() === `${wanted}-${suffix}`);
+  } else {
+    key = keys.find((candidate) => candidate.toLowerCase() === wanted);
   }
-  const key = keys.find((candidate) => candidate.toLowerCase() === wanted);
-  return key === undefined ? null : (detail[key] ?? null);
+  if (key === undefined) return null;
+  const rate = detail[key] ?? null;
+  // A negative or non-finite rate can never price a call: treat as unknown so
+  // the $25 gate blocks instead of auto-approving a phantom or negative cost.
+  return rate !== null && Number.isFinite(rate) && rate >= 0 ? rate : null;
 }
 
 /**
@@ -134,6 +139,12 @@ export function estimateKieVideoCost(
   request: KieCostRequest,
   profiles: KieProfileMap = KIE_MEDIA_PROFILES,
 ): KieCostEstimate {
+  if (typeof request.modelId !== "string") {
+    throw new KieCostError("modelId", "must be a string");
+  }
+  if (typeof request.resolution !== "string") {
+    throw new KieCostError("resolution", "must be a string");
+  }
   const modelId = request.modelId.trim();
   if (modelId.length === 0) throw new KieCostError("modelId", "must be a non-empty model id");
   const resolution = request.resolution.trim();
