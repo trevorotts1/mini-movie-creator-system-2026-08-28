@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-002",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_COMMIT_SHA",
+  "commit": "289fd87c31dc4a9552771038507689839c923e5a",
   "testsRun": "npx vitest run packages/providers/src/fish-audio/voice-profiles -> 23 passed (23), 1 file; tsc --noEmit -p packages/providers -> clean",
   "notes": "Voice profile management per spec §30: create/update/list/persist JSON-file store (one profile per character ID, permanent binding), pronunciation dictionary, proper nouns, pace/emotionStyle/model, test-sample status tracking (none/pending/generated/approved/rejected + asset id), approval states mirroring §17.5, production-ready gate, atomic writes + serialized read-modify-write.",
   "blockers": [],
