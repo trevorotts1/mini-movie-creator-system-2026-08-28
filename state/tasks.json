@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-28T14:38:00Z",
+  "updated_at": "2026-08-28T15:26:14Z",
   "items": [
     {
       "id": "CORE-001",
@@ -748,7 +748,8 @@
       "branch": "task/CAP-009-providers-verify",
       "worktree": "worktrees/CAP-009/",
       "acceptance": "`mmcs providers verify` reports configured vs documented vs runtime-observed capability + last verified date + discrepancy warning; transient failure never silently rewrites VERIFIED (test); `npx vitest run packages/capability-registry/src/verify` green.",
-      "status": "PASS"
+      "status": "QC_FIXING",
+      "note": " | 2026-08-28T15:26Z batch4 rollback: merged code broke integration typecheck (TS6059 cross-package import in apps/cli/src/commands/providers-verify/command.ts)"
     },
     {
       "id": "CAP-010",
@@ -859,7 +860,7 @@
       "branch": "task/AGN-007-agnes-regular",
       "worktree": "worktrees/AGN-007/",
       "acceptance": "Agnes Video 2.5 regular profile (4\u201312s, \u22645 ref images, reference-video support, 720p/960p/2K, prompt ceiling UNKNOWN); reference-video path exercised in mocked test; `npx vitest run packages/providers/src/agnes/profiles/regular` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "AGN-008",
@@ -887,7 +888,7 @@
       "branch": "task/AGN-009-agnes-quota",
       "worktree": "worktrees/AGN-009/",
       "acceptance": "requested/generated/accepted/rejected seconds + retries + cost recorded per job; included quota tracked separately from paid spend; `npx vitest run packages/providers/src/agnes/quota` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "AGN-010",
@@ -1012,7 +1013,7 @@
       "branch": "task/KIE-008-temp-url",
       "worktree": "worktrees/KIE-008/",
       "acceptance": "GENERATED_TEMPORARY persists provider URL + expiration immediately; archival handoff to GHL store triggered (GHL-012 integration point); `npx vitest run packages/providers/src/kie/temp-url` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "KIE-009",
@@ -1150,7 +1151,7 @@
       "branch": "task/FISH-008-normalization",
       "worktree": "worktrees/FISH-008/",
       "acceptance": "FFmpeg loudness normalization contract (target LUFS configurable, deterministic args); probe-before/after; `npx vitest run packages/providers/src/fish-audio/normalize` green (fixture WAV; ffmpeg present per spec \u00a72).",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "FISH-009",
@@ -1163,7 +1164,7 @@
       "branch": "task/FISH-009-mix",
       "worktree": "worktrees/FISH-009/",
       "acceptance": "dialogue + music bed + SFX mixed via FFmpeg with deterministic filter graph; mix plan as data; output passes ffprobe; `npx vitest run packages/providers/src/fish-audio/mix` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "FISH-010",
@@ -1177,7 +1178,7 @@
       "branch": "task/FISH-010-fish-config",
       "worktree": "worktrees/FISH-010/",
       "acceptance": "model selection + pricing fully config-driven (no hard-coded free assumption); cost estimate feeds CORE-009; `npx vitest run packages/providers/src/fish-audio/config` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "GHL-001",
@@ -1285,7 +1286,7 @@
       "branch": "task/GHL-008-asset-manifest",
       "worktree": "worktrees/GHL-008/",
       "acceptance": "MediaStore abstraction + GoHighLevelMediaStore implementation; asset record (spec \u00a719 all 26 fields) written with ghl_file_id/ghl_folder_id/ghl_url/checksum; resolve-after-local-cache-removal test passes via DB; `npx vitest run packages/media-storage/src/manifest` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "GHL-009",
@@ -1299,7 +1300,7 @@
       "branch": "task/GHL-009-character-links",
       "worktree": "worktrees/GHL-009/",
       "acceptance": "canonical character image \u2192 Character Library/<Name>/Identity Masters/ folder; GHL file ID + URL + folder ID + SHA-256 + generation metadata persisted on the character record (spec \u00a79 exact fields); `npx vitest run packages/media-storage/src/character-links` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "GHL-010",
@@ -1313,7 +1314,7 @@
       "branch": "task/GHL-010-episode-folders",
       "worktree": "worktrees/GHL-010/",
       "acceptance": "Series/<Name>/Season 01/S01E01 - <Title>/ created + all 9 subfolder IDs persisted; per-episode override respected; idempotent re-run test; `npx vitest run packages/media-storage/src/episode-folders` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "GHL-011",
@@ -1355,7 +1356,7 @@
       "branch": "task/VID-001-preserve-kits",
       "worktree": "worktrees/VID-001/",
       "acceptance": "shared kits + registry generation (`npm run gen`) + frame-QA discipline preserved; PF-1 fixed (chess SVGs committed or chess.tsx inline \u2014 Short1Chess renders); PF-2 `npm audit fix` applied; `cd remotion && npm run gen && npx tsc --noEmit` passes; render smoke on previously-failing composition passes with `--scale=1`.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "VID-002",
@@ -1382,7 +1383,7 @@
       "branch": "task/VID-003-shot-timeline",
       "worktree": "worktrees/VID-003/",
       "acceptance": "shot \u2192 timeline sequence mapping (sequence_index, in/out frames, fps); upstream frames.mjs local_f = global_s * fps \u2212 sequence_from convention preserved; unit test with known timings; `npx vitest run packages/remotion-runtime/src/timeline` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "VID-004",
@@ -1552,7 +1553,7 @@
       "branch": "task/VID-015-ffprobe",
       "worktree": "worktrees/VID-015/",
       "acceptance": "ffprobe wrapper reports codec/duration/resolution/bitrate; integrity check fails on corrupted fixture (truncated file test); every render output validated before ARCHIVED; `npx vitest run packages/remotion-runtime/src/ffprobe` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "VID-016",
@@ -1604,7 +1605,7 @@
       "branch": "task/QC-003-wardrobe-check",
       "worktree": "worktrees/QC-003/",
       "acceptance": "active appearance version (hair/wardrobe/props) verified against shot spec requirements; wrong-wardrobe fixture flagged; `npx vitest run packages/qc/src/wardrobe` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "QC-004",
@@ -1617,7 +1618,7 @@
       "branch": "task/QC-004-continuity",
       "worktree": "worktrees/QC-004/",
       "acceptance": "neighboring shots compared against each other + current Series Bible state (spec \u00a711); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "QC-005",
@@ -1646,7 +1647,7 @@
       "branch": "task/QC-006-retry-policy",
       "worktree": "worktrees/QC-006/",
       "acceptance": "targeted repair of affected shot only \u2014 never whole-episode regeneration (test proves single-shot scope); retry bounded by cost policy; `npx vitest run packages/qc/src/retry` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "QC-007",
@@ -1674,7 +1675,7 @@
       "branch": "task/QC-008-agnes-regular-fallback",
       "worktree": "worktrees/QC-008/",
       "acceptance": "Flash FAIL after retry \u2192 Agnes Video 2.5 regular escalation; fallback trigger conditions tested; `npx vitest run packages/qc/src/routes/agnes-regular` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "QC-009",
@@ -1746,7 +1747,7 @@
       "branch": "task/SKL-001-canonical-skill",
       "worktree": "worktrees/SKL-001/",
       "acceptance": "AgentSkills-style SKILL.md concise frontmatter; all 25 required behaviors of spec \u00a727 teachable; references hold detail; no secrets/hard-coded credentials (secret-scan grep clean); `bash skills/mini-movie-creator/scripts/mmcs-status.sh` exits 0 against a stub state; SKILL.md \u2264 500 lines.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "SKL-002",
@@ -1759,7 +1760,7 @@
       "branch": "task/SKL-002-claude-project-install",
       "worktree": "worktrees/SKL-002/",
       "acceptance": "`.claude/skills/mini-movie-creator` resolves to canonical source; `claude` loads it; non-destructive dry run of `/mini-movie-creator status` documented; install script idempotent (second run no-op); `bash integrations/claude/project-install.sh --check` exits 0.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "SKL-003",
@@ -1837,7 +1838,7 @@
       "branch": "task/REC-001-checkpoint-wiring",
       "worktree": "worktrees/REC-001/",
       "acceptance": "checkpoint cadence enforced (every material transition, before/after compaction, before/after batch merge, session end, every watchdog cycle \u2014 spec \u00a728); atomic write verified under concurrent writers; `npx vitest run packages/core/src/recovery` + integration script exit 0.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "REC-002",
@@ -1943,7 +1944,7 @@
       "branch": "task/REC-009-batch-merge",
       "worktree": "worktrees/REC-009/",
       "acceptance": "implements runbook \u00a77.2 (locks state/locks/merge.lock; admits only Sonnet-QC-PASS with passing tests; orders by dependency/conflict risk; batch-merges to integration in dedicated merge workflow; affected-area regression + secret scan before push; no QC PASS = no merge); dry-run mode test on fixture queue; `npx vitest run scripts/orchestration/batch-merge.test.ts` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "REC-010",
@@ -1961,7 +1962,7 @@
       "branch": "task/REC-010-restart-sim",
       "worktree": "worktrees/REC-010/",
       "acceptance": "simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission \u2192 resume polls existing task ID (no resubmit \u2014 spec \u00a732 recovery acceptance); simulation script exits 0.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "REC-011",
