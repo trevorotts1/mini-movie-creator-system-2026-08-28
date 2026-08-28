@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { connectSqlite, type SqliteDatabase } from "../connection/index.js";
-import { MIGRATIONS, MIGRATIONS_TABLE, migrate, sortMigrations, type Migration } from "./index.js";
+import { MIGRATIONS, MIGRATIONS_TABLE, baselineMigrations, migrate, sortMigrations, type Migration } from "./index.js";
 
 let dir: string;
 let caseCounter = 0;
@@ -184,13 +184,24 @@ describe("migration ordering and identity", () => {
   });
 });
 
-describe("shipped MIGRATIONS registry (000-init)", () => {
-  it("applies twice cleanly on a temp file DB and stays empty (band 000_ is framework-only)", () => {
+describe("shipped MIGRATIONS registry", () => {
+  it("applies the baseline band only when handed just 000-init", () => {
     const db = freshDb();
-    expect(migrate(db, MIGRATIONS).applied).toEqual([]);
-    expect(migrate(db, MIGRATIONS).applied).toEqual([]);
+    expect(migrate(db, baselineMigrations).applied).toEqual([]);
+    expect(migrate(db, baselineMigrations).applied).toEqual([]);
     const tables = db.all("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").map((r) => String(r["name"]));
     expect(tables).toEqual([MIGRATIONS_TABLE]);
+    db.close();
+  });
+
+  it("applies the shipped registry idempotently (baseline + owned bands)", () => {
+    const db = freshDb();
+    const first = migrate(db, MIGRATIONS);
+    expect(migrate(db, MIGRATIONS).applied).toEqual([]);
+    // Band 000_ stays framework-only; every other band is a pure addition.
+    expect(first.applied.every((id) => id !== "0000")).toBe(true);
+    const tables = db.all("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").map((r) => String(r["name"]));
+    expect(tables).toContain(MIGRATIONS_TABLE);
     db.close();
   });
 });
