@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-001",
+  "phase": "BUILDER_DONE",
+  "commit": "9f8dabe1ba15aacdd7f99dcb8e07a9e1ca4e932b",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/intake -> 25 passed, 0 failed; npx vitest run (full) -> 433 passed (25 files); npx tsc --noEmit (packages/scene-intelligence) -> clean",
+  "notes": "IdeaIntake record (rawText/aspectRatio/targetRuntimeSeconds/seriesLink) validated via parseIntake; default 16:9 (spec §23), null seriesLink = standalone; spec §29 injection suite proves story text stored verbatim as inert data, control chars stripped, NUL rejected, no idea text in error messages; aspect-ratio validator shape-compatible with CORE-004 repositories",
+  "blockers": [],
+  "updatedAt": "2026-08-28T14:10:00Z"
+}

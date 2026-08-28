@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-006",
+  "phase": "BUILDER_DONE",
+  "commit": "adcc6618535237ac79372e7ee3e75e897da8c0a0",
+  "testsRun": "npx vitest run packages/database/src/repositories/shots => 7/7 passed; npx vitest run packages/database => 7 files 51/51 passed; npx tsc --noEmit -p packages/database/tsconfig.json => exit 0",
+  "notes": "Migration band 030_ (0301 scenes / 0302 shots / 0303 shot_references, soft TEXT cross-band refs like CORE-007) + SceneRepository/ShotRepository/ShotReferenceRepository; shot table carries all 30 spec §12 fields (spec text lists 30, not the 28 in the task brief — independent spec-parse introspection test in 030-scenes-shots/schema.test.ts proves live columns vs spec.md directly); registered in migrations/registry.ts + migrations/index.ts, exported via repositories/index.ts + package index.ts; updated CORE-003's shipped-registry test to tolerate appended bands (same pattern as CORE-007 merge).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T14:40:00Z"
+}

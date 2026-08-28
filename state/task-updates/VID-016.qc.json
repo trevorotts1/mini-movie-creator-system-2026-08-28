@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-016",
+  "phase": "PASS",
+  "commit": "ceddd45",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/frame-extraction -> 2 files 50/50 (real ffmpeg 8.1.1 fixture); npx vitest run packages/remotion-runtime -> 4 files 78/78; npx tsc --noEmit -p packages/remotion-runtime -> clean; security pass (execFile argv-bound, no shell/eval, no secrets, bounded timeouts, overwrite guard)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Removed dead untested exports (parseFfprobeField/firstLine/resolveBinaryPath) from probe.ts and fixed self-contradictory round-half-up comment in probe.test.ts; acceptance met (count/interval/timestamps modes, frames.mjs naming+local_f, verify-every-PNG).",
+  "blockers": []
+}

@@ -1,0 +1,9 @@
+{
+  "taskId": "AGN-003",
+  "phase": "BUILDER_DONE",
+  "commit": "b2e021c",
+  "testsRun": "npx vitest run packages/providers/src/agnes/profiles/edit -> 22/22 pass, 1 file (exit 0); tsc --noEmit -p packages/providers/tsconfig.json -> exit 0; secret grep over owned files -> clean",
+  "notes": "Agnes image-edit profile: live-doc verdict 2026-08-28 — multi-image compose SUPPORTED (extra_body.image[] on POST /v1/images/generations), masked edit UNSUPPORTED (no mask param, no /edits endpoint); MASKED_EDIT_UNSUPPORTED fails before any HTTP call; doc-stated output constraints (1K-4K tiers, 8 ratios) validated pre-request; no max image count invented (UNKNOWN policy).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T18:25:00Z"
+}

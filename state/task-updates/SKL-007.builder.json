@@ -1,0 +1,9 @@
+{
+  "taskId": "SKL-007",
+  "phase": "BUILDER_DONE",
+  "commit": "67a555b",
+  "testsRun": "bash integrations/openclaw/invocation-test.sh --self-test → PASS; bash integrations/openclaw/invocation-test.sh --check → exit 0 (preconditions + skills check + installed/visible); MMCS_OPENCLAW_LIVE=1 bash integrations/openclaw/invocation-test.sh → exit 0 ALL GREEN (skills check PASS, watcher pickup 5s + removal 2s verified, agent invocation toolResult byte-identical to direct engine run rc=0); openclaw skills check --agent codex-computer-use → exit 0; openclaw skills check --agent main → exit 0; pnpm run build in apps/cli → OK; node apps/cli/dist/index.js status → rc 0",
+  "notes": "Live-verified on operator box (OpenClaw 2026.7.1-2): explicit agent invocation + skill-wrapper path both reach the same SKL-007 engine/state (byte-identical output, rc=0); watcher pickup/removal observed in seconds without gateway restart; fleet 'main' agent has empty skills allowlist (skills: []) so test targets unrestricted codex-computer-use agent — documented in docs/openclaw-skill-verification.md §7; live step gated behind MMCS_OPENCLAW_LIVE=1 to avoid token spend in regression.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

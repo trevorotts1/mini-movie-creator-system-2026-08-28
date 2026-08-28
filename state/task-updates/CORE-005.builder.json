@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-005",
+  "phase": "BUILDER_DONE",
+  "commit": "696d99c8be6da59a32033769d9b9bfe7a3f62048",
+  "testsRun": "npx vitest run packages/database/src/repositories/characters -> 22 passed; vitest run packages/database -> 74 passed (6 files); tsc --noEmit (packages/database) -> clean; full-repo vitest run -> 279 passed, 3 unrelated files fail to import (commander/zod missing via worktree node_modules symlink; pass on main checkout)",
+  "notes": "Band 020_ (0201-0204): characters, identity versions + assets, appearance versions w/ effective episode/time, locations/props; GHL file/folder ID + sha256 columns on all asset tables; DB-enforced immutable history via BEFORE UPDATE/DELETE triggers + ON DELETE RESTRICT; partial unique index = one canonical master per character; repos in repositories/{characters,locations,appearances}; registered band in migrations/registry.ts (the registry's own header assigns band registration to band owners) and updated CORE-003's shipped-registry test to cover non-empty bands.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T14:40:00Z"
+}

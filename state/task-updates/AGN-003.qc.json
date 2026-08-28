@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-003",
+  "phase": "PASS",
+  "commit": "393ae9f",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/providers/src/agnes/profiles/edit (26/26) + packages/providers (66/66); node_modules/.bin/tsc --noEmit -p packages/providers/tsconfig.json; secret grep over owned files",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:10:00Z",
+  "notes": "QC repaired: prompt required gate, https/data URI gate, fail-closed mode switch; wire shape verified against live doc (extra_body.image[] canonical).",
+  "blockers": []
+}

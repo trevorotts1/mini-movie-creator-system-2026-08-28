@@ -1,0 +1,9 @@
+{
+  "taskId": "CAP-009",
+  "phase": "BUILDER_DONE",
+  "commit": "fde9e4e6ce2ae627a4b303d3e359a34b29aa8b8b",
+  "testsRun": "npx vitest run packages/capability-registry/src/verify apps/cli/src/commands/providers-verify -> 2 files, 24/24 passed; npx vitest run packages/capability-registry -> 17/17; npx vitest run apps/cli -> 7/7; tsc --noEmit -p packages/capability-registry and -p apps/cli -> clean",
+  "notes": "Provider health/verify: verifyProviders compares configured vs documented (CAP-001-style profiles) vs runtime-observed via injected safe probes, with lastVerifiedAt staleness flag (STALE>30d), MISMATCH/UNDOCUMENTED/STALE discrepancy warnings, human+JSON report formatters; transient probe failure (throw/timeout/ok:false) recorded TRANSIENT, adds warning, sets verificationUsable=false, never rewrites documented VERIFIED values; observedOverrides feeds CAP-010 (probed-only, non-null); applyOverrides returns new entries, never mutates input, never rewrites verifiedFacts; CLI command wiring in apps/cli/src/commands/providers-verify/ with env-presence-only configured loader (never exposes key values) and injectable registry/probes; exported via src/index.ts; apps/cli gained workspace dep on @mmcs/capability-registry (package.json + pnpm-lock).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

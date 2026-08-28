@@ -1,0 +1,14 @@
+{
+  "taskId": "AGN-009",
+  "phase": "PASS",
+  "commit": "8f00764",
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "checksRun": "npx --package=vitest@3.0.0 vitest run packages/providers/src/agnes/quota (29/29 passed); npx tsc --noEmit -p packages/providers (rc=0); git diff origin/integration...HEAD (verified)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "AgnesQuotaLedger + InMemoryAgnesQuotaStore verified: per-job requested/generated/accepted/rejected seconds, retries, estimated+actual cost; included quota absorbed in separate field without paid spend mixing; unpriced job totals safety (estimatedCost null); verified docs provenance and pricing tiers; security pass clean.",
+  "blockers": []
+}
