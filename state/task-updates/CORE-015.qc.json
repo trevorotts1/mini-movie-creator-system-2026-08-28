@@ -1,0 +1,15 @@
+{
+  "taskId": "CORE-015",
+  "phase": "PASS",
+  "commit": "4f773b6206b58350dd8934558e93a07d5c070da1",
+  "checksRun": "npx vitest run packages/database/src/backup -> 12/12 PASS; npx vitest run apps/cli/src/commands/backup -> 15/15 PASS (incl. new regression test); vitest run packages/database apps/cli -> 242/242 PASS; vitest run (full repo) -> 3234 tests, 0 assertion failures (3 suites cannot load: remotion-runtime 'Cannot find package react' — ENV-001 owned, fixed on ENV-001 branch 8ad233b, QC PASS); tsc --noEmit packages/database -> clean; tsc --noEmit apps/cli -> clean; tsc -p apps/cli build -> clean; real-filesystem e2e export->restore->fingerprint-compare via node --experimental-strip-types -> E2E PASS incl. overwrite-refusal; security grep owned paths (no secrets, no child_process/eval, table identifiers quoted defensively, overwrite guarded, single-pass no retries) -> clean",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T01:00:00Z",
+  "notes": "Fixed makeBackupHandlers async export failure path: throw inside .then() under the dispatcher's fire-and-forget wire() became an unhandled promise rejection — now caught, process.exitCode=1 recorded, one clean stderr line; regression test added. Round-trip acceptance proven: restore into empty DB passes full row-count+checksum vs source; WAL-safe export verified; corrupt/tampered/foreign-format archives rejected.",
+  "blockers": [
+    "ENV-001 (not CORE-015): full-repo vitest run fails 3 remotion-runtime suites with 'Cannot find package react' — ENV-001 branch already fixes (commit 8ad233b, QC PASS); no CORE-015 action."
+  ]
+}

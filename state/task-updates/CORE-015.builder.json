@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-015",
+  "phase": "BUILDER_DONE",
+  "commit": "5d978e893d",
+  "testsRun": "npx vitest run packages/database/src/backup -> 12/12 passed (1 file); npx vitest run apps/cli/src/commands/backup -> 14/14 passed (1 file); both suites -> 26/26; full repo npx vitest run -> 164 files, 3276 passed / 1 skipped (exit 0); tsc --noEmit packages/database -> clean; tsc --noEmit apps/cli -> clean; secret grep over owned files -> clean",
+  "notes": "Backup/export in packages/database/src/backup/ (.mmcsbak = gzip(JSON envelope: manifest {schemaVersion=highest applied migration, migration ledger, per-table row counts+sha256, snapshot sha256+size} + base64 SQLite snapshot via node:sqlite online backup() API \u2014 WAL-safe, clean standalone snapshot file; restore = integrity check, migration-ledger check, full row-count+checksum comparison, refuses overwrite without overwrite:true) + fingerprint.ts (rowid-ordered SHA-256 row-stream fingerprints, compareFingerprints) + CLI wiring apps/cli/src/commands/backup/ (backup export/restore, exit 0/1/2, --json line, injected ports, no I/O at module scope). Dispatcher caveat recorded: CORE-011 wire() passes handler(args,{}) \u2014 flags reach handlers only when integration registers .option()s; handlers read Command.getOptionValue when present, else documented defaults; run* functions are the flag-accepting contract.",
+  "blockers": [],
+  "updatedAt": "2026-08-29T00:00:00Z"
+}
