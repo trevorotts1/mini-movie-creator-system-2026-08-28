@@ -208,6 +208,41 @@ describe("normalizeApprovalsDocument", () => {
     delete broken.gates.storyboard;
     expect(() => normalizeApprovalsDocument(broken)).toThrow(ApprovalsStoreError);
   });
+
+  it("throws on an unknown gate key instead of silently dropping it", () => {
+    // Regression (QC): a foreign/hand-edited gate key used to be dropped on
+    // normalize and then vanish on the next write — external damage must
+    // surface, not be silently reset.
+    const broken = JSON.parse(JSON.stringify(emptyApprovalsDocument(tick())));
+    broken.gates["final-render"] = { state: "PENDING" };
+    expect(() => normalizeApprovalsDocument(broken)).toThrow(ApprovalsStoreError);
+  });
+});
+
+describe("read-only discipline (no live references out of the store)", () => {
+  it("get()/load() return a frozen document; mutating it cannot corrupt the store", async () => {
+    const store = new ApprovalStore(dir);
+    const doc = await store.load();
+    expect(Object.isFrozen(doc)).toBe(true);
+    expect(Object.isFrozen(doc.gates)).toBe(true);
+    expect(Object.isFrozen(doc.gates.concept)).toBe(true);
+    const before = JSON.stringify(doc);
+    expect(() => {
+      (doc.gates.concept as unknown as { state: string }).state = "APPROVED";
+    }).toThrow();
+    expect(JSON.stringify(doc)).toBe(before);
+    const reread = await store.get();
+    expect(reread.gates.concept.state).toBe("PENDING");
+  });
+
+  it("the record returned by approve() is frozen too", async () => {
+    const store = new ApprovalStore(dir);
+    await store.load();
+    const record = await store.approve("concept", { decidedBy: "trevor", now: tick() });
+    expect(Object.isFrozen(record)).toBe(true);
+    const snapshot = await store.snapshot("concept");
+    expect(snapshot.state).toBe("APPROVED");
+  });
 });
 
 describe("unknown gates are refused everywhere", () => {

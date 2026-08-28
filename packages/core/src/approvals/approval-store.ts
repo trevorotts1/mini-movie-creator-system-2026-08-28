@@ -97,6 +97,16 @@ export function normalizeApprovalsDocument(raw: unknown): ApprovalsDocument {
   if (gatesRaw === null || typeof gatesRaw !== "object" || Array.isArray(gatesRaw)) {
     throw new ApprovalsStoreError('approvals document is missing its "gates" object');
   }
+  // Unknown gate keys are external damage (hand-edited or foreign data): they
+  // must surface here, not silently vanish on the next write.
+  const known = new Set<string>(GATE_IDS);
+  for (const key of Object.keys(gatesRaw as Record<string, unknown>)) {
+    if (!known.has(key)) {
+      throw new ApprovalsStoreError(
+        `approvals document has unknown gate ${JSON.stringify(key)} (spec §3 gates: ${GATE_IDS.join(", ")})`,
+      );
+    }
+  }
   const updatedAt = typeof doc.updatedAt === "string" ? doc.updatedAt : "";
   assertIsoTimestamp(updatedAt || "missing", "updatedAt");
 
@@ -184,11 +194,11 @@ export class ApprovalStore {
   async load(): Promise<ApprovalsDocument> {
     const raw = await readJsonFileOrNull<unknown>(this.filePath);
     if (raw === null) {
-      const fresh = emptyApprovalsDocument(new Date().toISOString());
+      const fresh = freezeDocument(emptyApprovalsDocument(new Date().toISOString()));
       await this.persist(fresh);
       return fresh;
     }
-    this.cached = normalizeApprovalsDocument(raw);
+    this.cached = freezeDocument(normalizeApprovalsDocument(raw));
     return this.cached;
   }
 
@@ -282,7 +292,7 @@ export class ApprovalStore {
         gates: { ...current.gates, [gate]: record },
       };
       await this.persist(doc);
-      return record;
+      return freezeRecord(record);
     };
     const result = this.writeQueue.then(run, run);
     this.writeQueue = result.catch(() => undefined);
@@ -293,6 +303,24 @@ export class ApprovalStore {
   private async persist(doc: ApprovalsDocument): Promise<void> {
     const serialized = `${JSON.stringify(doc, null, 2)}\n`;
     await atomicWriteFile(this.filePath, serialized);
-    this.cached = doc;
+    this.cached = freezeDocument(doc);
   }
+}
+
+/**
+ * Deep-freeze a document so consumers cannot corrupt the store's in-memory
+ * state through the reference `get()`/`load()` return (read-only discipline:
+ * mutations go through approve/reject/reopen only).
+ */
+function freezeDocument(doc: ApprovalsDocument): ApprovalsDocument {
+  for (const gate of GATE_IDS) {
+    Object.freeze(doc.gates[gate]);
+  }
+  Object.freeze(doc.gates);
+  return Object.freeze(doc);
+}
+
+/** Freeze one returned record so callers cannot mutate store state through it. */
+function freezeRecord(record: GateRecord): GateRecord {
+  return Object.freeze(record);
 }
