@@ -41,10 +41,11 @@ diagnostic truth — surface it, do not retry blindly around it.
 **Always run `mmcs status` first.** It shows the active project/series/episode,
 current pipeline stage, and which approval gates are open. The convenience
 wrapper `scripts/mmcs-status.sh` (next to this SKILL.md) resolves the engine
-root and prints the same status:
+root and prints the same status. OpenClaw resolves relative paths inside a
+skill against the skill directory (parent of SKILL.md) — run it as:
 
 ```bash
-"$SKILL_DIR/scripts/mmcs-status.sh"
+{baseDir}/scripts/mmcs-status.sh
 ```
 
 State rules the agent must respect:

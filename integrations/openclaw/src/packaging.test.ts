@@ -42,6 +42,15 @@ describe("SKL-005 packaging structure", () => {
     }
   });
 
+  it("references scripts via {baseDir}, never a runtime-undefined $SKILL_DIR", () => {
+    // OpenClaw runtime (2026.7.1) does not define a SKILL_DIR env var; its
+    // docs prescribe {baseDir} for skill-relative paths. A literal $SKILL_DIR
+    // would expand to an empty path when the agent runs the wrapper.
+    const md = read("SKILL.md");
+    expect(md).toContain("{baseDir}/scripts/mmcs-status.sh");
+    expect(md).not.toContain("$SKILL_DIR");
+  });
+
   it("SKILL.md has AgentSkills-style frontmatter with the exact name", () => {
     const md = read("SKILL.md");
     expect(md.startsWith("---\n")).toBe(true);
@@ -141,6 +150,35 @@ describe("SKL-005 packaging structure", () => {
 });
 
 describe("SKL-005 mmcs-status.sh wrapper", () => {
+  it("honors the MMCS_ROOT env var (SKILL.md §0) when set", () => {
+    // SKILL.md teaches MMCS_ROOT as the primary engine locator; the wrapper
+    // must respect it (regression: it read MMCS_ROOT_ENV instead).
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mmcs-envroot-"));
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "mmcs-monorepo" }),
+    );
+    const bin = path.join(dir, "fakebin");
+    fs.mkdirSync(bin);
+    fs.writeFileSync(
+      path.join(bin, "mmcs"),
+      "#!/usr/bin/env bash\necho '[mmcs] status — env-root stub'\n",
+    );
+    fs.chmodSync(path.join(bin, "mmcs"), 0o755);
+    const r = spawnSync(
+      "bash",
+      [path.join(PACKAGING_DIR, "scripts/mmcs-status.sh")],
+      {
+        cwd: dir, // inside the checkout, but env must win anyway
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, MMCS_ROOT: dir },
+      },
+    );
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("env-root stub");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
   it("refuses to guess: exit 2 + guidance when no engine root resolves", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mmcs-nowhere-"));
     const r2 = spawnSync(

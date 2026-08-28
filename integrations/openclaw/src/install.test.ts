@@ -262,6 +262,32 @@ describe("SKL-005 install.sh — hermetic behavior", () => {
     expect(runInstall(fake, ["--check"]).status).toBe(1);
   });
 
+  it("overwrites when only a reference is stale (tree compare, not just SKILL.md)", () => {
+    // Regression: the idempotency check used to diff only SKILL.md, so a
+    // packaging update to references/ or scripts/ left the installed copy
+    // stale forever. A diverging reference must trigger a refresh.
+    const ws = path.join(tmp(), "ws");
+    const fake = fakeOpenclaw({
+      workspace: ws,
+      configJson: CONFIG_TWO_AGENTS(ws, ws),
+      installMode: "fail", // placement path so we control the write
+    });
+    const dest = path.join(ws, "skills/mini-movie-creator");
+    fs.mkdirSync(path.join(dest, "references"), { recursive: true });
+    // SKILL.md identical, but one reference diverges.
+    fs.copyFileSync(
+      path.join(PACKAGING_DIR, "SKILL.md"),
+      path.join(dest, "SKILL.md"),
+    );
+    fs.writeFileSync(path.join(dest, "references/workflow.md"), "stale workflow reference");
+    const r = runInstall(fake, []);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("backed up");
+    expect(
+      fs.readFileSync(path.join(dest, "references/workflow.md"), "utf8"),
+    ).not.toContain("stale workflow reference");
+  });
+
   it("backs up a stale existing install before overwriting", () => {
     const ws = path.join(tmp(), "ws");
     const fake = fakeOpenclaw({

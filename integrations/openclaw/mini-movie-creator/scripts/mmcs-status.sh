@@ -2,9 +2,10 @@
 # mmcs-status.sh — OpenClaw skill convenience wrapper (SKL-005).
 #
 # Resolves the MMCS engine root the same way SKILL.md §0 teaches, then runs
-# `mmcs status`. Never guesses a path: MMCS_ROOT env → walk up from cwd for a
-# checkout whose package.json name is "mmcs-monorepo" → explicit --mmcs-root
-# flag. If nothing resolves, exits 2 with instructions (never invents a path).
+# `mmcs status`. Never guesses a path: explicit --mmcs-root flag overrides,
+# then MMCS_ROOT env (SKILL.md §0), then walk up from cwd for a checkout whose
+# package.json name is "mmcs-monorepo". If nothing resolves, exits 2 with
+# instructions (never invents a path).
 #
 # Usage:
 #   mmcs-status.sh                 # status via resolved engine
@@ -16,7 +17,9 @@
 set -u
 
 MMCS_PACKAGE_NAME="mmcs-monorepo"
-MMCS_ROOT=""
+# SKILL.md §0 resolution order: MMCS_ROOT env → --mmcs-root flag → cwd walk.
+# Inherit the env var here; the flag overrides it below.
+MMCS_ROOT="${MMCS_ROOT:-}"
 MMCS_BIN=""
 MODE="status"
 
@@ -52,11 +55,6 @@ resolve_root_from() {
 
 if [ -z "$MMCS_ROOT" ]; then
   MMCS_ROOT="$(resolve_root_from "$PWD" || true)"
-fi
-
-# Prefer the env var when the flag/cwd walk found nothing.
-if [ -z "$MMCS_ROOT" ] && [ -n "${MMCS_ROOT_ENV:-}" ]; then
-  MMCS_ROOT="$MMCS_ROOT_ENV"
 fi
 
 if [ -z "$MMCS_ROOT" ]; then

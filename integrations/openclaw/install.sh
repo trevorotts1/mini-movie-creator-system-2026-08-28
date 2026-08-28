@@ -150,7 +150,11 @@ if [ "$MODE" = "uninstall" ]; then
 fi
 
 # --- already installed? -------------------------------------------------------
-if [ -f "$DEST/SKILL.md" ] && diff -q "$DEST/SKILL.md" "$PACKAGING_DIR/SKILL.md" >/dev/null 2>&1; then
+# Compare the WHOLE packaging tree (SKILL.md + references/ + scripts/), not
+# just SKILL.md — a stale reference must not read as "up to date". The
+# .openclaw/ marker written by the real CLI into installed skills is not part
+# of the packaging and is excluded from the comparison.
+if [ -f "$DEST/SKILL.md" ] && diff -qr --exclude=".openclaw" "$DEST" "$PACKAGING_DIR" >/dev/null 2>&1; then
   echo "install.sh: already installed and up to date at $DEST — no-op."
   verify
   exit $?
