@@ -34,15 +34,17 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 | IQ-B6C | QC-002 | task/QC-002-identity-check | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | 0255884 |
 | IQ-B6C | QC-003 | task/QC-003-wardrobe-check | builder | qc-batch | PASS | `origin/integration` | MERGED | 692b20f9f83fc934ab561668026b0c610a350a88 |
 | IQ-B6C | QC-004 | task/QC-004-continuity | builder | qc-batch | PASS | `origin/integration` | MERGED | b43743aefded95186bd5bf1c83a02f2e243a8855 |
-| IQ-B6C | QC-010 | task/QC-010-wan-fallback | builder | qc-batch | PASS | `origin/integration` | CONFLICT_BLOCKED (rebase required) | still conflict on packages/qc/src/index.ts (batch-7) |
+| IQ-B6C | QC-010 | task/QC-010-wan-fallback | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-9) | 47f919e7897295509934538afff2353d1345cd60 |
 | IQ-B6C | REC-010 | task/REC-010-restart-sim | builder | qc-batch | PASS | `origin/integration` | CONFLICT_BLOCKED (rebase required) | Pending |
 | IQ-B6C | SKL-003 | task/SKL-003-personal-install | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | 7c6a79f |
 | IQ-B6C | SKL-004 | task/SKL-004-nine-verify | builder | qc-batch | PASS | `origin/integration` | MERGED | fef49fcb5a61f8ee99a58e73c854e4aacd44e791 |
 | IQ-B6C | SKL-005 | task/SKL-005-openclaw-workspace | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | f1689ba |
 | IQ-B6C | VID-005 | task/VID-005-generated-clip-layer | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | b22a21f |
 | IQ-B6C | VID-013 | task/VID-013-shot-replacement | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | 6d8cce1 |
-| IQ-B6C | VID-008 | task/VID-008-graphics-layer | builder | qc-batch | PASS | `origin/integration` | CONFLICT_BLOCKED (rebase required) | modify/delete GraphicsViews.tsx + tsconfig.json + 1 open blocker (root tsconfig gap) — batch-8 |
+| IQ-B6C | VID-008 | task/VID-008-graphics-layer | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-9) | f99eea41ec33874675057fcebac75070b0601edb |
 
 *(Batch-7 2026-08-28T22:05:00Z: 7 IQ-B6C rows merged; QC-003/004/010, SKL-004, VID-002 still conflict-blocked; REC-010 not admitted — deps unmerged; plus 12 new merges CAP-003, CAP-010, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010. Pushed 38974b3..6d8cce1.)*
 
 *(Batch-8 2026-08-28T19:57:36Z: SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a merged onto integration; regression PASS 3188 tests; pushed 0e9b00e..b43743a, control da5cc75. QC-010 conflict-blocked again (packages/qc/src/index.ts) — rebase required. REC-010 still deps-blocked. VID-008 blocked: conflict + open blocker.)*
+
+*(Batch-9 2026-08-28T20:30:00Z: QC-010 47f919e and VID-008 f99eea4 merged onto integration; regression PASS (pnpm -r test + typecheck exit 0, vitest 3364/1 skipped, 3 pre-existing react-env failures identical pre-batch); pushed 1e06ddb..f99eea4. REC-010 still deps-blocked.)*

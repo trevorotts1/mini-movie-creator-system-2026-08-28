@@ -1,55 +1,24 @@
 {
   "schema_version": 1,
   "items": [],
-  "updated_at": "2026-08-28T19:57:36.182Z",
+  "updated_at": "2026-08-28T20:30:00Z",
   "last_batch": {
-    "batch": "batch-7",
+    "batch": "batch-9",
     "merged": [
-      "CAP-003",
-      "CAP-010",
-      "CORE-007",
-      "DIR-002",
-      "FISH-003",
-      "FISH-005",
-      "FISH-006",
-      "FISH-007",
-      "KIE-010",
-      "QC-002",
-      "QC-003",
-      "QC-004",
       "QC-010",
-      "SKL-003",
-      "SKL-004",
-      "SKL-005",
-      "VID-002",
-      "VID-005",
-      "VID-013"
+      "VID-008"
     ],
     "failed": [
       {
-        "id": "QC-003",
-        "reason": "conflict packages/qc/src/index.ts — rebase required"
-      },
-      {
-        "id": "QC-004",
-        "reason": "conflict packages/qc/src/index.ts — rebase required"
-      },
-      {
-        "id": "QC-010",
-        "reason": "conflict packages/qc/src/index.ts — rebase required"
-      },
-      {
-        "id": "SKL-004",
-        "reason": "conflict integrations/claude/tsconfig.json — rebase required"
-      },
-      {
-        "id": "VID-002",
-        "reason": "conflict packages/remotion-runtime/src/index.ts — rebase required"
+        "id": "VID-008",
+        "reason": "resolved: revert-remerge trap (12 graphics core files restore-via-checkout) + tsconfig conflict (took integration) \u2014 committed a56b906"
       },
       {
         "id": "REC-010",
-        "reason": "deps REC-002..REC-005 not yet merged — admission rule 6"
+        "reason": "deps REC-002..REC-005 not yet merged \u2014 admission rule 6"
       }
-    ]
+    ],
+    "preBatchHead": "1e06ddbbab0250341298a54403e052a44e146eac",
+    "postBatchHead": "f99eea41ec33874675057fcebac75070b0601edb"
   }
 }

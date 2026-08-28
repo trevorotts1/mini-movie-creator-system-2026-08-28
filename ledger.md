@@ -206,3 +206,8 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 2026-08-28T19:57:36.212Z | QC-010 | batch-merge | CONFLICT | conflict surfaced during batch — skipped; resolvers handle it
 2026-08-28T19:57:36.212Z | BATCH-MERGE | batch-merge | REGRESSION | PASS areas=ALL
 - 2026-08-28T19:57:36Z | BATCH-8 | merger | MERGED | 4 merged (SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a), 1 conflict-blocked (QC-010), regression PASS 3188 tests, pushed 0e9b00e..b43743a + control da5cc75; batch-7 over-stamps corrected
+2026-08-28T20:30:00.000Z | QC-010 | batch-merge | MERGED | 47f919e7897295509934538afff2353d1345cd60
+2026-08-28T20:30:00.000Z | VID-008 | batch-merge | MERGED | f99eea41ec33874675057fcebac75070b0601edb
+2026-08-28T20:30:00.000Z | BATCH-MERGE | batch-merge | REGRESSION | PASS areas=ALL (pnpm -r test exit 0; typecheck exit 0; vitest 3364/1 skipped; 3 pre-existing react-env failures identical pre-batch)
+- 2026-08-28T20:30:00Z | BATCH-9 | merger | MERGED | 2 merged (QC-010 47f919e, VID-008 f99eea4), VID-008 revert-remerge trap resolved (12 core files restored), regression PASS, pushed 1e06ddb..f99eea4
+- 2026-08-28T20:30:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 unmerged (admission rule 6)

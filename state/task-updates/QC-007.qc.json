@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-007",
+  "phase": "PASS",
+  "commit": "77cf5f8",
+  "checksRun": "npx vitest run packages/qc/src/routes/agnes-flash (28/28, exit 0); npx vitest run packages/qc (28/28, exit 0); tsc --noEmit packages/qc (exit 0); lint: no lint script exists in any packages/*/package.json (verified, repo-wide no-op); secret/injection/exec/path scan on owned files (clean)",
+  "defectsFound": 3,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Round 2 QC: fixed PASS+providerError=true contradiction (was KEEP_AS_FINAL on incomplete QC) and attemptsUsed>2 silently treated as budget-exhausted (now FlashRouteError) — +2 regression tests, 28/28 green, typecheck clean. Third observation (lint script absent repo-wide) is an infrastructure gap outside owned paths, not patched here.",
+  "blockers": []
+}

@@ -1196,7 +1196,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-008-graphics-layer
   - Worktree: worktrees/TASK-VID-008/
   - Acceptance: native Remotion graphics (titles, overlays, credits, lower thirds) composable per shot plan; `npx vitest run packages/remotion-runtime/src/layers/graphics` green.
-  - Status: QC_FIXING
+  - Status: MERGED — batch-9 (merge f99eea4, cycle-2 re-admission after IQ-B6 revert; QC PASS 2/2 defects, 93/93 graphics tests)
 
 - [x] TASK-VID-009 — Transitions
   - Workflow: WF08
@@ -1396,7 +1396,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-010-wan-fallback
   - Worktree: worktrees/TASK-QC-010/
   - Acceptance: especially complex/long/hero/action shots route to Wan 3.0; routing policy considers capability/quality-history/cost/quota (policy table test); `npx vitest run packages/qc/src/routes/wan` green.
-  - Status: PASS — batch-8: rebased onto 0e9b00e (merge-tree clean), but conflict surfaced during batch merge (packages/qc/src/index.ts) — rebase required again
+  - Status: MERGED — batch-9 (merge 47f919e; rebased twice onto integration, merged clean, regression PASS)
 
 - [ ] TASK-QC-011 — Human REVIEW state
   - Workflow: WF09

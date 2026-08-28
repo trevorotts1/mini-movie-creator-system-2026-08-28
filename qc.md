@@ -126,3 +126,5 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T19:57:36Z | QC-003 | Wardrobe/hair/prop checks | merger | PASS | 0 | 0 | PASS — merged batch-8 (692b20f); batch-7 row over-stamped, corrected |
 | 2026-08-28T19:57:36Z | QC-004 | Continuity neighbor check | merger | PASS | 1 | 1 | PASS — merged batch-8 (b43743a); batch-7 row over-stamped, corrected |
 | 2026-08-28T19:57:36Z | QC-010 | Wan hero/complex fallback | merger | PASS | 7 | 7 | PASS — batch-8 conflict-blocked (packages/qc/src/index.ts), rebase required |
+| 2026-08-28T20:30:00Z | QC-010 | Wan hero/complex fallback | merger | PASS | 7 | 7 | PASS — merged batch-9 (47f919e); rebase-2 onto 1e06ddb resolved the packages/qc/src/index.ts conflict; wan route + policy + 663-line tests in |
+| 2026-08-28T20:30:00Z | VID-008 | Native graphics layer | merger | PASS | 2 | 2 | PASS — merged batch-9 (f99eea4): cycle-2 re-admission after IQ-B6 revert; revert-remerge trap resolved by restoring the 12 untouched graphics core files; tsconfig conflict taken from integration; tsc RC=0, 93/93 graphics tests |

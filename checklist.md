@@ -112,3 +112,10 @@
 - [x] Conflict-blocked rebase required: QC-010 (packages/qc/src/index.ts)
 - [x] Not admitted: REC-010 (deps REC-002..005 no branches/QC), WF00-01 (no branch/QC), SKL-002 (no QC PASS yet)
 - [x] VID-008 blocked: conflict (GraphicsViews.tsx, tsconfig.json) + 1 open blocker
+
+## Batch 9 (2026-08-28T20:30Z)
+- [x] Merged: QC-010 (47f919e), VID-008 (f99eea4) — no-ff merges, pushed 1e06ddb..f99eea4
+- [x] VID-008 conflict resolution: revert-remerge trap (merge-base 50d139a predates revert 4e9e71e; 12 graphics core blobs identical to base so merge kept HEAD's deletions) — restored via `git checkout 397d78a -- packages/remotion-runtime/src/layers/graphics/`, amend; tsconfig.json conflict -> took integration's version (identical content + trailing newline)
+- [x] Regression: pnpm -r test exit 0 (openclaw 23/23, claude 27/27, cli 63/63), pnpm -r typecheck exit 0 (remotion-runtime RC=0 after graphics restore), repo-wide vitest 3364 passed / 1 skipped; 3 pre-existing react-import collection failures (captions.test.ts, generated-clips/component.test.ts, generated-clips.test.ts) proven identical at pre-batch 1e06ddb and batch-8 b43743a — env defect (react/remotion not workspace deps), not batch-induced
+- [x] Not admitted: REC-010 (deps REC-002..REC-005 unmerged)
+- [x] QC-010 rebase-2 onto 1e06ddb (f12f42e) resolved prior packages/qc/src/index.ts conflict — merged clean

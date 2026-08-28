@@ -1,17 +1,26 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T22:05:00Z
-**Session Type:** Batch Merge Cycle 7 Pushed
+**Updated:** 2026-08-28T20:30:00Z
+**Session Type:** Batch Merge Cycle 9 Pushed
 
 ---
 
 ## Current Status
 
-- **Phase:** Batch Merge Cycle 7 complete. 19 tasks merged deps-first (CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, QC-003, QC-004, QC-010, SKL-003, SKL-004, SKL-005, VID-002, VID-005, VID-013 — QC-003/004/010, SKL-004, VID-002 conflict-aborted). Regression PASS. Pushed to origin/integration.
-- **Integration HEAD:** 6d8cce1 (== origin/integration)
-- **Regression Result:** PASS — `pnpm -r test` exit 0; `pnpm -r run typecheck` exit 0; repo-wide vitest 3188 passed / 1 skipped (159 files).
-- **Next Action:** Rebase conflict-blocked QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts) onto 6d8cce1. REC-010 waits on REC-002..REC-005 (all now READY). VID-008 and SKL-002 remain in QC_FIXING from batch 6. New unblocks: CORE-009, CORE-015 -> READY.
+- **Phase:** Batch Merge Cycle 9 complete. 2 tasks merged: QC-010 (47f919e, rebase-2 onto 1e06ddb resolved the packages/qc/src/index.ts conflict) and VID-008 (f99eea4, cycle-2 re-admission after IQ-B6 revert; revert-remerge trap resolved by restoring 12 untouched graphics core files; tsconfig conflict taken from integration). Regression PASS. Pushed to origin/integration.
+- **Integration HEAD:** f99eea4 (== origin/integration)
+- **Regression Result:** PASS — `pnpm -r test` exit 0; `pnpm -r run typecheck` exit 0 (remotion-runtime RC=0 after graphics restore); repo-wide vitest 3364 passed / 1 skipped. Known env defect (NOT batch-induced, proven identical at pre-batch 1e06ddb and batch-8 b43743a): 3 test files fail vitest collection with "Cannot find package 'react'" (captions.test.ts, generated-clips/component.test.ts, generated-clips.test.ts) — react/remotion declared in no workspace package.json; remotion/ is a separate npm project with node_modules absent.
+- **Next Action:** REC-010 waits on REC-002..REC-005 (READY, need build+QC). SKL-002 (PASS, unmerged — integrations/claude node-types fix landed batch-7 era; needs re-admission check). VID-008 worktree still holds task/VID-008-graphics-layer (merged — safe to prune). QC-007 BUILDER_DONE, no QC yet.
+
+
+## Batch 9 — Merged (2)
+- QC-010 (47f919e), VID-008 (f99eea4)
+
+## Batch 9 — Notes
+- VID-008 conflict resolution: merge-base 50d139a predates revert 4e9e71e, so 12 graphics core blobs (identical to base) kept HEAD's deletions silently — restored via `git checkout 397d78a -- packages/remotion-runtime/src/layers/graphics/` then amend. tsconfig.json conflict = trailing-newline only; took integration's byte-identical-plus-newline version.
+- Not admitted: REC-010 (deps REC-002..REC-005 unmerged).
+- Pre-existing env defect recorded: react not resolvable from repo root for 3 remotion-runtime test files (unrunnable on every commit; batch-8's "PASS 3188" log itself contains a hard Node crash — its PASS verdict was unreliable).
 
 ## Batch 7 — Merged (14)
 - CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, SKL-003, SKL-005, VID-005, VID-013
