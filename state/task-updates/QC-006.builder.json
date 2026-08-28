@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-006",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "vitest run packages/qc/src/retry (worktree root, vitest 4.1.11): 1 file, 23/23 passed, exit 0; tsc --noEmit -p packages/qc/tsconfig.json: clean",
+  "notes": "Retry policy: single-shot repair scope (scope:\"single-shot\", every non-failed shot is keep), bounded by per-route + total attempt caps and injected SpendGate (unknown cost fails closed to awaiting-approval), spec §13 escalation ladder with Wan only for hero/complex/long/action shots, terminal human review",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:50:00Z"
+}
