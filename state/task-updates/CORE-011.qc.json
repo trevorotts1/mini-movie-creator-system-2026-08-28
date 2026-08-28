@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-011",
+  "phase": "PASS",
+  "commit": "2701957e6cc3b7d368dd30f3bf54bf2b94cf26b8",
+  "checksRun": "pnpm --filter @mmcs/cli test (13/13 passed); pnpm -r run typecheck (clean across all packages/apps); pnpm -r run build (apps/cli built dist/ cleanly); node apps/cli/dist/index.js doctor (exited 0 with stub message); security audit (no secrets, safe string interpolation, inert arg echoing, commander bounded input)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "Added apps/cli/vitest.config.ts and configured apps/cli package.json test script to pass --config vitest.config.ts resolving root ESM loading in NodeNext. Verified all 30 verbs, stub handlers, argument parsing, error cases, build and node apps/cli/dist/index.js doctor exit 0.",
+  "blockers": []
+}

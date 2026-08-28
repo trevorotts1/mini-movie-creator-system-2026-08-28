@@ -26,6 +26,12 @@ importers:
         specifier: ^14.0.0
         version: 14.0.3
 
+  apps/web: {}
+
+  integrations/claude: {}
+
+  integrations/openclaw: {}
+
   packages/capability-registry:
     dependencies:
       zod:
@@ -34,7 +40,11 @@ importers:
 
   packages/character-library: {}
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
   packages/cost-engine: {}
 

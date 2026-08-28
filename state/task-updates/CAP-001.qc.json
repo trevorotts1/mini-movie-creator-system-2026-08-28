@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-001",
+  "phase": "PASS",
+  "commit": "eab41536e6d30fabfff3a9884868fc9d44fd2993",
+  "checksRun": "npx tsc --noEmit -p packages/capability-registry && node test runner over packages/capability-registry/src/schema",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "MediaModelCapability TS interface + zod schema complete per spec §5; confidence enum VERIFIED/PROVISIONAL/UNKNOWN, incompatibleCombinations, registry kinds all verified; typecheck and unit tests pass; security audit clean.",
+  "blockers": []
+}

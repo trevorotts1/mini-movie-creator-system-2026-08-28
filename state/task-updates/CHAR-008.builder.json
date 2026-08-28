@@ -1,0 +1,9 @@
+{
+  "taskId": "CHAR-008",
+  "phase": "BUILDER_DONE",
+  "commit": "7eaa37a",
+  "testsRun": "npx vitest run packages/character-library/src/hair -> 12/12 passed (json reporter evidence, exit 0); tsc -p packages/character-library -> exit 0",
+  "notes": "Hair versioning: immutable append-only hair history per character with effective-episode resolution (canon-at-the-time), no-overwrite guard on version names, retire/promote state transitions; barrel wiring of packages/character-library/src/index.ts left to integration (barrel is integration-owned per ownership.md rule 6).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:55:00Z"
+}
