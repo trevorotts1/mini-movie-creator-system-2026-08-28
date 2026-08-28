@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-014",
+  "phase": "PASS",
+  "commit": "9683e0d",
+  "checksRun": "npx vitest run packages/core/src/recovery; npm run typecheck",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "Fixed missing Node triple-slash directives across recovery files; all tests and typecheck pass green.",
+  "blockers": []
+}
