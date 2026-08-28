@@ -320,6 +320,35 @@ describe("mocked generation — no paid generation in this task", () => {
     );
   });
 
+  it("survives astral characters and lone surrogates in the prompt (untrusted text never crashes the mock)", async () => {
+    // A shotId placing an astral emoji across the 32-UTF-16-unit boundary of
+    // the URL label previously crashed encodeURIComponent with URIError (the
+    // slice kept the high surrogate, dropped the low) — a non-contract
+    // failure leaking out of the mock on hostile text.
+    const surrogatePlan = plans([
+      shot({ shotId: "SC03-SH011\u{1F3AC}X", visualIntent: "wide newsroom at dusk" }),
+    ]);
+    const surrogateRecords = await generateStoryboardFrames(
+      surrogatePlan,
+      new MockImageClient(),
+    );
+    expect(surrogateRecords[0]!.url.startsWith("mock://storyboard/")).toBe(true);
+    // Astral emoji in the visual intent must neither crash nor lose the
+    // character count ([...prompt].length, not .length).
+    const emojiPlan = plans([
+      shot({ visualIntent: "scene: \u{1F3AC} dusk \u{1F3AC}" }),
+    ]);
+    const records = await generateStoryboardFrames(emojiPlan, new MockImageClient());
+    expect(records[0]!.url.startsWith("mock://storyboard/")).toBe(true);
+    expect(records[0]!.promptCharacterCount).toBe(
+      [...emojiPlan.contracts[0]!.prompt].length,
+    );
+    // The label decodes cleanly (no split surrogate pairs inside it).
+    expect(() =>
+      decodeURIComponent(records[0]!.url.replace("mock://storyboard/", "")),
+    ).not.toThrow();
+  });
+
   it("does not call the mock for skipped shots", async () => {
     const plan = planStoryboard(
       [shot(), shot({ shotId: "SC03-SH03" })],
@@ -376,6 +405,19 @@ describe("NON_PROVIDER_INPUT guard", () => {
 describe("plan validation", () => {
   it("rejects duplicate shotIds", () => {
     expect(() => plans([shot(), shot()])).toThrow(/duplicate shotId/);
+  });
+
+  it("rejects a mixed-episode shot list (a plan is a per-episode artifact)", () => {
+    expect(() =>
+      plans([shot(), shot({ shotId: "SC03-SH02", episodeCode: "S01E02" })]),
+    ).toThrow(/per-episode/);
+    // The single-episode happy path is unaffected.
+    expect(() => plans([shot({ episodeCode: "S01E02" })])).not.toThrow();
+  });
+
+  it("stamps plan.episodeCode from the (uniform) shots' episode code", () => {
+    const plan = plans([shot({ episodeCode: "S01E07" })]);
+    expect(plan.episodeCode).toBe("S01E07");
   });
 
   it("rejects empty required fields", () => {

@@ -131,13 +131,20 @@ export class MockImageClient implements StoryboardImageClient {
     if (typeof request.prompt !== "string") {
       throw new StoryboardContractError("mock client requires a string prompt");
     }
+    // Prompt text is UNTRUSTED DATA (spec §29): truncate on code points and
+    // strip lone surrogates so encodeURIComponent can never throw URIError
+    // (a UTF-16 slice can split an astral pair) on hostile text.
+    const label = [...request.prompt.slice(0, 64)]
+      .slice(0, 32)
+      .join("")
+      .replace(/[\uD800-\uDFFF]/g, "");
     return {
       assetId: `MOCK_FRAME_${request.referenceAssetIds.length}refs`,
       modelId: "mock-image-model",
       provider: "mock",
       aspectRatio: request.aspectRatio,
       resolution: request.resolution,
-      url: `mock://storyboard/${encodeURIComponent(request.prompt.slice(0, 32))}`,
+      url: `mock://storyboard/${encodeURIComponent(label)}`,
       promptCharacterCount: [...request.prompt].length,
       providerInput: false,
     };
@@ -457,11 +464,24 @@ export function planStoryboard(
     }
     seen.add(shot.shotId);
   }
+  // A storyboard plan is a PER-EPISODE artifact (runbook §25 step 15: one
+  // `storyboard` → STOP for approval per episode) — mixed episode codes are
+  // a caller bug, never silently collapsed to the first shot's episode.
+  const first = shots[0];
+  if (first !== undefined) {
+    for (const shot of shots) {
+      if (shot.episodeCode !== first.episodeCode) {
+        throw new StoryboardContractError(
+          `storyboard plan is per-episode: shot "${shot.shotId}" carries ` +
+            `episodeCode "${shot.episodeCode}" but "${first.episodeCode}" was already seen`,
+        );
+      }
+    }
+  }
 
   const needsFrame = options.needsFrame ?? (() => true);
   const contracts: StoryboardShotContract[] = [];
   const skippedShotIds: string[] = [];
-  const aggregateNotes: string[] = [];
 
   for (const shot of shots) {
     if (!needsFrame(shot)) {
@@ -516,7 +536,6 @@ export function planStoryboard(
       providerInput: false,
       usageMarker: NON_PROVIDER_INPUT_MARKER,
     });
-    aggregateNotes.push(...notes);
   }
 
   return {
