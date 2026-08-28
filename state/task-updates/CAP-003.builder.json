@@ -1,0 +1,9 @@
+{
+  "taskId": "CAP-003",
+  "phase": "BUILDER_DONE",
+  "commit": "1f4e031",
+  "testsRun": "npx vitest run packages/capability-registry/src/validators -> 51 passed (51): 18 character-count tests + 33 exclusive-modes; npx tsc --noEmit -p packages/capability-registry/tsconfig.json -> clean",
+  "notes": "Character-count validator: exact UTF-16 code-unit counting (string/segments), rejects > hard max with PROMPT_TOO_LONG before provider call, passes any size on null/UNKNOWN limit, INVALID_LIMIT on corrupt limit, messages never embed prompt content.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
