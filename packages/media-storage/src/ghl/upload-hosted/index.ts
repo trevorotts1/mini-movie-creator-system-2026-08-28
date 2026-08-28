@@ -5,6 +5,7 @@ export {
   buildMultipartBody,
   nameFromUrl,
   parseUploadResponse,
+  probeUrl,
   verifyUrlReachable,
 } from "./upload-hosted.js";
 export type {
@@ -16,5 +17,6 @@ export type {
   GhlIngestErrorCode,
   UrlProbe,
   UrlProbeResponse,
+  UrlProbeResult,
   VerifyUrlOptions,
 } from "./upload-hosted.js";

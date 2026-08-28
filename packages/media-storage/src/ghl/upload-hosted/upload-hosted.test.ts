@@ -10,6 +10,7 @@ import {
   buildMultipartBody,
   nameFromUrl,
   parseUploadResponse,
+  probeUrl,
   verifyUrlReachable,
   type GhlUploadHttp,
   type HostedIngestRequest,
@@ -101,6 +102,25 @@ describe("buildCanonicalName — deterministic canonical naming (spec §48)", ()
     const name = buildCanonicalName([long], { maxLength: 60 });
     expect(name.length).toBe(60);
     expect(name.endsWith(".mp4")).toBe(true);
+  });
+
+  it("throws when maxLength cannot fit the extension (regression: silent overflow)", () => {
+    expect(() => buildCanonicalName(["abc.mp4"], { maxLength: 3 })).toThrow(
+      TypeError,
+    );
+    expect(() => buildCanonicalName(["abcdef.mp4"], { maxLength: 4 })).toThrow(
+      TypeError,
+    );
+  });
+
+  it("never returns a name longer than maxLength", () => {
+    expect(buildCanonicalName(["abcd.mp4"], { maxLength: 5 }).length).toBe(5);
+    expect(buildCanonicalName(["shortclip.mp4"], { maxLength: 5 }).length).toBe(
+      5,
+    );
+    expect(
+      buildCanonicalName(["x".repeat(100), "y.png"], { maxLength: 8 }).length,
+    ).toBe(8);
   });
 
   it("rejects parts that sanitize to empty", () => {
@@ -258,6 +278,52 @@ describe("verifyUrlReachable", () => {
   });
 });
 
+describe("probeUrl — reachability with observed status preserved", () => {
+  it("reports reachable + status for 2xx", async () => {
+    const probe = async () => ({ ok: true, status: 206 });
+    expect(await probeUrl("https://x/y", { probe })).toEqual({
+      reachable: true,
+      status: 206,
+    });
+  });
+
+  it("reports unreachable + status for non-2xx (regression: probeStatus was dead)", async () => {
+    const probe = async () => ({ ok: false, status: 403 });
+    expect(await probeUrl("https://x/y", { probe })).toEqual({
+      reachable: false,
+      status: 403,
+    });
+    const probe500 = async () => ({ ok: false, status: 500 });
+    expect(await probeUrl("https://x/y", { probe: probe500 })).toEqual({
+      reachable: false,
+      status: 500,
+    });
+  });
+
+  it("reports unreachable with no status on network error/timeout", async () => {
+    const probe = async () => {
+      throw new Error("ECONNREFUSED");
+    };
+    expect(await probeUrl("https://x/y", { probe })).toEqual({
+      reachable: false,
+    });
+  });
+
+  it("passes timeout signal and method like verifyUrlReachable", async () => {
+    const seen: Array<{ method?: string; signal?: AbortSignal }> = [];
+    const probe = async (
+      _url: string,
+      init?: { method?: "HEAD" | "GET"; signal?: AbortSignal },
+    ) => {
+      seen.push({ method: init?.method, signal: init?.signal });
+      return { ok: true, status: 200 };
+    };
+    await probeUrl("https://x/y", { probe });
+    expect(seen[0]?.method).toBe("HEAD");
+    expect(seen[0]?.signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
 describe("archiveHostedUrl — happy path (acceptance)", () => {
   it("POSTs multipart hosted=true + fileUrl + canonical name + parentId; ARCHIVED only after reachable URL verified", async () => {
     const storageUrl = "https://files.ghl.com/media/F123.mp4";
@@ -411,7 +477,7 @@ describe("GhlIngestError shape", () => {
     expect(err.message).toContain("UNREACHABLE");
   });
 
-  it("probeStatus is preserved when the probe observed an HTTP status", async () => {
+  it("probeStatus carries the HTTP status the probe observed (regression: was never populated)", async () => {
     const http = makeHttp(() => ({ fileId: "F", url: "https://s/u" }));
     const probe = async () => ({ ok: false, status: 500 });
     const err = await archiveHostedUrl(http, baseRequest(), { probe }).catch(
@@ -419,5 +485,18 @@ describe("GhlIngestError shape", () => {
     );
     expect(err).toBeInstanceOf(GhlIngestError);
     expect((err as GhlIngestError).url).toBe("https://s/u");
+    expect((err as GhlIngestError).probeStatus).toBe(500);
+  });
+
+  it("probeStatus is undefined when the probe died on a network error", async () => {
+    const http = makeHttp(() => ({ fileId: "F", url: "https://s/u" }));
+    const probe = async () => {
+      throw new Error("ECONNRESET");
+    };
+    const err = await archiveHostedUrl(http, baseRequest(), { probe }).catch(
+      (e: unknown) => e as GhlIngestError,
+    );
+    expect(err).toBeInstanceOf(GhlIngestError);
+    expect((err as GhlIngestError).probeStatus).toBeUndefined();
   });
 });

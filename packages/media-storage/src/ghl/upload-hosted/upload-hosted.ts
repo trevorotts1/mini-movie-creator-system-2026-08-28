@@ -100,6 +100,16 @@ export type UrlProbe = (
   init?: { method?: "HEAD" | "GET"; signal?: AbortSignal },
 ) => Promise<UrlProbeResponse>;
 
+/**
+ * Probe outcome with the observed HTTP status, so callers can attach
+ * diagnostics (e.g. `GhlIngestError.probeStatus`) without re-probing.
+ */
+export interface UrlProbeResult {
+  reachable: boolean;
+  /** HTTP status observed by the probe; undefined on network error/timeout. */
+  status?: number;
+}
+
 /** Parts may be strings/numbers; undefined/null parts are dropped. */
 export type CanonicalPart = string | number | undefined | null;
 
@@ -151,6 +161,11 @@ export function buildCanonicalName(
   const full = ext ? `${cleanBase}.${ext}` : cleanBase;
   if (full.length <= maxLength) return full;
   const keepBase = maxLength - (ext ? ext.length + 1 : 0);
+  if (keepBase <= 0) {
+    throw new TypeError(
+      `canonical name: maxLength ${maxLength} cannot fit ".${ext}" extension`,
+    );
+  }
   return ext
     ? `${cleanBase.slice(0, keepBase)}.${ext}`
     : cleanBase.slice(0, maxLength);
@@ -257,13 +272,14 @@ export interface VerifyUrlOptions {
 }
 
 /**
- * Probe whether a URL is reachable (any 2xx). Network errors, timeouts and
- * non-2xx all count as unreachable — never an ARCHIVED signal.
+ * Probe a URL once and report reachability plus the observed HTTP status.
+ * Network errors, timeouts and non-2xx all count as unreachable — never an
+ * ARCHIVED signal — but the status is preserved for diagnostics.
  */
-export async function verifyUrlReachable(
+export async function probeUrl(
   url: string,
   options: VerifyUrlOptions = {},
-): Promise<boolean> {
+): Promise<UrlProbeResult> {
   const probe = options.probe ?? defaultProbe;
   const method = options.method ?? "HEAD";
   const timeoutMs = options.timeoutMs ?? 10000;
@@ -272,10 +288,25 @@ export async function verifyUrlReachable(
       method,
       signal: AbortSignal.timeout(timeoutMs),
     });
-    return response.ok && response.status >= 200 && response.status < 300;
+    return {
+      reachable:
+        response.ok && response.status >= 200 && response.status < 300,
+      status: response.status,
+    };
   } catch {
-    return false;
+    return { reachable: false };
   }
+}
+
+/**
+ * Probe whether a URL is reachable (any 2xx). Network errors, timeouts and
+ * non-2xx all count as unreachable — never an ARCHIVED signal.
+ */
+export async function verifyUrlReachable(
+  url: string,
+  options: VerifyUrlOptions = {},
+): Promise<boolean> {
+  return (await probeUrl(url, options)).reachable;
 }
 
 function assertHttpUrl(fileUrl: string): void {
@@ -330,16 +361,20 @@ export async function archiveHostedUrl(
       { fileId: parsed.fileId },
     );
   }
-  const reachable = await verifyUrlReachable(parsed.url, {
+  const probeResult = await probeUrl(parsed.url, {
     probe: options.probe,
     method: options.probeMethod,
     timeoutMs: options.probeTimeoutMs,
   });
-  if (!reachable) {
+  if (!probeResult.reachable) {
     throw new GhlIngestError(
       "UNREACHABLE",
       "GHL storage URL failed reachability verification; binary fallback required",
-      { fileId: parsed.fileId, url: parsed.url },
+      {
+        fileId: parsed.fileId,
+        url: parsed.url,
+        probeStatus: probeResult.status,
+      },
     );
   }
   return {
