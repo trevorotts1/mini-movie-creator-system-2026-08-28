@@ -205,3 +205,4 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 2026-08-28T19:57:36.212Z | QC-004 | batch-merge | MERGED | b43743aefded95186bd5bf1c83a02f2e243a8855
 2026-08-28T19:57:36.212Z | QC-010 | batch-merge | CONFLICT | conflict surfaced during batch — skipped; resolvers handle it
 2026-08-28T19:57:36.212Z | BATCH-MERGE | batch-merge | REGRESSION | PASS areas=ALL
+- 2026-08-28T19:57:36Z | BATCH-8 | merger | MERGED | 4 merged (SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a), 1 conflict-blocked (QC-010), regression PASS 3188 tests, pushed 0e9b00e..b43743a + control da5cc75; batch-7 over-stamps corrected

@@ -1396,7 +1396,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-010-wan-fallback
   - Worktree: worktrees/TASK-QC-010/
   - Acceptance: especially complex/long/hero/action shots route to Wan 3.0; routing policy considers capability/quality-history/cost/quota (policy table test); `npx vitest run packages/qc/src/routes/wan` green.
-  - Status: MERGED
+  - Status: PASS — batch-8: rebased onto 0e9b00e (merge-tree clean), but conflict surfaced during batch merge (packages/qc/src/index.ts) — rebase required again
 
 - [ ] TASK-QC-011 — Human REVIEW state
   - Workflow: WF09

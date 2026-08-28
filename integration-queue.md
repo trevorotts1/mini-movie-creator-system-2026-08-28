@@ -41,6 +41,8 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 | IQ-B6C | SKL-005 | task/SKL-005-openclaw-workspace | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | f1689ba |
 | IQ-B6C | VID-005 | task/VID-005-generated-clip-layer | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | b22a21f |
 | IQ-B6C | VID-013 | task/VID-013-shot-replacement | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | 6d8cce1 |
-| IQ-B6C | VID-008 | task/VID-008-graphics-layer | builder | qc-batch | PASS | `origin/integration` | CONFLICT_BLOCKED (rebase required) | Pending |
+| IQ-B6C | VID-008 | task/VID-008-graphics-layer | builder | qc-batch | PASS | `origin/integration` | CONFLICT_BLOCKED (rebase required) | modify/delete GraphicsViews.tsx + tsconfig.json + 1 open blocker (root tsconfig gap) — batch-8 |
 
 *(Batch-7 2026-08-28T22:05:00Z: 7 IQ-B6C rows merged; QC-003/004/010, SKL-004, VID-002 still conflict-blocked; REC-010 not admitted — deps unmerged; plus 12 new merges CAP-003, CAP-010, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010. Pushed 38974b3..6d8cce1.)*
+
+*(Batch-8 2026-08-28T19:57:36Z: SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a merged onto integration; regression PASS 3188 tests; pushed 0e9b00e..b43743a, control da5cc75. QC-010 conflict-blocked again (packages/qc/src/index.ts) — rebase required. REC-010 still deps-blocked. VID-008 blocked: conflict + open blocker.)*
