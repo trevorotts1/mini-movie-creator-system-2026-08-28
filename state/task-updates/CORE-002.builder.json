@@ -1,7 +1,7 @@
 {
   "taskId": "CORE-002",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING_COMMIT_SHA",
+  "commit": "806fd6d",
   "testsRun": "npm install (ok, 67 pkgs); npx tsc --noEmit -p tsconfig.base.json (exit 0); node -e require('./package.json').workspaces (lists packages/*, apps/*, integrations/*); npx vitest run packages/core/src/__tests__/monorepo-layout.test.ts -> 6/6 pass; npx vitest run (full sweep, 1 file) -> 6/6 pass; corepack pnpm install --frozen-lockfile verified compatible before lockfile restore",
   "notes": "Scaffold pre-existed on integration (d4f79ec). Closed acceptance gaps: added root package.json workspaces field (packages/*, apps/*, integrations/*), added package.json to apps/web + integrations/openclaw + integrations/claude (were .gitkeep-only), added 6-test layout suite packages/core/src/__tests__/monorepo-layout.test.ts.",
   "blockers": [
