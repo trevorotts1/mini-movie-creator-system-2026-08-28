@@ -1,5 +1,8 @@
 import { AspectPlanError, AspectRatio } from "./types.js";
 
+/** Hard cap on the raw id string: reject, never truncate (truncation parses wrong ratios). */
+const MAX_RATIO_ID_LENGTH = 64;
+
 /**
  * Parse a "W:H" ratio string into an {@link AspectRatio}.
  * Accepts presets ("16:9", "9:16") and custom "W:H" (e.g. "2.35:1").
@@ -7,7 +10,12 @@ import { AspectPlanError, AspectRatio } from "./types.js";
  * and anything that is not exactly "W:H".
  */
 export function parseAspectRatio(input: string): AspectRatio {
-  const raw = (input ?? "").trim().slice(0, 64);
+  const raw = (input ?? "").trim();
+  if (raw.length > MAX_RATIO_ID_LENGTH) {
+    throw new AspectPlanError(
+      `Invalid aspect ratio "${input}": longer than ${MAX_RATIO_ID_LENGTH} characters`,
+    );
+  }
   const match = /^(\d+)(?:\.(\d{1,3}))?\s*:\s*(\d+)(?:\.(\d{1,3}))?$/.exec(raw);
   if (!match) {
     throw new AspectPlanError(

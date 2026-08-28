@@ -5,6 +5,7 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_RESOLUTION_TIER,
   EpisodeAspectConfig,
+  RESOLUTION_TIERS,
   ResolutionTier,
   ResolvedAspect,
   SeriesAspectConfig,
@@ -22,7 +23,7 @@ import { canvasFor, captionZoneFor, safeAreaFor } from "./geometry.js";
  */
 export function resolveAspectPlan(plan: AspectPlan, episodeIds: string[]): ResolvedAspect[] {
   const series = normalizeSeries(plan.series);
-  const overrides = normalizeOverrides(plan.episodes);
+  const overrides = normalizeOverrides(plan.episodes, series);
   const known = new Set(episodeIds);
   if (known.size !== episodeIds.length) {
     throw new Error("duplicate episode ids in episodeIds");
@@ -65,13 +66,22 @@ function normalizeSeries(
 ): { aspectRatioId: string; resolutionTier: ResolutionTier } {
   const aspectRatioId = series?.aspectRatio ?? DEFAULT_ASPECT_RATIO;
   const resolutionTier = series?.resolutionTier ?? DEFAULT_RESOLUTION_TIER;
-  // Validate eagerly so bad series config fails before any episode is rendered.
-  parseAspectRatio(aspectRatioId);
+  // Validate eagerly so bad series config fails before any episode is rendered —
+  // even when the episode list is empty.
+  validateConfig(aspectRatioId, resolutionTier);
   return { aspectRatioId, resolutionTier };
 }
 
+function validateConfig(aspectRatioId: string, resolutionTier: ResolutionTier): void {
+  parseAspectRatio(aspectRatioId);
+  if (!(resolutionTier in RESOLUTION_TIERS)) {
+    throw new Error(`unknown resolution tier "${resolutionTier}"`);
+  }
+}
+
 function normalizeOverrides(
-  episodes?: EpisodeAspectConfig[],
+  episodes: EpisodeAspectConfig[] | undefined,
+  series: { aspectRatioId: string; resolutionTier: ResolutionTier },
 ): Map<string, { aspectRatioId: string; resolutionTier: ResolutionTier }> {
   const map = new Map<
     string,
@@ -84,9 +94,12 @@ function normalizeOverrides(
     if (map.has(ep.episodeId)) {
       throw new Error(`duplicate episode override for "${ep.episodeId}"`);
     }
-    const aspectRatioId = ep.aspectRatio ?? DEFAULT_ASPECT_RATIO;
-    const resolutionTier = ep.resolutionTier ?? DEFAULT_RESOLUTION_TIER;
-    parseAspectRatio(aspectRatioId);
+    // Missing override fields fall back to the series default (types.ts contract),
+    // NOT the builtin defaults — an override that only bumps the tier must keep
+    // the series ratio (e.g. series 9:16 + tier-only override stays 9:16).
+    const aspectRatioId = ep.aspectRatio ?? series.aspectRatioId;
+    const resolutionTier = ep.resolutionTier ?? series.resolutionTier;
+    validateConfig(aspectRatioId, resolutionTier);
     map.set(ep.episodeId, { aspectRatioId, resolutionTier });
   }
   return map;

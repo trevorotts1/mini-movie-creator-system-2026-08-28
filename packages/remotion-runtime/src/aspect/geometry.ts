@@ -1,5 +1,8 @@
 import { AspectRatio, Canvas, SafeAreaRect, ResolutionTier, RESOLUTION_TIERS } from "./types.js";
 
+/** Renderer ceiling (Remotion max frame dimension). */
+export const MAX_CANVAS_EDGE = 16384;
+
 /**
  * Resolution math (spec §32: resolution/safe-area tested).
  *
@@ -20,6 +23,11 @@ export function canvasFor(aspect: AspectRatio, tier: ResolutionTier): Canvas {
       ? short * aspect.ratio
       : short * (1 / aspect.ratio);
   long = Math.round(long / 2) * 2;
+  if (long < 2 || long > MAX_CANVAS_EDGE) {
+    throw new Error(
+      `aspect ratio "${aspect.id}" at tier "${tier}" yields invalid long edge ${long}px (must be within [2, ${MAX_CANVAS_EDGE}])`,
+    );
+  }
   const width = aspect.ratio >= 1 ? long : short;
   const height = aspect.ratio >= 1 ? short : long;
   return { width, height, aspectRatioId: aspect.id };
@@ -64,6 +72,9 @@ export function safeAreaFor(
 export function captionZoneFor(canvas: Canvas, fraction: { safe?: number; zone?: number } = {}): SafeAreaRect {
   const safeForward = fraction.safe ?? 0.1;
   const zoneBack = fraction.zone ?? 0.25;
+  if (!Number.isFinite(zoneBack) || zoneBack <= 0 || zoneBack > 1) {
+    throw new Error(`caption zone fraction must be in (0, 1], got ${zoneBack}`);
+  }
   const safe = safeAreaFor(canvas, { fraction: safeForward });
   const zoneHeight = Math.max(1, Math.round(safe.height * zoneBack));
   const y = safe.y + safe.height - zoneHeight;
@@ -88,7 +99,7 @@ export function isValidCanvas(canvas: Canvas): boolean {
     Number.isInteger(canvas.height) &&
     canvas.width > 0 &&
     canvas.height > 0 &&
-    canvas.width <= 16384 &&
-    canvas.height <= 16384
+    canvas.width <= MAX_CANVAS_EDGE &&
+    canvas.height <= MAX_CANVAS_EDGE
   );
 }

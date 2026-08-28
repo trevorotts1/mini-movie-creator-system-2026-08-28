@@ -33,6 +33,15 @@ describe("parseAspectRatio", () => {
       expect(() => parseAspectRatio(bad), `should reject "${bad}"`).toThrow(AspectPlanError);
     }
   });
+
+  it("rejects over-long inputs instead of silently truncating", () => {
+    // Regression: parse used to slice the input at 64 chars, so "16:" + many 9s
+    // parsed as a valid (absurd) ratio. Now any id longer than 64 chars throws.
+    const long = "16:" + "9".repeat(70);
+    expect(() => parseAspectRatio(long)).toThrow(/longer than 64 characters/);
+    // 64 chars exactly is the boundary — still valid when well-formed.
+    expect(() => parseAspectRatio("16:" + "9".repeat(61))).not.toThrow();
+  });
 });
 
 describe("formatRatioId", () => {

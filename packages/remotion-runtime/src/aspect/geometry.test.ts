@@ -47,6 +47,11 @@ describe("canvasFor", () => {
   it("rejects unknown tiers", () => {
     expect(() => canvasFor(LANDSCAPE, "bogus" as never)).toThrow(/unknown resolution tier/);
   });
+
+  it("rejects extreme ratios whose long edge would exceed the renderer ceiling", () => {
+    // 1:20000 at 1080p -> long edge ~216M px: must throw, not produce a bogus canvas.
+    expect(() => canvasFor(parseAspectRatio("1:20000"), "1080p")).toThrow(/invalid long edge/);
+  });
 });
 
 describe("safeAreaFor", () => {
@@ -93,6 +98,15 @@ describe("captionZoneFor", () => {
     const zone = captionZoneFor(canvas);
     expect(zone.y + zone.height).toBe(1920 - 192);
     expect(zone.width).toBe(1080 - 2 * 108);
+  });
+
+  it("rejects zone fractions outside (0, 1]", () => {
+    const canvas = canvasFor(LANDSCAPE, "1080p");
+    for (const bad of [0, -0.1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => captionZoneFor(canvas, { zone: bad })).toThrow(/caption zone fraction/);
+    }
+    // zone 1 = full safe-area height, bottom-aligned.
+    expect(captionZoneFor(canvas, { zone: 1 }).height).toBe((1080 - 216));
   });
 });
 

@@ -48,6 +48,42 @@ describe("resolveAspectPlan", () => {
     expect(resolved[1]!.source).toBe("episode-override");
   });
 
+  it("partial override falls back to the SERIES ratio, not the builtin default", () => {
+    // Regression: an override that only bumps the tier must keep the series ratio.
+    // (Previously the missing field fell back to builtin 16:9, silently discarding
+    // a 9:16 or 21:9 series master.)
+    const resolved = resolveAspectPlan(
+      {
+        series: { aspectRatio: "9:16", resolutionTier: "720p" },
+        episodes: [{ episodeId: "s2", resolutionTier: "1080p" }],
+      },
+      ["s1", "s2"],
+    );
+    expect(resolved[1]!.aspectRatio.id).toBe("9:16");
+    expect(resolved[1]!.canvas).toMatchObject({ width: 1080, height: 1920 });
+
+    const wide = resolveAspectPlan(
+      {
+        series: { aspectRatio: "21:9" },
+        episodes: [{ episodeId: "s2", resolutionTier: "720p" }],
+      },
+      ["s1", "s2"],
+    );
+    expect(wide[1]!.aspectRatio.id).toBe("21:9");
+    expect(wide[1]!.canvas).toMatchObject({ height: 720 });
+    expect(wide[1]!.canvas.width).toBeGreaterThan(1280);
+
+    // Ratio-only override must keep the series tier.
+    const tier = resolveAspectPlan(
+      {
+        series: { aspectRatio: "16:9", resolutionTier: "1440p" },
+        episodes: [{ episodeId: "s2", aspectRatio: "9:16" }],
+      },
+      ["s1", "s2"],
+    );
+    expect(tier[1]!.canvas).toMatchObject({ width: 1440, height: 2560 });
+  });
+
   it("same plan can produce both 16:9 and 9:16 output", () => {
     const plan = {
       series: { aspectRatio: "16:9" },
@@ -85,6 +121,20 @@ describe("resolveAspectPlan", () => {
     expect(() =>
       resolveAspectPlan({ episodes: [{ episodeId: "e1", aspectRatio: "0:0" }] }, ["e1"]),
     ).toThrow();
+  });
+
+  it("rejects invalid tiers eagerly, even with an empty episode list", () => {
+    // Regression: a bad series tier only blew up once an episode got rendered
+    // (canvasFor). Validate up front so empty-plan callers fail too.
+    expect(() =>
+      resolveAspectPlan({ series: { resolutionTier: "bogus" as never } }, []),
+    ).toThrow(/unknown resolution tier/);
+    expect(() =>
+      resolveAspectPlan(
+        { episodes: [{ episodeId: "e1", resolutionTier: "bogus" as never }] },
+        ["e1"],
+      ),
+    ).toThrow(/unknown resolution tier/);
   });
 });
 
