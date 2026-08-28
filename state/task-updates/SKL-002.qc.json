@@ -1,0 +1,13 @@
+{
+  "taskId": "SKL-002",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "pnpm -r run typecheck (exit 0, 17/17 Done); pnpm -r run test (exit 0, 17/17 Done); npx vitest run --config integrations/claude/vitest.config.mts (45/45 PASS, exit 0); bash integrations/claude/project-install.sh --check (exit 0); bash integrations/claude/project-install.sh x2 (idempotent no-op exit 0); security scan on owned paths (no secrets, hardcoded relative symlink target, --force backup-before-replace, no unbounded retries)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T22:30:00Z",
+  "notes": "QC_FIXING round: batch-6 reverted SKL-002 for integrations/claude typecheck regression (node: imports without node types; tsc never run by first QC). Fix 1: integrations/claude/tsconfig.json gains types:[node] (matches SKL-003 pattern already on integration). Fix 2: project-install.test.ts(121) noUncheckedIndexedAccess — backups[0] cast via backupDir as string. Branch merged origin/integration (0e9b00e) bringing SKL-001 canonical tree so the committed symlink now resolves; SKL-002 artifacts reinstated from branch history with the two fixes; vitest.config.mts drops unused node:path import. Full regression green: typecheck 17/17 Done exit 0, test 17/17 Done exit 0, claude suite 45/45 (27 personal + 18 project), --check exit 0, install idempotent.",
+  "blockers": []
+}
