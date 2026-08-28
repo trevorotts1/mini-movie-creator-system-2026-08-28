@@ -165,6 +165,34 @@ describe("parseIntake — validation rejections", () => {
     );
   });
 
+  it("rejects non-ISO-8601 createdAt strings that Date.parse would accept", () => {
+    // Regression: Date.parse("March 5, 2026") succeeds, so a bare parse-check
+    // let locale junk into a durable record. Shape must be ISO-8601 first.
+    for (const createdAt of ["March 5, 2026", "5 Mar 2026", "08/28/2026", "yesterday"]) {
+      expect(() => parseIntake(validInput({ createdAt }))).toThrow(IntakeValidationError);
+    }
+    for (const createdAt of [
+      "2026-08-28T12:00:00.000Z",
+      "2026-08-28T12:00:00Z",
+      "2026-08-28T12:00Z",
+      "2026-08-28T12:00:00-05:00",
+      "2026-08-28T12:00:00+0530",
+      "2026-08-28 12:00:00.000Z",
+    ]) {
+      expect(() => parseIntake(validInput({ createdAt }))).not.toThrow();
+    }
+  });
+
+  it("throws IntakeValidationError (not TypeError) for null/undefined/non-object input", () => {
+    // Regression: parseIntake(null) crashed with a raw TypeError before any
+    // field validation ran — callers cannot catch a typed validation error.
+    for (const input of [null, undefined, 42, "keeper idea"]) {
+      expect(() => (parseIntake as (input: unknown) => unknown)(input)).toThrow(
+        IntakeValidationError,
+      );
+    }
+  });
+
   it("names the offending field, never the idea text, in the error", () => {
     try {
       parseIntake(validInput({ aspectRatio: "bananas" }));
@@ -245,6 +273,17 @@ describe("spec §29 — story text is untrusted data (injection tests)", () => {
   it("truncates untrusted text to a display bound", () => {
     expect(truncateForDisplay("abcdefghij", 5)).toBe("abcd…");
     expect(truncateForDisplay("abc", 5)).toBe("abc");
+  });
+
+  it("truncates to at most max characters even for max < 2", () => {
+    // Regression: max=0 returned "…" (1 char), violating the "at most max"
+    // contract that single-line log/metadata fields rely on. max=1 still
+    // yields the 1-char ellipsis (1 <= 1), which the contract permits.
+    expect(truncateForDisplay("abc", 0)).toBe("");
+    expect(truncateForDisplay("abc", 1)).toBe("…");
+    expect(truncateForDisplay("abc", -1)).toBe("");
+    expect(truncateForDisplay("ab", 2)).toBe("ab");
+    expect(truncateForDisplay("abc", 2)).toBe("a…");
   });
 
   it("keeps path-traversal and prompt-override payloads as inert data", () => {

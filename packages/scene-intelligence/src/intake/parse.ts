@@ -25,6 +25,9 @@ import {
  * exception strings and logs — spec §29).
  */
 export function parseIntake(input: IdeaIntakeInput): IdeaIntake {
+  if (input === null || input === undefined || typeof input !== "object") {
+    throw new IntakeValidationError("input", "must be an idea intake object");
+  }
   const rawText = requireRawText(input.rawText);
   const aspectRatio = requireAspectRatio(input.aspectRatio);
   const targetRuntimeSeconds = requireRuntime(input.targetRuntimeSeconds);
@@ -148,11 +151,20 @@ function requireCreatedAt(value: unknown): string {
   if (value === undefined) {
     return new Date().toISOString();
   }
-  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+  if (typeof value !== "string" || !ISO_8601_PATTERN.test(value) || Number.isNaN(Date.parse(value))) {
     throw new IntakeValidationError("createdAt", "must be an ISO-8601 timestamp string");
   }
   return value;
 }
+
+/**
+ * ISO-8601 date-time shape: `YYYY-MM-DDTHH:MM(:SS(.fraction)?)?` with an
+ * optional offset (Z or ±HH:MM). `Date.parse` alone accepts locale junk
+ * ("March 5, 2026"), which would let a non-normalized timestamp into a
+ * durable record — shape-check first, then parse-check.
+ */
+const ISO_8601_PATTERN =
+  /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?$/;
 
 /** Thrown when an intake field fails validation; names the field, never the idea text. */
 export class IntakeValidationError extends Error {
