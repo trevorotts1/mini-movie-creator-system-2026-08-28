@@ -1,7 +1,7 @@
 {
   "taskId": "CAP-005",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "3f439c4",
   "testsRun": "npx vitest run packages/capability-registry/src/validators -> 31 passed (31); packages/capability-registry tsc --noEmit -> clean",
   "notes": "Mutually-exclusive-mode validator: hard first/last-frame vs multimodal-reference rule (Wan/Seedance) always enforced + generic incompatibleCombinations checking with malformed-entry defects.",
   "blockers": [],
