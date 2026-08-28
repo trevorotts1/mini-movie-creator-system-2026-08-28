@@ -1,0 +1,13 @@
+{
+  "taskId": "FISH-003",
+  "phase": "PASS",
+  "commit": "308a920",
+  "checksRun": "npx vitest run packages/providers/src/fish-audio/tts (19/19 PASS); npx vitest run packages/providers (422/422 PASS, 17 files); tsc --noEmit packages/providers (clean); security scan owned paths (no secrets/exec/path-traversal; text only in JSON bodies)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:15:00Z",
+  "notes": "Fixed: settings spread no longer clobbers hashed identity fields in synthesize.ts (regression test added); removed dead makeId runner option; replaced dead assertion in provider_task_id acceptance test with real durability check",
+  "blockers": []
+}

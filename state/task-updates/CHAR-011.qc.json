@@ -1,0 +1,15 @@
+{
+  "taskId": "CHAR-011",
+  "phase": "PASS",
+  "commit": "c37021a",
+  "checksRun": "npx vitest run packages/character-library/src/locations (30/30 PASS); tsc --noEmit packages/character-library (clean); workspace lint N/A (no package defines lint script); security grep on owned paths (clean)",
+  "defectsFound": 6,
+  "defectsFixed": 6,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Strict parseLocationMaster, post-approval asset freeze, assetId uniqueness, dead-code dedupe; regression tests added, 30/30 green",
+  "blockers": [],
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "rebaseCommit": "89e8a7a8765251183529b50903f82cd710e9123c"
+}

@@ -1,0 +1,9 @@
+{
+  "taskId": "FISH-007",
+  "phase": "BUILDER_DONE",
+  "commit": "eaa77742b3d1b8a32e6002e331a33100bf5f2a85",
+  "testsRun": "npx vitest run packages/providers/src/fish-audio/captions — 38/38 PASS; npx vitest run packages/providers — 78/78 PASS (no collateral); npx tsc --noEmit -p packages/providers/tsconfig.json — clean",
+  "notes": "Word-exact caption track from FISH-006 alignment (structural input, no cross-task import): upstream gen_voice.py discipline (verbatim words, delivery tags filtered, integer ms, original text), cue grouping maxWords=4, CaptionTrackStore persistence keyed by fsh1 cache key, msToFrames/framesToMs deterministic 30fps contract for VID-004.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}

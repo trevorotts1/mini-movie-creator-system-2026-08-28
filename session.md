@@ -1,28 +1,42 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T10:05:00Z
-**Session Type:** Batch Merge Cycle 2 Complete
+**Updated:** 2026-08-28T22:05:00Z
+**Session Type:** Batch Merge Cycle 7 Pushed
 
 ---
 
 ## Current Status
 
-- **Phase:** Batch Merge Cycle 2 complete. 5 tasks merged (CAP-005, CAP-006, CAP-008, KIE-002, KIE-003); 7 QC-PASS tasks conflict-blocked pending rebase (CORE-001, CAP-004, CAP-007, CAP-009, CAP-010, CHAR-007, KIE-001).
-- **Integration HEAD:** e973ac2 (pushed to origin)
-- **Regression Result:** PASS (408/408 tests, 24 files; pnpm -r test + root vitest green; typecheck failures on apps/web + integrations/claude pre-existing scaffold gaps, also fail at cycle-1 HEAD).
-- **Next Action:** Rebase 7 conflict-blocked branches and re-merge next cycle; continue dispatch of unblocked tasks (CORE-004..007 already dispatched).
+- **Phase:** Batch Merge Cycle 7 complete. 19 tasks merged deps-first (CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, QC-003, QC-004, QC-010, SKL-003, SKL-004, SKL-005, VID-002, VID-005, VID-013 — QC-003/004/010, SKL-004, VID-002 conflict-aborted). Regression PASS. Pushed to origin/integration.
+- **Integration HEAD:** 6d8cce1 (== origin/integration)
+- **Regression Result:** PASS — `pnpm -r test` exit 0; `pnpm -r run typecheck` exit 0; repo-wide vitest 3188 passed / 1 skipped (159 files).
+- **Next Action:** Rebase conflict-blocked QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts) onto 6d8cce1. REC-010 waits on REC-002..REC-005 (all now READY). VID-008 and SKL-002 remain in QC_FIXING from batch 6. New unblocks: CORE-009, CORE-015 -> READY.
 
-## Merged Tasks (Batch 2)
-- CAP-005, CAP-006, CAP-008, KIE-002, KIE-003
+## Batch 7 — Merged (14)
+- CAP-003, CAP-010, CORE-007, DIR-002, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010, QC-002, SKL-003, SKL-005, VID-005, VID-013
 
-## QC PASS, Conflict-Blocked (rebase needed)
-- CORE-001 (docs/BASELINE-REPORT.md add/add)
-- CAP-004, CAP-007, CAP-009, CAP-010 (capability-registry index.ts)
-- CHAR-007 (character-library index.ts)
-- KIE-001 (docs/provider-capabilities/kie.md add/add)
+## Batch 7 — Conflict-Blocked (5, merge aborted, branch retains PASS)
+- QC-003, QC-004, QC-010 (packages/qc/src/index.ts), SKL-004 (integrations/claude/tsconfig.json), VID-002 (packages/remotion-runtime/src/index.ts)
 
-## Merged Tasks (Batch 1)
-- CORE-002, CORE-003, CORE-010, CORE-011, CORE-012, CORE-013, CORE-014
-- CAP-001, CAP-002
-- CHAR-001, CHAR-002, CHAR-006, CHAR-008, CHAR-009
+## Batch 7 — Not Admitted
+- REC-010 (deps REC-002..REC-005 unmerged — all READY now)
+
+## Batch 6 — Merged (44)
+- AGN-001, AGN-002, AGN-003, AGN-004, AGN-005, AGN-006, AGN-007, AGN-008, AGN-009, AGN-010, CHAR-015, CORE-006, DIR-001, DIR-004, DIR-005, DIR-006, DIR-007, DIR-009, DIR-010, DIR-011, DIR-012, DIR-013, DIR-014, GHL-012, KIE-007, QC-001, QC-006, QC-008, QC-009, QC-012, REC-008, SKL-001, SKL-006, SKL-007, VID-003, VID-004, VID-006, VID-007, VID-009, VID-010, VID-011, VID-012, VID-014, VID-016
+
+## Batch 6 — Reverted to QC_FIXING (2)
+- VID-008 (4e9e71e): GraphicsViews.tsx(29,26) TS2345 FrameSize->number. Invisible on branch — its tsconfig lacked the tsx include VID-004 added to the shared package, so tsc never compiled the view. QC 'tsc clean' true under branch tsconfig only.
+- SKL-002 (01d5505): integrations/claude/src/project-install.test.ts uses node: imports + import.meta.url without node types in package tsconfig. SKL-002 QC ran vitest only, no tsc. Prebatch integrations/claude tsc verified clean.
+
+## Batch 6 — Conflict/branch-blocked (13, merge aborted, branch retains PASS)
+- CORE-007, DIR-002, QC-002, QC-003, QC-004, QC-010, REC-010, SKL-003, SKL-004, SKL-005, VID-005, VID-008, VID-013
+
+## Batch 5 — Merged (24)
+- CAP-007, CAP-009, CHAR-011, CHAR-014, CORE-005, FISH-008, FISH-009, FISH-010, GHL-003, GHL-004, GHL-005, GHL-006, GHL-008, GHL-009, GHL-010, GHL-011, KIE-001, KIE-005, KIE-006, KIE-008, REC-001, REC-009, VID-001, VID-015
+
+## Batch 5 — Conflict-Blocked (merge aborted, branch retains PASS)
+- CAP-010 (packages/capability-registry/src/index.ts), CORE-006 (resolved batch 6), CORE-007 (packages/database/src/repositories/index.ts), KIE-010 (docs/provider-capabilities/kie.md add/add)
+
+## Batch 4 — Rolled Back (regression FAIL, superseded by batch 5)
+- 14 merged locally then reverted: CAP-009 TS6059 rootDir break in apps/cli providers-verify command (fixed on branch 7f4561d; re-merged clean in batch 5)
