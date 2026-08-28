@@ -1,7 +1,7 @@
 {
   "taskId": "GHL-001",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "9aa7793",
   "testsRun": "npx vitest run packages/media-storage/src/ghl/auth -> 11/11 passed (1 file); npx tsc --noEmit -p packages/media-storage -> 0 errors",
   "notes": "GHL auth/config: bearer + Version:v3 headers, env config, token redaction (toString/toJSON/redactGhlToken), docs verified 2026-08-28 in docs/provider-capabilities/ghl.md",
   "blockers": [],
