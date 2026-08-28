@@ -103,6 +103,33 @@ describe("frame planning", () => {
     expect(frameFileName("qc-frame", 1234)).toBe("qc-frame-f1234.png");
   });
 
+  it("rejects stems that could traverse out of the frame directory (path traversal guard)", () => {
+    for (const hostile of ["../evil", "..", "a/b", "a\\b", "", "x/y", ".\\x"]) {
+      expect(() => frameFileName(hostile, 1)).toThrow(QcFrameError);
+      expect(() => planFrames({ durationSeconds: 4, fps: 25 }, { stem: hostile })).toThrow(QcFrameError);
+      expect(() =>
+        extractRepresentativeFrames("/media/shot.mp4", {
+          outputDir: "/tmp/x",
+          facts: { durationSeconds: 4, fps: 25 },
+          stem: hostile,
+        }),
+      ).rejects.toThrow(/stem/);
+    }
+    // benign stems still accepted
+    expect(() => frameFileName("qc-frame_v2", 1)).not.toThrow();
+    expect(() => frameFileName("S01E01_SC01_SH01", 1)).not.toThrow();
+  });
+
+  it("rejects a non-finite/non-positive count instead of silently planning zero frames or looping forever", () => {
+    expect(() => representativeTimestamps(10, 30, NaN)).toThrow(QcFrameError);
+    expect(() => representativeTimestamps(10, 30, Infinity)).toThrow(QcFrameError);
+    expect(() => representativeTimestamps(10, 30, 0)).toThrow(QcFrameError);
+    expect(() => representativeTimestamps(10, 30, -3)).toThrow(QcFrameError);
+    expect(() => planFrames({ durationSeconds: 10, fps: 30 }, { count: NaN })).toThrow(QcFrameError);
+    // a count larger than the clip's usable frames is capped, not fatal
+    expect(representativeTimestamps(2 / 30, 30, 99)).toEqual([0, 1 / 30]);
+  });
+
   it("plans evenly-spaced representative timestamps inside [0, duration)", () => {
     const timestamps = representativeTimestamps(10, 30, 4);
     expect(timestamps).toHaveLength(4);

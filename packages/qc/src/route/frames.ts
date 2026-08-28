@@ -164,7 +164,22 @@ export function timestampToFrameNumber(timestampSeconds: number, fps: number): n
 
 /** frames.mjs file naming: 4-digit zero-padded frame number. */
 export function frameFileName(stem: string, frameNumber: number): string {
+  assertSafeStem(stem);
   return `${stem}-f${String(frameNumber).padStart(4, "0")}.png`;
+}
+
+/**
+ * Stem is used as a path segment (`<stem>-f<NNNN>.png` joined onto
+ * `outputDir`), so it must never carry path separators or traversal
+ * segments — a hostile stem like "../evil" would write outside the frame
+ * directory. Allowlist: letters, digits, dot, underscore, dash; 1–128 chars.
+ */
+export function assertSafeStem(stem: string): void {
+  if (stem === "." || stem === ".." || !/^[A-Za-z0-9._-]{1,128}$/.test(stem)) {
+    throw new QcFrameError(
+      `invalid frame stem ${JSON.stringify(stem)} — use 1-128 chars of [A-Za-z0-9._-] (no path separators)`,
+    );
+  }
 }
 
 /**
@@ -188,7 +203,10 @@ export function representativeTimestamps(
   if (lastFrame < 0) {
     throw new QcFrameError(`clip too short to extract frames (${String(durationSeconds)}s @ ${String(fps)}fps)`);
   }
-  const n = Math.max(1, Math.floor(count));
+  if (!Number.isFinite(count) || count <= 0) {
+    throw new QcFrameError(`cannot plan frames: invalid count ${String(count)}`);
+  }
+  const n = Math.min(Math.max(1, Math.floor(count)), lastFrame + 1);
   const timestamps: number[] = [];
   const seenFrames = new Set<number>();
   for (let i = 0; i < n; i++) {
