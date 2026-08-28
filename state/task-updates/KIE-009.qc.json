@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-009",
+  "phase": "PASS",
+  "commit": "3323d6bed489ff1e9e05dfb6286cbbfec24acab1",
+  "checksRun": "npx vitest run packages/providers/src/kie/errors -> 34 passed (34); npx vitest run (full suite) -> 34 passed; npx tsc --noEmit (packages/providers) -> rc 0; lint: repo has no eslint config (none run)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Fixed: failureToLogLine now re-redacts message (leak if caller passes raw failure); server Retry-After clamped to 900s max (unbounded-sleep guard); KieApiError http-error mapping carries retryAfterSec. Regression tests added.",
+  "blockers": []
+}

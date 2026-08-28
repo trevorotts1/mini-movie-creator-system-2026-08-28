@@ -1,0 +1,12 @@
+{
+  "taskId": "REC-009",
+  "phase": "BUILDER_DONE",
+  "commit": "1317c7892b076a55186d5aa73ba2cc62a8d19ec7",
+  "testsRun": "npx vitest run scripts/orchestration/batch-merge.test.ts -> 24/24 pass; npx vitest run scripts/orchestration/batch-merge.engine.test.ts -> 11/11 pass (real temp git repos); npx vitest run scripts/orchestration/ -> 35/35 pass; npx tsc --noEmit -p tsconfig.base.json -> 0 errors; CLI smoke: npx tsx scripts/orchestration/batch-merge.cli.ts --dry-run --root <fixture> -> correct no-mutation report",
+  "notes": "Runbook §7.2 engine: merge.lock (token release + stale break), QC-PASS admission (phase/finalTestResult/defects/blockers/deps/branch/qc-commit-ancestor), Kahn ordering with conflict-risk tiebreak, merge-tree conflict pre-check (rc=1 stdout parsed), CAS update-ref batch merges, affected-area vitest regression, revert + culprit isolation on red, secret/heavy-media scan before push, MERGED writes to tasks.json/merge-queue.json/integration-queue.md/checkpoint, logs/merges evidence + ledger append; SKILL.md + CLI with --dry-run (zero mutation, tested on fixture queue); vitest.config.ts scripts/** include claimed under ownership.md §4 unowned-path rule",
+  "blockers": [
+    "OWNERSHIP NOTE: ownership.md row says REC-009 owns scripts/batch-merge/ but todo.md, state/tasks.json, and the acceptance command all say scripts/orchestration/batch-merge.* — implemented per acceptance command; ownership.md row should be reconciled by the orchestrator",
+    "MERGER NOTE: vitest.config.ts (unowned) gained a scripts/** include per ownership.md §4 unowned-path default — verify no other task edits it concurrently"
+  ],
+  "updatedAt": "2026-08-28T16:10:00Z"
+}

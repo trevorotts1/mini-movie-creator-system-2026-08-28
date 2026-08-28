@@ -255,9 +255,6 @@ export interface FishTtsSynthesizer {
 export interface DialogueTtsRunnerOptions {
   /** Injectable clock (ISO string); defaults to Date-based. */
   now?: () => string;
-  /** Injectable random id source for asset ids; defaults to a counter-free
-   * deterministic derivation (asset ids are request-hash derived anyway). */
-  makeId?: () => string;
   /** Durable byte store (runbook §21: resume, never resubmit). Generated
    * bytes are persisted through it so a restart — or a new runner instance
    * over the same stores — reloads them without resynthesis. */

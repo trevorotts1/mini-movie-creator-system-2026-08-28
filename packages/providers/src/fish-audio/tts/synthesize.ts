@@ -47,11 +47,15 @@ export class FishClientSynthesizer implements FishTtsSynthesizer {
     }
 
     const result = await this.client.tts({
+      // Settings spread FIRST: text/referenceId/model/format below are the
+      // runner-owned identity fields hashed into the idempotency identifier —
+      // a settings key must never be able to silently change what was
+      // actually synthesized (or the hash would no longer describe the call).
+      ...((request.settings ?? {}) as Record<string, never>),
       text: request.text,
       referenceId: request.voiceId,
       model: model as Parameters<FishClient["tts"]>[0]["model"],
       format: request.format,
-      ...((request.settings ?? {}) as Record<string, never>),
     });
 
     if (!result.ok) {

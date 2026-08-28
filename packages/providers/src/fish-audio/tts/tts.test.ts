@@ -226,10 +226,11 @@ describe("DialogueTtsRunner â€” job record persisted BEFORE synthesis (runbook Â
   });
 
   it("returns asset with provider_task_id stamped on job + asset (acceptance)", async () => {
+    const assetStore = memoryAssetStore();
     const synthesizer = scriptedSynthesizer([
       { ok: true, audio: AUDIO_A, providerTaskId: "fish-job-777", providerModel: "s2.1-pro" },
     ]);
-    const runner = makeRunner(synthesizer);
+    const runner = makeRunner(synthesizer, memoryJobStore(), assetStore);
 
     const { job, asset, audio } = await runner.generateDialogueAudio("ep01:line-2", LINE);
 
@@ -247,8 +248,10 @@ describe("DialogueTtsRunner â€” job record persisted BEFORE synthesis (runbook Â
     expect(job.state).toBe("GENERATED_TEMPORARY");
 
     // The asset is durable in the store.
-    const stored = await memoryAssetStore(); // shape check only
-    void stored;
+    const stored = assetStore.rows.get(asset.assetId);
+    expect(stored).toBeDefined();
+    expect(stored?.providerTaskId).toBe("fish-job-777");
+    expect(stored?.dialogueRef).toBe("ep01:line-2");
   });
 
   it("derives fish-tts-<requestHash> providerTaskId when Fish returns none (sync TTS)", async () => {
@@ -477,6 +480,38 @@ describe("FishClientSynthesizer (FISH-001 adapter)", () => {
     });
     expect(outcome.ok).toBe(false);
     if (!outcome.ok) expect(outcome.failure.message).toMatch(/model is required/i);
+  });
+
+  it("runner identity fields (text/voice/model/format) win over same-named settings keys", async () => {
+    const { FishClientSynthesizer } = await import("./synthesize.js");
+    const captured: unknown[] = [];
+    const fakeClient = {
+      async tts(request: Record<string, unknown>) {
+        captured.push(request);
+        return { ok: true, data: new TextEncoder().encode("abc").buffer as ArrayBuffer };
+      },
+    };
+    const synth = new FishClientSynthesizer(fakeClient as never);
+    const outcome = await synth.synthesize({
+      characterId: "CHAR_A_001",
+      voiceId: "voice-real",
+      text: "the real line",
+      model: "s2.1-pro",
+      format: "mp3",
+      // Hostile/pass-through settings: must NOT clobber the hashed fields.
+      settings: {
+        text: "INJECTED",
+        referenceId: "voice-hijack",
+        model: "s1",
+        format: "wav",
+      } as never,
+    });
+    expect(outcome.ok).toBe(true);
+    const sent = captured[0] as Record<string, unknown>;
+    expect(sent.text).toBe("the real line");
+    expect(sent.referenceId).toBe("voice-real");
+    expect(sent.model).toBe("s2.1-pro");
+    expect(sent.format).toBe("mp3");
   });
 });
 
