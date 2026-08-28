@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-015",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "pnpm exec tsc -p packages/remotion-runtime/tsconfig.json --noEmit; npx vitest run packages/remotion-runtime/src/ffprobe (28/28 PASS)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "QC PASS: ffprobe wrapper + integrity check + pre-ARCHIVED render gate verified on real & corrupted fixtures. Exported ffprobe module from packages/remotion-runtime/src/index.ts.",
+  "blockers": []
+}
