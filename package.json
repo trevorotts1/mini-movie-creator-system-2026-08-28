@@ -2,6 +2,11 @@
   "name": "mmcs-monorepo",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "integrations/*"
+  ],
   "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=20"
