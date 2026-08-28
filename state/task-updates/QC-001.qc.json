@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-001",
+  "phase": "PASS",
+  "commit": "083c323",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/qc/src/schema --reporter=json --outputFile=/tmp/qc-final.json (23/23 pass, success:true); node node_modules/vitest/vitest.mjs run --reporter=json (full repo: 431/431 pass, success:true); pnpm --filter @mmcs/qc typecheck (clean); security pass on packages/qc (no secrets, no shell exec, no fs access, no path traversal surface, no retries)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Fixed 3 defects: (1) shotQcResultSchema accepted verdict contradicting per-check rollup (e.g. FAIL check with PASS shot verdict) - now superRefine rejects; (2) accepted completedAt earlier than startedAt - now rejected; (3) rollupVerdict([]) returned PASS - now throws. Added qc-schema.regression.test.ts (6 tests). All 17 spec sec-20 checks covered, schemaVersion gated. Repo-wide pnpm -r typecheck fails only in pre-existing empty stub integrations/claude (no source, no node_modules, present on origin/integration) - not this task's scope.",
+  "blockers": []
+}
