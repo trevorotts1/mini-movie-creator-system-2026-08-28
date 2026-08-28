@@ -1,7 +1,7 @@
 {
   "taskId": "KIE-010",
   "phase": "PASS",
-  "commit": "51d7f7c",
+  "commit": "508ee6504a10c596f1162063ffa7daf8736b2b14",
   "checksRun": "vitest run packages/providers/src/kie/__tests__ (23 passed, 1 skipped); pnpm -r run typecheck (clean)",
   "defectsFound": 0,
   "defectsFixed": 0,
