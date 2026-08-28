@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-004",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/screenplay -> 25/25 passed; npx tsc --noEmit -p packages/scene-intelligence -> clean",
+  "notes": "Screenplay generator under packages/scene-intelligence/src/screenplay/ (self-contained, no shared barrel edit): types.ts (screenplay.schema/v1 — Screenplay/Scene/DialogueLine/Character + ApprovedConcept seam interface), writer-model.ts (injectable WriterModelClient transport, WriterModelError; generator makes no network calls), prompt.ts (deterministic system+user prompt, scene-count guidance from target runtime, spec-29 security boundary, exact prompt char count per spec 6), parse.ts (strict-fail JSON parse: fences stripped, truncation detection, heading INT./EXT. split, dialogue speakers must exist in cast, derived line/scene ids), generator.ts (gate-1 enforcement — ConceptNotApprovedError before any writer call on non-APPROVED concept; MAX_REASONING logical preference passed through to adapter per runbook 28; provenance metadata stamped). Merger: add `export * from \"./screenplay/index.js\";` to packages/scene-intelligence/src/index.ts (same pattern as CAP-006).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:30:00Z"
+}
