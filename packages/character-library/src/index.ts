@@ -23,4 +23,28 @@ export * from "./wardrobe/index.js";
 
 export const MMCS_CHARACTER_LIBRARY = "@mmcs/character-library scaffold marker";
 
-export * from "./cast/index.js";
+export type {
+  CastStatus,
+  CharacterAssetState,
+  GlobalCharacterRecord,
+  ResolvedCastMember,
+  SeriesCastLink,
+  SeriesCastLinkPatch,
+} from "./cast/index.js";
+export {
+  isCastableState,
+  linkCoversEpisode,
+  DuplicateCastLinkError,
+  NotInCastError,
+  UnknownCharacterError,
+  type GlobalCharacterReader,
+  type SeriesCastStore,
+  InvalidCastRangeError,
+  InvalidCharacterIdError,
+  isValidPermanentCharacterId,
+  validateCastLink,
+  CastService,
+  type LinkCharacterInput,
+  InMemoryGlobalCharacterReader,
+  InMemorySeriesCastStore,
+} from "./cast/index.js";
