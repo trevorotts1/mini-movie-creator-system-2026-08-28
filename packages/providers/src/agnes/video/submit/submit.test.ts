@@ -8,6 +8,7 @@ import type { MediaModelCapabilitySeed } from "@mmcs/capability-registry/data/ty
 
 import {
   AgnesVideoBudgetDeclinedError,
+  AgnesVideoSubmitPersistError,
   AgnesVideoSubmitter,
   InMemoryAgnesVideoJobStore,
   agnesVideoCapability,
@@ -656,6 +657,117 @@ describe("AgnesVideoSubmitter (mocked submit → SUBMITTED, spec §18)", () => {
     expect(final?.state).toBe("REJECTED");
     expect(final?.retryCount).toBe(1);
     expect(final?.providerJobId).toBeUndefined();
+  });
+
+  it("store failure on SUBMITTED save retries bounded, then throws AgnesVideoSubmitPersistError — never REJECTED, never 'failed' release (regression: provider-accepted job must not double-spend)", async () => {
+    const calls = { submitCount: 0, seen: [] as AgnesVideoSubmitRequest[] };
+    let saveFailuresLeft = 99; // every save fails; retry must stay bounded
+    let saveAttempts = 0;
+    const store = tracedStore();
+    const failingStore: AgnesVideoJobStore = {
+      async load(ref) {
+        return store.load(ref);
+      },
+      async save(record) {
+        saveAttempts += 1;
+        // Fail only the SUBMITTED save (4th+): earlier pipeline saves land.
+        if (record.state === "SUBMITTED" && saveFailuresLeft > 0) {
+          saveFailuresLeft -= 1;
+          throw new Error("SQLITE_BUSY: database is locked");
+        }
+        await store.save(record);
+      },
+    };
+    const gate = budgetGate();
+    const submitter = new AgnesVideoSubmitter(
+      scriptedClient("vid_persist_fail", calls),
+      failingStore,
+      gate,
+      { now: fixedClock() },
+    );
+
+    await expect(submitter.submit("job-persist-fail", BASE_INPUT)).rejects.toBeInstanceOf(
+      AgnesVideoSubmitPersistError,
+    );
+
+    // Provider was called exactly once — no resubmit on retry.
+    expect(calls.submitCount).toBe(1);
+    // Bounded retry: exactly 3 attempts at the SUBMITTED save.
+    expect(saveAttempts).toBe(6); // 3 pipeline saves + 3 SUBMITTED attempts
+    // Hold settled as "submitted", never "failed".
+    expect(gate.released).toEqual([{ id: "res-1", reason: "submitted" }]);
+    expect(gate.heldIds()).toEqual([]);
+    // No REJECTED record was written after provider acceptance.
+    const persisted = await store.load("job-persist-fail");
+    expect(persisted?.state).not.toBe("REJECTED");
+  });
+
+  it("transient store failure recovers within the bounded retry (SUBMITTED persisted, no error)", async () => {
+    const calls = { submitCount: 0, seen: [] as AgnesVideoSubmitRequest[] };
+    let submittedSaveFails = 2; // first two SUBMITTED saves fail, third lands
+    const store = tracedStore();
+    const flakyStore: AgnesVideoJobStore = {
+      async load(ref) {
+        return store.load(ref);
+      },
+      async save(record) {
+        if (record.state === "SUBMITTED" && submittedSaveFails > 0) {
+          submittedSaveFails -= 1;
+          throw new Error("SQLITE_BUSY: database is locked");
+        }
+        await store.save(record);
+      },
+    };
+    const gate = budgetGate();
+    const submitter = new AgnesVideoSubmitter(
+      scriptedClient("vid_flaky", calls),
+      flakyStore,
+      gate,
+      { now: fixedClock() },
+    );
+
+    const record = await submitter.submit("job-flaky", BASE_INPUT);
+    expect(record.state).toBe("SUBMITTED");
+    expect(record.providerJobId).toBe("vid_flaky");
+    expect(calls.submitCount).toBe(1); // retried the SAVE, not the submit
+  });
+
+  it("failed release of a stale reservation ABORTS the resume (no double-hold, hold trace preserved)", async () => {
+    const calls = { submitCount: 0, seen: [] as AgnesVideoSubmitRequest[] };
+    const store = tracedStore();
+    const gate = budgetGate({ failReleases: true });
+    const submitter = new AgnesVideoSubmitter(
+      scriptedClient("vid_resume_abort", calls),
+      store,
+      gate,
+      { now: fixedClock() },
+    );
+
+    await store.save({
+      ref: "job-stranded-2",
+      state: "SUBMITTING",
+      requestHash: "stale",
+      provider: "agnes",
+      model: "agnes-video-2.5-flash",
+      budgetReservationId: "res-stale",
+      createdAt: "2026-08-28T00:00:00.000Z",
+      updatedAt: "2026-08-28T00:00:00.000Z",
+    });
+
+    await expect(submitter.submit("job-stranded-2", BASE_INPUT)).rejects.toThrow(
+      "releaseById failed for res-stale",
+    );
+
+    // Aborted BEFORE any durable write or provider call: the stale hold's
+    // trace stays on the record for the next resume, no new reservation was
+    // taken, no submit happened, and the record was not overwritten with a
+    // cleared budgetReservationId.
+    expect(calls.submitCount).toBe(0);
+    expect(gate.reservations).toEqual([]);
+    const untouched = await store.load("job-stranded-2");
+    expect(untouched?.budgetReservationId).toBe("res-stale");
+    expect(untouched?.state).toBe("SUBMITTING");
+    expect(store.saveOrder).toHaveLength(1); // only the seed save
   });
 });
 

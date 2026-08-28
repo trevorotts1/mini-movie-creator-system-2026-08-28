@@ -12,5 +12,6 @@ export * from "./validate.js";
 export {
   AgnesVideoSubmitter,
   AgnesVideoBudgetDeclinedError,
+  AgnesVideoSubmitPersistError,
 } from "./submit.js";
 export * from "./store.js";

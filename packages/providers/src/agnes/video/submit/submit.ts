@@ -13,11 +13,17 @@
  * Failure semantics: a chain failure aborts before any durable write. A
  * client failure after the BUDGET_RESERVED save releases the reservation,
  * records REJECTED with the error reason, and rethrows the original error.
+ * A STORE failure AFTER the provider accepted the job is different: the
+ * provider job already exists, so the hold settles as "submitted" and the
+ * typed {@link AgnesVideoSubmitPersistError} surfaces the provider job id
+ * for reconciliation — the SUBMITTED save itself retries a bounded 3 times
+ * first. Resuming with a stale reservation id releases that hold before
+ * re-reserving, and a failed release aborts the resume (never double-hold).
  */
 
 import { requestHash } from "@mmcs/core/idempotency/request-hash.js";
 
-import type { AgnesVideoSubmitInput } from "./request.js";
+import type { AgnesVideoSubmitInput, AgnesVideoSubmitRequest } from "./request.js";
 import { buildAgnesVideoSubmitRequest } from "./request.js";
 import { agnesVideoCapability, estimateSpendUsd, validateAgnesVideoSubmit, AgnesVideoValidationError } from "./validate.js";
 import type {
@@ -39,6 +45,29 @@ export class AgnesVideoBudgetDeclinedError extends Error {
       `budget gate declined reservation for "${ref}" (estimated $${estimatedCostUsd.toFixed(4)} would cross the cumulative AUTO_SPEND_LIMIT_USD without prior approval)`,
     );
     this.name = "AgnesVideoBudgetDeclinedError";
+  }
+}
+
+/**
+ * Thrown when the provider ACCEPTED the job (it returned a video_id) but the
+ * SUBMITTED record could not be persisted (spec §18 crash window).
+ *
+ * Carrying the provider job id lets the caller/operator reconcile the job
+ * without resubmitting — calling the submit endpoint again would create a
+ * second paid provider job. This is NOT a retryable submit failure.
+ */
+export class AgnesVideoSubmitPersistError extends Error {
+  constructor(
+    ref: string,
+    readonly providerJobId: string,
+    readonly submitRequest: AgnesVideoSubmitRequest,
+    options?: { cause?: unknown },
+  ) {
+    super(
+      `provider accepted video_id "${providerJobId}" for "${ref}" but the SUBMITTED record could not be persisted — do NOT resubmit; reconcile via the provider job id`,
+      options,
+    );
+    this.name = "AgnesVideoSubmitPersistError";
   }
 }
 
@@ -100,6 +129,10 @@ export class AgnesVideoSubmitter {
     // Crash between budgetGate.reserve and the SUBMITTED save leaves a held
     // reservation id on the record. Release it before re-reserving so a
     // resume can never double-hold (spec §4 cumulative atomic reservation).
+    // A FAILED release aborts the resume: re-reserving now would hold twice
+    // and overwrite the stale hold's only durable trace (spec §4 atomic
+    // reservation). The id stays on the record; the next resume retries the
+    // release first.
     if (existing?.budgetReservationId !== undefined) {
       try {
         await this.releaseById(existing.budgetReservationId, "failed");
@@ -109,6 +142,7 @@ export class AgnesVideoSubmitter {
           reservationId: existing.budgetReservationId,
           error: error instanceof Error ? error.message : String(error),
         });
+        throw error;
       }
     }
 
@@ -222,7 +256,33 @@ export class AgnesVideoSubmitter {
       // Persist the provider job ID BEFORE any polling (spec §18). This
       // module never polls; AGN-005's poller requires providerJobId, so the
       // invariant holds structurally.
-      await this.store.save(submitted);
+      try {
+        await this.saveSubmittedWithRetry(submitted);
+      } catch (error) {
+        // The provider ACCEPTED the job — it returned a video_id — so this is
+        // NOT a submit failure: recording REJECTED or releasing the hold as
+        // "failed" would invite a resubmit and a second paid provider job
+        // (spec §18: never double-spend). Settle the hold as submitted
+        // (best-effort) and surface the durable provider job id via a typed
+        // error so the caller can reconcile without resubmitting.
+        try {
+          await reservation.release("submitted");
+        } catch (releaseError) {
+          this.log.error("failed to release budget reservation after submit", {
+            taskId: ref,
+            reservationId: reservation.id,
+            error: releaseError instanceof Error ? releaseError.message : String(releaseError),
+          });
+        }
+        this.log.error("failed to persist SUBMITTED record after provider accepted", {
+          taskId: ref,
+          providerJobId: created.videoId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw new AgnesVideoSubmitPersistError(ref, created.videoId, request, {
+          cause: error,
+        });
+      }
       this.log.info("agnes video job submitted", {
         taskId: ref,
         providerJobId: created.videoId,
@@ -245,6 +305,11 @@ export class AgnesVideoSubmitter {
       }
       return submitted;
     } catch (error) {
+      if (error instanceof AgnesVideoSubmitPersistError) {
+        // Already handled (hold settled best-effort, typed error carries the
+        // provider job id). Never convert it to REJECTED or release "failed".
+        throw error;
+      }
       // Persist REJECTED FIRST, then release: a store failure must not mask
       // the provider error, and the durable record carries the retry count.
       const failed: AgnesVideoJobRecord = {
@@ -286,5 +351,28 @@ export class AgnesVideoSubmitter {
     reason: "submitted" | "failed",
   ): Promise<void> {
     await this.budgetGate.releaseById(reservationId, reason);
+  }
+
+  /**
+   * Persist the SUBMITTED record with a small bounded retry. Transient store
+   * failures (e.g. SQLite SQLITE_BUSY) are the one crash-window defect a
+   * retry actually repairs; a provider-accepted job must not lose its
+   * durable record to one bad save. Bounded (3 attempts, no backoff sleep —
+   * synchronous store), never unbounded (spec: no unbounded retry loops).
+   */
+  private async saveSubmittedWithRetry(
+    submitted: AgnesVideoJobRecord,
+  ): Promise<void> {
+    const MAX_ATTEMPTS = 3;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      try {
+        await this.store.save(submitted);
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError;
   }
 }
