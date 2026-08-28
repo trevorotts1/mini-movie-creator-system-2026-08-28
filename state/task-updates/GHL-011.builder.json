@@ -1,7 +1,7 @@
 {
   "taskId": "GHL-011",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "f8ea8fc",
   "testsRun": "npx vitest run packages/media-storage/src/ghl/retry -> 35 passed (35); npx tsc --noEmit -p packages/media-storage/tsconfig.json -> rc=0",
   "notes": "Retry/idempotency done: boundedRetry (hard maxAttempts cap, exponential backoff capped per-wait, jitter clamped under cap, injectable sleep), failure classification (transient 408/429/5xx + transport faults retry; deterministic 4xx/501 never), ArchivalLedger (dir-backed, atomic temp+fsync+rename, key from canonical request hash of altId/parentId/canonical filename/checksum), withArchivalIdempotency (duplicate/restart calls return recorded result and never re-upload -> no duplicate GHL files; lost-success race closed; concurrent same-key calls serialized to one upload), ArchivalFailedError preserves provider task/job ID so archival failure never signals regeneration (spec §35.3/§38).",
   "blockers": [
