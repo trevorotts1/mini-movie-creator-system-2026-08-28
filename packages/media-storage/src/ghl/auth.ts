@@ -74,14 +74,6 @@ export class InvalidGhlTokenError extends Error {
   }
 }
 
-function requireTrimmed(value: string | undefined, what: string): string {
-  const trimmed = typeof value === "string" ? value.trim() : "";
-  if (trimmed.length === 0) {
-    throw new InvalidGhlTokenError(`${what} must be a non-empty string`);
-  }
-  return trimmed;
-}
-
 /**
  * Masks a token for logging: keeps nothing but a length marker. Deliberately returns
  * the same fixed shape regardless of token content so logs never leak token material.
@@ -110,6 +102,11 @@ export function createGhlAuthConfig(input: GhlAuthConfigInput): GhlAuthConfig {
   if (missing.length > 0) throw new MissingGhlConfigError(missing);
 
   const baseUrl = (input.baseUrl ?? GHL_API_BASE_URL).replace(/\/+$/, "");
+  if (baseUrl.length === 0 || !/^https?:\/\//i.test(baseUrl)) {
+    throw new MissingGhlConfigError([
+      "baseUrl (must be an absolute http(s) URL)",
+    ]);
+  }
   const kind: GhlTokenKind = input.tokenKind ?? "private-integration-token";
 
   const config: GhlAuthConfig = {

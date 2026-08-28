@@ -63,6 +63,21 @@ describe("GHL auth config", () => {
     );
   });
 
+  it("rejects empty or non-http(s) baseUrl override with MissingGhlConfigError", () => {
+    expect(() =>
+      createGhlAuthConfig({ token: TOKEN, locationId: LOCATION, baseUrl: "" }),
+    ).toThrow(/baseUrl/);
+    expect(() =>
+      createGhlAuthConfig({ token: TOKEN, locationId: LOCATION, baseUrl: "   " }),
+    ).toThrow(/baseUrl/);
+    expect(() =>
+      createGhlAuthConfig({ token: TOKEN, locationId: LOCATION, baseUrl: "not-a-url" }),
+    ).toThrow(/baseUrl/);
+    expect(() =>
+      createGhlAuthConfig({ token: TOKEN, locationId: LOCATION, baseUrl: "ftp://example.test" }),
+    ).toThrow(/baseUrl/);
+  });
+
   it("builds config from environment variables", () => {
     const config = ghlAuthConfigFromEnv({
       GHL_ACCESS_TOKEN: TOKEN,
