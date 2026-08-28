@@ -73,6 +73,7 @@ export type AssetManifestField = (typeof ASSET_MANIFEST_FIELDS)[number];
 
 /** Spec §18 job-safety columns every provider_jobs table must carry. */
 export const JOB_SAFETY_FIELDS = [
+  "request_hash",
   "idempotency_key",
   "provider",
   "provider_model",

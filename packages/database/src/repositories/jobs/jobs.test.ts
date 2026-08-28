@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { connectSqlite, type SqliteDatabase } from "../../connection/index.js";
 import { migrate } from "../../migrations/index.js";
 import { jobsAssetsMigrations } from "../../migrations/004-jobs-assets/index.js";
-import { AssetRepository, ASSET_MANIFEST_FIELDS } from "../assets/index.js";
+import { AssetRepository, ASSET_MANIFEST_FIELDS, JOB_SAFETY_FIELDS } from "../assets/index.js";
 import {
   JOB_STATES,
   JobStateTransitionError,
@@ -67,6 +67,16 @@ describe("provider_jobs schema — spec §18 job-safety fields", () => {
     for (const field of required) {
       expect(columns).toContain(field);
     }
+  });
+
+  it("carries every exported §18 job-safety field (JOB_SAFETY_FIELDS, incl. request_hash)", () => {
+    const columns = columnNames("provider_jobs");
+    for (const field of JOB_SAFETY_FIELDS) {
+      expect(columns, `missing §18 job-safety field: ${field}`).toContain(field);
+    }
+    // Spec §18: "request hash/idempotency identifier where supported" — both.
+    expect(JOB_SAFETY_FIELDS).toContain("request_hash");
+    expect(JOB_SAFETY_FIELDS).toContain("idempotency_key");
   });
 
   it("carries the §18 state-machine status enum covering PLANNED..REJECTED", () => {
