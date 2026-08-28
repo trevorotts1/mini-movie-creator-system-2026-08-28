@@ -1,0 +1,13 @@
+{
+  "taskId": "GHL-007",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "npx vitest run packages/media-storage/src/ghl/validation (43/43 green, exit 0); npx tsc --noEmit (packages/media-storage, exit 0); node --experimental-strip-types SSRF bypass probes (all blocked); grep exec/spawn/fetch/net (clean); no eslint config in scaffold (n/a)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Fixed 3 SSRF/filename defects: fe80::/10 full range, fec0::/10, ff00::/8 multicast, malformed ::ffff:<short> mapped forms; length-cap overflow with long extension; reserved device names with trailing dot/space stems. 43 tests green.",
+  "blockers": []
+}

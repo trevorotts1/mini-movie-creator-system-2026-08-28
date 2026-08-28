@@ -127,8 +127,16 @@ function isPrivateIpv6(hostname: string): boolean {
   const host = hostname.split("%")[0] ?? hostname;
   const lower = host.toLowerCase();
   if (lower === "::" || lower === "::1") return true; // unspecified + loopback
-  if (lower.startsWith("fe80")) return true; // link-local
-  if (lower.startsWith("fc") || lower.startsWith("fd")) return true; // unique-local
+  if (lower.startsWith("ff")) return true; // multicast (ff00::/8)
+  if (lower.startsWith("fc") || lower.startsWith("fd")) return true; // unique-local (fc00::/7)
+  // First hextet bitmask checks: link-local fe80::/10 and the deprecated
+  // site-local fec0::/10 are both never publicly routable.
+  const first = lower.slice(0, 4);
+  if (/^[0-9a-f]{4}$/.test(first)) {
+    const v = Number.parseInt(first, 16);
+    if ((v & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
+    if ((v & 0xffc0) === 0xfec0) return true; // fec0::/10 site-local
+  }
   if (lower.startsWith("::ffff:")) {
     // IPv4-mapped. WHATWG URL may normalize to hex hextets
     // ("::ffff:7f00:1" for 127.0.0.1) or keep the dotted quad.
@@ -137,15 +145,23 @@ function isPrivateIpv6(hostname: string): boolean {
       // Hex hextets: take the last two as the embedded IPv4.
       const parts = tail.split(":").filter((p) => p.length > 0);
       const last = parts[parts.length - 1];
+      if (last === undefined) return true; // malformed — block
+      if (parts.length === 1) {
+        // "::ffff:<16-bit>" is not a well-formed mapped address; it
+        // canonically expands to 0:0:0:0:0:0:ffff:<v>, a reserved range.
+        return true;
+      }
       const prev = parts[parts.length - 2];
-      if (last === undefined || prev === undefined) return false;
+      if (prev === undefined) return true;
       const a = Number.parseInt(prev, 16) >> 8; // high byte of prev hextet
       const b = Number.parseInt(prev, 16) & 0xff; // low byte of prev hextet
       const c = Number.parseInt(last, 16) >> 8;
       const d = Number.parseInt(last, 16) & 0xff;
       return isPrivateIpv4(`${a}.${b}.${c}.${d}`);
     }
-    return isPrivateIpv4(tail) || tail.startsWith("127.");
+    // Dotted-quad mapped form (parser usually normalizes to hextets first).
+    if (netIsIpV4(tail)) return isPrivateIpv4(tail);
+    return true; // not a valid mapped form — block rather than guess
   }
   return false;
 }
@@ -266,8 +282,10 @@ export function sanitizeFilename(raw: string, fallback = "file"): string {
   name = name.replace(/[. ]+$/, "");
   if (name.length === 0) return fallback;
 
-  // Reserved Windows device names (case-insensitive), with or without extension.
-  const stem = name.split(".")[0]?.toUpperCase() ?? "";
+  // Reserved Windows device names (case-insensitive), with or without
+  // extension. Win32 ignores trailing dots/spaces in the stem, so normalize
+  // them out before the check ("CON .txt" is still the CON device).
+  const stem = name.split(".")[0]?.toUpperCase().replace(/[. ]+$/, "") ?? "";
   if (
     ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
       "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6",
@@ -276,13 +294,18 @@ export function sanitizeFilename(raw: string, fallback = "file"): string {
     name = `_${name}`;
   }
 
-  // Cap length, preserving the extension.
+  // Cap length, preserving the extension when it fits within the cap.
   const MAX = 200;
   if (name.length > MAX) {
     const dot = name.lastIndexOf(".");
     if (dot > 0 && dot < name.length - 1) {
       const ext = name.slice(dot);
-      name = name.slice(0, MAX - ext.length) + ext;
+      if (ext.length < MAX - 1) {
+        name = name.slice(0, MAX - ext.length) + ext;
+      } else {
+        // Extension alone overflows the cap — keep only the capped head.
+        name = name.slice(0, MAX);
+      }
     } else {
       name = name.slice(0, MAX);
     }

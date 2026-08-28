@@ -132,6 +132,24 @@ describe("validateRemoteUrl — SSRF guard (no private ranges)", () => {
     expect(codeOf(() => validateRemoteUrl("https://[::ffff:10.0.0.5]/a.png"))).toBe("PRIVATE_HOST");
   });
 
+  it("rejects the full link-local fe80::/10 range (not just literal fe80)", () => {
+    for (const host of ["fe90::1", "fea0::1", "febf::1"]) {
+      expect(codeOf(() => validateRemoteUrl(`https://[${host}]/a.png`))).toBe("PRIVATE_HOST");
+    }
+  });
+
+  it("rejects site-local fec0::/10, multicast, and IPv4-mapped short forms", () => {
+    expect(codeOf(() => validateRemoteUrl("https://[fec0::1]/a.png"))).toBe("PRIVATE_HOST");
+    expect(codeOf(() => validateRemoteUrl("https://[ff02::1]/a.png"))).toBe("PRIVATE_HOST");
+    // "::ffff:1" is a malformed mapped form — must block, never guess.
+    expect(codeOf(() => validateRemoteUrl("https://[::ffff:1]/a.png"))).toBe("PRIVATE_HOST");
+  });
+
+  it("still accepts public IPv6 hosts", () => {
+    expect(validateRemoteUrl("https://[2606:4700::1111]/a.png").hostname).toBe("[2606:4700::1111]");
+    expect(validateRemoteUrl("https://[2001:db8::1]/a.png").hostname).toBe("[2001:db8::1]");
+  });
+
   it("rejects .internal and .local names", () => {
     expect(codeOf(() => validateRemoteUrl("https://storage.internal/a.png"))).toBe("PRIVATE_HOST");
     expect(codeOf(() => validateRemoteUrl("https://nas.local/a.png"))).toBe("PRIVATE_HOST");
@@ -209,6 +227,17 @@ describe("sanitizeFilename — path traversal safety", () => {
     const safe = sanitizeFilename(long);
     expect(safe.length).toBeLessThanOrEqual(200);
     expect(safe.endsWith(".png")).toBe(true);
+  });
+
+  it("caps length even when the extension alone overflows the cap", () => {
+    const longExt = "x." + "a".repeat(250);
+    const safe = sanitizeFilename(longExt);
+    expect(safe.length).toBeLessThanOrEqual(200);
+  });
+
+  it("blocks reserved device names with trailing dots/spaces in the stem", () => {
+    expect(sanitizeFilename("CON .txt")).toBe("_CON .txt");
+    expect(sanitizeFilename("NUL..txt")).toBe("_NUL.txt");
   });
 
   it("falls back for degenerate input", () => {
