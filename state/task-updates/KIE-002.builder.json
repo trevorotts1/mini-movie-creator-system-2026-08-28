@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-002",
+  "phase": "BUILDER_DONE",
+  "commit": "c8d8f75",
+  "testsRun": "npx vitest run packages/providers/src/kie/task — 15 passed (15), 1 file; tsc --noEmit -p packages/providers clean",
+  "notes": "Generic Kie task submit/poll: KieTaskRunner persists providerTaskId before first poll, resume-at-SUBMITTED polls existing task (no resubmit), raw statuses folded to runbook §21 machine (GENERATED_TEMPORARY/REJECTED terminal).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

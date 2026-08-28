@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-002",
+  "phase": "PASS",
+  "commit": "c8d8f75",
+  "checksRun": "npx --package=vitest@3.0.0 vitest run packages/providers/src/kie/task (15 passed); npx tsc --noEmit -p packages/providers (clean); git diff origin/integration...HEAD (verified)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Generic Kie task runner verified: providerTaskId persisted before poll, resume at SUBMITTED polls existing task without resubmission, §21 state machine mapping accurate, bounds and timeouts verified.",
+  "blockers": []
+}

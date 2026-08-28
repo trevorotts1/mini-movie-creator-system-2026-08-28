@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-013",
+  "phase": "PASS",
+  "commit": "ff0a8d7",
+  "checksRun": "npx vitest run --config packages/core/src/idempotency/vitest.config.mts (24 passed); npx tsc --noEmit -p packages/core/tsconfig.json (rc=0); security audit pass",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T13:55:00Z",
+  "notes": "QC passed. Removed unused import in atomic-write.ts. All 24 idempotency tests pass cleanly, atomic writes, once-only guard, request hash canonicalization, crash mid-write resilience verified.",
+  "blockers": []
+}
