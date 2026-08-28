@@ -49,6 +49,10 @@ export function isBelow720(source: Resolution): boolean {
  * - upscaled (rendered > source) with a 720-class source → `upscaled-720p`,
  *   NEVER `native-1080p` even when renderedAt is exactly 1920x1080;
  * - upscaled below 720 → `upscaled-lower`;
+ * - upscaled from a source ≥1080p (bigger master than native) →
+ *   `upscaled-higher` — honest: the source was native-grade but the output
+ *   was enlarged beyond it, so neither `native-1080p` nor `upscaled-720p`
+ *   is truthful;
  * - not upscaled and source is 1080p+ → `native-1080p`;
  * - not upscaled and source is 720-class → `native-720p`.
  */
@@ -58,11 +62,11 @@ export function tierFor(
 ): QualityTier {
   const upscaled = renderedAt.width > source.width || renderedAt.height > source.height;
   if (upscaled) {
-    if (is720Class(source)) return "upscaled-720p";
     if (isBelow720(source)) return "upscaled-lower";
+    if (is720Class(source)) return "upscaled-720p";
     // Upscaled from a source ≥1080p (e.g. rendered larger than native for a
     // bigger master). Still not native at the output resolution.
-    return "upscaled-720p";
+    return "upscaled-higher";
   }
   if (isNative1080(source)) return "native-1080p";
   if (is720Class(source)) return "native-720p";
@@ -132,8 +136,9 @@ export function computeShotQuality(
  * - all shots native (not upscaled) and all ≥1080p → `native-1080p`;
  * - all native, all 720-class → `native-720p`;
  * - any upscale present → the source mix decides:
- *     - every upscaled shot is 720-class → `upscaled-720p`;
  *     - any upscaled shot below 720 → `upscaled-lower`;
+ *     - any upscaled shot from a ≥1080p source → `upscaled-higher`;
+ *     - every upscaled shot is 720-class → `upscaled-720p`;
  *     - sources genuinely mixed (some native-1080, some 720) → `mixed-source`.
  */
 export function episodeTier(
@@ -150,7 +155,9 @@ export function episodeTier(
   }
   const has1080Native = records.some((r) => !r.upscaled && isNative1080(r.source));
   const below720Upscale = upscaled.some((r) => isBelow720(r.source));
+  const higherUpscale = upscaled.some((r) => isNative1080(r.source));
   if (has1080Native) return "mixed-source";
   if (below720Upscale) return "upscaled-lower";
+  if (higherUpscale) return "upscaled-higher";
   return "upscaled-720p";
 }

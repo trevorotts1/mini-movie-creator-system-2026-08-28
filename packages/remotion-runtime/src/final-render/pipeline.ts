@@ -23,6 +23,7 @@
 import {
   finalFileName,
   finalFolderSegments,
+  isSafeEpisodeCode,
   sidecarFileName,
   sidecarFolderSegments,
   type ApprovalGatePort,
@@ -195,6 +196,15 @@ export function planFinalRender(
 ): FinalRenderPlan {
   if (!spec.episodeCode || spec.episodeCode.trim().length === 0) {
     throw new FinalRenderError("INVALID_SPEC", "episodeCode is required");
+  }
+  // Path-traversal guard: finalFileName/sidecarFileName build REAL filesystem
+  // names from the episode code — an unsanitized code like "../../evil" would
+  // escape outputDir. Enforce the safe-token pattern before any name is built.
+  if (!isSafeEpisodeCode(spec.episodeCode)) {
+    throw new FinalRenderError(
+      "INVALID_SPEC",
+      `episodeCode '${spec.episodeCode}' is not a safe filename token (expected ${"[A-Za-z0-9][A-Za-z0-9._-]{0,63}"} with no leading dot)`,
+    );
   }
   if (spec.composition.shots.length === 0) {
     throw new FinalRenderError("INVALID_SPEC", "composition has no shots");

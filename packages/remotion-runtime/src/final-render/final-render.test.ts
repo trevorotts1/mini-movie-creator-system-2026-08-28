@@ -18,6 +18,8 @@ import {
   GATES,
   finalFileName,
   finalFolderSegments,
+  isSafeEpisodeCode,
+  sanitizeTitleLeaf,
   sidecarFileName,
   sidecarFolderSegments,
   type FinalRenderSpec,
@@ -248,6 +250,19 @@ describe("720p-source upscale metadata flag (spec §21 core rule)", () => {
     expect(episodeTier(records)).toBe("upscaled-lower");
   });
 
+  it("a ≥1080p source upscaled to a bigger master is 'upscaled-higher' — honest, never mislabeled", () => {
+    // 1080p native source enlarged to a 4K master: not native at output,
+    // not a 720 upscale — its own honest tier.
+    expect(tierFor(RESOLUTION_1080P, { width: 3840, height: 2160 })).toBe("upscaled-higher");
+    expect(tierFor(RESOLUTION_1080P, { width: 3840, height: 2160 })).not.toBe("native-1080p");
+    expect(tierFor(RESOLUTION_1080P, { width: 3840, height: 2160 })).not.toBe("upscaled-720p");
+    const records = computeShotQuality(
+      [{ ...SHOT_1080, source: RESOLUTION_1080P }],
+      { width: 3840, height: 2160 },
+    );
+    expect(episodeTier(records)).toBe("upscaled-higher");
+  });
+
   it("classification helpers split the quality bands correctly", () => {
     expect(isNative1080(RESOLUTION_1080P)).toBe(true);
     expect(isNative1080(RESOLUTION_720P)).toBe(false);
@@ -294,6 +309,55 @@ describe("final render pipeline — deterministic naming and archive plan (spec 
   it("composition id is deterministic and filesystem-safe", () => {
     expect(compositionIdFor(makeSpec())).toBe("final-s01e01");
     expect(compositionIdFor(makeSpec({ episodeCode: "S02E10" }))).toBe("final-s02e10");
+  });
+
+  it("isSafeEpisodeCode rejects traversal and unsafe tokens, accepts spec codes", () => {
+    expect(isSafeEpisodeCode("S01E01")).toBe(true);
+    expect(isSafeEpisodeCode("a.b-c_d")).toBe(true);
+    expect(isSafeEpisodeCode("../../evil")).toBe(false);
+    expect(isSafeEpisodeCode("with/slash")).toBe(false);
+    expect(isSafeEpisodeCode("with\\backslash")).toBe(false);
+    expect(isSafeEpisodeCode(".hidden")).toBe(false);
+    expect(isSafeEpisodeCode("..dots")).toBe(false);
+    expect(isSafeEpisodeCode(" leading")).toBe(false);
+    expect(isSafeEpisodeCode("trailing ")).toBe(false);
+    expect(isSafeEpisodeCode("")).toBe(false);
+    expect(isSafeEpisodeCode("a".repeat(64))).toBe(true);
+    expect(isSafeEpisodeCode("a".repeat(65))).toBe(false);
+  });
+
+  it("planFinalRender REFUSES a path-traversal episodeCode (INVALID_SPEC, nothing built)", () => {
+    for (const evil of ["../../evil", "a/b", "a\\b", ".hidden", ".."]) {
+      expect(() =>
+        planFinalRender(makeSpec({ episodeCode: evil }), gatePort("APPROVED")),
+      ).toThrowError(/safe filename token/);
+    }
+  });
+
+  it("sanitizeTitleLeaf neutralizes hostile titles (no traversal, no control chars)", () => {
+    expect(sanitizeTitleLeaf("../../etc/passwd")).not.toContain("/");
+    expect(sanitizeTitleLeaf("..\\..\\win")).not.toContain("\\");
+    expect(finalFolderSegments("S01E01", "../../etc/passwd")[0]).toBe(
+      "S01E01 - -..-etc-passwd",
+    );
+    // leading dots/spaces stripped — no hidden segments
+    expect(sanitizeTitleLeaf(".hidden")).toBe("hidden");
+    expect(sanitizeTitleLeaf(" . leading")).toBe("leading");
+    // control characters (C0/DEL/C1) dropped
+    for (const code of [0x00, 0x09, 0x0a, 0x1f, 0x7f, 0x80, 0x9f]) {
+      const out = sanitizeTitleLeaf(`a${String.fromCharCode(code)}b`);
+      expect(out).toBe("ab");
+    }
+    // trailing dots/spaces stripped (Windows-safe)
+    expect(sanitizeTitleLeaf("name...")).toBe("name");
+    expect(sanitizeTitleLeaf("name . ")).toBe("name");
+    // length cap never leaves a trailing dot
+    const capped = sanitizeTitleLeaf("x".repeat(119) + ".y");
+    expect(capped.length).toBeLessThanOrEqual(120);
+    expect(capped.endsWith(".")).toBe(false);
+    // empty/hostile-only titles fall back to the bare episode code
+    expect(finalFolderSegments("S01E01", "..")[0]).toBe("S01E01");
+    expect(sidecarFolderSegments("S01E01", ".")[0]).toBe("S01E01");
   });
 });
 

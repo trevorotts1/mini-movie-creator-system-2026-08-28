@@ -99,6 +99,7 @@ export type QualityTier =
   | "native-custom"
   | "upscaled-720p"
   | "upscaled-lower"
+  | "upscaled-higher"
   | "mixed-source";
 
 /**
@@ -184,26 +185,63 @@ export function sidecarFileName(episodeCode: string, version: number): string {
 }
 
 /**
+ * Safe filename token for an episode code: starts alphanumeric, then only
+ * alphanumerics, dots, dashes, underscores (no path separators, no leading
+ * dot). `finalFileName` builds real filesystem names from this — an
+ * unsanitized episodeCode like "../../evil" would escape the output
+ * directory (path traversal), so `planFinalRender` validates against this
+ * exact pattern (via {@link isSafeEpisodeCode}) before any name is built.
+ */
+export const EPISODE_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+
+/** True when the episode code is a safe filename token. */
+export function isSafeEpisodeCode(episodeCode: string): boolean {
+  return EPISODE_CODE_PATTERN.test(episodeCode) && !episodeCode.startsWith(".");
+}
+
+/**
+ * Sanitize a human-typed episode title into a safe single folder-segment
+ * leaf: path separators become "-", ALL control characters (C0, DEL, C1)
+ * are dropped, leading dots/spaces are stripped (no hidden/dot segments),
+ * trailing dots/spaces are stripped (Windows-safe), and the result is
+ * length-capped with a final trailing strip so a dot can never survive the
+ * cap. The result contains no "/" or "\" and never begins or ends with a
+ * dot, so joining it into a folder path cannot traverse.
+ */
+export function sanitizeTitleLeaf(episodeTitle: string): string {
+  const cleaned = episodeTitle
+    .replace(/[/\\]/g, "-")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x1f\x7f-\x9f]/g, "")
+    .replace(/^[.\s]+/, "")
+    .replace(/[.\s]+$/, "")
+    .slice(0, 120)
+    .replace(/[.\s]+$/, "");
+  return cleaned;
+}
+
+function episodeFolderLeaf(episodeCode: string, episodeTitle?: string): string {
+  if (!episodeTitle) return episodeCode;
+  const cleaned = sanitizeTitleLeaf(episodeTitle);
+  return cleaned.length > 0 ? `${episodeCode} - ${cleaned}` : episodeCode;
+}
+
+/**
  * Local mirror of the GHL `08 Final/` folder (spec §17): the episode folder
  * `S01E01 - <Title>/08 Final/`. Returned as path segments joined with "/" —
- * the storage layer owns OS separators.
+ * the storage layer owns OS separators. The title is sanitized
+ * ({@link sanitizeTitleLeaf}) so a hostile title cannot traverse.
  */
 export function finalFolderSegments(
   episodeCode: string,
   episodeTitle?: string,
 ): readonly string[] {
-  const leaf = episodeTitle
-    ? `${episodeCode} - ${episodeTitle}`
-    : episodeCode;
-  return [leaf, "08 Final"];
+  return [episodeFolderLeaf(episodeCode, episodeTitle), "08 Final"];
 }
 
 export function sidecarFolderSegments(
   episodeCode: string,
   episodeTitle?: string,
 ): readonly string[] {
-  const leaf = episodeTitle
-    ? `${episodeCode} - ${episodeTitle}`
-    : episodeCode;
-  return [leaf, "09 QC Metadata"];
+  return [episodeFolderLeaf(episodeCode, episodeTitle), "09 QC Metadata"];
 }
