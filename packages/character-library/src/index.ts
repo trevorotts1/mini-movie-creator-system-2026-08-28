@@ -22,3 +22,5 @@ export {
 export * from "./wardrobe/index.js";
 
 export const MMCS_CHARACTER_LIBRARY = "@mmcs/character-library scaffold marker";
+
+export * from "./cast/index.js";

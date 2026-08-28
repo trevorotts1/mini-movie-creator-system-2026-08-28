@@ -1,0 +1,92 @@
+/**
+ * In-memory adapters for the cast ports — the default wiring for tests and
+ * for engine use before the SQLite repositories (CORE-005) land. Durable
+ * stores implement the same `SeriesCastStore` interface.
+ */
+
+import type {
+  GlobalCharacterRecord,
+  SeriesCastLink,
+  SeriesCastLinkPatch,
+} from "./types.js";
+import {
+  DuplicateCastLinkError,
+  NotInCastError,
+  type GlobalCharacterReader,
+  type SeriesCastStore,
+} from "./ports.js";
+
+/** Map-backed GlobalCharacterReader over pre-existing library records. */
+export class InMemoryGlobalCharacterReader implements GlobalCharacterReader {
+  private readonly records: Map<string, GlobalCharacterRecord>;
+
+  constructor(records: Iterable<GlobalCharacterRecord> = []) {
+    this.records = new Map(
+      [...records].map((record) => [record.characterId, record]),
+    );
+  }
+
+  async get(characterId: string): Promise<GlobalCharacterRecord | null> {
+    return this.records.get(characterId) ?? null;
+  }
+
+  /** Test/seed helper — mutates the in-memory record in place. */
+  seed(record: GlobalCharacterRecord): void {
+    this.records.set(record.characterId, record);
+  }
+}
+
+/** Map-backed SeriesCastStore. Links are keyed by (seriesId, characterId). */
+export class InMemorySeriesCastStore implements SeriesCastStore {
+  private readonly links = new Map<string, SeriesCastLink>();
+
+  /**
+   * JSON-encoded composite key - collision-proof for any ID text (a raw
+   * separator byte could alias two distinct pairs via crafted IDs).
+   */
+  private static key(seriesId: string, characterId: string): string {
+    return JSON.stringify([seriesId, characterId]);
+  }
+
+  async listBySeries(seriesId: string): Promise<SeriesCastLink[]> {
+    return [...this.links.values()]
+      .filter((link) => link.seriesId === seriesId)
+      .map((link) => ({ ...link }));
+  }
+
+  async get(
+    seriesId: string,
+    characterId: string,
+  ): Promise<SeriesCastLink | null> {
+    const link = this.links.get(InMemorySeriesCastStore.key(seriesId, characterId));
+    return link ? { ...link } : null;
+  }
+
+  async add(link: SeriesCastLink): Promise<void> {
+    const key = InMemorySeriesCastStore.key(link.seriesId, link.characterId);
+    if (this.links.has(key)) {
+      throw new DuplicateCastLinkError(link.seriesId, link.characterId);
+    }
+    this.links.set(key, { ...link });
+  }
+
+  async update(
+    seriesId: string,
+    characterId: string,
+    patch: SeriesCastLinkPatch,
+  ): Promise<void> {
+    const key = InMemorySeriesCastStore.key(seriesId, characterId);
+    const existing = this.links.get(key);
+    if (!existing) {
+      throw new NotInCastError(seriesId, characterId);
+    }
+    this.links.set(key, { ...existing, ...patch });
+  }
+
+  async remove(seriesId: string, characterId: string): Promise<void> {
+    const key = InMemorySeriesCastStore.key(seriesId, characterId);
+    if (!this.links.delete(key)) {
+      throw new NotInCastError(seriesId, characterId);
+    }
+  }
+}
