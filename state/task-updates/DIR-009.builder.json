@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-009",
+  "phase": "BUILDER_DONE",
+  "commit": "f29f7ed",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/scene-parser -> 1 file, 29/29 passed; npx tsc --noEmit (packages/scene-intelligence) -> clean",
+  "notes": "Scene parser: fountain text + structured screenplay -> ParsedScene (slug, characters, location, duration); 45s fixture parses to 6 named scenes; fixed noUncheckedIndexedAccess TS error in parse-text.ts.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T18:10:00Z"
+}
