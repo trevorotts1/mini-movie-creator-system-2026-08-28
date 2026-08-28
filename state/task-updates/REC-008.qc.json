@@ -1,7 +1,7 @@
 {
   "taskId": "REC-008",
   "phase": "PASS",
-  "commit": "PENDING",
+  "commit": "523d95a",
   "checksRun": "npx vitest run scripts/orchestration/watchdog.test.ts (37/37); npx tsx scripts/orchestration/watchdog.cli.ts --selftest (ok); npx tsx scripts/orchestration/watchdog.cli.ts --dry-run --root <live repo> (rc=0, state/ untouched); tsc --noEmit watchdog.ts watchdog.cli.ts",
   "defectsFound": 16,
   "defectsFixed": 16,
