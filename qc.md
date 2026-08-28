@@ -28,4 +28,17 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 |---|---|---|---|---|---|---|---|
 | 2026-08-28 | WF00-01 | Bootstrap control plane | Sonnet Checker | PASS | None | Initial seed | PASS |
 
-*(Rows appended chronologically as QC passes are performed.)*
+*(Rows appended chronologically as QC passes are performed.)*| 2026-08-28T13:30:06Z | CORE-002 | Target monorepo/module layout | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CORE-003 | SQLite connection + migrations runner | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CORE-010 | Config/env validation loader | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CORE-011 | mmcs CLI bootstrap | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CORE-012 | Structured logging | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CORE-013 | Idempotency primitives | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CORE-014 | Recovery checkpoint service | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CAP-001 | Capability schema | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CAP-002 | Capability source/date/confidence data | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CHAR-001 | Global character stable IDs | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CHAR-002 | Canonical identity asset metadata | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CHAR-006 | Appearance versions (effective episode) | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CHAR-008 | Hair versions | Sonnet QC | PASS | 0 | 0 | PASS |
+| 2026-08-28T13:30:06Z | CHAR-009 | Fish voice binding | Sonnet QC | PASS | 0 | 0 | PASS |

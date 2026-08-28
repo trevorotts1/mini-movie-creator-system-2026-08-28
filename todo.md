@@ -38,7 +38,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: docs/upstream-audit/preservation-map.md exists and lists every upstream package/script/tool with keep|rewrite|drop + reason; PF-1 and PF-2 carried forward; decisions reconciled against spec §2 facts; verified by `test -s docs/upstream-audit/preservation-map.md && grep -q "PF-1" docs/upstream-audit/preservation-map.md`.
   - Status: READY
 
-- [ ] TASK-CORE-002 — Target monorepo/module layout
+- [x] TASK-CORE-002 — Target monorepo/module layout
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -49,7 +49,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: all 11 packages + 3 apps + 2 integrations dirs exist with package.json; `npm install && npx tsc --noEmit -p tsconfig.base.json` passes; `node -e "require('./package.json').workspaces"` lists packages/*.
   - Status: READY
 
-- [ ] TASK-CORE-003 — SQLite connection + migrations runner
+- [x] TASK-CORE-003 — SQLite connection + migrations runner
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -126,7 +126,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: $24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger — run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.
   - Status: BLOCKED
 
-- [ ] TASK-CORE-010 — Config/env validation loader
+- [x] TASK-CORE-010 — Config/env validation loader
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -137,7 +137,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: loads + zod-validates AGNES_API_KEY, KIE_API_KEY, FISH_API_KEY, GHL_ACCESS_TOKEN, GHL_LOCATION_ID, OPENROUTER_API_KEY, NINEROUTER_URL, NINEROUTER_KEY, AUTO_SPEND_LIMIT_USD (default 25.00); missing-var error names the variable; .env.example has names+descriptions only; `npx vitest run packages/core/src/config` green; `git check-ignore .env` exits 0.
   - Status: READY
 
-- [ ] TASK-CORE-011 — `mmcs` CLI bootstrap
+- [x] TASK-CORE-011 — `mmcs` CLI bootstrap
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -148,7 +148,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: command registry + argument parsing for the full verb list in spec §24 (doctor, status, create-series … recover) with stub handlers; `npx vitest run apps/cli` green; `node apps/cli/dist/index.js doctor` exits 0 (or documented stub output).
   - Status: READY
 
-- [ ] TASK-CORE-012 — Structured logging
+- [x] TASK-CORE-012 — Structured logging
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -159,7 +159,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: structured JSON logger with levels + task-id/agent fields; redaction hook that scrubs values matching token/key patterns (test proves a fake API key never reaches output); `npx vitest run packages/core/src/logging` green.
   - Status: READY
 
-- [ ] TASK-CORE-013 — Idempotency primitives
+- [x] TASK-CORE-013 — Idempotency primitives
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -170,7 +170,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: atomic file write (temp+rename), request-hash idempotency keys, once-only execution guard; duplicate submit attempt returns original result; `npx vitest run packages/core/src/idempotency` green incl. crash-mid-write test.
   - Status: READY
 
-- [ ] TASK-CORE-014 — Recovery checkpoint service
+- [x] TASK-CORE-014 — Recovery checkpoint service
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -194,7 +194,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
 
 ## WF02 — SERIES BIBLE / CHARACTER
 
-- [ ] TASK-CHAR-001 — Global character stable IDs
+- [x] TASK-CHAR-001 — Global character stable IDs
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -205,7 +205,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: `CHAR_<NAME>_<NNN>` stable business-ID generator + validator (spec §9); never display-name-keyed; collision test proves 1000 generated IDs unique; `npx vitest run packages/character-library/src/ids` green.
   - Status: READY
 
-- [ ] TASK-CHAR-002 — Canonical identity asset metadata
+- [x] TASK-CHAR-002 — Canonical identity asset metadata
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -249,7 +249,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: LOCK CHARACTER approval → candidate asset states transition DRAFT→APPROVED→CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.
   - Status: BLOCKED
 
-- [ ] TASK-CHAR-006 — Appearance versions (effective episode)
+- [x] TASK-CHAR-006 — Appearance versions (effective episode)
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -271,7 +271,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: wardrobe states versioned per character; active-wardrobe resolution for an episode continuity point; `npx vitest run packages/character-library/src/wardrobe` green.
   - Status: READY
 
-- [ ] TASK-CHAR-008 — Hair versions
+- [x] TASK-CHAR-008 — Hair versions
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -282,7 +282,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: hair states versioned per character; change never overwrites identity history; `npx vitest run packages/character-library/src/hair` green.
   - Status: READY
 
-- [ ] TASK-CHAR-009 — Fish voice binding
+- [x] TASK-CHAR-009 — Fish voice binding
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -528,7 +528,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
 
 ## WF09A — MODEL REGISTRY / CAPABILITIES (CAP-* live in WF09)
 
-- [ ] TASK-CAP-001 — Capability schema
+- [x] TASK-CAP-001 — Capability schema
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -539,7 +539,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: MediaModelCapability TS interface + zod schema exactly per spec §5 (all fields incl. confidence enum VERIFIED/PROVISIONAL/UNKNOWN, incompatibleCombinations); separate registry kinds for reasoning/vision/image/video/voice/storage; `npx vitest run packages/capability-registry/src/schema` green.
   - Status: READY
 
-- [ ] TASK-CAP-002 — Capability source/date/confidence data
+- [x] TASK-CAP-002 — Capability source/date/confidence data
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned

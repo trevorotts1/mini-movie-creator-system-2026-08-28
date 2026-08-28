@@ -26,9 +26,9 @@
 
 ## 3. Core Architecture & Database
 
-- [ ] SQLite schema migrations initialized and tested
-- [ ] Capability registry implementation complete
-- [ ] Async job safety harness running with idempotency keys
+- [x] SQLite schema migrations initialized and tested
+- [x] Capability registry implementation complete
+- [x] Async job safety harness running with idempotency keys
 - [ ] Asset manifest data model defined and tested
 
 ## 4. Providers & Pipelines

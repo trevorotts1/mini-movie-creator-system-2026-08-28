@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-28T13:52:00Z",
+  "updated_at": "2026-08-28T14:00:00Z",
   "items": [
     {
       "id": "CORE-001",
@@ -24,7 +24,7 @@
       "branch": "task/CORE-002-monorepo-layout",
       "worktree": "worktrees/CORE-002/",
       "acceptance": "all 11 packages + 3 apps + 2 integrations dirs exist with package.json; `npm install && npx tsc --noEmit -p tsconfig.base.json` passes; `node -e \"require('./package.json').workspaces\"` lists packages/*.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-003",
@@ -37,7 +37,7 @@
       "branch": "task/CORE-003-sqlite-migrations",
       "worktree": "worktrees/CORE-003/",
       "acceptance": "migration runner applies + rolls back idempotently; repository interfaces exported; `npx vitest run packages/database/src/migrations` green (includes open/close/transaction/migration-order tests on a temp file DB).",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-004",
@@ -50,7 +50,7 @@
       "branch": "task/CORE-004-project-schema",
       "worktree": "worktrees/CORE-004/",
       "acceptance": "migrations create projects/series/episodes tables incl. aspect-ratio + per-episode override fields (spec \u00a723); repositories CRUD-tested; `npx vitest run packages/database/src/repositories/projects` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CORE-005",
@@ -63,7 +63,7 @@
       "branch": "task/CORE-005-character-schema",
       "worktree": "worktrees/CORE-005/",
       "acceptance": "tables for characters, identity versions (immutable history), appearance versions w/ effective-episode, locations/props; GHL file/folder ID + sha256 columns present (spec \u00a79); `npx vitest run packages/database/src/repositories/characters` green incl. version-history immutability test.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CORE-006",
@@ -76,7 +76,7 @@
       "branch": "task/CORE-006-scene-shot-schema",
       "worktree": "worktrees/CORE-006/",
       "acceptance": "shot table carries every field of spec \u00a712 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CORE-007",
@@ -89,7 +89,7 @@
       "branch": "task/CORE-007-job-asset-schema",
       "worktree": "worktrees/CORE-007/",
       "acceptance": "provider_jobs + assets tables carry every field of spec \u00a719 asset manifest (all 26 fields asserted by introspection test) and \u00a718 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CORE-008",
@@ -130,7 +130,7 @@
       "branch": "task/CORE-010-config-loader",
       "worktree": "worktrees/CORE-010/",
       "acceptance": "loads + zod-validates AGNES_API_KEY, KIE_API_KEY, FISH_API_KEY, GHL_ACCESS_TOKEN, GHL_LOCATION_ID, OPENROUTER_API_KEY, NINEROUTER_URL, NINEROUTER_KEY, AUTO_SPEND_LIMIT_USD (default 25.00); missing-var error names the variable; .env.example has names+descriptions only; `npx vitest run packages/core/src/config` green; `git check-ignore .env` exits 0.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-011",
@@ -144,7 +144,7 @@
       "branch": "task/CORE-011-cli-bootstrap",
       "worktree": "worktrees/CORE-011/",
       "acceptance": "command registry + argument parsing for the full verb list in spec \u00a724 (doctor, status, create-series \u2026 recover) with stub handlers; `npx vitest run apps/cli` green; `node apps/cli/dist/index.js doctor` exits 0 (or documented stub output).",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-012",
@@ -157,7 +157,7 @@
       "branch": "task/CORE-012-logging",
       "worktree": "worktrees/CORE-012/",
       "acceptance": "structured JSON logger with levels + task-id/agent fields; redaction hook that scrubs values matching token/key patterns (test proves a fake API key never reaches output); `npx vitest run packages/core/src/logging` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-013",
@@ -170,7 +170,7 @@
       "branch": "task/CORE-013-idempotency",
       "worktree": "worktrees/CORE-013/",
       "acceptance": "atomic file write (temp+rename), request-hash idempotency keys, once-only execution guard; duplicate submit attempt returns original result; `npx vitest run packages/core/src/idempotency` green incl. crash-mid-write test.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-014",
@@ -183,7 +183,7 @@
       "branch": "task/CORE-014-checkpoint-service",
       "worktree": "worktrees/CORE-014/",
       "acceptance": "checkpoint.json written atomically with runbook \u00a75 fields; kill -9 mid-write leaves previous valid checkpoint; reload reconstructs ready/blocked/mergeQueue ids; `npx vitest run packages/core/src/recovery` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CORE-015",
@@ -214,7 +214,7 @@
       "branch": "task/CHAR-001-character-ids",
       "worktree": "worktrees/CHAR-001/",
       "acceptance": "`CHAR_<NAME>_<NNN>` stable business-ID generator + validator (spec \u00a79); never display-name-keyed; collision test proves 1000 generated IDs unique; `npx vitest run packages/character-library/src/ids` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "CHAR-002",
@@ -228,7 +228,7 @@
       "branch": "task/CHAR-002-identity-asset",
       "worktree": "worktrees/CHAR-002/",
       "acceptance": "asset record carries every field of spec \u00a79 canonical identity record (asset ID, character ID, identity version, ghlFileId, ghlFolderId, ghlUrl, sha256, local cache, dimensions, provider/model, source job ID, prompt, approval state, canonical flag); schema test asserts all fields; `npx vitest run packages/character-library/src/identity-asset` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "CHAR-003",
@@ -285,7 +285,7 @@
       "branch": "task/CHAR-006-appearance-versions",
       "worktree": "worktrees/CHAR-006/",
       "acceptance": "hair/wardrobe change creates new appearance version with effective episode/time; historical episodes resolve canon-at-the-time version (Monica v1 braids E01\u2013E08, v2 short from E09 test); base identity master never replaced; `npx vitest run packages/character-library/src/appearance-versions` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "CHAR-007",
@@ -311,7 +311,7 @@
       "branch": "task/CHAR-008-hair-versions",
       "worktree": "worktrees/CHAR-008/",
       "acceptance": "hair states versioned per character; change never overwrites identity history; `npx vitest run packages/character-library/src/hair` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "CHAR-009",
@@ -325,7 +325,7 @@
       "branch": "task/CHAR-009-voice-binding",
       "worktree": "worktrees/CHAR-009/",
       "acceptance": "voice profile record per spec \u00a716 (character ID, Fish voice/reference ID, model, pace, emotion/style, pronunciation dictionary, proper nouns, test sample status, approval state); recurring character voice never randomly changes across episodes (determinism test); `npx vitest run packages/character-library/src/voice-binding` green.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "CHAR-010",
@@ -643,7 +643,7 @@
       "branch": "task/CAP-001-capability-schema",
       "worktree": "worktrees/CAP-001/",
       "acceptance": "MediaModelCapability TS interface + zod schema exactly per spec \u00a75 (all fields incl. confidence enum VERIFIED/PROVISIONAL/UNKNOWN, incompatibleCombinations); separate registry kinds for reasoning/vision/image/video/voice/storage; `npx vitest run packages/capability-registry/src/schema` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CAP-002",
@@ -656,7 +656,7 @@
       "branch": "task/CAP-002-capability-data",
       "worktree": "worktrees/CAP-002/",
       "acceptance": "seed profiles for Agnes Video 2.5 Flash + regular, Seedance 2.0 Mini, Wan 3.0, Fish S2.1 family, GLM 5.3 Flash / DeepSeek V4 Flash Vision Experimental / Qwen 3.8 Flash / Gemini 3.7 Flash; every value carries lastVerifiedAt + sourceUrls + confidence; UNKNOWN preserved where undocumented (Agnes hard prompt ceiling = UNKNOWN, asserted by test); one docs file per provider family; `npx vitest run packages/capability-registry/src/data` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CAP-003",
