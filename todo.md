@@ -36,7 +36,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-001-upstream-audit
   - Worktree: worktrees/TASK-CORE-001/
   - Acceptance: docs/upstream-audit/preservation-map.md exists and lists every upstream package/script/tool with keep|rewrite|drop + reason; PF-1 and PF-2 carried forward; decisions reconciled against spec §2 facts; verified by `test -s docs/upstream-audit/preservation-map.md && grep -q "PF-1" docs/upstream-audit/preservation-map.md`.
-  - Status: READY
+  - Status: PASS
 
 - [x] TASK-CORE-002 — Target monorepo/module layout
   - Workflow: WF01
@@ -47,7 +47,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-002-monorepo-layout
   - Worktree: worktrees/TASK-CORE-002/
   - Acceptance: all 11 packages + 3 apps + 2 integrations dirs exist with package.json; `npm install && npx tsc --noEmit -p tsconfig.base.json` passes; `node -e "require('./package.json').workspaces"` lists packages/*.
-  - Status: READY
+  - Status: PASS
 
 - [x] TASK-CORE-003 — SQLite connection + migrations runner
   - Workflow: WF01
@@ -58,7 +58,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-003-sqlite-migrations
   - Worktree: worktrees/TASK-CORE-003/
   - Acceptance: migration runner applies + rolls back idempotently; repository interfaces exported; `npx vitest run packages/database/src/migrations` green (includes open/close/transaction/migration-order tests on a temp file DB).
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CORE-004 — Project/series/episode schema
   - Workflow: WF01
@@ -269,7 +269,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-007-wardrobe-versions
   - Worktree: worktrees/TASK-CHAR-007/
   - Acceptance: wardrobe states versioned per character; active-wardrobe resolution for an episode continuity point; `npx vitest run packages/character-library/src/wardrobe` green.
-  - Status: READY
+  - Status: PASS
 
 - [x] TASK-CHAR-008 — Hair versions
   - Workflow: WF02
@@ -280,7 +280,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-008-hair-versions
   - Worktree: worktrees/TASK-CHAR-008/
   - Acceptance: hair states versioned per character; change never overwrites identity history; `npx vitest run packages/character-library/src/hair` green.
-  - Status: READY
+  - Status: PASS
 
 - [x] TASK-CHAR-009 — Fish voice binding
   - Workflow: WF02
@@ -291,7 +291,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-009-voice-binding
   - Worktree: worktrees/TASK-CHAR-009/
   - Acceptance: voice profile record per spec §16 (character ID, Fish voice/reference ID, model, pace, emotion/style, pronunciation dictionary, proper nouns, test sample status, approval state); recurring character voice never randomly changes across episodes (determinism test); `npx vitest run packages/character-library/src/voice-binding` green.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CHAR-010 — Series cast links
   - Workflow: WF02
@@ -570,7 +570,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-004-reference-count
   - Worktree: worktrees/TASK-CAP-004/
   - Acceptance: rejects too many Wan reference images (>10) before call; validates images/videos/audio counts per profile; `npx vitest run packages/capability-registry/src/validators` green incl. reference tests.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CAP-005 — Mutually-exclusive-mode validator
   - Workflow: WF09
@@ -581,7 +581,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-005-exclusive-modes
   - Worktree: worktrees/TASK-CAP-005/
   - Acceptance: rejects first/last-frame combined with multimodal references (Wan); validates incompatibleCombinations generically; `npx vitest run packages/capability-registry/src/validators` green incl. mode tests.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-CAP-006 — Pricing/quota model
   - Workflow: WF09
@@ -592,7 +592,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-006-pricing-model
   - Worktree: worktrees/TASK-CAP-006/
   - Acceptance: per-model pricing_unit/current_price/quota/overage consumed by cost estimate; spend estimation test against fixture profiles; `npx vitest run packages/capability-registry/src/pricing` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-CAP-007 — Reasoning/vision model registry
   - Workflow: WF09
@@ -603,7 +603,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-007-llm-registry
   - Worktree: worktrees/TASK-CAP-007/
   - Acceptance: OpenRouter-compatible selection; separate slots for director/writer/script-critic/image-QC/video-QC/continuity-QC/final-QC; any compatible model ID accepted (not closed to 4 presets); `npx vitest run packages/capability-registry/src/llm-registry` green.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CAP-008 — MAX_REASONING mapper
   - Workflow: WF09
@@ -614,7 +614,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-008-max-reasoning
   - Worktree: worktrees/TASK-CAP-008/
   - Acceptance: MAX_REASONING logical config maps per-adapter to highest supported reasoning effort; never sends literal "max" to endpoints that reject it (adapter table test); `npx vitest run packages/capability-registry/src/max-reasoning` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-CAP-009 — Provider health/verify command
   - Workflow: WF09
@@ -625,7 +625,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-009-providers-verify
   - Worktree: worktrees/TASK-CAP-009/
   - Acceptance: `mmcs providers verify` reports configured vs documented vs runtime-observed capability + last verified date + discrepancy warning; transient failure never silently rewrites VERIFIED (test); `npx vitest run packages/capability-registry/src/verify` green.
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-CAP-010 — Runtime observed capability overrides
   - Workflow: WF09
@@ -636,7 +636,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-010-observed-overrides
   - Worktree: worktrees/TASK-CAP-010/
   - Acceptance: runtime-discovered model IDs/limits refine profiles with PROVISIONAL confidence + provenance; VERIFIED values immutable on one transient failure (test); Agnes 2.5 runtime IDs recorded with source/date; `npx vitest run packages/capability-registry/src/observed-overrides` green.
-  - Status: READY
+  - Status: PASS
 
 ## WF04 — AGNES / IMAGE / VIDEO
 
@@ -761,7 +761,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-001-kie-client
   - Worktree: worktrees/TASK-KIE-001/
   - Acceptance: HTTP client, bearer auth from config, timeouts/retries, key never logged; current docs.kie.ai schema facts recorded in docs/provider-capabilities/kie.md with URLs + date; `npx vitest run packages/providers/src/kie/client` green (mocked).
-  - Status: READY
+  - Status: PASS
 
 - [ ] TASK-KIE-002 — Generic task submit/poll
   - Workflow: WF05
@@ -772,7 +772,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-002-kie-task
   - Worktree: worktrees/TASK-KIE-002/
   - Acceptance: generic Kie task abstraction: persist task ID before polling; resume-at-SUBMITTED polls existing task (no resubmit test); state mapping to §18 machine; `npx vitest run packages/providers/src/kie/task` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-KIE-003 — Seedance 2.0 Mini profile
   - Workflow: WF05
@@ -783,7 +783,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-003-seedance-profile
   - Worktree: worktrees/TASK-KIE-003/
   - Acceptance: Seedance 2.0 Mini adapter per live Kie schema (verify at build; record in docs/provider-capabilities/kie.md); generation modes tracked separately (first-frame I2V / first+last I2V / multimodal-reference); unstated numeric limits stay UNKNOWN/PROVISIONAL; `npx vitest run packages/providers/src/kie/seedance` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-KIE-004 — Seedance modes/validation
   - Workflow: WF05

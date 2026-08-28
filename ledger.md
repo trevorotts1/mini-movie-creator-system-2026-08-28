@@ -22,3 +22,15 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 - 2026-08-28T13:30:06Z | BATCH_MERGE | merger | MERGED | CHAR-006 | sha: 2cce12b | Appearance versions (effective episode)
 - 2026-08-28T13:30:06Z | BATCH_MERGE | merger | MERGED | CHAR-008 | sha: eeaec71 | Hair versions
 - 2026-08-28T13:30:06Z | BATCH_MERGE | merger | MERGED | CHAR-009 | sha: 0c7ef2c | Fish voice binding
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CORE-001 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CAP-004 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | MERGED | CAP-005 | sha: fff515d | batch 2 (dd77818..e973ac2)
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | MERGED | CAP-006 | sha: 7cf45a1 | batch 2 (dd77818..e973ac2)
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CAP-007 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | MERGED | CAP-008 | sha: 1669e5b | batch 2 (dd77818..e973ac2)
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CAP-009 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CAP-010 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | CHAR-007 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | QC_PASS_CONFLICT | KIE-001 | conflict on integration, branch retains PASS — rebasing required
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | MERGED | KIE-002 | sha: 54abd40 | batch 2 (dd77818..e973ac2)
+- 2026-08-28T10:05:00Z | BATCH_MERGE | merger | MERGED | KIE-003 | sha: e973ac2 | batch 2 (dd77818..e973ac2)

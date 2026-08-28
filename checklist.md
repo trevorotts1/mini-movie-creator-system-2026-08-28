@@ -28,6 +28,18 @@
 
 - [x] SQLite schema migrations initialized and tested
 - [x] Capability registry implementation complete
+- [x] CAP-005 mutually-exclusive-mode validator merged (batch 2, fff515d)
+- [x] CAP-006 pricing/quota model merged (batch 2, 7cf45a1)
+- [x] CAP-008 MAX_REASONING mapper merged (batch 2, 1669e5b)
+- [x] CAP-004 reference-count validator QC PASS (conflict: rebasing required)
+- [x] CAP-007 reasoning/vision LLM registry QC PASS (conflict: rebasing required)
+- [x] CAP-009 provider health/verify QC PASS (conflict: rebasing required)
+- [x] CAP-010 observed overrides QC PASS (conflict: rebasing required)
+- [x] KIE-002 generic task submit/poll merged (batch 2, 54abd40)
+- [x] KIE-003 Seedance 2.0 Mini profile merged (batch 2, e973ac2)
+- [x] KIE-001 Kie client/auth QC PASS (conflict: rebasing required)
+- [x] CORE-001 upstream audit QC PASS (conflict: rebasing required)
+- [x] CHAR-007 wardrobe versions QC PASS (conflict: rebasing required)
 - [x] Async job safety harness running with idempotency keys
 - [ ] Asset manifest data model defined and tested
 

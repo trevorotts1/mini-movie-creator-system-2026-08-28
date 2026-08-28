@@ -11,7 +11,7 @@
       "branch": "task/CORE-001-upstream-audit",
       "worktree": "worktrees/CORE-001/",
       "acceptance": "docs/upstream-audit/preservation-map.md exists and lists every upstream package/script/tool with keep|rewrite|drop + reason; PF-1 and PF-2 carried forward; decisions reconciled against spec \u00a72 facts; verified by `test -s docs/upstream-audit/preservation-map.md && grep -q \"PF-1\" docs/upstream-audit/preservation-map.md`.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "CORE-002",
@@ -298,7 +298,7 @@
       "branch": "task/CHAR-007-wardrobe-versions",
       "worktree": "worktrees/CHAR-007/",
       "acceptance": "wardrobe states versioned per character; active-wardrobe resolution for an episode continuity point; `npx vitest run packages/character-library/src/wardrobe` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "CHAR-008",
@@ -682,7 +682,7 @@
       "branch": "task/CAP-004-reference-count",
       "worktree": "worktrees/CAP-004/",
       "acceptance": "rejects too many Wan reference images (>10) before call; validates images/videos/audio counts per profile; `npx vitest run packages/capability-registry/src/validators` green incl. reference tests.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "CAP-005",
@@ -695,7 +695,7 @@
       "branch": "task/CAP-005-exclusive-modes",
       "worktree": "worktrees/CAP-005/",
       "acceptance": "rejects first/last-frame combined with multimodal references (Wan); validates incompatibleCombinations generically; `npx vitest run packages/capability-registry/src/validators` green incl. mode tests.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CAP-006",
@@ -708,7 +708,7 @@
       "branch": "task/CAP-006-pricing-model",
       "worktree": "worktrees/CAP-006/",
       "acceptance": "per-model pricing_unit/current_price/quota/overage consumed by cost estimate; spend estimation test against fixture profiles; `npx vitest run packages/capability-registry/src/pricing` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CAP-007",
@@ -721,7 +721,7 @@
       "branch": "task/CAP-007-llm-registry",
       "worktree": "worktrees/CAP-007/",
       "acceptance": "OpenRouter-compatible selection; separate slots for director/writer/script-critic/image-QC/video-QC/continuity-QC/final-QC; any compatible model ID accepted (not closed to 4 presets); `npx vitest run packages/capability-registry/src/llm-registry` green.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "CAP-008",
@@ -734,7 +734,7 @@
       "branch": "task/CAP-008-max-reasoning",
       "worktree": "worktrees/CAP-008/",
       "acceptance": "MAX_REASONING logical config maps per-adapter to highest supported reasoning effort; never sends literal \"max\" to endpoints that reject it (adapter table test); `npx vitest run packages/capability-registry/src/max-reasoning` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "CAP-009",
@@ -748,7 +748,7 @@
       "branch": "task/CAP-009-providers-verify",
       "worktree": "worktrees/CAP-009/",
       "acceptance": "`mmcs providers verify` reports configured vs documented vs runtime-observed capability + last verified date + discrepancy warning; transient failure never silently rewrites VERIFIED (test); `npx vitest run packages/capability-registry/src/verify` green.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "CAP-010",
@@ -762,7 +762,7 @@
       "branch": "task/CAP-010-observed-overrides",
       "worktree": "worktrees/CAP-010/",
       "acceptance": "runtime-discovered model IDs/limits refine profiles with PROVISIONAL confidence + provenance; VERIFIED values immutable on one transient failure (test); Agnes 2.5 runtime IDs recorded with source/date; `npx vitest run packages/capability-registry/src/observed-overrides` green.",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "AGN-001",
@@ -916,7 +916,7 @@
       "branch": "task/KIE-001-kie-client",
       "worktree": "worktrees/KIE-001/",
       "acceptance": "HTTP client, bearer auth from config, timeouts/retries, key never logged; current docs.kie.ai schema facts recorded in docs/provider-capabilities/kie.md with URLs + date; `npx vitest run packages/providers/src/kie/client` green (mocked).",
-      "status": "BUILDER_DONE"
+      "status": "PASS"
     },
     {
       "id": "KIE-002",
@@ -930,7 +930,7 @@
       "branch": "task/KIE-002-kie-task",
       "worktree": "worktrees/KIE-002/",
       "acceptance": "generic Kie task abstraction: persist task ID before polling; resume-at-SUBMITTED polls existing task (no resubmit test); state mapping to \u00a718 machine; `npx vitest run packages/providers/src/kie/task` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "KIE-003",
@@ -944,7 +944,7 @@
       "branch": "task/KIE-003-seedance-profile",
       "worktree": "worktrees/KIE-003/",
       "acceptance": "Seedance 2.0 Mini adapter per live Kie schema (verify at build; record in docs/provider-capabilities/kie.md); generation modes tracked separately (first-frame I2V / first+last I2V / multimodal-reference); unstated numeric limits stay UNKNOWN/PROVISIONAL; `npx vitest run packages/providers/src/kie/seedance` green.",
-      "status": "BUILDER_DONE"
+      "status": "MERGED"
     },
     {
       "id": "KIE-004",
