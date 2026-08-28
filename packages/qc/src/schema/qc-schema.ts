@@ -176,8 +176,11 @@ export const shotQcResultSchema = z
     }
     // Verdict must match the per-check rollup; a self-contradictory result
     // would corrupt downstream routing (verdict drives APPROVED/QC_FIXING).
-    const rolled = rollupVerdict(result.checks);
-    if (rolled !== result.verdict) {
+    // Empty checks are already rejected by the missing-check loop above —
+    // skip the rollup there so safeParse returns a structured failure
+    // instead of throwing.
+    const rolled = result.checks.length > 0 ? rollupVerdict(result.checks) : null;
+    if (rolled !== null && rolled !== result.verdict) {
       ctx.addIssue({
         code: "custom",
         path: ["verdict"],

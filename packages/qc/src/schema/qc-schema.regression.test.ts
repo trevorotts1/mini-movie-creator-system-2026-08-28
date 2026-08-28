@@ -113,3 +113,65 @@ describe("rollupVerdict empty input (regression)", () => {
     expect(() => rollupVerdict([])).toThrow(/at least one check/);
   });
 });
+
+describe("empty checks array (QC fixer round 2 regression)", () => {
+  it("safeParse returns a structured failure (never throws) on checks: []", () => {
+    // Regression: superRefine called rollupVerdict([]) which threw inside
+    // safeParse — the "safe" variant must return a structured failure.
+    let threw = false;
+    let success: boolean | undefined;
+    try {
+      const r = shotQcResultSchema.safeParse({ ...base, checks: [] });
+      success = r.success;
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBe(false);
+    expect(success).toBe(false);
+  });
+
+  it("reports the missing-check error for checks: []", () => {
+    const r = shotQcResultSchema.safeParse({ ...base, checks: [] });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      const messages = JSON.stringify(r.error.issues);
+      expect(messages).toContain("missing spec §20 check");
+    }
+  });
+});
+
+describe("attempt + evidence bounds (QC fixer round 2 regression)", () => {
+  it("rejects negative and fractional attempt", () => {
+    expect(
+      shotQcResultSchema.safeParse({ ...base, attempt: -1 }).success,
+    ).toBe(false);
+    expect(
+      shotQcResultSchema.safeParse({ ...base, attempt: 1.5 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects non-finite or negative evidence timecodes", () => {
+    const withTimecode = (value: number) =>
+      QC_CHECK_IDS.map((id) => {
+        const check = passedCheck(id, "ok");
+        if (id === "hair") check.evidence[0]!.timecodeSeconds = value;
+        return check;
+      });
+    expect(
+      shotQcResultSchema.safeParse({
+        ...base,
+        checks: withTimecode(Number.NaN),
+      }).success,
+    ).toBe(false);
+    expect(
+      shotQcResultSchema.safeParse({
+        ...base,
+        checks: withTimecode(Number.POSITIVE_INFINITY),
+      }).success,
+    ).toBe(false);
+    expect(
+      shotQcResultSchema.safeParse({ ...base, checks: withTimecode(-3) })
+        .success,
+    ).toBe(false);
+  });
+});
