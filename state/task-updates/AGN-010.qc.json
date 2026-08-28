@@ -1,7 +1,7 @@
 {
   "taskId": "AGN-010",
   "phase": "PASS",
-  "commit": "PENDING",
+  "commit": "0d5ebf9",
   "checksRun": "npx vitest run --config packages/providers/src/agnes/retry/vitest.config.mts packages/providers/src/agnes/retry -> 29 passed (29); npx vitest run packages/providers -> 69 passed (69); npx tsc --noEmit -p packages/providers/tsconfig.json -> rc=0; mutation check (reverted cumulative-retryCount fix -> regression test failed as expected, fix restored); security scan of owned paths (no exec/eval/secrets/unbounded loops)",
   "defectsFound": 4,
   "defectsFixed": 4,
