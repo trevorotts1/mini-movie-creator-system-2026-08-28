@@ -1,7 +1,7 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — READY: **130** — BLOCKED: **19**.
+Total tasks: **149** — READY: **26** — BLOCKED: **14**.
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
@@ -71,7 +71,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: migrations create projects/series/episodes tables incl. aspect-ratio + per-episode override fields (spec §23); repositories CRUD-tested; `npx vitest run packages/database/src/repositories/projects` green.
   - Status: MERGED
 
-- [ ] TASK-CORE-005 — Character/location/appearance schema
+- [x] TASK-CORE-005 — Character/location/appearance schema
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -80,9 +80,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-005-character-schema
   - Worktree: worktrees/TASK-CORE-005/
   - Acceptance: tables for characters, identity versions (immutable history), appearance versions w/ effective-episode, locations/props; GHL file/folder ID + sha256 columns present (spec §9); `npx vitest run packages/database/src/repositories/characters` green incl. version-history immutability test.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-CORE-006 — Scene/shot/reference schema
+- [x]  TASK-CORE-006 — Scene/shot/reference schema
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -91,9 +91,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-006-scene-shot-schema
   - Worktree: worktrees/TASK-CORE-006/
   - Acceptance: shot table carries every field of spec §12 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-CORE-007 — Provider job/asset schema
+- [ ]  TASK-CORE-007 — Provider job/asset schema
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -115,7 +115,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: 6 gates (concept, script, character, storyboard, rough cut, canon) persisted as domain states; illegal transitions throw; `npx vitest run packages/core/src/approvals` green incl. gate-ordering + persistence tests.
   - Status: READY
 
-- [ ] TASK-CORE-009 — Cost/quota reservations engine
+- [ ]  TASK-CORE-009 — Cost/quota reservations engine
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -181,7 +181,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: checkpoint.json written atomically with runbook §5 fields; kill -9 mid-write leaves previous valid checkpoint; reload reconstructs ready/blocked/mergeQueue ids; `npx vitest run packages/core/src/recovery` green.
   - Status: MERGED
 
-- [ ] TASK-CORE-015 — Database backup/export
+- [ ]  TASK-CORE-015 — Database backup/export
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -304,7 +304,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: global library ↔ per-series cast join; cast resolution by episode; removing series cast never deletes global character; `npx vitest run packages/character-library/src/cast` green.
   - Status: MERGED
 
-- [ ] TASK-CHAR-011 — Recurring location library
+- [x] TASK-CHAR-011 — Recurring location library
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -313,7 +313,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-011-location-library
   - Worktree: worktrees/TASK-CHAR-011/
   - Acceptance: location masters with approved wide/medium/reverse angles + day/night states; resolution by episode continuity point; `npx vitest run packages/character-library/src/locations` green.
-  - Status: PASS
+  - Status: MERGED
 
 - [x] TASK-CHAR-012 — Series Bible events
   - Workflow: WF02
@@ -337,7 +337,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.
   - Status: BLOCKED
 
-- [ ] TASK-CHAR-014 — GHL asset-link refresh/fallback
+- [x] TASK-CHAR-014 — GHL asset-link refresh/fallback
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -346,9 +346,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-014-asset-links
   - Worktree: worktrees/TASK-CHAR-014/
   - Acceptance: canonical GHL file ID + URL + checksum resolved verbatim in downstream reference plans; stale-link refresh via manifest; local-cache-removal resolution test passes against mocked GHL; `npx vitest run packages/character-library/src/asset-links` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-CHAR-015 — Character reference-pack metrics
+- [x] TASK-CHAR-015 — Character reference-pack metrics
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -357,11 +357,11 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-015-refpack-metrics
   - Worktree: worktrees/TASK-CHAR-015/
   - Acceptance: persists which references produced accepted vs rejected clips; historical success rate queryable per character/model/reference combination (feeds DIR-013 scoring); `npx vitest run packages/character-library/src/refpack-metrics` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 ## WF03 — STORY / SCENE / REFERENCE (directing)
 
-- [ ] TASK-DIR-001 — Idea intake schema
+- [x] TASK-DIR-001 — Idea intake schema
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -370,9 +370,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-001-idea-intake
   - Worktree: worktrees/TASK-DIR-001/
   - Acceptance: idea record (raw text, aspect ratio, target runtime, series link) validated; story text treated as untrusted data (spec §29 — injection test passes); `npx vitest run packages/scene-intelligence/src/intake` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-002 — Concept generator
+- [ ]  TASK-DIR-002 — Concept generator
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -394,7 +394,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: no screenplay work while concept unapproved (state throws); `mmcs develop-concept` + `mmcs approve concept` wired; `npx vitest run packages/scene-intelligence/src/concept/approval` green.
   - Status: BLOCKED
 
-- [ ] TASK-DIR-004 — Screenplay generator
+- [x] TASK-DIR-004 — Screenplay generator
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -403,9 +403,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-004-screenplay-generator
   - Worktree: worktrees/TASK-DIR-004/
   - Acceptance: approved concept → screenplay via writer-model interface; output structured (scenes, dialogue, characters); mocked-LLM test; `npx vitest run packages/scene-intelligence/src/screenplay` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-005 — Runtime estimator
+- [x] TASK-DIR-005 — Runtime estimator
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -414,9 +414,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-005-runtime-estimator
   - Worktree: worktrees/TASK-DIR-005/
   - Acceptance: screenplay → estimated runtime within ±10% on fixture screenplays (test with known-duration fixtures); per-scene and total estimates persisted; `npx vitest run packages/scene-intelligence/src/runtime-estimator` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-006 — Script critic/QC
+- [x] TASK-DIR-006 — Script critic/QC
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -425,9 +425,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-006-script-critic
   - Worktree: worktrees/TASK-DIR-006/
   - Acceptance: critic-model interface returns structured findings (pacing, continuity, dialogue, character consistency) on fixture screenplay; findings schema versioned; `npx vitest run packages/scene-intelligence/src/script-critic` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-007 — Script revision loop
+- [x] TASK-DIR-007 — Script revision loop
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -436,7 +436,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-007-script-revision
   - Worktree: worktrees/TASK-DIR-007/
   - Acceptance: critic findings → targeted revision → re-criticize; loop bounded (max iterations configurable); convergence test on fixture; `npx vitest run packages/scene-intelligence/src/script-revision` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 - [ ] TASK-DIR-008 — Script approval gate (gate 2)
   - Workflow: WF03
@@ -449,7 +449,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.
   - Status: BLOCKED
 
-- [ ] TASK-DIR-009 — Scene parser
+- [x]  TASK-DIR-009 — Scene parser
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -458,9 +458,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-009-scene-parser
   - Worktree: worktrees/TASK-DIR-009/
   - Acceptance: approved screenplay → narrative scenes with per-scene characters, location, duration; 45-second reference scene parses to ≥5 named scenes on fixture; `npx vitest run packages/scene-intelligence/src/scene-parser` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-DIR-010 — Shot planner
+- [x] TASK-DIR-010 — Shot planner
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -469,9 +469,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-010-shot-planner
   - Worktree: worktrees/TASK-DIR-010/
   - Acceptance: scenes → shots by dialogue/emotional/action beats; shots inside selected model duration limits; Shot Specification Record fields populated (spec §12); 45s scene → 5–8 shots on fixture; `npx vitest run packages/scene-intelligence/src/shot-planner` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-011 — Scene master planner
+- [x] TASK-DIR-011 — Scene master planner
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -480,9 +480,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-011-scene-master-planner
   - Worktree: worktrees/TASK-DIR-011/
   - Acceptance: multi-character scenes flagged for Scene Master Image; scene-master spec carries identities, wardrobe, room, lighting, props, positions; internal storyboard images marked non-provider-input; `npx vitest run packages/scene-intelligence/src/scene-master` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-012 — Keyframe planner
+- [x] TASK-DIR-012 — Keyframe planner
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -491,9 +491,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-012-keyframe-planner
   - Worktree: worktrees/TASK-DIR-012/
   - Acceptance: mutually exclusive classification per shot: zero / one / start+end / scene-master+refs / multimodal package (spec §8); classification changes when capability profile changes (fixture test); `npx vitest run packages/scene-intelligence/src/keyframe-planner` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-013 — ReferenceBudgetPlanner
+- [x] TASK-DIR-013 — ReferenceBudgetPlanner
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -502,9 +502,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-013-reference-budget
   - Worktree: worktrees/TASK-DIR-013/
   - Acceptance: minimum-sufficient references (single close-up 1–2; two-character dialogue prefers scene master over portrait stack); scoring by identity/wardrobe/location/prop/pose/start/end/historical-success; never stuffs max slots (test asserts under-limit selection); `npx vitest run packages/scene-intelligence/src/reference-budget` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-DIR-014 — Storyboard generator contract
+- [x] TASK-DIR-014 — Storyboard generator contract
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -513,7 +513,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-014-storyboard-contract
   - Worktree: worktrees/TASK-DIR-014/
   - Acceptance: storyboard plan = per-shot image-generation contract (image model by capability profile, spec §15); no paid generation in this task (mocked image client); `npx vitest run packages/scene-intelligence/src/storyboard` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 - [ ] TASK-DIR-015 — Storyboard approval gate (gate 4)
   - Workflow: WF03
@@ -594,7 +594,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: per-model pricing_unit/current_price/quota/overage consumed by cost estimate; spend estimation test against fixture profiles; `npx vitest run packages/capability-registry/src/pricing` green.
   - Status: MERGED
 
-- [ ] TASK-CAP-007 — Reasoning/vision model registry
+- [x] TASK-CAP-007 — Reasoning/vision model registry
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -603,7 +603,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-007-llm-registry
   - Worktree: worktrees/TASK-CAP-007/
   - Acceptance: OpenRouter-compatible selection; separate slots for director/writer/script-critic/image-QC/video-QC/continuity-QC/final-QC; any compatible model ID accepted (not closed to 4 presets); `npx vitest run packages/capability-registry/src/llm-registry` green.
-  - Status: PASS
+  - Status: MERGED
 
 - [x] TASK-CAP-008 — MAX_REASONING mapper
   - Workflow: WF09
@@ -616,7 +616,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: MAX_REASONING logical config maps per-adapter to highest supported reasoning effort; never sends literal "max" to endpoints that reject it (adapter table test); `npx vitest run packages/capability-registry/src/max-reasoning` green.
   - Status: MERGED
 
-- [ ] TASK-CAP-009 — Provider health/verify command
+- [x] TASK-CAP-009 — Provider health/verify command
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -625,9 +625,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CAP-009-providers-verify
   - Worktree: worktrees/TASK-CAP-009/
   - Acceptance: `mmcs providers verify` reports configured vs documented vs runtime-observed capability + last verified date + discrepancy warning; transient failure never silently rewrites VERIFIED (test); `npx vitest run packages/capability-registry/src/verify` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-CAP-010 — Runtime observed capability overrides
+- [ ]  TASK-CAP-010 — Runtime observed capability overrides
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -640,7 +640,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
 
 ## WF04 — AGNES / IMAGE / VIDEO
 
-- [ ] TASK-AGN-001 — Agnes auth/client
+- [x] TASK-AGN-001 — Agnes auth/client
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -649,9 +649,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-001-agnes-client
   - Worktree: worktrees/TASK-AGN-001/
   - Acceptance: HTTP client with bearer auth from config, timeout/retry limits (spec §29), token never logged (redaction test); docs inspection source URLs + date recorded in docs/provider-capabilities/agnes.md; `npx vitest run packages/providers/src/agnes/client` green (mocked API).
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-AGN-002 — Agnes image generation
+- [x]  TASK-AGN-002 — Agnes image generation
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -660,9 +660,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-002-agnes-image
   - Worktree: worktrees/TASK-AGN-002/
   - Acceptance: image generation + edit/compose paths per current API (AGN-003 scope merged if API supports); capability profile consulted before request; mocked test produces image record with provider_task_id; `npx vitest run packages/providers/src/agnes/image` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-AGN-003 — Agnes image edit/compose (conditional)
+- [x]  TASK-AGN-003 — Agnes image edit/compose (conditional)
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -671,9 +671,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-003-agnes-edit
   - Worktree: worktrees/TASK-AGN-003/
   - Acceptance: if current Agnes API supports edit/compose: masked edit + multi-image compose implemented behind capability flags; if unsupported: capability registry records mode unsupported + task closes with documented evidence in docs/provider-capabilities/agnes.md; `npx vitest run packages/providers/src/agnes/image/edit` green either way.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-AGN-004 — Agnes video job submit
+- [x]  TASK-AGN-004 — Agnes video job submit
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -682,9 +682,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-004-agnes-submit
   - Worktree: worktrees/TASK-AGN-004/
   - Acceptance: job submitted with request persisted BEFORE polling (task/job ID in DB first, spec §18); pre-request validation chain runs (character count → references → modes → duration → budget); mocked submit returns job record in SUBMITTED; `npx vitest run packages/providers/src/agnes/video/submit` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-AGN-005 — Agnes video poll + resume
+- [x] TASK-AGN-005 — Agnes video poll + resume
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -693,9 +693,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-005-agnes-poll
   - Worktree: worktrees/TASK-AGN-005/
   - Acceptance: resume at SUBMITTED polls existing job, never resubmits (kill-poller test: restart → same task ID, no second charge); GENERATED_TEMPORARY persists URL + expiration; `npx vitest run packages/providers/src/agnes/video/poll` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-AGN-006 — Agnes Flash profile
+- [x] TASK-AGN-006 — Agnes Flash profile
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -704,9 +704,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-006-agnes-flash
   - Worktree: worktrees/TASK-AGN-006/
   - Acceptance: Agnes Video 2.5 Flash profile (720p, 4–12s, ≤5 ref images, first/last-frame, no ref-video, prompt ceiling UNKNOWN); runtime model ID discovered + recorded with source/date (not hard-coded from stale agnes-video-v2.0 docs); profile test; `npx vitest run packages/providers/src/agnes/profiles/flash` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-AGN-007 — Agnes regular 2.5 profile
+- [x] TASK-AGN-007 — Agnes regular 2.5 profile
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -715,9 +715,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-007-agnes-regular
   - Worktree: worktrees/TASK-AGN-007/
   - Acceptance: Agnes Video 2.5 regular profile (4–12s, ≤5 ref images, reference-video support, 720p/960p/2K, prompt ceiling UNKNOWN); reference-video path exercised in mocked test; `npx vitest run packages/providers/src/agnes/profiles/regular` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-AGN-008 — Agnes first/last/reference validation
+- [x] TASK-AGN-008 — Agnes first/last/reference validation
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -726,9 +726,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-008-agnes-validation
   - Worktree: worktrees/TASK-AGN-008/
   - Acceptance: first-frame, last-frame, reference-image request shapes validated against profile before call; invalid combination rejected pre-flight (test); `npx vitest run packages/providers/src/agnes/validation` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-AGN-009 — Agnes quota accounting
+- [x] TASK-AGN-009 — Agnes quota accounting
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -737,9 +737,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-009-agnes-quota
   - Worktree: worktrees/TASK-AGN-009/
   - Acceptance: requested/generated/accepted/rejected seconds + retries + cost recorded per job; included quota tracked separately from paid spend; `npx vitest run packages/providers/src/agnes/quota` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-AGN-010 — Agnes retry/idempotency
+- [x] TASK-AGN-010 — Agnes retry/idempotency
   - Workflow: WF04
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -748,11 +748,11 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-AGN-010-agnes-retry
   - Worktree: worktrees/TASK-AGN-010/
   - Acceptance: bounded retry (no unbounded loops, spec §29); same request hash never double-submits; retry count persisted; `npx vitest run packages/providers/src/agnes/retry` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 ## WF05 — KIE / SEEDANCE / WAN
 
-- [ ] TASK-KIE-001 — Kie client/auth
+- [x] TASK-KIE-001 — Kie client/auth
   - Workflow: WF05
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -761,7 +761,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-001-kie-client
   - Worktree: worktrees/TASK-KIE-001/
   - Acceptance: HTTP client, bearer auth from config, timeouts/retries, key never logged; current docs.kie.ai schema facts recorded in docs/provider-capabilities/kie.md with URLs + date; `npx vitest run packages/providers/src/kie/client` green (mocked).
-  - Status: PASS
+  - Status: MERGED
 
 - [x] TASK-KIE-002 — Generic task submit/poll
   - Workflow: WF05
@@ -796,7 +796,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: mutually exclusive modes never combined (pre-flight rejection test); mode selected explicitly per request; `npx vitest run packages/providers/src/kie/seedance/validation` green.
   - Status: MERGED
 
-- [ ] TASK-KIE-005 — Wan 3.0 profile
+- [x] TASK-KIE-005 — Wan 3.0 profile
   - Workflow: WF05
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -805,9 +805,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-005-wan-profile
   - Worktree: worktrees/TASK-KIE-005/
   - Acceptance: Wan 3.0 adapter after live schema/pricing/limits verification recorded in registry (baseline: 20,000-char prompt, ≤10 ref images, ≤5 ref videos, ≤5 ref audio, ≤30s, 480p/720p/1080p — verify, never trust static doc over newer docs); `npx vitest run packages/providers/src/kie/wan` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-KIE-006 — Wan multimodal validation
+- [x] TASK-KIE-006 — Wan multimodal validation
   - Workflow: WF05
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -816,9 +816,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-006-wan-validation
   - Worktree: worktrees/TASK-KIE-006/
   - Acceptance: >20,000-char prompt rejected BEFORE provider call; >10 reference images rejected before call; first/last-frame vs multimodal incompatibility enforced; `npx vitest run packages/providers/src/kie/wan/validation` green (spec §32 media-capability acceptance).
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-KIE-007 — Kie cost calculator
+- [x] TASK-KIE-007 — Kie cost calculator
   - Workflow: WF05
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -827,9 +827,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-007-kie-cost
   - Worktree: worktrees/TASK-KIE-007/
   - Acceptance: per-model cost estimate from registry pricing before submission; feeds CORE-009 reservation; fixture test with known pricing; `npx vitest run packages/providers/src/kie/cost` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-KIE-008 — Temporary URL persistence
+- [x] TASK-KIE-008 — Temporary URL persistence
   - Workflow: WF05
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -838,7 +838,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-KIE-008-temp-url
   - Worktree: worktrees/TASK-KIE-008/
   - Acceptance: GENERATED_TEMPORARY persists provider URL + expiration immediately; archival handoff to GHL store triggered (GHL-012 integration point); `npx vitest run packages/providers/src/kie/temp-url` green.
-  - Status: READY
+  - Status: MERGED
 
 - [x] TASK-KIE-009 — Failure normalization
   - Workflow: WF05
@@ -851,7 +851,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: all Kie error shapes normalized to one error taxonomy (retryable/fatal/quota); no raw error leakage into logs with secrets; `npx vitest run packages/providers/src/kie/errors` green.
   - Status: MERGED
 
-- [ ] TASK-KIE-010 — Contract/smoke tests
+- [ ]  TASK-KIE-010 — Contract/smoke tests
   - Workflow: WF05
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -908,7 +908,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: per-character pronunciation dictionary + proper-noun list applied to TTS requests; dictionary versioned; `npx vitest run packages/providers/src/fish-audio/pronunciation` green.
   - Status: MERGED
 
-- [ ] TASK-FISH-005 — Dialogue cache
+- [ ]  TASK-FISH-005 — Dialogue cache
   - Workflow: WF06
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -941,7 +941,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: word-exact caption track generated from alignment (upstream gen_voice.py word-exact discipline); output format consumable by VID-004; `npx vitest run packages/providers/src/fish-audio/captions` green.
   - Status: BUILDER_DONE
 
-- [ ] TASK-FISH-008 — Audio normalization
+- [x] TASK-FISH-008 — Audio normalization
   - Workflow: WF06
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -950,9 +950,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-008-normalization
   - Worktree: worktrees/TASK-FISH-008/
   - Acceptance: FFmpeg loudness normalization contract (target LUFS configurable, deterministic args); probe-before/after; `npx vitest run packages/providers/src/fish-audio/normalize` green (fixture WAV; ffmpeg present per spec §2).
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-FISH-009 — Mix pipeline (dialogue/music/SFX)
+- [x] TASK-FISH-009 — Mix pipeline (dialogue/music/SFX)
   - Workflow: WF06
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -961,9 +961,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-009-mix
   - Worktree: worktrees/TASK-FISH-009/
   - Acceptance: dialogue + music bed + SFX mixed via FFmpeg with deterministic filter graph; mix plan as data; output passes ffprobe; `npx vitest run packages/providers/src/fish-audio/mix` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-FISH-010 — Fish model/cost config
+- [x] TASK-FISH-010 — Fish model/cost config
   - Workflow: WF06
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -972,7 +972,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-FISH-010-fish-config
   - Worktree: worktrees/TASK-FISH-010/
   - Acceptance: model selection + pricing fully config-driven (no hard-coded free assumption); cost estimate feeds CORE-009; `npx vitest run packages/providers/src/fish-audio/config` green.
-  - Status: READY
+  - Status: MERGED
 
 ## WF07 — GHL DURABLE MEDIA STORAGE
 
@@ -998,7 +998,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: `GET /medias/files` with location context (altType=location, altId) lists/searches files + folders; pagination handled; folder-resolution by exact name (test: find "Convert and Flow"); `npx vitest run packages/media-storage/src/ghl/list` green.
   - Status: MERGED
 
-- [ ] TASK-GHL-003 — Create folder
+- [x] TASK-GHL-003 — Create folder
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1007,9 +1007,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-003-ghl-create-folder
   - Worktree: worktrees/TASK-GHL-003/
   - Acceptance: `POST /medias/folder` {altId, altType:"location", name, parentId?}; returned folder ID persisted; search-before-create (duplicate-root prevention test); `npx vitest run packages/media-storage/src/ghl/folders` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-GHL-004 — Idempotent Convert and Flow tree
+- [x] TASK-GHL-004 — Idempotent Convert and Flow tree
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1018,9 +1018,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-004-ghl-tree
   - Worktree: worktrees/TASK-GHL-004/
   - Acceptance: full spec §17 tree (Convert and Flow / Character Library / Series / Standalone Movies + 01–09 episode subfolders) created idempotently; second run creates zero duplicates (test against mocked API recording calls); `npx vitest run packages/media-storage/src/ghl/tree` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-GHL-005 — Hosted URL ingest
+- [x] TASK-GHL-005 — Hosted URL ingest
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1029,9 +1029,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-005-ghl-hosted
   - Worktree: worktrees/TASK-GHL-005/
   - Acceptance: `POST /medias/upload-file` multipart hosted=true + fileUrl + deterministic canonical name + parentId; returns fileId + storage URL stored; GHL URL reachability verified before ARCHIVED; `npx vitest run packages/media-storage/src/ghl/upload-hosted` green (mocked).
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-GHL-006 — Binary fallback upload
+- [x] TASK-GHL-006 — Binary fallback upload
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1040,7 +1040,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-006-ghl-binary
   - Worktree: worktrees/TASK-GHL-006/
   - Acceptance: hosted ingest failure → immediate download → checksum → ffprobe/decode verify → binary upload (25 MB general / 500 MB video limits enforced) → returned ID/URL verified → integrity compare before ARCHIVED; size-limit rejection test; `npx vitest run packages/media-storage/src/ghl/upload-binary` green.
-  - Status: PASS
+  - Status: MERGED
 
 - [x] TASK-GHL-007 — URL/file validation
   - Workflow: WF07
@@ -1053,7 +1053,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: remote download URL validation (spec §29: scheme allowlist, no SSRF to private ranges); MIME/file-type + file-size checks; path-traversal-safe filenames; `npx vitest run packages/media-storage/src/ghl/validation` green.
   - Status: MERGED
 
-- [ ] TASK-GHL-008 — Asset manifest integration
+- [x] TASK-GHL-008 — Asset manifest integration
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1062,9 +1062,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-008-asset-manifest
   - Worktree: worktrees/TASK-GHL-008/
   - Acceptance: MediaStore abstraction + GoHighLevelMediaStore implementation; asset record (spec §19 all 26 fields) written with ghl_file_id/ghl_folder_id/ghl_url/checksum; resolve-after-local-cache-removal test passes via DB; `npx vitest run packages/media-storage/src/manifest` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-GHL-009 — Character canonical link persistence
+- [x] TASK-GHL-009 — Character canonical link persistence
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1073,9 +1073,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-009-character-links
   - Worktree: worktrees/TASK-GHL-009/
   - Acceptance: canonical character image → Character Library/<Name>/Identity Masters/ folder; GHL file ID + URL + folder ID + SHA-256 + generation metadata persisted on the character record (spec §9 exact fields); `npx vitest run packages/media-storage/src/character-links` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-GHL-010 — Episode folder persistence
+- [x] TASK-GHL-010 — Episode folder persistence
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1084,9 +1084,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-010-episode-folders
   - Worktree: worktrees/TASK-GHL-010/
   - Acceptance: Series/<Name>/Season 01/S01E01 - <Title>/ created + all 9 subfolder IDs persisted; per-episode override respected; idempotent re-run test; `npx vitest run packages/media-storage/src/episode-folders` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-GHL-011 — Retry/idempotency
+- [x] TASK-GHL-011 — Retry/idempotency
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1095,9 +1095,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-011-ghl-retry
   - Worktree: worktrees/TASK-GHL-011/
   - Acceptance: bounded retry with backoff; retry never creates duplicate GHL files (idempotency-key test); archival never triggers regeneration (spec §17.5); `npx vitest run packages/media-storage/src/ghl/retry` green.
-  - Status: PASS
+  - Status: MERGED
 
-- [ ] TASK-GHL-012 — Provider temporary URL emergency archival
+- [x] TASK-GHL-012 — Provider temporary URL emergency archival
   - Workflow: WF07
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1106,11 +1106,11 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-GHL-012-emergency-archival
   - Worktree: worktrees/TASK-GHL-012/
   - Acceptance: restart at GENERATED_TEMPORARY archives the known provider URL immediately if valid (never regenerates); expired-URL path falls back to documented BLOCKED state, never silent regeneration; `npx vitest run packages/media-storage/src/emergency-archival` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 ## WF08 — REMOTION / FFMPEG / RENDER
 
-- [ ] TASK-VID-001 — Preserve upstream shared kits + fix PF-1/PF-2
+- [x] TASK-VID-001 — Preserve upstream shared kits + fix PF-1/PF-2
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1119,9 +1119,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-001-preserve-kits
   - Worktree: worktrees/TASK-VID-001/
   - Acceptance: shared kits + registry generation (`npm run gen`) + frame-QA discipline preserved; PF-1 fixed (chess SVGs committed or chess.tsx inline — Short1Chess renders); PF-2 `npm audit fix` applied; `cd remotion && npm run gen && npx tsc --noEmit` passes; render smoke on previously-failing composition passes with `--scale=1`.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-VID-002 — Episodic composition registry
+- [ ]  TASK-VID-002 — Episodic composition registry
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1132,7 +1132,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: episodic composition registry (series/episode/scene/shot → composition) generated from DB plan; `npm run gen` extended; registry test proves one composition per episode resolves; `npx vitest run packages/remotion-runtime/src/registry` green.
   - Status: READY
 
-- [ ] TASK-VID-003 — Shot timeline abstraction
+- [x]  TASK-VID-003 — Shot timeline abstraction
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1141,9 +1141,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-003-shot-timeline
   - Worktree: worktrees/TASK-VID-003/
   - Acceptance: shot → timeline sequence mapping (sequence_index, in/out frames, fps); upstream frames.mjs local_f = global_s * fps − sequence_from convention preserved; unit test with known timings; `npx vitest run packages/remotion-runtime/src/timeline` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-VID-004 — Dialogue/captions layer
+- [x] TASK-VID-004 — Dialogue/captions layer
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1152,9 +1152,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-004-captions-layer
   - Worktree: worktrees/TASK-VID-004/
   - Acceptance: word-exact captions from FISH-007 alignment rendered in timeline; timing sync test (caption frame == alignment ms→frames); `npx vitest run packages/remotion-runtime/src/layers/captions` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-VID-005 — Generated clip layer
+- [ ]  TASK-VID-005 — Generated clip layer
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1165,7 +1165,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: archived provider clips (GHL-resolved assets) placed on timeline per shot plan; missing-asset error names the shot; mocked test assembles 3-shot sequence; `npx vitest run packages/remotion-runtime/src/layers/generated-clips` green.
   - Status: READY
 
-- [ ] TASK-VID-006 — Still-image motion layer
+- [x] TASK-VID-006 — Still-image motion layer
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1174,9 +1174,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-006-still-motion
   - Worktree: worktrees/TASK-VID-006/
   - Acceptance: AI stills animated with camera movement (pan/zoom/drift) per camera_motion spec field; deterministic rendering (same inputs → same frames, seeded); `npx vitest run packages/remotion-runtime/src/layers/still-motion` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-VID-007 — Stock/B-roll layer
+- [x]  TASK-VID-007 — Stock/B-roll layer
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1185,7 +1185,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-007-stock-layer
   - Worktree: worktrees/TASK-VID-007/
   - Acceptance: stock/B-roll clips placed for generic establishing shots only; guard test rejects stock substitution for recurring main characters (spec §22); optional Pexels/Pixabay adapter interface stubbed; `npx vitest run packages/remotion-runtime/src/layers/stock` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 - [ ] TASK-VID-008 — Native graphics layer
   - Workflow: WF08
@@ -1196,9 +1196,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-008-graphics-layer
   - Worktree: worktrees/TASK-VID-008/
   - Acceptance: native Remotion graphics (titles, overlays, credits, lower thirds) composable per shot plan; `npx vitest run packages/remotion-runtime/src/layers/graphics` green.
-  - Status: BUILDER_DONE
+  - Status: QC_FIXING
 
-- [ ] TASK-VID-009 — Transitions
+- [x] TASK-VID-009 — Transitions
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1207,9 +1207,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-009-transitions
   - Worktree: worktrees/TASK-VID-009/
   - Acceptance: transition catalog (cut, crossfade, wipe minimum) applied at shot boundaries from plan data; frame-exact overlap math tested; `npx vitest run packages/remotion-runtime/src/transitions` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-VID-010 — Audio/music/SFX timeline
+- [x] TASK-VID-010 — Audio/music/SFX timeline
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1218,9 +1218,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-010-audio-timeline
   - Worktree: worktrees/TASK-VID-010/
   - Acceptance: dialogue + music + SFX placed on audio timeline from mix plan; loop-friendly (frame-0==last-frame convention preserved); sync test; `npx vitest run packages/remotion-runtime/src/layers/audio` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-VID-011 — Aspect ratios
+- [x]  TASK-VID-011 — Aspect ratios
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1229,9 +1229,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-011-aspect
   - Worktree: worktrees/TASK-VID-011/
   - Acceptance: 16:9 and 9:16 compositions both generate from the same plan; series-level default + per-episode override; resolution/safe-area math tested; `npx vitest run packages/remotion-runtime/src/aspect` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-VID-012 — Rough cut assembly
+- [x]  TASK-VID-012 — Rough cut assembly
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1240,9 +1240,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-012-rough-cut
   - Worktree: worktrees/TASK-VID-012/
   - Acceptance: full episode assembles from shot plan + archived assets; `mmcs rough-cut` wired; 16:9 AND 9:16 rough cuts render (acceptance §32) on fixture project; `npx vitest run packages/remotion-runtime/src/rough-cut` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-VID-013 — Selective shot replacement
+- [ ]  TASK-VID-013 — Selective shot replacement
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1253,7 +1253,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: replace one shot (new asset/trim) without regenerating unaffected shots — composition diff test proves only the targeted shot's inputs change; `mmcs retry-shot <id>` wired; `npx vitest run packages/remotion-runtime/src/shot-replacement` green.
   - Status: READY
 
-- [ ] TASK-VID-014 — Final render pipeline
+- [x] TASK-VID-014 — Final render pipeline
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1262,9 +1262,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-014-final-render
   - Worktree: worktrees/TASK-VID-014/
   - Acceptance: approved rough cut → final render at series/episode resolution; 720p-source upscale never labeled native 1080p (metadata flag test); `mmcs final` wired; fixture final render completes and passes VID-015 ffprobe; `npx vitest run packages/remotion-runtime/src/final-render` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-VID-015 — ffprobe integrity checks
+- [x] TASK-VID-015 — ffprobe integrity checks
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1273,9 +1273,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-015-ffprobe
   - Worktree: worktrees/TASK-VID-015/
   - Acceptance: ffprobe wrapper reports codec/duration/resolution/bitrate; integrity check fails on corrupted fixture (truncated file test); every render output validated before ARCHIVED; `npx vitest run packages/remotion-runtime/src/ffprobe` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-VID-016 — Video frame extraction for QC
+- [x] TASK-VID-016 — Video frame extraction for QC
   - Workflow: WF08
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1284,11 +1284,11 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-VID-016-frame-extraction
   - Worktree: worktrees/TASK-VID-016/
   - Acceptance: representative frames extracted from any generated clip for image-vision QC (spec §20 fallback path); frame count/timestamps configurable; upstream frames.mjs discipline reused; `npx vitest run packages/remotion-runtime/src/frame-extraction` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 ## WF09B — QC / ROUTING (QC-* live in WF09)
 
-- [ ] TASK-QC-001 — Per-shot visual QC schema
+- [x] TASK-QC-001 — Per-shot visual QC schema
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1297,7 +1297,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-001-qc-schema
   - Worktree: worktrees/TASK-QC-001/
   - Acceptance: QC result schema covers all spec §20 checks (identity, face consistency, skin tone, hair, wardrobe, accessories, anatomy, props, location, lighting continuity, camera, action, artifacts, lip/face, start/end state, neighbor continuity, dialogue suitability); verdict + evidence fields versioned; `npx vitest run packages/qc/src/schema` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
 - [ ] TASK-QC-002 — Character identity comparison
   - Workflow: WF09
@@ -1310,7 +1310,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: extracted frame vs canonical identity asset comparison via vision-model interface (registry-selected); mismatch verdict on doctored fixture; `npx vitest run packages/qc/src/identity` green (mocked vision model).
   - Status: BUILDER_DONE
 
-- [ ] TASK-QC-003 — Wardrobe/hair/prop checks
+- [ ]  TASK-QC-003 — Wardrobe/hair/prop checks
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1319,9 +1319,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-003-wardrobe-check
   - Worktree: worktrees/TASK-QC-003/
   - Acceptance: active appearance version (hair/wardrobe/props) verified against shot spec requirements; wrong-wardrobe fixture flagged; `npx vitest run packages/qc/src/wardrobe` green.
-  - Status: READY
+  - Status: PASS
 
-- [ ] TASK-QC-004 — Continuity neighbor check
+- [ ]  TASK-QC-004 — Continuity neighbor check
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1330,9 +1330,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-004-continuity
   - Worktree: worktrees/TASK-QC-004/
   - Acceptance: neighboring shots compared against each other + current Series Bible state (spec §11); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.
-  - Status: READY
+  - Status: PASS
 
-- [ ] TASK-QC-005 — Video direct vs extracted-frame route
+- [ ]  TASK-QC-005 — Video direct vs extracted-frame route
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1343,7 +1343,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: video-capable model → direct video review; otherwise FFmpeg frame extraction → image-vision QC; route selection from capability profile (both branches tested); `npx vitest run packages/qc/src/route` green.
   - Status: READY
 
-- [ ] TASK-QC-006 — Retry policy
+- [x]  TASK-QC-006 — Retry policy
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1352,7 +1352,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-006-retry-policy
   - Worktree: worktrees/TASK-QC-006/
   - Acceptance: targeted repair of affected shot only — never whole-episode regeneration (test proves single-shot scope); retry bounded by cost policy; `npx vitest run packages/qc/src/retry` green.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-QC-007 — Agnes Flash acceptance route
   - Workflow: WF09
@@ -1365,7 +1365,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure → one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.
   - Status: BUILDER_DONE
 
-- [ ] TASK-QC-008 — Agnes regular fallback
+- [x]  TASK-QC-008 — Agnes regular fallback
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1374,9 +1374,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-008-agnes-regular-fallback
   - Worktree: worktrees/TASK-QC-008/
   - Acceptance: Flash FAIL after retry → Agnes Video 2.5 regular escalation; fallback trigger conditions tested; `npx vitest run packages/qc/src/routes/agnes-regular` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-QC-009 — Seedance fallback
+- [x]  TASK-QC-009 — Seedance fallback
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1385,9 +1385,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-009-seedance-fallback
   - Worktree: worktrees/TASK-QC-009/
   - Acceptance: reference/identity problem persists after Agnes regular → Seedance 2.0 Mini escalation; mode constraints honored on fallback requests; `npx vitest run packages/qc/src/routes/seedance` green.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-QC-010 — Wan hero/complex fallback
+- [ ]  TASK-QC-010 — Wan hero/complex fallback
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1409,7 +1409,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: automated routes exhausted → shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.
   - Status: BLOCKED
 
-- [ ] TASK-QC-012 — Final episode QC
+- [x]  TASK-QC-012 — Final episode QC
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1418,11 +1418,11 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-012-final-episode-qc
   - Worktree: worktrees/TASK-QC-012/
   - Acceptance: full-episode QC runs before rough-cut presentation; production report data collected (runtime, aspect/resolution, providers/models, generated/accepted/rejected seconds, retries, cost, quota, characters, canon changes, final URL, QC status — spec §21); `npx vitest run packages/qc/src/final-episode` green.
-  - Status: READY
+  - Status: MERGED
 
 ## WF10 — SKILLS / RECOVERY / INTEGRATION / RELEASE
 
-- [ ] TASK-SKL-001 — Canonical portable Skill
+- [x] TASK-SKL-001 — Canonical portable Skill
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1431,9 +1431,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-SKL-001-canonical-skill
   - Worktree: worktrees/TASK-SKL-001/
   - Acceptance: AgentSkills-style SKILL.md concise frontmatter; all 25 required behaviors of spec §27 teachable; references hold detail; no secrets/hard-coded credentials (secret-scan grep clean); `bash skills/mini-movie-creator/scripts/mmcs-status.sh` exits 0 against a stub state; SKILL.md ≤ 500 lines.
-  - Status: BUILDER_DONE
+  - Status: MERGED
 
-- [ ] TASK-SKL-002 — Claude project install
+- [ ]  TASK-SKL-002 — Claude project install
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1442,9 +1442,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-SKL-002-claude-project-install
   - Worktree: worktrees/TASK-SKL-002/
   - Acceptance: `.claude/skills/mini-movie-creator` resolves to canonical source; `claude` loads it; non-destructive dry run of `/mini-movie-creator status` documented; install script idempotent (second run no-op); `bash integrations/claude/project-install.sh --check` exits 0.
-  - Status: BUILDER_DONE
+  - Status: QC_FIXING
 
-- [ ] TASK-SKL-003 — Claude personal install
+- [ ]  TASK-SKL-003 — Claude personal install
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1455,7 +1455,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: backup-before-overwrite logic (existing personal skill never destroyed without backup/confirmation); symlink to canonical source; verified in NEW session outside repo; documented skill-discovery root; `bash integrations/claude/personal-install.sh --check` exits 0.
   - Status: READY
 
-- [ ] TASK-SKL-004 — Claude-nine verification
+- [ ]  TASK-SKL-004 — Claude-nine verification
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1466,7 +1466,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: fresh claude-nine session invokes `/mini-movie-creator status` with same engine/state (no copied logic); actual skill discovery root (~/.claude-nine/skills/ primary + sync from ~/.claude/skills/) documented; verified behavior recorded, never invented; `bash integrations/claude/nine-verify.sh` exits 0.
   - Status: READY
 
-- [ ] TASK-SKL-005 — OpenClaw workspace install
+- [ ]  TASK-SKL-005 — OpenClaw workspace install
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1477,7 +1477,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: packaging at integrations/openclaw/mini-movie-creator/ (SKILL.md + references/scripts, calls same CLI/DB — no engine fork); active workspace resolved from OpenClaw config (never guessed); install via current `openclaw skills install` flow or workspace placement; `openclaw skills list` shows mini-movie-creator.
   - Status: READY
 
-- [ ] TASK-SKL-006 — OpenClaw global optional install
+- [x]  TASK-SKL-006 — OpenClaw global optional install
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1486,9 +1486,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-SKL-006-openclaw-global
   - Worktree: worktrees/TASK-SKL-006/
   - Acceptance: optional global install form documented + tested; workspace install remains the supported default; uninstall/rollback path verified; `bash integrations/openclaw/global-install.sh --check` exits 0.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-SKL-007 — OpenClaw invocation test
+- [x]  TASK-SKL-007 — OpenClaw invocation test
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1497,9 +1497,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-SKL-007-openclaw-invocation
   - Worktree: worktrees/TASK-SKL-007/
   - Acceptance: explicit invocation from an OpenClaw agent reaches the same mmcs engine + project state; skill watcher pickup verified (not assumed); `openclaw skills check` passes; test evidence recorded in docs/openclaw-skill-verification.md.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-REC-001 — Checkpoint service wiring
+- [x] TASK-REC-001 — Checkpoint service wiring
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1508,7 +1508,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-REC-001-checkpoint-wiring
   - Worktree: worktrees/TASK-REC-001/
   - Acceptance: checkpoint cadence enforced (every material transition, before/after compaction, before/after batch merge, session end, every watchdog cycle — spec §28); atomic write verified under concurrent writers; `npx vitest run packages/core/src/recovery` + integration script exit 0.
-  - Status: READY
+  - Status: MERGED
 
 - [ ] TASK-REC-002 — PreCompact hook
   - Workflow: WF10
@@ -1576,7 +1576,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: exit 2 + continue instruction when teammate owns ACTIVE/QC_FIXING task; directs to claim next compatible READY task in same workflow; allows idle when no useful work; both-branch tests pass.
   - Status: READY
 
-- [ ] TASK-REC-008 — Watchdog Skill/loop
+- [x]  TASK-REC-008 — Watchdog Skill/loop
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1585,9 +1585,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-REC-008-watchdog
   - Worktree: worktrees/TASK-REC-008/
   - Acceptance: watchdog implements runbook §7.1 checks (locks state/locks/watchdog.lock; verifies workflows/agents/worktrees vs recorded; enforces 10/500; refills under-capacity IMMEDIATELY — never merely reports; pings stalled; kills duplicates; ensures BUILDER_DONE has Sonnet QC; pushes PASS to queue; updates build-status.md + ledger + atomic checkpoint); `--selftest` with an artificially underfilled workflow detects + flags refill; `npx vitest run scripts/orchestration/watchdog.test.ts` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-REC-009 — Batch merge Skill/loop
+- [x] TASK-REC-009 — Batch merge Skill/loop
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1596,9 +1596,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-REC-009-batch-merge
   - Worktree: worktrees/TASK-REC-009/
   - Acceptance: implements runbook §7.2 (locks state/locks/merge.lock; admits only Sonnet-QC-PASS with passing tests; orders by dependency/conflict risk; batch-merges to integration in dedicated merge workflow; affected-area regression + secret scan before push; no QC PASS = no merge); dry-run mode test on fixture queue; `npx vitest run scripts/orchestration/batch-merge.test.ts` green.
-  - Status: READY
+  - Status: MERGED
 
-- [ ] TASK-REC-010 — Restart simulation
+- [ ]  TASK-REC-010 — Restart simulation
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1607,7 +1607,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-REC-010-restart-sim
   - Worktree: worktrees/TASK-REC-010/
   - Acceptance: simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission → resume polls existing task ID (no resubmit — spec §32 recovery acceptance); simulation script exits 0.
-  - Status: BUILDER_DONE
+  - Status: PASS
 
 - [ ] TASK-REC-011 — Auto-compact simulation
   - Workflow: WF10

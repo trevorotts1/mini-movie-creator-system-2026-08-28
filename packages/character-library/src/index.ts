@@ -48,3 +48,6 @@ export {
   InMemoryGlobalCharacterReader,
   InMemorySeriesCastStore,
 } from "./cast/index.js";
+
+export * from "./locations/index.js";
+export { isAtOrAfter } from "./wardrobe/index.js";

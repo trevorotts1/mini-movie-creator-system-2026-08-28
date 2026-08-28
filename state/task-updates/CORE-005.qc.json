@@ -1,0 +1,15 @@
+{
+  "taskId": "CORE-005",
+  "phase": "PASS",
+  "commit": "a5ca06472a67c087275fcca3a8184063960fc92a",
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "rebaseCommit": "0add1f80074ea4a39b20ac5bf597275d9a99ac45",
+  "checksRun": "npx vitest run packages/database/src/repositories/characters (27 passed); npx vitest run packages/database (98 passed/8 files); npx vitest run full repo (849 passed/233 files); npx tsc --noEmit across all workspaces clean; independent SQL probes: PRAGMA table_info GHL columns, sqlite_master triggers, UNIQUE constraints, sha256 CHECK",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Second QC pass (first pass fixed 2: typed appearance-state validation, ledger contains-assertion). This pass fixed 1: resolveForEpisode string-compared episode labels (S01E08>=S01E10 and S02E03>=S10E01 true lexicographically -> wrong canon) -> numeric episodeNumber mirroring CHAR-006, time-only versions skip episode queries, 4 regression tests. Verified non-defects: sha256 CHECK lowercase per CHAR-002 producers, UNIQUE(character_id,version_label) present on both history tables. Rebase onto origin/integration clean: merged project/series/episode (CORE-004) and character/location/appearance (CORE-005) schemas and registries.",
+  "blockers": []
+}

@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-002",
+  "phase": "PASS",
+  "commit": "70423b0",
+  "checksRun": "node node_modules/vitest/vitest.mjs run packages/providers/src/agnes/profiles/image; node node_modules/vitest/vitest.mjs run; tsc --noEmit (packages/providers); live doc verification via https://wiki.agnes-ai.com/en/docs/agnes-image-21-flash and /en/docs/pricing",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:10:00Z",
+  "notes": "Fixed: extra_body.image-only wire placement (top-level image was undocumented), sizeDefault relabeled PROVISIONAL (docs state no default). 29/29 + 830/830 green.",
+  "blockers": []
+}

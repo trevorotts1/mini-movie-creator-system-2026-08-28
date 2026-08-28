@@ -1,6 +1,8 @@
 import type { Migration } from "./types.js";
 import { baselineMigrations } from "./000-init/index.js";
 import { projectSchemaMigrations } from "./010-project-series-episode/index.js";
+import { characterMigrations } from "./020-characters/index.js";
+import { scenesMigrations } from "./030-scenes-shots/index.js";
 
 /**
  * The ordered MMCS migration list. Bands are appended by their owning
@@ -9,4 +11,9 @@ import { projectSchemaMigrations } from "./010-project-series-episode/index.js";
  * directory under `migrations/` and is registered here exactly once.
  * The runner rejects duplicate ids, so band collisions fail loudly.
  */
-export const MIGRATIONS: readonly Migration[] = [...baselineMigrations, ...projectSchemaMigrations];
+export const MIGRATIONS: readonly Migration[] = [
+  ...baselineMigrations,
+  ...projectSchemaMigrations,
+  ...characterMigrations,
+  ...scenesMigrations,
+];
