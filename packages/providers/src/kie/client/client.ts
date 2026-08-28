@@ -88,8 +88,6 @@ export interface KieRequest {
   body?: unknown;
 }
 
-const REDACTED = "[REDACTED]";
-
 /**
  * HTTP client for the Kie API. One instance per configured key; safe to share
  * across adapters. Bearer auth from config; per-attempt timeout; bounded
@@ -127,10 +125,18 @@ export class KieClient {
 
   private readonly fetchImpl: KieFetch;
 
-  /** Build the full URL (path + query) for a request. */
+  /**
+   * Build the full URL (path + query) for a request. The path MUST stay on the
+   * configured base origin: `new URL(path, base)` would let an absolute URL or
+   * a protocol-relative path ("//evil.example/x") override the host and leak
+   * the Bearer key to a foreign origin, so any such path is rejected.
+   */
   private url(req: KieRequest): string {
     const base = this.cfg.baseUrl;
     const url = new URL(req.path, base.endsWith("/") ? base : base + "/");
+    if (url.origin !== new URL(base).origin) {
+      throw new Error(`KieClient path must stay on the configured base origin (got ${url.origin})`);
+    }
     if (req.query) {
       for (const [key, value] of Object.entries(req.query)) {
         if (value !== undefined && value !== null && value !== "") {
@@ -329,12 +335,15 @@ export class KieClient {
     return new KieApiError({ kind: "network", message: `Kie request failed: ${detail}`, attempt });
   }
 
-  /** Exponential backoff; 429 honors a server Retry-After when sane. */
+  /** Max plain-backoff delay (matches the Retry-After cap). */
+  private static readonly MAX_BACKOFF_MS = 30_000;
+
+  /** Exponential backoff (capped); 429 honors a server Retry-After when sane. */
   private backoffFor(attempt: number, error: KieApiError): number {
     if (error.kind === "rate-limited" && error.retryAfterSec !== undefined && error.retryAfterSec > 0) {
-      return Math.min(error.retryAfterSec * 1000, 30_000);
+      return Math.min(error.retryAfterSec * 1000, KieClient.MAX_BACKOFF_MS);
     }
-    return this.cfg.retryBackoffMs * 2 ** (attempt - 1);
+    return Math.min(this.cfg.retryBackoffMs * 2 ** (attempt - 1), KieClient.MAX_BACKOFF_MS);
   }
 
   /** Key-safe string form of this client's identity (for logs). */

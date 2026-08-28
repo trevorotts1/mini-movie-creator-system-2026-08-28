@@ -270,6 +270,26 @@ describe("KieClient — key never leaks", () => {
     await client.recordInfo("task_5");
     expect(calls[0]!.url).not.toContain(API_KEY);
   });
+
+  it("rejects an absolute-URL path that would leave the base origin (no key exfiltration)", async () => {
+    const { fetch, calls } = scriptedFetch([]);
+    const client = makeClient(fetch);
+    // Fail fast on caller misuse (same contract as config validation); fetch
+    // must never fire, so the Authorization header never leaves the origin.
+    await expect(
+      client.request({ path: "https://evil.example/api/v1/jobs/createTask", body: {} }),
+    ).rejects.toThrow(/base origin/);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("rejects a protocol-relative path that would leave the base origin", async () => {
+    const { fetch, calls } = scriptedFetch([]);
+    const client = makeClient(fetch);
+    await expect(
+      client.request({ path: "//evil.example/api/v1/jobs/createTask", body: {} }),
+    ).rejects.toThrow(/base origin/);
+    expect(calls).toHaveLength(0);
+  });
 });
 
 describe("KieClient — backoff behavior", () => {
@@ -313,5 +333,27 @@ describe("KieClient — backoff behavior", () => {
     );
     await client.createTask({ model: "m", input: {} });
     expect(sleeps).toEqual([5000]);
+  });
+
+  it("caps exponential backoff at 30s even for huge configured backoff", async () => {
+    const sleeps: number[] = [];
+    const { fetch } = scriptedFetch([
+      jsonResponse(500, { code: 500, msg: "boom" }),
+      jsonResponse(500, { code: 500, msg: "boom" }),
+      jsonResponse(200, ENVELOPE_OK),
+    ]);
+    const client = new KieClient(
+      {
+        apiKey: API_KEY,
+        baseUrl: "https://mock.kie.test",
+        retryBackoffMs: 20_000, // 20s → 40s uncapped; must clamp to 30s
+        sleep: async (ms) => {
+          sleeps.push(ms);
+        },
+      },
+      { fetch },
+    );
+    await client.createTask({ model: "m", input: {} });
+    expect(sleeps).toEqual([20_000, 30_000]);
   });
 });
