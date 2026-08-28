@@ -158,6 +158,42 @@ describe("assembleRoughCut", () => {
     );
     expect(timeline.totalFrames).toBe(1);
   });
+
+  it("keeps back-to-back placement after a clamped sub-frame shot (no overlap)", () => {
+    const timeline = assembleRoughCut(
+      makePlan({
+        shots: [
+          {
+            shotId: "tiny",
+            sequenceIndex: 0,
+            targetDurationSeconds: 0.001,
+            layerKind: "graphics",
+          },
+          {
+            shotId: "big",
+            sequenceIndex: 1,
+            targetDurationSeconds: 1,
+            layerKind: "graphics",
+          },
+        ],
+      }),
+    );
+    // Shot 1 mounts at the clamped out frame of shot 0 — never at frame 0
+    // (which would overlap the clamped 1-frame segment).
+    expect(timeline.segments[0]!).toMatchObject({
+      sequenceFrom: 0,
+      durationInFrames: 1,
+      globalOutFrame: 1,
+    });
+    expect(timeline.segments[1]!.sequenceFrom).toBe(timeline.segments[0]!.globalOutFrame);
+    expect(timeline.segments[1]!.sequenceFrom).toBeGreaterThan(0);
+    // Back-to-back invariant holds over the whole timeline.
+    for (let i = 1; i < timeline.segments.length; i++) {
+      expect(timeline.segments[i]!.sequenceFrom).toBe(
+        timeline.segments[i - 1]!.globalOutFrame,
+      );
+    }
+  });
 });
 
 describe("validateRoughCutPlan", () => {
@@ -234,6 +270,36 @@ describe("validateRoughCutPlan", () => {
   it("rejects an empty shot list and empty ids", () => {
     expect(() => validateRoughCutPlan(makePlan({ shots: [] }))).toThrow(/shots/);
     expect(() => validateRoughCutPlan(makePlan({ episodeCode: "  " }))).toThrow(/episodeCode/);
+  });
+
+  it("rejects episode codes that could escape the output directory", () => {
+    expect(() => validateRoughCutPlan(makePlan({ episodeCode: "../S01E01" }))).toThrow(
+      /episodeCode/,
+    );
+    expect(() => validateRoughCutPlan(makePlan({ episodeCode: "S01E01/../x" }))).toThrow(
+      /episodeCode/,
+    );
+    expect(() =>
+      validateRoughCutPlan(makePlan({ episodeCode: "S01E01\n--help" })),
+    ).toThrow(/episodeCode/);
+  });
+
+  it("rejects custom formats with malformed resolutions", () => {
+    expect(() =>
+      validateRoughCutPlan(
+        makePlan({ format: "custom", custom: { width: -1, height: 1080 } }),
+      ),
+    ).toThrow(/resolution/);
+    expect(() =>
+      validateRoughCutPlan(
+        makePlan({ format: "custom", custom: { width: 1.5, height: 1080 } }),
+      ),
+    ).toThrow(/resolution/);
+    expect(() =>
+      validateRoughCutPlan(
+        makePlan({ format: "custom", custom: { width: 0, height: 1080 } }),
+      ),
+    ).toThrow(/resolution/);
   });
 });
 

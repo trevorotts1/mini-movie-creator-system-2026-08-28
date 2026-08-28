@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-012",
+  "phase": "PASS",
+  "commit": "",
+  "checksRun": "vitest run packages/remotion-runtime/src/rough-cut (44/44); tsc --noEmit packages/remotion-runtime (exit 0); security pass on owned paths",
+  "defectsFound": 5,
+  "defectsFixed": 5,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:10:00Z",
+  "notes": "Fixed sub-frame overlap in back-to-back math, episodeCode path traversal, custom resolution validation gap, argv escape-seq echo, spawn timeout bounds",
+  "blockers": []
+}

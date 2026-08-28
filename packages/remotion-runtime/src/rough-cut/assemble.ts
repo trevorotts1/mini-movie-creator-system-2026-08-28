@@ -61,6 +61,14 @@ const LAYER_KINDS: readonly RoughCutLayerKind[] = [
 
 const FORMATS: readonly MasterFormat[] = ["16:9", "9:16", "custom"];
 
+/**
+ * Episode codes are data, not just display strings: they name the preview
+ * file (`planRoughCutRender` joins the derived filename under `outputDir`).
+ * A code outside this shape could escape the output directory (spec §29:
+ * untrusted plan data must never reach a filesystem path unvalidated).
+ */
+const EPISODE_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+
 function assertNonEmptyString(value: unknown, label: string): string {
   if (typeof value !== "string" || value.trim() === "") {
     throw new RoughCutError("PLAN_INVALID", `${label} must be a non-empty string`);
@@ -137,11 +145,20 @@ export function validateRoughCutPlan(plan: RoughCutPlan): void {
   assertNonEmptyString(plan.seriesId, "seriesId");
   assertNonEmptyString(plan.episodeId, "episodeId");
   assertNonEmptyString(plan.episodeCode, "episodeCode");
+  if (!EPISODE_CODE_PATTERN.test(plan.episodeCode)) {
+    throw new RoughCutError(
+      "PLAN_INVALID",
+      `episodeCode must match ${EPISODE_CODE_PATTERN} (safe filename fragment)`,
+    );
+  }
   if (!FORMATS.includes(plan.format)) {
     throw new RoughCutError("PLAN_INVALID", `format must be one of ${FORMATS.join(", ")}`);
   }
-  if (plan.format === "custom" && !plan.custom) {
-    throw new RoughCutError("PLAN_INVALID", 'format "custom" requires a custom resolution');
+  if (plan.format === "custom") {
+    if (!plan.custom) {
+      throw new RoughCutError("PLAN_INVALID", 'format "custom" requires a custom resolution');
+    }
+    resolutionForFormat("custom", plan.custom);
   }
   if (!Array.isArray(plan.shots) || plan.shots.length === 0) {
     throw new RoughCutError("PLAN_INVALID", "plan.shots must be a non-empty array");
@@ -211,13 +228,19 @@ export function assembleRoughCut(plan: RoughCutPlan): RoughCutTimeline {
   let cumulativeSeconds = 0;
   for (const shot of ordered) {
     const sequenceFrom = framesForSeconds(cumulativeSeconds, fps);
-    const globalOutFrame = framesForSeconds(
+    const roundedOut = framesForSeconds(
       cumulativeSeconds + shot.targetDurationSeconds,
       fps,
     );
     // A plan is never allowed to emit a zero-frame segment: an episode with
     // a zero-duration shot cannot render it (Remotion durations are >= 1).
-    const durationInFrames = Math.max(1, globalOutFrame - sequenceFrom);
+    // Clamp the DURATION, not the boundary: shot n+1 must still mount at the
+    // unclamped cumulative boundary or a clamped sub-frame shot (e.g.
+    // round(0.001s * 30) = 0) would overlap the next shot, which mounts at
+    // frame 0 as well. Clamping the duration keeps boundaries contiguous:
+    // next shot's sequenceFrom = max(cumBoundary, previous globalOutFrame),
+    // which equals previous globalOutFrame when the clamp stretched.
+    const durationInFrames = Math.max(1, roundedOut - sequenceFrom);
     segments.push({
       shotId: shot.shotId,
       sequenceIndex: shot.sequenceIndex,
@@ -229,6 +252,22 @@ export function assembleRoughCut(plan: RoughCutPlan): RoughCutTimeline {
       targetDurationSeconds: shot.targetDurationSeconds,
     });
     cumulativeSeconds += shot.targetDurationSeconds;
+  }
+
+  // Back-to-back guarantee: a clamped segment may extend past its own
+  // cumulative boundary; every subsequent shot mounts at the later of its
+  // boundary and the previous segment's out frame. The first segment never
+  // needs a shift (it always mounts at round(0 * fps) = 0).
+  for (let i = 1; i < segments.length; i++) {
+    const prev = segments[i - 1]!;
+    const cur = segments[i]!;
+    if (cur.sequenceFrom < prev.globalOutFrame) {
+      segments[i] = {
+        ...cur,
+        sequenceFrom: prev.globalOutFrame,
+        globalOutFrame: prev.globalOutFrame + cur.durationInFrames,
+      };
+    }
   }
 
   const totalFrames = segments.reduce((sum, s) => sum + s.durationInFrames, 0);

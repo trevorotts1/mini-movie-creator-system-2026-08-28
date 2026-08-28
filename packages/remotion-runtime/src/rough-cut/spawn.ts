@@ -27,7 +27,16 @@ export function spawnFile(
   args: readonly string[],
   options: SpawnOptions = {},
 ): Promise<SpawnResult> {
-  const timeoutMs = options.timeoutMs ?? 30_000;
+  const rawTimeout = options.timeoutMs ?? 30_000;
+  // Timeout bounds: a timeout ≤ 0 would fire before the child ever gets
+  // scheduled (always-kill), and an absurd timeout would pin the process
+  // table for days. Validate before arming the timer.
+  if (!Number.isFinite(rawTimeout) || rawTimeout <= 0 || rawTimeout > 3_600_000) {
+    return Promise.reject(
+      new Error(`invalid timeoutMs ${String(rawTimeout)}: must be in (0, 3600000]`),
+    );
+  }
+  const timeoutMs = rawTimeout;
   return new Promise((resolve, reject) => {
     const child = spawn(file, [...args], { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";

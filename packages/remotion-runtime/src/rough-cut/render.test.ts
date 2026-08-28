@@ -21,6 +21,7 @@ import {
   renderRoughCut,
   type RoughCutProbeReport,
 } from "./render.js";
+import { spawnFile } from "./spawn.js";
 import { ROUGH_CUT_PLAN_VERSION, type RoughCutPlan } from "./types.js";
 
 /** Small, fast fixture resolution for the ffmpeg fixture renders. */
@@ -195,5 +196,19 @@ describe("ffprobeValidateRoughCut", () => {
     writeFileSync(path, "this is not an mp4");
     const report = await ffprobeValidateRoughCut(path);
     expect(report.ok).toBe(false);
+  });
+});
+
+describe("spawnFile timeout guard", () => {
+  it("rejects invalid timeoutMs instead of arming a broken timer", async () => {
+    await expect(
+      spawnFile("true", [], { timeoutMs: 0, allowNonZero: true }),
+    ).rejects.toThrow(/invalid timeoutMs/);
+    await expect(
+      spawnFile("true", [], { timeoutMs: Number.NaN, allowNonZero: true }),
+    ).rejects.toThrow(/invalid timeoutMs/);
+    await expect(
+      spawnFile("true", [], { timeoutMs: 9_999_999, allowNonZero: true }),
+    ).rejects.toThrow(/invalid timeoutMs/);
   });
 });

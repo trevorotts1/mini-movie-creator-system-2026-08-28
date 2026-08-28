@@ -14,6 +14,8 @@ import {
   executeRoughCut,
   formatRoughCutLines,
   parseRoughCutArgs,
+  quoteShell,
+  sanitizeCliText,
 } from "./cli.js";
 import { makeFfmpegFixtureAdapter } from "./render.js";
 import { ROUGH_CUT_PLAN_VERSION, type RoughCutPlan } from "./types.js";
@@ -80,6 +82,21 @@ describe("executeRoughCut", () => {
     expect(result.lines[0]).toMatch(/unknown episode 'nope'/);
   });
 
+  it("shell-quotes and sanitizes unknown-episode echoes", async () => {
+    const evil = "nope'; rm -rf /; echo 'pwn";
+    const result = await executeRoughCut([evil], () => undefined, fixtureAdapter);
+    expect(result.exitCode).toBe(1);
+    expect(result.lines[0]).toContain(`'nope'\\''; rm -rf /; echo '\\''pwn'`);
+    expect(result.lines[0]).not.toContain(evil);
+    // Terminal escape sequence never survives.
+    const esc = await executeRoughCut(
+      ["ep[31mX"],
+      () => undefined,
+      fixtureAdapter,
+    );
+    expect(esc.lines[0]).not.toContain("");
+  });
+
   it("plans without rendering under --dry-run", async () => {
     let rendered = false;
     const renderAdapter = {
@@ -138,6 +155,21 @@ describe("executeRoughCut", () => {
     const result = await executeRoughCut(["ep-1"], () => bad, fixtureAdapter);
     expect(result.exitCode).toBe(1);
     expect(result.lines[0]).toMatch(/PLAN_INVALID/);
+  });
+});
+
+describe("sanitizeCliText", () => {
+  it("strips control characters and truncates long values", () => {
+    expect(sanitizeCliText("ep-1")).toBe("ep-1");
+    expect(sanitizeCliText("ep[31m1")).toBe("ep[31m1");
+    expect(sanitizeCliText("ab")).toBe("ab");
+    expect(sanitizeCliText("x".repeat(200)).length).toBe(121);
+    expect(sanitizeCliText("x".repeat(200)).endsWith("…")).toBe(true);
+  });
+
+  it("quoteShell is safe for single-quoted shell context", () => {
+    expect(quoteShell("ep-1")).toBe("'ep-1'");
+    expect(quoteShell("a'b")).toBe(`'a'\\''b'`);
   });
 });
 

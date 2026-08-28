@@ -42,7 +42,32 @@ export const USAGE_ROUGH_CUT = [
   "Exit 0 on success, 1 when the plan is invalid or a step fails.",
 ].join("\n");
 
-/** Parsed flags for `mmcs rough-cut`. */
+/** Maximum display width for untrusted ids echoed into CLI lines. */
+const MAX_ID_DISPLAY = 120;
+
+/**
+ * Escape an untrusted value for a single-quoted shell snippet. Episode ids
+ * come from `mmcs rough-cut <episodeId>` argv (spec §29: never executable),
+ * so any id echoed into advice text must be shell-quote-safe.
+ */
+export function quoteShell(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/**
+ * Truncate untrusted text for CLI display. Text arriving through argv or a
+ * plan is data, never control: terminal escape sequences (ANSI/OSC) and
+ * unbounded lengths must not survive into printed lines. Long values are
+ * shortened and marked; non-printable characters are stripped.
+ */
+export function sanitizeCliText(value: string, max = MAX_ID_DISPLAY): string {
+  // Strip C0/C1 control characters (including ESC, and the OSC/CSI
+  // lead-ins). Escapes are explicit here: raw control bytes in source
+  // are invisible and fragile across editors.
+  // eslint-disable-next-line no-control-regex
+  const clean = value.replace(/[\x00-\x1f\x7f-\x9f]/g, "");
+  return clean.length > max ? clean.slice(0, max) + "\u2026" : clean;
+}
 export interface RoughCutCliOptions {
   episodeId?: string;
   dryRun: boolean;
@@ -59,7 +84,12 @@ export function parseRoughCutArgs(argv: readonly string[]): RoughCutCliOptions {
     else if (arg === "--json") json = true;
     else if (!arg.startsWith("--")) positionals.push(arg);
   }
-  return { episodeId: positionals[0], dryRun, json };
+  return {
+    episodeId:
+      positionals[0] === undefined ? undefined : sanitizeCliText(positionals[0]),
+    dryRun,
+    json,
+  };
 }
 
 /** Result the handler prints; exposed for tests. */
@@ -80,10 +110,14 @@ export function formatRoughCutLines(result: {
   dialogueCount: number;
   hasTempMusic: boolean;
 }): string[] {
+  // compositionId/fileName derive from the validated episodeCode; sanitize
+  // again here so no control sequence or oversized id ever reaches a terminal.
+  const compositionId = sanitizeCliText(result.compositionId);
+  const fileName = sanitizeCliText(result.fileName);
   return [
-    `[mmcs] rough-cut: ${result.compositionId} assembled — ${result.resolution.width}x${result.resolution.height}@${result.fps}, ${result.totalFrames} frames (${result.durationSeconds.toFixed(2)}s)`,
+    `[mmcs] rough-cut: ${compositionId} assembled — ${result.resolution.width}x${result.resolution.height}@${result.fps}, ${result.totalFrames} frames (${result.durationSeconds.toFixed(2)}s)`,
     `[mmcs] rough-cut: ${result.shotCount} shot(s), ${result.dialogueCount} dialogue line(s), temp music: ${result.hasTempMusic ? "yes" : "no"}`,
-    `[mmcs] rough-cut: wrote ${result.fileName} (ffprobe-valid)`,
+    `[mmcs] rough-cut: wrote ${fileName} (ffprobe-valid)`,
   ];
 }
 
@@ -104,9 +138,13 @@ export async function executeRoughCut(
   }
   const plan = planFactory(opts.episodeId);
   if (!plan) {
+    // opts.episodeId is already sanitized by parseRoughCutArgs; quote it so
+    // the advice line is shell-safe for copy-paste.
     return {
       exitCode: 1,
-      lines: [`[mmcs] rough-cut: unknown episode '${opts.episodeId}'`],
+      lines: [
+        `[mmcs] rough-cut: unknown episode ${quoteShell(opts.episodeId)}`,
+      ],
     };
   }
   try {

@@ -33,6 +33,8 @@ export {
   executeRoughCut,
   formatRoughCutLines,
   parseRoughCutArgs,
+  quoteShell,
+  sanitizeCliText,
 } from "./cli.js";
 export type {
   CommandSpec,
