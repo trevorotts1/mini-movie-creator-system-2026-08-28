@@ -1,7 +1,7 @@
 {
   "taskId": "QC-002",
   "phase": "BUILDER_DONE",
-  "commit": "",
+  "commit": "29fc2ad",
   "testsRun": "npx vitest run packages/qc/src/identity -> 1 file, 18/18 passed; npx vitest run packages/qc -> 18/18 passed (barrel export verified); npx tsc --noEmit -p packages/qc -> clean",
   "notes": "Character identity comparison (spec 20/9/14): extracted-frame vs canonical identity asset through injected VisionModel interface; imageQc registry slot enforced, durable GHL linkage required, match/mismatch/uncertain gating (uncertain fails QC, never silent pass), mismatched attributes named in reason; MockVisionModel replays scripted verdicts; doctored-frame fixture acceptance test passes.",
   "blockers": [],
