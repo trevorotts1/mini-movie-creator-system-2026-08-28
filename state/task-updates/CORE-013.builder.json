@@ -1,0 +1,11 @@
+{
+  "taskId": "CORE-013",
+  "phase": "BUILDER_DONE",
+  "commit": "f515d20",
+  "testsRun": "npx vitest run packages/core/src/idempotency -> 24 passed (24); npx tsc --noEmit -p packages/core/tsconfig.json -> rc=0",
+  "notes": "Idempotency primitives done: atomicWriteFile/Json (temp+fsync+rename), canonical requestHash (sha256, key-order stable), IdempotencyStore/onceOnly (duplicate submit returns original result, in-process same-key serialization, temp-litter sweep, traversal-safe keys); crash-mid-write covered by temp-litter + failed-rename-preserves-prior-record + fn-crash-reruns tests.",
+  "blockers": [
+    "scaffold: repo-root vitest.config.ts is ESM but root package.json lacks \"type\":\"module\" — `npx vitest run <path>` from repo root fails on Node 26 with 'Cannot find module vitest/config' unless vitest/typescript are installed in the worktree; also tsconfig.base lacks node types (worked around via /// <reference types=\"node\" /> in owned files + local vitest.config.mts). Scaffold owner should add \"type\":\"module\" to root package.json or rename config to vitest.config.mts, and add @types/node to tsconfig.base types."
+  ],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
