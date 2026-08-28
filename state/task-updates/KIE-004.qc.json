@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-004",
+  "phase": "PASS",
+  "commit": "7dad00d",
+  "checksRun": "npx vitest run --config packages/providers/src/kie/seedance/validation/vitest.config.mts packages/providers/src/kie/seedance/validation (27/27 passed); npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie (67/67 passed, 3 files); npx tsc --noEmit -p packages/providers/tsconfig.json (clean); security pass clean",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T17:10:00Z",
+  "notes": "Verified Seedance 2.0 Mini modes and pre-flight validation. Mutually exclusive mode checks enforced, prompt and reference limit bounds verified, callback URL handling validated, pure validation logic with zero side-effects. 27/27 validation tests pass, 67/67 total kie provider tests pass, tsc clean.",
+  "blockers": []
+}
