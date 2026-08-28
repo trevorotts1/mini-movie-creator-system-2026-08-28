@@ -1,7 +1,7 @@
 {
   "taskId": "SKL-002",
   "phase": "PASS",
-  "commit": "PENDING",
+  "commit": "361c28b",
   "checksRun": "pnpm -r run typecheck (exit 0, 17/17 Done); pnpm -r run test (exit 0, 17/17 Done); npx vitest run --config integrations/claude/vitest.config.mts (45/45 PASS, exit 0); bash integrations/claude/project-install.sh --check (exit 0); bash integrations/claude/project-install.sh x2 (idempotent no-op exit 0); security scan on owned paths (no secrets, hardcoded relative symlink target, --force backup-before-replace, no unbounded retries)",
   "defectsFound": 2,
   "defectsFixed": 2,
