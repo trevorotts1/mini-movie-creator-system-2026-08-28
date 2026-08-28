@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-007",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/layers/stock -> 1 file, 18/18 passed (exit 0); npx tsc --noEmit -p packages/remotion-runtime -> clean",
+  "notes": "Stock/B-roll layer per spec §22: placeStockShots places resolved stock clips only for generic purposes (establishing/broll) on stock_broll-sourced shots; guard (evaluateStockGuard/assertStockAllowed/StockPolicyViolationError) rejects stock substitution for recurring main characters and non-generic purposes; Pexels/Pixabay adapter interfaces stubbed (createStockAdapter, StockAdapter contract) with no network code.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
