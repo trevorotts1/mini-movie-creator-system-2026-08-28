@@ -101,3 +101,22 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T~20:00Z | VID-015 | VID-015 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
 | 2026-08-28T19:38:52Z | VID-008 | regression | merger | REVERTED | 3+1 (typecheck regression surfaced post-merge) | 0 | QC_FIXING — typecheck regression: GraphicsViews.tsx(29,26) TS2345 FrameSize->number; invisible on branch because its tsconfig lacked |
 | 2026-08-28T19:38:52Z | SKL-002 | regression | merger | REVERTED | 0+1 (typecheck regression surfaced post-merge) | 0 | QC_FIXING — typecheck regression: integrations/claude/src/project-install.test.ts uses node: imports + import.meta.url without node  |
+| 2026-08-28T22:05:00Z | CAP-003 | Character-count validator | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | CAP-010 | Runtime observed capability overrides | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | CORE-007 | Provider job/asset schema | qc-batch (adopted) | PASS | 1 | 1 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | DIR-002 | Concept generator | qc-batch (adopted) | PASS | 2 | 2 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | FISH-003 | TTS generation | qc-batch (adopted) | PASS | 3 | 3 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | FISH-005 | Dialogue cache | qc-batch (adopted) | PASS | 2 | 2 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | FISH-006 | Alignment/timestamps | qc-batch (adopted) | PASS | 4 | 4 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | FISH-007 | Caption output | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | KIE-010 | Contract/smoke tests | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | QC-002 | Character identity comparison | qc-batch (adopted) | PASS | 2 | 2 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | QC-003 | Wardrobe/hair/prop checks | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | QC-004 | Continuity neighbor check | qc-batch (adopted) | PASS | 1 | 1 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | QC-010 | Wan hero/complex fallback | qc-batch (adopted) | PASS | 7 | 7 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | SKL-003 | Claude personal install | qc-batch (adopted) | PASS | 4 | 4 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | SKL-004 | Claude-nine verification | qc-batch (adopted) | PASS | 2 | 2 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | SKL-005 | OpenClaw workspace install | qc-batch (adopted) | PASS | 3 | 3 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | VID-002 | Episodic composition registry | qc-batch (adopted) | PASS | 0 | 0 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | VID-005 | Generated clip layer | qc-batch (adopted) | PASS | 1 | 1 | PASS — merged batch-7 |
+| 2026-08-28T22:05:00Z | VID-013 | Selective shot replacement | qc-batch (adopted) | PASS | 2 | 2 | PASS — merged batch-7 |
