@@ -1,0 +1,15 @@
+{
+  "taskId": "CORE-006",
+  "phase": "PASS",
+  "commit": "c3d533c",
+  "checksRun": "npx vitest run packages/database/src/repositories/shots -> 7/7 PASS (acceptance); npx vitest run (full workspace) -> 309/309 PASS; npx tsc --noEmit -p packages/database/tsconfig.json -> exit 0; DB-level smoke: STRICT type rejection + CHECK constraint enforcement + default planning_status verified (temp test, removed); secret scan clean; migration band IDs 0301-0303 verified collision-free vs 0101-0103/0201-0204/0401-0402; spec §12 field count independently re-verified as 30",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "QC PASS. Fixed: scenes.visual_source_type CHECK + VISUAL_SOURCE_TYPES omitted NATIVE_GRAPHICS (spec §22 type 4), so a legal visual-type decision could not be persisted; added value + regression test round-tripping all four §22 types. Independent spec-parse introspection test proves shots carries all 30 §12 fields (spec text lists 30, not 28). §8 keyframe strategies + scoring axes match spec. Soft cross-band TEXT refs deliberate (band independence).",
+  "blockers": [
+    "CORE-002: workspace `pnpm -r run typecheck` fails in apps/web, integrations/claude, integrations/openclaw — all three package.json declare a `typecheck` script but ship no tsconfig.json and no src/ (scaffold defect, proven present on origin/integration at 6ca3b08, unrelated to this task)."
+  ]
+}
