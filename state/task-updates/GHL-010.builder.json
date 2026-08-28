@@ -1,0 +1,9 @@
+{
+  "taskId": "GHL-010",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/media-storage/src/episode-folders → 17/17 passed (2 files); full repo npx vitest run → 818/818 passed (43 files); npx tsc --noEmit -p packages/media-storage/tsconfig.json → clean",
+  "notes": "episode-folders: search-before-create ensure of Series/<Name>/Season NN/SNNEE - <Title>/ + 9 subfolders, SQLite persistence of all IDs (episode_folders table), per-episode folderNameOverride honored, idempotent re-run (warm record short-circuit + restart adoption both tested), GhlHttp adapter over GHL-002 lister + POST /medias/folder.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:45:00Z"
+}
