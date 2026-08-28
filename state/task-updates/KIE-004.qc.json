@@ -1,0 +1,15 @@
+{
+  "taskId": "KIE-004",
+  "phase": "PASS",
+  "commit": "d00bdbf",
+  "rebasedOnto": "6ca3b08fc7e70cb0bba7746849a934e85d812db8",
+  "rebaseCommit": "fb47e6dd31a690fc58104c2ed2cb0778cf8e74cd",
+  "checksRun": "npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie/seedance (52/52 pass, 2 files); npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie (67/67 pass, 3 files); npx tsc --noEmit -p packages/providers/tsconfig.json (clean); git merge origin/integration clean (merge-tree clean)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "sonnet-rebase-fixer",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Merged origin/integration into task/TASK-KIE-004-seedance-modes (PROBE-SONNET). Added callback URL validation and buildSeedanceTaskRequest helper. Seedance modes validation clean. 52/52 seedance tests green, 67/67 kie provider tests green, tsc clean.",
+  "blockers": []
+}
