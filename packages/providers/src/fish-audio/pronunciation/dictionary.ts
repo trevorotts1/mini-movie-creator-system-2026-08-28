@@ -214,7 +214,7 @@ export class PronunciationDictionaryBuilder {
   }
 }
 
-/** Serialize a dictionary to a JSON-safe plain object (persisted per character). */
+/** Serialize a dictionary to a JSON string (persisted per character). */
 export function serializePronunciationDictionary(
   dictionary: PronunciationDictionary,
 ): string {
