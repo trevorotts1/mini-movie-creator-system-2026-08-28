@@ -1,0 +1,13 @@
+{
+  "taskId": "SKL-006",
+  "phase": "PASS",
+  "commit": "33aba39ea519a9acca781dfb658434a3b646a33a",
+  "checksRun": "bash integrations/openclaw/global-install.sh --check (exit 0); ./node_modules/.bin/vitest run --config integrations/openclaw/global-install/vitest.config.ts integrations/openclaw/global-install/global-install.test.ts (14/14); full vitest regression via same config (422/422, 25 files); bash -n syntax; shellcheck (exit 0); tsc --noEmit --strict on test file (exit 0)",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:00:00Z",
+  "notes": "Fixed 4 defects: printed rollback mv moved wrong path (now restores target/SKILL.md and is executed in tests); install failure destroyed prior global copy (now restores backup on install/verify failure); uninstall blocked when CLI missing (now filesystem-only with skipped inventory verify); backup timestamp collision (now -$$ suffix) + empty --source= guard. Added 3 regression tests (rollback execution, install-failure restore, uninstall without CLI).",
+  "blockers": []
+}
