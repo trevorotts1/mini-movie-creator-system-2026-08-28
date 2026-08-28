@@ -1,36 +1,31 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T12:30:00Z
-**Session Type:** Planning Complete (WF01 Pre-Launch)
+**Updated:** 2026-08-28T14:38:00Z
+**Session Type:** Batch Merge Cycle 3 Complete
 
 ---
 
 ## Current Status
 
-- **Phase:** Planning complete; DAG, ownership, and task state synchronized across all 149 tasks.
-- **Next Action:** Launch Wave 1 build workflows.
-- **Active Agents Count:** 0
-- **Total Completed Agents:** 4 (Baseline Agent, Environment Agent, Capabilities Agent, Planning Verification Agent)
+- **Phase:** Batch Merge Cycle 3 complete. 16 tasks merged (CAP-004, CHAR-007, CORE-001, CORE-004, FISH-001, GHL-001, KIE-004, KIE-009, CHAR-003, CHAR-010, CHAR-012, FISH-002, GHL-002, GHL-007, CHAR-004, FISH-004); 8 QC-PASS tasks conflict-blocked pending rebase (CAP-007, CAP-009, CORE-005, CORE-006, CORE-007, KIE-001, CAP-010, CHAR-011).
+- **Integration HEAD:** c7d4892 (pushed to origin)
+- **Regression Result:** PASS (all package test suites green; typecheck 0 errors across all 17 workspaces).
+- **Next Action:** Rebase 8 conflict-blocked branches and re-merge next cycle; continue dispatch of newly unblocked tasks.
 
-## Phases Completed
+## Merged Tasks (Batch 3)
+- CAP-004, CHAR-007, CORE-001, CORE-004, FISH-001, GHL-001, KIE-004, KIE-009, CHAR-003, CHAR-010, CHAR-012, FISH-002, GHL-002, GHL-007, CHAR-004, FISH-004
 
-1. **Repo Init:** Confirmed fork relationship to `hassancs91/claude-faceless-shorts-creator`, verified upstream HEAD `773054b`, MIT license preserved.
-2. **Discovery & Validation:** Baseline report generated (`docs/BASELINE-REPORT.md`), clean-clone smoke render verified.
-3. **Environment Documentation:** Local runtime mapped (`docs/environment/ENVIRONMENT.md`), claude-nine / 9Router capabilities documented (`docs/environment/CLAUDE-NINE-CAPABILITIES.md`).
-4. **Control Plane Initialization:** Directories created, 9 state JSON files populated and validated, 12 root control markdown files written.
-5. **Planning & Task Decomposition:** All 149 task definitions validated across `todo.md`, `task-graph.md`, `ownership.md`, `spec.md`, `state/tasks.json`, and `state/dependencies.json`. 130 READY tasks, 19 BLOCKED tasks.
+## QC PASS, Conflict-Blocked (rebase needed)
+- CAP-007, CAP-009, CAP-010 (capability-registry index.ts / lockfile)
+- CORE-005, CORE-006, CORE-007 (database migrations & repositories index.ts)
+- KIE-001 (docs/provider-capabilities/kie.md)
+- CHAR-011 (character-library index.ts)
 
-## Next Steps
+## Merged Tasks (Batch 2)
+- CAP-005, CAP-006, CAP-008, KIE-002, KIE-003
 
-1. Launch wave-1 build workflows across 10 parallel tracks (WF01–WF10).
-2. Spawn builder agents (Opus) paired with QC checkers (Sonnet).
-3. Monitor progress via watchdog loop and execute batch merges into `origin/integration`.
-
----
-
-## Active Agents Summary
-
-| Agent ID | Role | Workflow | Model | Status | Started (UTC) |
-|---|---|---|---|---|---|
-| None | Idle / Pre-Launch | — | — | Idle | — |
+## Merged Tasks (Batch 1)
+- CORE-002, CORE-003, CORE-010, CORE-011, CORE-012, CORE-013, CORE-014
+- CAP-001, CAP-002
+- CHAR-001, CHAR-002, CHAR-006, CHAR-008, CHAR-009
