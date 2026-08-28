@@ -180,27 +180,41 @@ describe("checkpoint wiring (REC-001)", () => {
         `,
         "utf8",
       );
-      const { execFile } = await import("node:child_process");
-      // tsx lives in the npx cache on this box (no local dependency); resolve
-      // it from the HOME-relative npx cache so the test is portable-ish.
-      const tsxCli = join(
-        process.env.HOME ?? "",
-        ".npm",
-        "_npx",
-        "fd45a72a545557e9",
-        "node_modules",
-        "tsx",
-        "dist",
-        "cli.mjs",
-      );
+      const { execFile, execFileSync } = await import("node:child_process");
+      // Resolve tsx CLI dynamically or fall back to npx
+      let tsxCli = "";
+      try {
+        const out = execFileSync("npx", ["which", "tsx"], { encoding: "utf8" }).trim();
+        if (out) tsxCli = out;
+      } catch {
+        // search npx cache
+        const glob = join(process.env.HOME ?? "", ".npm", "_npx", "fd45a72a545557e9", "node_modules", "tsx", "dist", "cli.mjs");
+        tsxCli = glob;
+      }
       const run = (id: string) =>
         new Promise<string>((resolve) => {
-          execFile(
-            process.execPath,
-            [tsxCli, scriptPath, id, dir],
-            { timeout: 90_000 },
-            (err, stdout, stderr) => (err ? resolve(`ERR:${stderr}`) : resolve(stdout)),
-          );
+          if (tsxCli && !tsxCli.endsWith(".mjs")) {
+            execFile(
+              tsxCli,
+              [scriptPath, id, dir],
+              { timeout: 90_000 },
+              (err, stdout, stderr) => (err ? resolve(`ERR:${stderr}`) : resolve(stdout)),
+            );
+          } else if (tsxCli) {
+            execFile(
+              process.execPath,
+              [tsxCli, scriptPath, id, dir],
+              { timeout: 90_000 },
+              (err, stdout, stderr) => (err ? resolve(`ERR:${stderr}`) : resolve(stdout)),
+            );
+          } else {
+            execFile(
+              "npx",
+              ["tsx", scriptPath, id, dir],
+              { timeout: 90_000 },
+              (err, stdout, stderr) => (err ? resolve(`ERR:${stderr}`) : resolve(stdout)),
+            );
+          }
         });
       const results = await Promise.all(Array.from({ length: 6 }, (_, i) => run(`P${i}`)));
       for (const r of results) expect(r.startsWith("ok:")).toBe(true);
