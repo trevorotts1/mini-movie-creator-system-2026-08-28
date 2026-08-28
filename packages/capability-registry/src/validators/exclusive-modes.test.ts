@@ -245,6 +245,32 @@ describe("generic incompatibleCombinations validation", () => {
   });
 });
 
+describe("CAP-001-shaped profiles (nullable incompatibleCombinations)", () => {
+  // CAP-001's zod schema types the field as string[] | null (null = UNKNOWN,
+  // runbook §16). This compile-time regression proves such a profile satisfies
+  // ExclusiveModeCapability with no cast — it fails to compile against the
+  // pre-QC `readonly string[]` signature.
+  const cap001Shaped: {
+    references: { incompatibleCombinations: string[] | null };
+  } = { references: { incompatibleCombinations: null } };
+  const asCapability: ExclusiveModeCapability = cap001Shaped;
+
+  it("accepts incompatibleCombinations: null without a capability-data defect", () => {
+    expect(
+      validateExclusiveModes(asCapability, { referenceImageUrls: [IMG] }),
+    ).toEqual([]);
+  });
+
+  it("still enforces the hard frame-vs-references rule when combinations are null", () => {
+    const issues = validateExclusiveModes(asCapability, {
+      firstFrameUrl: FRAME_A,
+      referenceImageUrls: [IMG],
+    });
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.code).toBe("MUTUALLY_EXCLUSIVE_MODES");
+  });
+});
+
 describe("capability-data defects (incompatibleCombinations hygiene)", () => {
   it("rejects entries with unknown mode tokens", () => {
     const issues = validateExclusiveModes(capability(["firstFrame+bogusMode"]), {

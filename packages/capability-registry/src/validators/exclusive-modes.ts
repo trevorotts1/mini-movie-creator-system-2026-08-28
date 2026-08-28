@@ -83,13 +83,19 @@ export function isReferenceMode(key: ExclusiveModeKey): boolean {
 
 /**
  * The subset of a capability profile this validator reads. Structural — any
- * full MediaModelCapability (CAP-001 schema) satisfies it, so callers pass
- * registry entries directly without a conversion step.
+ * full MediaModelCapability (CAP-001 schema, where the field is
+ * `string[] | null`) satisfies it, so callers pass registry entries directly
+ * without a conversion step.
  */
 export interface ExclusiveModeCapability {
   references: {
-    /** "+"-joined mode keys that cannot be combined, e.g. "referenceVideos+referenceAudio". */
-    incompatibleCombinations: readonly string[];
+    /**
+     * "+"-joined mode keys that cannot be combined, e.g.
+     * "referenceVideos+referenceAudio". null (CAP-001 UNKNOWN) is accepted and
+     * treated as "no declared combinations" — the hard frame-vs-references
+     * rule still applies.
+     */
+    incompatibleCombinations: readonly string[] | null;
   };
 }
 
@@ -178,19 +184,6 @@ export function parseIncompatibleCombination(
     if (!keys.includes(key)) keys.push(key);
   }
   return keys.length >= 2 ? keys : null;
-}
-
-/** All pairs (a, b) with a before b, order-independent comparison downstream. */
-function pairs<T>(items: readonly T[]): ReadonlyArray<readonly [T, T]> {
-  const out: [T, T][] = [];
-  for (let i = 0; i < items.length; i++) {
-    for (let j = i + 1; j < items.length; j++) {
-      const a = items[i];
-      const b = items[j];
-      if (a !== undefined && b !== undefined) out.push([a, b]);
-    }
-  }
-  return out;
 }
 
 /** Collect every exclusivity violation for one request against one profile. */
