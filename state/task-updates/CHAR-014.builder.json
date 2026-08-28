@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-014",
   "phase": "BUILDER_DONE",
-  "commit": "2daaeb3b75a27ea696b9fcabd3c56e953d0953d6",
+  "commit": "3e6ffbfdca00c9f6445e07d589bb94504bdf2156",
   "testsRun": "npx vitest run packages/character-library/src/asset-links -> 15 passed (15); full packages/character-library -> 6 files, 114 passed; tsc --noEmit clean",
   "notes": "asset-links: verbatim canonical triplet (fileId+url+sha256) via requireCanonicalLink; resolveAssetLink with local-cache-removal fallback to durable DB/manifest record (spec 35 gate 13); refreshStaleLink/refreshAssetLink re-verify against GhlMediaStore (mocked in tests) and persist refreshed link to manifest, never fabricating links; ReferencePlanAsset handoff for downstream plans; GhlMediaStore interface read-only per ownership (GHL lane owns impl).",
   "blockers": [],
