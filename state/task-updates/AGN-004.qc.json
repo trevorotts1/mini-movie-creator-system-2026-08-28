@@ -1,13 +1,13 @@
 {
   "taskId": "AGN-004",
   "phase": "PASS",
-  "commit": "d758647480c98360d70c30c36984231ea2dac415",
-  "checksRun": "npx vitest run packages/providers/src/agnes/video/submit (36/36 pass); npx vitest run (full suite 444/444 pass); tsc --noEmit -p packages/providers + packages/core + packages/database + packages/capability-registry (clean); security grep (no secrets, fixed-string DDL only, no shell injection, no path traversal, no retry loops)",
-  "defectsFound": 3,
-  "defectsFixed": 3,
+  "commit": "ef10cacaf621f0d3467a3d513e776b55f1915e48",
+  "checksRun": "npx vitest run packages/providers/src/agnes/video/submit (39/39 pass); npx vitest run (full suite 447/447 pass); tsc --noEmit -p packages/providers + packages/core (clean); security grep on owned paths (no secrets, fixed-string parameterized SQL, no shell injection, no path traversal, bounded retries only)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
-  "queuedAt": "2026-08-28T20:10:00Z",
-  "notes": "Fixed spec \u00a74 budget-reservation crash window: reservation id now persisted on the record immediately after reserve, resume releases stale hold before re-reserving (no double-hold); release failures after successful submit no longer mask the SUBMITTED state (persist-first ordering); store-save failures after reserve release the hold directly. 4 regression tests added (36 total).",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Round 2 (this pass found 2 more on top of round 1's 3): spec §4 stale-reservation resume — failed releaseById now ABORTS the resume instead of log-and-continue (was double-holding and erasing the stale hold's durable trace); spec §18 double-spend window — store failure on the SUBMITTED save after provider acceptance no longer records REJECTED / releases 'failed' / discards the video_id: SUBMITTED save retries bounded 3x, hold settles 'submitted', typed AgnesVideoSubmitPersistError carries the provider job id for reconciliation. 3 regression tests added (39 total, was 36).",
   "blockers": []
 }
