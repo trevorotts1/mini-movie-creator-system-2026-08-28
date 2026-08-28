@@ -181,6 +181,32 @@ Mona Bennett stares at the water. A bell rings.
     });
     expect(result.scenes[0]?.characters).toContain("MONA BENNETT");
   });
+
+  it("sanitizes hostile sceneIdPrefix and honors clean prefixes (both paths)", () => {
+    // Regression: path separators / control characters used to flow into
+    // sceneId unchanged.
+    const hostile = parseScreenplay("INT. DINER - NIGHT\nA\n", {
+      sceneIdPrefix: "../../evil\n",
+    });
+    expect(hostile.scenes[0]?.sceneId).toBe("EVIL01");
+
+    const cleanText = parseScreenplayText("INT. DINER - NIGHT\nA\n", {
+      sceneIdPrefix: "ep1",
+    });
+    expect(cleanText.scenes[0]?.sceneId).toBe("EP101");
+
+    const cleanStructured = parseScreenplay(
+      { approved: true, scenes: [{ heading: "INT. DINER - NIGHT" }] },
+      { sceneIdPrefix: "ep1" },
+    );
+    expect(cleanStructured.scenes[0]?.sceneId).toBe("EP101");
+
+    // Degenerate prefix falls back to "SC" instead of empty IDs.
+    const degenerate = parseScreenplay("INT. DINER - NIGHT\nA\n", {
+      sceneIdPrefix: "///",
+    });
+    expect(degenerate.scenes[0]?.sceneId).toBe("SC01");
+  });
 });
 
 describe("structured screenplay parsing", () => {
@@ -237,6 +263,27 @@ describe("structured screenplay parsing", () => {
     expect(result.scenes[0]?.durationSeconds).toBe(12.5);
   });
 
+  it("rejects non-finite or absurd duration overrides (never poisons totals)", () => {
+    // Regression: Infinity/1e308 overrides propagated into
+    // totalDurationSeconds as Infinity.
+    const result = parseScreenplay({
+      approved: true,
+      scenes: [
+        { heading: "INT. LAB", estimatedDurationSeconds: Infinity },
+        { heading: "INT. LAB", estimatedDurationSeconds: 1e308 },
+        { heading: "INT. LAB", estimatedDurationSeconds: -5 },
+        { heading: "INT. LAB", estimatedDurationSeconds: Number.NaN },
+        { heading: "INT. LAB - NIGHT", action: "Machines hum." },
+      ],
+    });
+    for (const scene of result.scenes) {
+      expect(Number.isFinite(scene.durationSeconds)).toBe(true);
+      expect(scene.durationSeconds).toBeGreaterThanOrEqual(0);
+ expect(scene.durationSeconds).toBeLessThanOrEqual(3600);
+    }
+    expect(Number.isFinite(result.totalDurationSeconds)).toBe(true);
+  });
+
   it("flags structured scenes without location", () => {
     const result = parseScreenplay({
       approved: true,
@@ -254,6 +301,42 @@ describe("structured screenplay parsing", () => {
         (w) => w.code === "INVALID_STRUCTURED_SCREENPLAY",
       ),
     ).toBe(true);
+  });
+
+  it("never throws on malformed structured input (null / primitives)", () => {
+    // Regression: parseScreenplay(null as never) used to TypeError.
+    // Strings are excluded: parseScreenplay routes strings to the text
+    // parser by design (source "text").
+    for (const bad of [null, 42, [], true]) {
+      const result = parseScreenplay(bad as never);
+      expect(result.scenes).toHaveLength(0);
+      expect(result.source).toBe("structured");
+      expect(
+        result.warnings.some(
+          (w) => w.code === "INVALID_STRUCTURED_SCREENPLAY",
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("joins multi-line headings into one slug (INT. on its own line)", () => {
+    // Regression: "INT." alone then "APARTMENT - KITCHEN - NIGHT" on the next
+    // line used to parse a slug with an UNKNOWN location and leak the second
+    // heading line into the action body.
+    const script = `INT.
+APARTMENT - KITCHEN - NIGHT
+
+MONA
+Hello.
+`;
+    const result = parseScreenplayText(script);
+    expect(result.scenes).toHaveLength(1);
+    const scene = result.scenes[0];
+    expect(scene?.slug?.intExt).toBe("INT");
+    expect(scene?.location).toBe("APARTMENT - KITCHEN");
+    expect(scene?.timeOfDay).toBe("NIGHT");
+    expect(scene?.actionLines).not.toContain("APARTMENT - KITCHEN - NIGHT");
+    expect(scene?.dialogue.some((d) => d.character === "MONA")).toBe(true);
   });
 });
 

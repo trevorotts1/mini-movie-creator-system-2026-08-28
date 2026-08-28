@@ -29,9 +29,25 @@ export function parseScreenplay(
   }
 
   // Structured path: normalize the document, then honor caller approval.
+  // Never throws: malformed documents (null, primitives, missing scenes)
+  // yield an empty result plus INVALID_STRUCTURED_SCREENPLAY.
+  if (input === null || typeof input !== "object") {
+    return {
+      scenes: [],
+      totalDurationSeconds: 0,
+      warnings: [
+        {
+          code: "INVALID_STRUCTURED_SCREENPLAY",
+          message: "Structured screenplay was not an object.",
+        },
+      ],
+      source: "structured",
+    };
+  }
+
   const effectiveApproved = options.approved ?? input.approved;
 
-  const scenes = normalizeStructuredScreenplay(input);
+  const scenes = normalizeStructuredScreenplay(input, options.sceneIdPrefix);
   const structuredWarnings: SceneParseWarning[] = [];
   if (scenes.length === 0) {
     structuredWarnings.push({

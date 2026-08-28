@@ -212,3 +212,13 @@ export function buildDialogueLine(
     text,
   };
 }
+
+/**
+ * Keeps a scene-ID prefix an identifier: uppercase letters, digits,
+ * underscore and dash only. Path separators, control characters and
+ * whitespace from caller input are stripped (spec §19 naming).
+ */
+export function sanitizeSceneIdPrefix(raw: string): string {
+  const cleaned = raw.replace(/[^A-Za-z0-9_-]/g, "").toUpperCase();
+  return cleaned.length > 0 ? cleaned : "SC";
+}

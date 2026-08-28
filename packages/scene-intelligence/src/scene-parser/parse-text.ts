@@ -5,7 +5,13 @@ import type {
   SceneParseWarning,
   SceneParseWarningCode,
 } from "./types.js";
-import { buildDialogueLine, looksLikeSlug, parseCue, parseSlug } from "./slug.js";
+import {
+  buildDialogueLine,
+  looksLikeSlug,
+  parseCue,
+  parseSlug,
+  sanitizeSceneIdPrefix,
+} from "./slug.js";
 import { estimateSceneDuration } from "./normalize-structured.js";
 
 /**
@@ -99,7 +105,9 @@ export function parseScreenplayText(
     return { scenes: [], warnings };
   }
 
-  const prefix = options.sceneIdPrefix ?? "SC";
+  // sceneId is an identifier (spec §19): keep the caller prefix but strip
+  // anything that would smuggle path separators or control characters.
+  const prefix = sanitizeSceneIdPrefix(options.sceneIdPrefix ?? "SC");
   const knownCharacters = (options.knownCharacters ?? []).map((c) =>
     c.trim().toUpperCase(),
   );
@@ -108,12 +116,40 @@ export function parseScreenplayText(
   sceneStarts.forEach((start, sceneIdx) => {
     const end = sceneIdx + 1 < sceneStarts.length ? (sceneStarts[sceneIdx + 1] ?? blocks.length) : blocks.length;
     const heading = blocks[start]?.[0]?.trim() ?? "";
-    const slug = parseSlug(heading);
+    let slug = parseSlug(heading);
 
     const dialogue: ParsedDialogueLine[] = [];
     const actionLines: string[] = [];
 
     let i = start + 1;
+
+    // Multi-line heading continuation: a bare "INT." slug whose location
+    // remainder sits on the next line ("INT." + "APARTMENT - NIGHT"). Only
+    // fires when the first line alone parsed WITHOUT a location and the
+    // next single-line block is neither a cue nor a slug itself, so real
+    // scene bodies are never consumed.
+    if (slug.location === "UNKNOWN") {
+      const nextBlock = blocks[i] ?? [];
+      const nextFirst = (nextBlock[0] ?? "").trim();
+      // A bare ALL-CAPS word parses as a cue ("MONA") — keep that reading.
+      // A location remainder contains a " - " separator, which cues never do.
+      const cueLike =
+        parseCue(nextFirst) !== null && !/\s[-–—]\s/.test(nextFirst);
+      if (
+        nextBlock.length === 1 &&
+        nextFirst.length > 0 &&
+        !cueLike &&
+        !looksLikeSlug(nextFirst) &&
+        looksLikeSlug(`${heading} ${nextFirst}`)
+      ) {
+        const extended = parseSlug(`${heading} ${nextFirst}`);
+        if (extended.location !== "UNKNOWN") {
+          slug = extended;
+          i += 1;
+        }
+      }
+    }
+
     while (i < end) {
       const block = blocks[i] ?? [];
       if (block.length === 0) {
@@ -195,7 +231,9 @@ export function parseScreenplayText(
 function isSlugBlock(block: string[]): boolean {
   if (block.length === 0) return false;
   const first = (block[0] ?? "").trim();
-  // Multi-line heading: "INT." alone then rest on the next line.
+  // Multi-line heading: "INT." alone then rest on the next line. The slug
+  // matcher accepts the joined line; the location is recovered later by the
+  // heading-continuation step in the scene loop.
   if (/^(?:INT|EXT|I\/E|E\/I)\b[\s./]?$/i.test(first) && block.length >= 2) {
     return looksLikeSlug(`${first} ${block[1] ?? ""}`);
   }

@@ -4,7 +4,7 @@ import type {
   StructuredScreenplay,
   StructuredScreenplayScene,
 } from "./types.js";
-import { looksLikeSlug, parseSlug } from "./slug.js";
+import { looksLikeSlug, parseSlug, sanitizeSceneIdPrefix } from "./slug.js";
 
 /**
  * Normalizes a structured screenplay document (the DIR-004 generator shape)
@@ -15,16 +15,19 @@ import { looksLikeSlug, parseSlug } from "./slug.js";
 
 export function normalizeStructuredScreenplay(
   document: StructuredScreenplay,
+  sceneIdPrefix?: string,
 ): ParsedScene[] {
   const scenes = Array.isArray(document.scenes) ? document.scenes : [];
+  const prefix = sanitizeSceneIdPrefix(sceneIdPrefix ?? "SC");
   return scenes
-    .map((scene, index) => normalizeStructuredScene(scene, index))
+    .map((scene, index) => normalizeStructuredScene(scene, index, prefix))
     .filter((scene): scene is ParsedScene => scene !== null);
 }
 
 function normalizeStructuredScene(
   scene: StructuredScreenplayScene,
   index: number,
+  sceneIdPrefix: string,
 ): ParsedScene | null {
   if (scene === null || typeof scene !== "object") return null;
 
@@ -76,15 +79,22 @@ function normalizeStructuredScene(
     if (!characters.includes(line.character)) characters.push(line.character);
   }
 
-  const durationSeconds =
+  // Caller-supplied overrides must be finite positive seconds (spec §7:
+  // scene durations are ordinary second counts). Infinity/NaN/absurd values
+  // fall back to the estimator so totalDurationSeconds can never poison
+  // downstream planners with Infinity/NaN.
+  const overrideSeconds =
     typeof scene.estimatedDurationSeconds === "number" &&
     Number.isFinite(scene.estimatedDurationSeconds) &&
-    scene.estimatedDurationSeconds > 0
-      ? scene.estimatedDurationSeconds
-      : estimateSceneDuration(dialogue, actionLines);
+    scene.estimatedDurationSeconds > 0 &&
+    scene.estimatedDurationSeconds <= 3600
+      ? Math.round(scene.estimatedDurationSeconds * 10) / 10
+      : null;
+  const durationSeconds =
+    overrideSeconds ?? estimateSceneDuration(dialogue, actionLines);
 
   return {
-    sceneId: `SC${String(index + 1).padStart(2, "0")}`,
+    sceneId: `${sceneIdPrefix}${String(index + 1).padStart(2, "0")}`,
     index,
     name,
     heading: heading ?? null,
