@@ -1,7 +1,7 @@
 {
   "taskId": "FISH-009",
   "phase": "BUILDER_DONE",
-  "commit": "eb1534ab0c1ce51eddaa41e4bd76a43d636b64ea",
+  "commit": "fccadc7da62d9bacba532c0adbbfa9b6268488aa",
   "testsRun": "npx vitest run packages/providers/src/fish-audio/mix — 2 files, 30/30 passed (graph.test.ts 26 deterministic-argv/validation tests; executor.test.ts 4 real-ffmpeg/ffprobe integration tests incl. ducked bed mix, argv determinism re-run, MixPlanError no-spawn, MixExecError stderr tail); tsc --noEmit -p packages/providers clean",
   "notes": "Mix plan as data -> deterministic FFmpeg filter graph (48k stereo aformat, volume/adelay/afade, amix normalize=0 buses, sidechaincompress bed duck with apad-padded key, alimiter, -t bound; bed input -stream_loop -1 so durationSec required with a bed); fixed executor double-binary bug (argv[0] passed both as bin and arg); output verified via real ffprobe",
   "blockers": [],
