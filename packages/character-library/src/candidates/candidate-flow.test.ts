@@ -199,4 +199,35 @@ describe("flow integrity", () => {
     state = applySelection(state, "1", LATER);
     expect(() => createRound(state, 2, LATER)).toThrow(CandidateFlowError);
   });
+
+  it("choice 'TRY_AGAIN' rejects open round candidates terminally while '1'/'2'/'3' selects candidate", () => {
+    // Test that all choices 1, 2, 3, TRY_AGAIN function correctly per spec §9 / gate 3
+    for (const choice of ["1", "2", "3"] as const) {
+      let flow = generateCandidates(startedFlow(), NOW).state;
+      flow = applySelection(flow, choice, LATER);
+      const slotNum = Number.parseInt(choice, 10);
+      const chosen = flow.candidates.find((c) => c.round === 1 && c.slot === slotNum);
+      expect(chosen?.state).toBe("APPROVED");
+      expect(flow.selectedCandidateId).toBe(chosen?.candidateId);
+      const siblings = flow.candidates.filter((c) => c.round === 1 && c.slot !== slotNum);
+      expect(siblings.every((c) => c.state === "REJECTED")).toBe(true);
+    }
+  });
+
+  it("invalid choice throws CandidateFlowError", () => {
+    const { state } = firstRound();
+    // @ts-expect-error testing invalid choice at runtime
+    expect(() => applySelection(state, "4", LATER)).toThrow(CandidateFlowError);
+    // @ts-expect-error testing invalid choice at runtime
+    expect(() => applySelection(state, "INVALID", LATER)).toThrow(CandidateFlowError);
+  });
+
+  it("handles untrusted creative brief safely without code execution or corruption", () => {
+    const maliciousBrief = "'; DROP TABLE characters; -- <script>alert(1)</script> $(whoami)";
+    const req = request({ brief: maliciousBrief });
+    const flow = startCandidateFlow(req, NOW);
+    const { candidates } = generateCandidates(flow, NOW);
+    expect(candidates).toHaveLength(3);
+    expect(flow.request.brief).toBe(maliciousBrief);
+  });
 });

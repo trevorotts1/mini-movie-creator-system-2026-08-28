@@ -17,6 +17,7 @@ import {
 } from "./candidate-state.js";
 import {
   CANDIDATES_PER_ROUND,
+  SELECTION_CHOICES,
   createCandidatesForRound,
   requestIdOf,
   requireSelectable,
@@ -206,6 +207,11 @@ export function applySelection(
   now: string,
   reason = "",
 ): CandidateFlowState {
+  if (!SELECTION_CHOICES.includes(choice)) {
+    throw new CandidateFlowError(
+      `invalid selection choice: ${choice}; expected one of: ${SELECTION_CHOICES.join(", ")}`,
+    );
+  }
   if (state.openRound === null) {
     throw new CandidateFlowError("no open round to apply a selection to");
   }
