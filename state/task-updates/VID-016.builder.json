@@ -1,7 +1,7 @@
 {
   "taskId": "VID-016",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "ecd890d",
   "testsRun": "npx vitest run packages/remotion-runtime/src/frame-extraction -> 2 files, 50/50 passed (real ffmpeg/ffprobe 8.1.1 fixture: 2s 60-frame clip); npx tsc --noEmit -p packages/remotion-runtime -> clean",
   "notes": "Frame extraction for image-vision QC (spec §20 fallback): ffprobe probe -> frame-grid plan (count/interval/timestamps modes, local_f = global_s*fps − sequence_from, frames.mjs 4-digit naming, --scale) -> per-frame ffmpeg seek+dump -> every PNG verified (exists/non-empty/PNG magic) before success; injectable FrameDumpFn; refuses overwrite without overwrite:true; provided-facts bypass for manifest-driven runs.",
   "blockers": [],
