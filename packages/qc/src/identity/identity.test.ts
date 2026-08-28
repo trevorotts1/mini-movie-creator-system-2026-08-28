@@ -199,6 +199,28 @@ describe("parseVisionComparison — real-adapter string responses", () => {
     expect(comparison.verdict).toBe("mismatch");
   });
 
+  it("extracts the JSON object when surrounding prose contains braces", () => {
+    const raw =
+      'Result {step one} then {"verdict":"uncertain","confidence":0.3,"rationale":"occluded","attributes":[]}';
+    const comparison = parseVisionComparison(raw);
+    expect(comparison.verdict).toBe("uncertain");
+  });
+
+  it("braces inside JSON string values do not break extraction", () => {
+    const raw =
+      '{"verdict":"match","confidence":0.9,"rationale":"face is {symmetrical} per {step two}","attributes":[]}';
+    const comparison = parseVisionComparison(raw);
+    expect(comparison.verdict).toBe("match");
+    expect(comparison.rationale).toContain("{step two}");
+  });
+
+  it("escaped quotes inside a rationale do not break extraction", () => {
+    const raw =
+      '{"verdict":"mismatch","confidence":0.6,"rationale":"jaw \\"wider\\" than asset","attributes":[]}';
+    const comparison = parseVisionComparison(raw);
+    expect(comparison.verdict).toBe("mismatch");
+  });
+
   it("throws VisionResponseError on a non-JSON response", () => {
     expect(() => parseVisionComparison("I could not analyze the image."))
       .toThrow(VisionResponseError);

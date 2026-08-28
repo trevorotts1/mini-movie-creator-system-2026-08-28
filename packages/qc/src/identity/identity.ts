@@ -133,9 +133,59 @@ export function buildIdentityPrompt(
   ].join("\n");
 }
 
-/** Machine-readable JSON the model is instructed to return. */
-const RESPONSE_JSON_SCHEMA_HINT =
-  '"verdict" ("match"|"mismatch"|"uncertain"), "confidence" (0..1), "rationale", "attributes"';
+/**
+ * Extract the first parseable JSON object from a response string. Real
+ * adapters sometimes wrap the instructed JSON in prose, and prose may itself
+ * contain braces ("Result {step one} then {json}"), so a naive
+ * indexOf('{')..lastIndexOf('}') slice mis-extracts. This scan walks the
+ * string skipping string literals, slices each balanced top-level object,
+ * and returns the first slice that parses as JSON. Returns null when none
+ * parses — the caller then fails QC loudly (never a silent pass).
+ */
+function extractJsonObject(text: string): string | null {
+  let searchFrom = 0;
+  for (;;) {
+    const start = text.indexOf("{", searchFrom);
+    if (start === -1) return null;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let end = -1;
+    for (let i = start; i < text.length; i += 1) {
+      const ch = text[i];
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (ch === "\\") {
+          escaped = true;
+        } else if (ch === '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+      } else if (ch === "{") {
+        depth += 1;
+      } else if (ch === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end === -1) return null;
+    const candidate = text.slice(start, end + 1);
+    try {
+      JSON.parse(candidate);
+      return candidate;
+    } catch {
+      // Prose brace pair, not JSON — keep scanning for the next candidate.
+      searchFrom = start + 1;
+    }
+  }
+}
 
 /**
  * Parse a vision model response. Accepts either a pre-parsed object (mocked
@@ -145,16 +195,15 @@ const RESPONSE_JSON_SCHEMA_HINT =
  */
 export function parseVisionComparison(raw: unknown): VisionComparison {
   if (typeof raw === "string") {
-    const start = raw.indexOf("{");
-    const end = raw.lastIndexOf("}");
-    if (start === -1 || end === -1 || end < start) {
+    const json = extractJsonObject(raw);
+    if (json === null) {
       throw new VisionResponseError(
         "vision response contains no JSON object",
         raw,
       );
     }
     try {
-      raw = JSON.parse(raw.slice(start, end + 1)) as unknown;
+      raw = JSON.parse(json) as unknown;
     } catch {
       throw new VisionResponseError(
         "vision response JSON is not parseable",
