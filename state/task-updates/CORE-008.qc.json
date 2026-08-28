@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-008",
+  "phase": "PASS",
+  "commit": "4d307a7911c26c8a79e0ade8296c010eb9b4f99a",
+  "checksRun": "vitest run packages/core/src/approvals packages/core/src/state-machine packages/core/src/recovery -> 64/64; vitest run packages/core -> 135/135; vitest run packages/remotion-runtime/src/final-render packages/database apps/cli -> 257/257; tsc --noEmit (packages/core) clean",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T01:00:00Z",
+  "notes": "Six §3 gates persisted as domain states; fixed (1) normalize silently dropping unknown gate keys — now throws, (2) store handing out live mutable documents/records — now deep-frozen; regression tests added, all suites green",
+  "blockers": []
+}
