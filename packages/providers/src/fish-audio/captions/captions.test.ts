@@ -463,6 +463,15 @@ describe("loadCaptionTrack (alignment store → caption track)", () => {
       /Not a valid dialogue asset key/,
     );
     await expect(load({ key: "  " })).rejects.toThrow(/Not a valid dialogue asset key/);
+    // Regression: a PADDED key must be rejected loudly, not silently
+    // trimmed into a valid key that then misses the file (ENOENT).
+    const padded = ` ${FIXTURE_KEY} `;
+    const { load: loadPadded } = makeLoader({
+      [`/tmp/test-alignment/${FIXTURE_KEY}.json`]: fixtureAlignmentDoc,
+    });
+    await expect(loadPadded({ key: padded })).rejects.toThrow(
+      /Not a valid dialogue asset key/,
+    );
   });
 
   it("throws a clear error when no alignment record exists", async () => {

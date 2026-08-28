@@ -83,7 +83,11 @@ export function parseAlignmentDoc(
 export async function loadCaptionTrack(
   options: LoadCaptionTrackOptions,
 ): Promise<CaptionTrack> {
-  const key = options.key?.trim();
+  // Validate the RAW key (strict, no trimming) — the validated string is
+  // exactly the string that becomes the file path, so validation and path
+  // construction can never disagree (a padded key is rejected loudly, never
+  // turned into a confusing ENOENT).
+  const key = typeof options.key === "string" ? options.key : "";
   if (!key || !isCurrentDialogueAssetKey(key)) {
     throw new Error(
       `Not a valid dialogue asset key: ${JSON.stringify(options.key)}`,
@@ -93,7 +97,7 @@ export async function loadCaptionTrack(
     throw new Error("directory is required");
   }
   const fsImpl = options.fs ?? DEFAULT_FS;
-  const filePath = path.join(options.directory, `${options.key}.json`);
+  const filePath = path.join(options.directory, `${key}.json`);
   let raw: string;
   try {
     raw = await fsImpl.readFile(filePath, "utf8");
