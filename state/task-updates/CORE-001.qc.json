@@ -1,6 +1,8 @@
 {
   "taskId": "CORE-001",
   "phase": "PASS",
+  "rebasedOnto": "6ca3b08fc7e70cb0bba7746849a934e85d812db8",
+  "rebaseCommit": "14adef126ea0882dc43578ead7c22d1b286959bd",
   "commit": "b57a128c38ade40e8e05ffdf3f0451b74f6f8c6a",
   "checksRun": "node docs/upstream-audit/validate.mjs; test -s docs/upstream-audit/preservation-map.md && grep -q PF-1 docs/upstream-audit/preservation-map.md",
   "defectsFound": 0,
