@@ -99,10 +99,26 @@ describe("runChooseCharacter", () => {
   const gates = () => makeGates();
   const flow = () => makeFlow();
 
+  /** True only when a gate-3 selection is recorded on the gate double. */
+  function gatesHasSelection(g: GateDouble): boolean {
+    return g.getSelectedCharacterId() !== null;
+  }
+
   it("bare invocation prints usage and exits 0", () => {
     const res = runChooseCharacter(undefined, gates(), flow());
     expect(res.exitCode).toBe(0);
     expect(res.output.join("\n")).toBe(USAGE_CHOOSE_CHARACTER);
+  });
+
+  it("empty-string argument is a provided invalid selection, not bare usage", () => {
+    const f = flow();
+    const res = runChooseCharacter("", gates(), f);
+    expect(res.exitCode).toBe(1);
+    expect(f.regenerations).toBe(0);
+    expect(gatesHasSelection(gates())).toBe(false);
+    const text = res.output.join("\n");
+    expect(text).toContain("Invalid selection: \"\"");
+    expect(text).toContain("Usage: mmcs choose-character <1|2|3|4>");
   });
 
   it("selects candidate 1/2/3 and reports the character ID to lock", () => {

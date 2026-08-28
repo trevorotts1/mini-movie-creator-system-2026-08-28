@@ -111,7 +111,10 @@ export function runChooseCharacter(
   gates: GateStatePort,
   flow: CandidateFlowPort,
 ): ChooseCharacterResult {
-  if (rawCandidate === undefined || rawCandidate === "") {
+  // Only a MISSING argument is bare usage (exit 0). An empty string is a
+  // provided-but-invalid selection: parseSelection("") is undefined, so it
+  // must be rejected with usage and exit 1 like any other non-alphabet input.
+  if (rawCandidate === undefined) {
     return { exitCode: 0, output: [USAGE_CHOOSE_CHARACTER] };
   }
 
