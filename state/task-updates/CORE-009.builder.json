@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-009",
+  "phase": "BUILDER_DONE",
+  "commit": "cabba7a2ae357f79d0378d361aca6a5e2fed96d5",
+  "testsRun": "npx vitest run packages/cost-engine \u2192 25 passed (1 file); full worktree suite npx vitest run \u2192 163 files, 3275 passed, 1 skipped; tsc --noEmit -p packages/cost-engine clean",
+  "notes": "CostLedger: atomic $25 cumulative gate via BEGIN IMMEDIATE on one SQLite ledger (5 parallel $24.99 \u2192 exactly 1 approved, incl. multi-connection test), integer-cent money, release/commit lifecycle, included quota tracked separately in cost_quota_usage (never gated), decision-object API (approved | requires_approval) with persisted approveAndReserve audit trail.",
+  "blockers": [],
+  "updatedAt": "2026-08-29T00:00:00Z"
+}
