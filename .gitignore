@@ -25,3 +25,16 @@ ai-shorts/*/bakeoff/*.mp4
 
 # local editor config
 .vscode/
+
+# --- MMCS monorepo additions (scaffold 2026-08-28) ---
+dist/
+logs/
+worktrees/
+state/locks/
+coverage/
+*.tsbuildinfo
+
+# env files — keep .env.example tracked
+.env
+.env.*
+!.env.example
