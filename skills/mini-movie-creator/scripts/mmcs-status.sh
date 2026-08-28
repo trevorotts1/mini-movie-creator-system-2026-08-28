@@ -36,6 +36,14 @@ if [ -z "$REPO_ROOT" ] && [ -d "$PWD/apps/cli" ]; then
   REPO_ROOT="$PWD"
 fi
 
+# Hard stop when the root is still unknown: every check below is anchored to
+# REPO_ROOT, and guessing would produce false FAILs against the CWD.
+if [ -z "$REPO_ROOT" ]; then
+  say "repo root: <unresolved> — walk-up, \$MMCS_REPO_ROOT, and \$PWD all failed"
+  say "engine surface INCOMPLETE — exit 1 (no mutation performed)"
+  exit 1
+fi
+
 fail=0
 say() { printf '[mmcs-status] %s\n' "$1"; }
 ok()  { say "OK   $1"; }
@@ -61,7 +69,7 @@ fi
 if [ -f "$REPO_ROOT/apps/cli/dist/index.js" ]; then
   ok "cli build artifact: apps/cli/dist/index.js"
 else
-  warn "cli not built (run: cd apps/cli && npm run build) — verbs run via node apps/cli/dist/index.js after build"
+  warn "cli not built (run: pnpm --filter @mmcs/cli build) — verbs run via node apps/cli/dist/index.js after build"
 fi
 
 # 3. Stub state files present? (checkpoint + task store are the durable pair)

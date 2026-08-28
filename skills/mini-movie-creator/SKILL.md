@@ -38,16 +38,16 @@ by hand when an `mmcs` command exists.
 ## Locate the engine and check health
 
 The engine lives in this repository (monorepo: `packages/` + `apps/cli/`).
-The CLI verb is `mmcs` (`apps/cli`, bin entry `mmcs`; run via
-`npm run build` in `apps/cli` then `npx mmcs`, or through the repo's task
-runner). From any directory inside the repo:
+The CLI verb is `mmcs` (`apps/cli`, bin entry `mmcs`; build with
+`pnpm --filter @mmcs/cli build`, then run `npx mmcs` from the repo root or
+`node apps/cli/dist/index.js`). From any directory inside the repo:
 
 ```bash
 mmcs doctor          # environment, providers, config health — run first if anything looks off
 mmcs status          # project/series/episode state, approval gates, spend — run before EVERY mutation
 ```
 
-If `mmcs` is not on PATH: build it once (`cd apps/cli && npm run build`),
+If `mmcs` is not on PATH: build it once (`pnpm --filter @mmcs/cli build`),
 then invoke `node apps/cli/dist/index.js` — identical verb surface. All
 commands below are written as `mmcs <verb>`; substitute the local invocation
 if needed.

@@ -2,8 +2,8 @@
 
 Exact CLI verbs for the calling agent. Verb names match spec §24 and the
 `mmcs` dispatcher registry (`apps/cli/src/dispatch/registry.ts`). Multi-word
-verbs are real nested subcommands (`mmcs approve concept`, not
-`mmcs approve concept`).
+verbs are real nested subcommands (`mmcs approve concept`, never
+`approve-concept`).
 
 Before EVERY stage transition: `mmcs status`. It shows episode state, the
 active approval gate, and cumulative spend. If `status` reports a gate that

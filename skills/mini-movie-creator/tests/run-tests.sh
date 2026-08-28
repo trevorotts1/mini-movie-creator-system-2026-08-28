@@ -135,6 +135,27 @@ check "mmcs-status.sh is executable" test -x "$SKILL_DIR/scripts/mmcs-status.sh"
 check "mmcs-status.sh bash -n syntax clean" bash -n "$SKILL_DIR/scripts/mmcs-status.sh"
 check "run-tests.sh bash -n syntax clean" bash -n "$SCRIPT_DIR/run-tests.sh"
 
+# --- 6. Regression tests (QC fixes) ---
+# 6a. Build instruction must match the pnpm monorepo (never `npm run build`).
+check "SKILL.md uses pnpm build command (not npm)" \
+  sh -c "! grep -q 'npm run build' '$SKILL_DIR/SKILL.md'"
+# 6b. workflow.md must not contain the self-contradictory verb typo
+#     (`mmcs approve concept`, not `mmcs approve concept`).
+check "workflow.md verb typo fixed" \
+  sh -c "! grep -q 'not \`mmcs approve concept\`' '$SKILL_DIR/references/workflow.md'"
+# 6c. mmcs-status.sh must exit 1 (never a false PASS) when the repo root is
+#     unresolvable: walk-up from a sandbox copy finds no apps/cli ancestor.
+sandbox="$(mktemp -d)"
+mkdir -p "$sandbox/skills/mini-movie-creator/scripts"
+cp "$SKILL_DIR/scripts/mmcs-status.sh" "$sandbox/skills/mini-movie-creator/scripts/"
+if ( cd "$sandbox" && MMCS_REPO_ROOT= bash "$sandbox/skills/mini-movie-creator/scripts/mmcs-status.sh" >/dev/null 2>&1 ); then
+  fail=$((fail+1)); failures+=("mmcs-status.sh unresolved root exits 1")
+  printf 'FAIL  mmcs-status.sh unresolved root exits 1\n'
+else
+  pass=$((pass+1))
+fi
+rm -rf "$sandbox"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 if [ "$fail" -gt 0 ]; then
   printf 'Failures:\n'
