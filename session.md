@@ -1,18 +1,27 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T20:30:00Z
-**Session Type:** Batch Merge Cycle 9 Pushed
+**Updated:** 2026-08-28T23:35:00Z
+**Session Type:** Batch Merge Cycle 10 Pushed
 
 ---
 
 ## Current Status
 
-- **Phase:** Batch Merge Cycle 9 complete. 2 tasks merged: QC-010 (47f919e, rebase-2 onto 1e06ddb resolved the packages/qc/src/index.ts conflict) and VID-008 (f99eea4, cycle-2 re-admission after IQ-B6 revert; revert-remerge trap resolved by restoring 12 untouched graphics core files; tsconfig conflict taken from integration). Regression PASS. Pushed to origin/integration.
-- **Integration HEAD:** f99eea4 (== origin/integration)
-- **Regression Result:** PASS — `pnpm -r test` exit 0; `pnpm -r run typecheck` exit 0 (remotion-runtime RC=0 after graphics restore); repo-wide vitest 3364 passed / 1 skipped. Known env defect (NOT batch-induced, proven identical at pre-batch 1e06ddb and batch-8 b43743a): 3 test files fail vitest collection with "Cannot find package 'react'" (captions.test.ts, generated-clips/component.test.ts, generated-clips.test.ts) — react/remotion declared in no workspace package.json; remotion/ is a separate npm project with node_modules absent.
-- **Next Action:** REC-010 waits on REC-002..REC-005 (READY, need build+QC). SKL-002 (PASS, unmerged — integrations/claude node-types fix landed batch-7 era; needs re-admission check). VID-008 worktree still holds task/VID-008-graphics-layer (merged — safe to prune). QC-007 BUILDER_DONE, no QC yet.
+- **Phase:** Batch Merge Cycle 10 complete. 5 tasks merged deps-first, zero conflicts: CORE-008 (afe126e, approval state machine + gates), CORE-009 (362a985, cost/quota reservations engine), CORE-015 (b2992b9, database backup/export), QC-005 (73de2a2, video direct vs extracted-frame route), SKL-002 (dfa9ba7, claude project install — cycle-2 re-admission after IQ-B6 revert; node-types typecheck fix verified on integration: tsc RC=0, claude tests 45/45). Regression PASS. Pushed to origin/integration.
+- **Integration HEAD:** dfa9ba7 (== origin/integration)
+- **Regression Result:** PASS — `pnpm -r test` exit 0 (apps/cli 78/78, integrations/claude 45/45, integrations/openclaw 23/23); `pnpm -r run typecheck` exit 0 (17/17 packages Done); batch-touched suites 219/219 (approvals, gate-machine, cost-engine ledger, db backup round-trip, qc route, claude project-install, openclaw). pnpm-lock.yaml unchanged — no install needed. Known env defect from batch-9 (react not resolvable for 3 remotion-runtime test files) did NOT surface in `pnpm -r test` this cycle (those files live under remotion/, a separate npm project, not a workspace package).
+- **Next Action:** REC-010 still waits on REC-002..REC-005 (READY, need build+QC). QC-007 NOT admitted (defects 3 found > 2 fixed — needs fixer round 2 then re-QC). Newly unblocked READY: CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001 (all were waiting on CORE-008/SKL-002).
 
+## Batch 10 — Merged (5)
+- CORE-008 (afe126e), CORE-009 (362a985), CORE-015 (b2992b9), QC-005 (73de2a2), SKL-002 (dfa9ba7)
+
+## Batch 10 — Notes
+- All 5 branches passed merge-tree pre-check before merge; zero conflicts surfaced during the batch.
+- SKL-002 cycle-2: the IQ-B6 revert (01d5505) was for integrations/claude node-types regression; branch commit 361c28b re-merged integration and fixed typecheck; verified clean on integration post-merge.
+- QC-007 admission rejected: qc.json shows defectsFound=3, defectsFixed=2 — runbook §11.1 requires defectsFixed >= defectsFound.
+- REC-010 admission rejected: deps REC-002..REC-005 unmerged (rule 6) — 4th consecutive cycle blocked.
+- Unblocked 7 tasks (tasks.json + todo.md): CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011 (all CORE-008 dependents) and REL-001 (clean install, needed CORE-015 + SKL-002).
 
 ## Batch 9 — Merged (2)
 - QC-010 (47f919e), VID-008 (f99eea4)

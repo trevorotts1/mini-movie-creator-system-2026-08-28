@@ -211,3 +211,11 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 2026-08-28T20:30:00.000Z | BATCH-MERGE | batch-merge | REGRESSION | PASS areas=ALL (pnpm -r test exit 0; typecheck exit 0; vitest 3364/1 skipped; 3 pre-existing react-env failures identical pre-batch)
 - 2026-08-28T20:30:00Z | BATCH-9 | merger | MERGED | 2 merged (QC-010 47f919e, VID-008 f99eea4), VID-008 revert-remerge trap resolved (12 core files restored), regression PASS, pushed 1e06ddb..f99eea4
 - 2026-08-28T20:30:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 unmerged (admission rule 6)
+| 2026-08-28T23:35:00Z | CORE-008 | merger | MERGED | batch-10 merge afe126e (QC PASS 2/2 defects fixed; regression PASS; pushed f023247..dfa9ba7) |
+| 2026-08-28T23:35:00Z | CORE-009 | merger | MERGED | batch-10 merge 362a985 (QC PASS 2/2) |
+| 2026-08-28T23:35:00Z | CORE-015 | merger | MERGED | batch-10 merge b2992b9 (QC PASS 1/1) |
+| 2026-08-28T23:35:00Z | QC-005 | merger | MERGED | batch-10 merge 73de2a2 (QC PASS 2/2) |
+| 2026-08-28T23:35:00Z | SKL-002 | merger | MERGED | batch-10 merge dfa9ba7 (cycle-2 re-admission after IQ-B6 revert; QC PASS 2/2; tsc+vitest clean on integration) |
+| 2026-08-28T23:35:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 still unmerged (admission rule 6) |
+| 2026-08-28T23:35:00Z | QC-007 | merger | NOT_ADMITTED | defectsFound=3 > defectsFixed=2 (admission rule: defectsFixed >= defectsFound) |
+| 2026-08-28T23:35:00Z | BATCH-10 | merger | MERGED | 5 merged, 0 conflict-blocked, regression PASS (pnpm -r test exit 0; pnpm -r run typecheck exit 0; 219/219 on batch-touched suites; apps/cli 78, integrations/claude 45, integrations/openclaw 23), pushed f023247..dfa9ba7 |

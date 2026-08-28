@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-28T20:30:00Z",
+  "updated_at": "2026-08-28T23:35:00Z",
   "items": [
     {
       "id": "CORE-001",
@@ -105,7 +105,10 @@
       "branch": "task/CORE-008-approval-gates",
       "worktree": "worktrees/CORE-008/",
       "acceptance": "6 gates (concept, script, character, storyboard, rough cut, canon) persisted as domain states; illegal transitions throw; `npx vitest run packages/core/src/approvals` green incl. gate-ordering + persistence tests.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedSha": "afe126e2af7dd3f8ca2f68aa0ccb8fbbb1e04358",
+      "mergedAt": "2026-08-28T23:35:00Z",
+      "mergedBatch": "batch-10"
     },
     {
       "id": "CORE-009",
@@ -119,7 +122,10 @@
       "branch": "task/CORE-009-cost-engine",
       "worktree": "worktrees/CORE-009/",
       "acceptance": "$24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger \u2014 run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedSha": "362a9857039326fe446c4ec2e43b587514715670",
+      "mergedAt": "2026-08-28T23:35:00Z",
+      "mergedBatch": "batch-10"
     },
     {
       "id": "CORE-010",
@@ -202,7 +208,10 @@
       "branch": "task/CORE-015-db-backup",
       "worktree": "worktrees/CORE-015/",
       "acceptance": "`mmcs backup export` produces a restorable archive; restore into empty DB passes full row-count + checksum comparison; `npx vitest run packages/database/src/backup` green incl. round-trip test.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedSha": "b2992b910b18b1785347d7077a19b05b032bcd50",
+      "mergedAt": "2026-08-28T23:35:00Z",
+      "mergedBatch": "batch-10"
     },
     {
       "id": "CHAR-001",
@@ -273,7 +282,7 @@
       "branch": "task/CHAR-005-lock-canonical",
       "worktree": "worktrees/CHAR-005/",
       "acceptance": "LOCK CHARACTER approval \u2192 candidate asset states transition DRAFT\u2192APPROVED\u2192CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CHAR-006",
@@ -384,7 +393,7 @@
       "branch": "task/CHAR-013-canon-approval",
       "worktree": "worktrees/CHAR-013/",
       "acceptance": "end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CHAR-014",
@@ -459,7 +468,7 @@
       "branch": "task/DIR-003-concept-approval",
       "worktree": "worktrees/DIR-003/",
       "acceptance": "no screenplay work while concept unapproved (state throws); `mmcs develop-concept` + `mmcs approve concept` wired; `npx vitest run packages/scene-intelligence/src/concept/approval` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "DIR-004",
@@ -541,7 +550,7 @@
       "branch": "task/DIR-008-script-approval",
       "worktree": "worktrees/DIR-008/",
       "acceptance": "no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "DIR-009",
@@ -656,7 +665,7 @@
       "branch": "task/DIR-015-storyboard-approval",
       "worktree": "worktrees/DIR-015/",
       "acceptance": "no paid generation while storyboard unapproved; `mmcs storyboard` + `mmcs approve-storyboard` wired; `npx vitest run packages/scene-intelligence/src/storyboard/approval` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "CAP-001",
@@ -1705,7 +1714,10 @@
       "branch": "task/QC-005-qc-route",
       "worktree": "worktrees/QC-005/",
       "acceptance": "video-capable model \u2192 direct video review; otherwise FFmpeg frame extraction \u2192 image-vision QC; route selection from capability profile (both branches tested); `npx vitest run packages/qc/src/route` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedSha": "73de2a2c7ac612518d88b27fdae7da8e332e8bac",
+      "mergedAt": "2026-08-28T23:35:00Z",
+      "mergedBatch": "batch-10"
     },
     {
       "id": "QC-006",
@@ -1735,7 +1747,8 @@
       "branch": "task/QC-007-agnes-flash-route",
       "worktree": "worktrees/QC-007/",
       "acceptance": "Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure \u2192 one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.",
-      "status": "BUILDER_DONE"
+      "status": "QC_FIXING",
+      "notes": "batch-10: admission rejected (defectsFound=3 > defectsFixed=2) \u2014 fixer round 2 then re-QC"
     },
     {
       "id": "QC-008",
@@ -1795,7 +1808,7 @@
       "branch": "task/QC-011-human-review",
       "worktree": "worktrees/QC-011/",
       "acceptance": "automated routes exhausted \u2192 shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "QC-012",
@@ -1842,7 +1855,10 @@
       "branch": "task/SKL-002-claude-project-install",
       "worktree": "worktrees/SKL-002/",
       "acceptance": "`.claude/skills/mini-movie-creator` resolves to canonical source; `claude` loads it; non-destructive dry run of `/mini-movie-creator status` documented; install script idempotent (second run no-op); `bash integrations/claude/project-install.sh --check` exits 0.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedSha": "dfa9ba76134486e6c7b16b2e005e326b91767b57",
+      "mergedAt": "2026-08-28T23:35:00Z",
+      "mergedBatch": "batch-10"
     },
     {
       "id": "SKL-003",
@@ -2082,7 +2098,7 @@
       "branch": "task/REL-001-clean-install",
       "worktree": "worktrees/REL-001/",
       "acceptance": "fresh clean clone \u2192 install \u2192 `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "REL-002",

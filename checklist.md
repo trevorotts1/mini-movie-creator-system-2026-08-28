@@ -119,3 +119,13 @@
 - [x] Regression: pnpm -r test exit 0 (openclaw 23/23, claude 27/27, cli 63/63), pnpm -r typecheck exit 0 (remotion-runtime RC=0 after graphics restore), repo-wide vitest 3364 passed / 1 skipped; 3 pre-existing react-import collection failures (captions.test.ts, generated-clips/component.test.ts, generated-clips.test.ts) proven identical at pre-batch 1e06ddb and batch-8 b43743a — env defect (react/remotion not workspace deps), not batch-induced
 - [x] Not admitted: REC-010 (deps REC-002..REC-005 unmerged)
 - [x] QC-010 rebase-2 onto 1e06ddb (f12f42e) resolved prior packages/qc/src/index.ts conflict — merged clean
+
+## Batch 10 (2026-08-28T23:35Z)
+- [x] Admitted 5 QC-PASS tasks (phase=PASS, finalTestResult=PASS, defectsFixed >= defectsFound, final commit sha, branch+worktree verified, merge-tree pre-check clean): CORE-008, CORE-009, CORE-015, QC-005, SKL-002
+- [x] Merged deps-first order: CORE-008 (afe126e), CORE-009 (362a985), CORE-015 (b2992b9), QC-005 (73de2a2), SKL-002 (dfa9ba7) — all --no-ff, zero conflicts, never force-pushed
+- [x] SKL-002 cycle-2 re-admission: IQ-B6 revert (node: imports without node types) fixed on branch (361c28b); verified on integration: integrations/claude tsc --noEmit RC=0, claude tests 45/45
+- [x] Regression PASS: pnpm -r test exit 0 (apps/cli 78/78, integrations/claude 45/45, integrations/openclaw 23/23); pnpm -r run typecheck exit 0 (17/17 packages Done); batch-touched suites 219/219 (approvals+gate-machine+cost-engine+db-backup+qc-route+claude+openclaw)
+- [x] Pushed origin/integration f023247..dfa9ba7
+- [x] Not admitted: REC-010 (deps REC-002..005 unmerged), QC-007 (defects 3 found > 2 fixed)
+- [x] Unblocked (tasks.json BLOCKED->READY + todo.md): CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001
+- [x] pnpm-lock.yaml unchanged — no install needed

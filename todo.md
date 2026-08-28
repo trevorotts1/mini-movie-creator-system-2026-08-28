@@ -1,15 +1,15 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — READY: **26** — BLOCKED: **14**.
+Total tasks: **149** — MERGED: **128** — READY: **14** — BLOCKED: **5** — PASS: **1** (REC-010, deps REC-002..005) — BUILDER_DONE: **1** (QC-007, defects 3 found / 2 fixed — back to fixer). Batch-10: CORE-008, CORE-009, CORE-015, QC-005, SKL-002 merged; CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001 unblocked.
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
 WF01 CORE-001,002,003,010,011,012,013,014 · WF02 CHAR-001,002,003,004,006,007,008,009,010,011,012,014,015 · WF03 DIR-001,002,004,005,006,007,009,010,011,012,013,014 · WF09 CAP-001..010, QC-001..010,012 · WF04 AGN-001..010 · WF05 KIE-001..010 · WF06 FISH-001..010 · WF07 GHL-001..012 · WF08 VID-001..016 · WF10 SKL-001..007, REC-001..011.
 
-## BLOCKED set (19)
+## BLOCKED set (5)
 
-CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-003 migration runner / schema tables / CORE-008 gate persistence) · CHAR-005, CHAR-013 (need CORE-008) · DIR-003, DIR-008, DIR-015 (need CORE-008) · QC-011 (needs CORE-008) · REL-001..006 (wave-3 release: depends on all area tasks).
+REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked set) · REL-005 (needs REL-004) · REL-006 (needs REL-002..005 + REC-010/011). Batch-10 unblocked CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001 (all CORE-008 dependents) — CORE-008, CORE-009, CORE-015, QC-005, SKL-002 merged batch-10.
 
 ## Status policy (binding)
 
@@ -104,7 +104,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: provider_jobs + assets tables carry every field of spec §19 asset manifest (all 26 fields asserted by introspection test) and §18 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.
   - Status: MERGED
 
-- [ ] TASK-CORE-008 — Approval state machine + gates
+- [x] TASK-CORE-008 — Approval state machine + gates
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -113,9 +113,9 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-008-approval-gates
   - Worktree: worktrees/TASK-CORE-008/
   - Acceptance: 6 gates (concept, script, character, storyboard, rough cut, canon) persisted as domain states; illegal transitions throw; `npx vitest run packages/core/src/approvals` green incl. gate-ordering + persistence tests.
-  - Status: READY
+  - Status: MERGED (batch-10, afe126e)
 
-- [ ]  TASK-CORE-009 — Cost/quota reservations engine
+- [x]  TASK-CORE-009 — Cost/quota reservations engine
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -124,7 +124,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-009-cost-engine
   - Worktree: worktrees/TASK-CORE-009/
   - Acceptance: $24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger — run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.
-  - Status: READY
+  - Status: MERGED (batch-10, 362a985)
 
 - [x] TASK-CORE-010 — Config/env validation loader
   - Workflow: WF01
@@ -181,7 +181,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: checkpoint.json written atomically with runbook §5 fields; kill -9 mid-write leaves previous valid checkpoint; reload reconstructs ready/blocked/mergeQueue ids; `npx vitest run packages/core/src/recovery` green.
   - Status: MERGED
 
-- [ ]  TASK-CORE-015 — Database backup/export
+- [x]  TASK-CORE-015 — Database backup/export
   - Workflow: WF01
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -190,7 +190,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CORE-015-db-backup
   - Worktree: worktrees/TASK-CORE-015/
   - Acceptance: `mmcs backup export` produces a restorable archive; restore into empty DB passes full row-count + checksum comparison; `npx vitest run packages/database/src/backup` green incl. round-trip test.
-  - Status: READY
+  - Status: MERGED (batch-10, b2992b9)
 
 ## WF02 — SERIES BIBLE / CHARACTER
 
@@ -247,7 +247,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-005-lock-canonical
   - Worktree: worktrees/TASK-CHAR-005/
   - Acceptance: LOCK CHARACTER approval → candidate asset states transition DRAFT→APPROVED→CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 - [x] TASK-CHAR-006 — Appearance versions (effective episode)
   - Workflow: WF02
@@ -335,7 +335,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-CHAR-013-canon-approval
   - Worktree: worktrees/TASK-CHAR-013/
   - Acceptance: end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 - [x] TASK-CHAR-014 — GHL asset-link refresh/fallback
   - Workflow: WF02
@@ -392,7 +392,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-003-concept-approval
   - Worktree: worktrees/TASK-DIR-003/
   - Acceptance: no screenplay work while concept unapproved (state throws); `mmcs develop-concept` + `mmcs approve concept` wired; `npx vitest run packages/scene-intelligence/src/concept/approval` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 - [x] TASK-DIR-004 — Screenplay generator
   - Workflow: WF03
@@ -447,7 +447,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-008-script-approval
   - Worktree: worktrees/TASK-DIR-008/
   - Acceptance: no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 - [x]  TASK-DIR-009 — Scene parser
   - Workflow: WF03
@@ -524,7 +524,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-DIR-015-storyboard-approval
   - Worktree: worktrees/TASK-DIR-015/
   - Acceptance: no paid generation while storyboard unapproved; `mmcs storyboard` + `mmcs approve-storyboard` wired; `npx vitest run packages/scene-intelligence/src/storyboard/approval` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 ## WF09A — MODEL REGISTRY / CAPABILITIES (CAP-* live in WF09)
 
@@ -1332,7 +1332,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: neighboring shots compared against each other + current Series Bible state (spec §11); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.
   - Status: MERGED
 
-- [ ]  TASK-QC-005 — Video direct vs extracted-frame route
+- [x]  TASK-QC-005 — Video direct vs extracted-frame route
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1341,7 +1341,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-005-qc-route
   - Worktree: worktrees/TASK-QC-005/
   - Acceptance: video-capable model → direct video review; otherwise FFmpeg frame extraction → image-vision QC; route selection from capability profile (both branches tested); `npx vitest run packages/qc/src/route` green.
-  - Status: READY
+  - Status: MERGED (batch-10, 73de2a2)
 
 - [x]  TASK-QC-006 — Retry policy
   - Workflow: WF09
@@ -1363,7 +1363,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-007-agnes-flash-route
   - Worktree: worktrees/TASK-QC-007/
   - Acceptance: Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure → one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.
-  - Status: BUILDER_DONE
+  - Status: QC_FIXING (batch-10 admission rejected: defects 3 found / 2 fixed — fixer round 2 then re-QC)
 
 - [x]  TASK-QC-008 — Agnes regular fallback
   - Workflow: WF09
@@ -1407,7 +1407,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-QC-011-human-review
   - Worktree: worktrees/TASK-QC-011/
   - Acceptance: automated routes exhausted → shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 - [x]  TASK-QC-012 — Final episode QC
   - Workflow: WF09
@@ -1433,7 +1433,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Acceptance: AgentSkills-style SKILL.md concise frontmatter; all 25 required behaviors of spec §27 teachable; references hold detail; no secrets/hard-coded credentials (secret-scan grep clean); `bash skills/mini-movie-creator/scripts/mmcs-status.sh` exits 0 against a stub state; SKILL.md ≤ 500 lines.
   - Status: MERGED
 
-- [ ]  TASK-SKL-002 — Claude project install
+- [x]  TASK-SKL-002 — Claude project install
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1442,7 +1442,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-SKL-002-claude-project-install
   - Worktree: worktrees/TASK-SKL-002/
   - Acceptance: `.claude/skills/mini-movie-creator` resolves to canonical source; `claude` loads it; non-destructive dry run of `/mini-movie-creator status` documented; install script idempotent (second run no-op); `bash integrations/claude/project-install.sh --check` exits 0.
-  - Status: QC_FIXING
+  - Status: MERGED (batch-10, dfa9ba7; cycle-2 re-admission after IQ-B6 revert — node-types typecheck regression fixed on branch, tsc + vitest clean on integration)
 
 - [x]   TASK-SKL-003 — Claude personal install
   - Workflow: WF10
@@ -1629,7 +1629,7 @@ CORE-004, CORE-005, CORE-006, CORE-007, CORE-008, CORE-009, CORE-015 (need CORE-
   - Branch: task/TASK-REL-001-clean-install
   - Worktree: worktrees/TASK-REL-001/
   - Acceptance: fresh clean clone → install → `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
 
 - [ ] TASK-REL-002 — Full regression
   - Workflow: WF10
