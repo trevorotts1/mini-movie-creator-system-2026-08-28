@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "project_id": "mmcs",
-  "timestamp": "unknown",
+  "timestamp": "2026-08-28T14:38:00Z",
   "current_main_sha": "773054bebbe460de0f31dcfda5315970b1c8b4f2",
-  "current_integration_sha": null,
-  "active_dependency_wave": 0,
+  "current_integration_sha": "c7d489222c19e735fa108a95610d440ad2f00d8d",
+  "active_dependency_wave": 1,
   "ready_task_ids": [],
   "active_task_ids": [],
   "qc_task_ids": [],
@@ -13,6 +13,9 @@
   "active_workflow_ids": [],
   "active_agent_ids": [],
   "last_watchdog_timestamp": null,
-  "last_batch_merge_timestamp": null,
-  "next_recommended_actions": ["launch planning workflow"]
+  "last_batch_merge_timestamp": "2026-08-28T14:38:00Z",
+  "next_recommended_actions": [
+    "rebase 8 conflict-blocked branches",
+    "continue dispatch of newly unblocked tasks"
+  ]
 }
