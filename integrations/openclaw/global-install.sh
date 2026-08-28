@@ -179,7 +179,7 @@ cmd_install() {
   log "target:    $target (shared managed skills dir)"
 
   if [ -e "$target" ] || [ -L "$target" ]; then
-    ts="$(date -u +%Y%m%dT%H%M%SZ)"
+    ts="$(date -u +%Y%m%dT%H%M%SZ)-$$"
     backup_dir="$(backup_root)/$SKILL_SLUG-$ts"
     mkdir -p "$backup_dir"
     mv "$target" "$backup_dir/"
@@ -187,20 +187,29 @@ cmd_install() {
   fi
 
   mkdir -p "$(managed_skills_dir)"
-  OPENCLAW_STATE_DIR="$(state_dir)" openclaw skills install \
-    "$source_dir" --as "$SKILL_SLUG" --global --force
-
-  [ -f "$target/SKILL.md" ] || die "install reported success but $target/SKILL.md is missing"
-  if list_json | skill_source_from_json "$SKILL_SLUG" "openclaw-managed" >/dev/null; then
-    log "verified: '$SKILL_SLUG' visible with source openclaw-managed"
-  else
-    die "installed but 'openclaw skills list --json' does not report '$SKILL_SLUG' as openclaw-managed"
+  # Run install + verify as one unit: ANY failure here restores the previous
+  # copy so a half-installed or unverifiable state never replaces a working one.
+  local install_ok=0
+  if OPENCLAW_STATE_DIR="$(state_dir)" openclaw skills install \
+      "$source_dir" --as "$SKILL_SLUG" --global --force \
+      && [ -f "$target/SKILL.md" ] \
+      && list_json | skill_source_from_json "$SKILL_SLUG" "openclaw-managed" >/dev/null; then
+    install_ok=1
   fi
+  if [ "$install_ok" -ne 1 ]; then
+    if [ -n "${backup_dir:-}" ]; then
+      rm -rf "$target" 2>/dev/null || true
+      mv "$backup_dir/$SKILL_SLUG" "$target" 2>/dev/null \
+        || die "install/verify failed and automatic restore failed; previous copy is at: $backup_dir"
+      die "install/verify failed; previous global copy restored from $backup_dir"
+    fi
+    die "install/verify failed (no previous copy existed; nothing was replaced)"
+  fi
+  log "verified: '$SKILL_SLUG' visible with source openclaw-managed"
   log "done. uninstall/rollback: bash integrations/openclaw/global-install.sh --uninstall"
 }
 
 cmd_uninstall() {
-  require_openclaw
   local target backup_dir ts
   target="$(managed_skill_dir)"
   if [ ! -e "$target" ] && [ ! -L "$target" ]; then
@@ -208,17 +217,23 @@ cmd_uninstall() {
     log "note: a workspace copy (<workspace>/skills/$SKILL_SLUG) is managed by SKL-005 and is left untouched"
     return 0
   fi
-  ts="$(date -u +%Y%m%dT%H%M%SZ)"
+  ts="$(date -u +%Y%m%dT%H%M%SZ)-$$"
   backup_dir="$(backup_root)/$SKILL_SLUG-$ts"
   mkdir -p "$backup_dir"
   mv "$target" "$backup_dir/"
   log "removed global copy; backup at: $backup_dir"
-  if list_json | skill_source_from_json "$SKILL_SLUG" "" >/dev/null 2>&1; then
-    warn "'$SKILL_SLUG' still listed after removal (a workspace copy may provide it — that copy wins by precedence and is NOT touched)"
+  if command -v openclaw >/dev/null 2>&1; then
+    if list_json | skill_source_from_json "$SKILL_SLUG" "" >/dev/null 2>&1; then
+      warn "'$SKILL_SLUG' still listed after removal (a workspace copy may provide it — that copy wins by precedence and is NOT touched)"
+    else
+      log "verified: '$SKILL_SLUG' no longer in the managed inventory"
+    fi
   else
-    log "verified: '$SKILL_SLUG' no longer in the managed inventory"
+    log "openclaw CLI unavailable; skipped inventory verification (managed dir removal is complete)"
   fi
-  log "rollback: mv '$backup_dir' '$target'"
+  # The backup is the previous <target> itself, so rollback is a single mv of
+  # the moved dir back into place (restores <target>/SKILL.md exactly).
+  log "rollback: mv '$backup_dir/$SKILL_SLUG' '$target'"
 }
 
 cmd_check() {
@@ -308,7 +323,8 @@ while [ $# -gt 0 ]; do
     --help|-h)  usage; exit 0 ;;
     --source)   [ $# -ge 2 ] || die "--source requires a directory argument"
                 SOURCE_FLAG="$2"; shift ;;
-    --source=*) SOURCE_FLAG="${1#--source=}" ;;
+    --source=*) SOURCE_FLAG="${1#--source=}"
+                [ -n "$SOURCE_FLAG" ] || die "--source= requires a non-empty directory argument" ;;
     *)          die "unknown argument: $1 (try --help)" ;;
   esac
   shift

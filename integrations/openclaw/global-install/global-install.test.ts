@@ -49,7 +49,10 @@ function childEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
   return { ...rest, ...extra };
 }
 
-/** Run the install script with args; returns {status, stdout, stderr}. */
+/** Path-restricted env: hides the real openclaw CLI so CLI-optional paths get exercised. */
+function noClawEnv(extra: Record<string, string> = {}): Record<string, string> {
+  return { PATH: "/usr/bin:/bin", HOME: process.env.HOME ?? "", ...extra };
+}
 function runScript(args: string[], env: Record<string, string>) {
   try {
     const stdout = execFileSync("bash", [SCRIPT, ...args], {
@@ -164,6 +167,12 @@ describe("SKL-006 script properties", () => {
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("unknown argument");
   });
+
+  it("rejects an empty --source= value with exit 2", () => {
+    const r = runScript(["--source="], {});
+    expect(r.status).toBe(2);
+    expect(r.stderr).toContain("non-empty");
+  });
 });
 
 describe("SKL-006 --check (acceptance: exits 0)", () => {
@@ -227,12 +236,25 @@ describe("SKL-006 end-to-end against the real openclaw CLI (isolated state dir)"
       expect(r.stdout).toMatch(/rollback: mv /);
       expect(existsSync(path.join(e.stateDir, "skills", SKILL_SLUG))).toBe(false);
       expect(listSkill(e.stateDir)).toBeUndefined();
-      // the backup itself is restorable: <backups>/<slug>-<ts>/<slug>/SKILL.md
+      // the backup itself is restorable: <backups>/<slug>-<ts>-<pid>/<slug>/SKILL.md
       const backups = path.join(e.stateDir, "skills", ".mmcs-global-install-backups");
       expect(existsSync(backups)).toBe(true);
       const stamp = readDirSync(backups)[0];
-      expect(stamp).toMatch(new RegExp(`^${SKILL_SLUG}-\\d{8}T\\d{6}Z$`));
+      expect(stamp).toMatch(new RegExp(`^${SKILL_SLUG}-\\d{8}T\\d{6}Z-\\d+$`));
       expect(existsSync(path.join(backups, stamp, SKILL_SLUG, "SKILL.md"))).toBe(true);
+      // EXECUTE the printed rollback command — it must actually restore the
+      // global copy (target/SKILL.md present, visible again as openclaw-managed).
+      const mvMatch = r.stdout.match(/rollback: mv ('[^']+' '[^']+')/);
+      expect(mvMatch).not.toBeNull();
+      const mvCmd = (mvMatch as RegExpMatchArray)[1];
+      const rb = execFileSync("bash", ["-c", `mv ${mvCmd}`], {
+        env: childEnv({}),
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      expect(rb).toBe("");
+      expect(existsSync(path.join(e.stateDir, "skills", SKILL_SLUG, "SKILL.md"))).toBe(true);
+      expect(listSkill(e.stateDir)?.source).toBe("openclaw-managed");
     } finally {
       e.cleanup();
     }
@@ -245,6 +267,76 @@ describe("SKL-006 end-to-end against the real openclaw CLI (isolated state dir)"
       expect(r.status).toBe(0);
       expect(r.stdout).toContain("nothing to uninstall");
       expect(r.stdout).toContain("workspace copy"); // points to SKL-005's default
+    } finally {
+      e.cleanup();
+    }
+  });
+
+  it.skipIf(!openclawAvailable)("failed install restores the backed-up previous copy (no destroyed state)", () => {
+    const e = makeEnv();
+    try {
+      const fixture = makeFixture(e.root);
+      expect(runScript(["--source", fixture], e.env).status).toBe(0);
+      const marker = "PREVIOUS-GLOBAL-COPY-MARKER";
+      writeFileSync(
+        path.join(e.stateDir, "skills", SKILL_SLUG, "SKILL.md"),
+        `---\nname: ${SKILL_SLUG}\ndescription: ${marker}\n---\n`,
+      );
+      // Simulate a failing CLI: a fake openclaw that refuses `skills install`
+      // but still lists (so the failure path is the install itself).
+      const fake = path.join(e.root, "fakebin");
+      mkdirSync(fake, { recursive: true });
+      // passes require_openclaw help probe; fails the real install
+      writeFileSync(
+        path.join(fake, "openclaw"),
+        [
+          "#!/bin/sh",
+          'case "$1" in',
+          "  skills)",
+          '    case "$2" in',
+          "      install)",
+          '        if [ "$3" = "--help" ]; then echo "  --global"; exit 0; fi',
+          "        exit 1 ;;",
+          "      *) exit 0 ;;",
+          "    esac",
+          "    ;;",
+          "  *) exit 0 ;;",
+          "esac",
+          "",
+        ].join("\n"),
+        { mode: 0o755 },
+      );
+      const r = runScript(["--source", fixture], {
+        OPENCLAW_STATE_DIR: e.stateDir,
+        PATH: `${fake}:/usr/bin:/bin`,
+      });
+      expect(r.status).toBe(2);
+      expect(r.stderr).toContain("restored");
+      // previous copy is back in place, not lost
+      const restored = readFileSync(
+        path.join(e.stateDir, "skills", SKILL_SLUG, "SKILL.md"),
+        "utf8",
+      );
+      expect(restored).toContain(marker);
+    } finally {
+      e.cleanup();
+    }
+  });
+
+  it.skipIf(!openclawAvailable)("uninstall works without the openclaw CLI on PATH (filesystem-only op)", () => {
+    const e = makeEnv();
+    try {
+      const fixture = makeFixture(e.root);
+      expect(runScript(["--source", fixture], e.env).status).toBe(0);
+      const r = runScript(["--uninstall"], noClawEnv({ OPENCLAW_STATE_DIR: e.stateDir }));
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain("removed global copy");
+      expect(r.stdout).toContain("skipped inventory verification");
+      expect(existsSync(path.join(e.stateDir, "skills", SKILL_SLUG))).toBe(false);
+      // backup exists and is restorable via the printed command's target layout
+      const backups = path.join(e.stateDir, "skills", ".mmcs-global-install-backups");
+      const stamp = readDirSync(backups)[0];
+      expect(existsSync(path.join(backups, stamp, SKILL_SLUG, "SKILL.md"))).toBe(true);
     } finally {
       e.cleanup();
     }
