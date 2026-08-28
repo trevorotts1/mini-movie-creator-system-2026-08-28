@@ -2,15 +2,15 @@
   "taskId": "CAP-009",
   "phase": "PASS",
   "commit": "677f00dab4482fc3a31b9e57d3e74f9fdac027a6",
-  "rebasedOnto": "c7d4892fd0c56a2534e5cd2d00a7e0b1d52bff66",
-  "rebaseCommit": "f89fec6de860e2bb1b0684afa5687cdd5bb6f9fc",
-  "checksRun": "npx vitest run packages/capability-registry/src/verify apps/cli/src/commands/providers-verify (24/24 PASS, JSON-reporter verified); full-suite vitest run (exit 0); npx tsc --noEmit -p packages/capability-registry and -p apps/cli (clean); git merge-tree vs origin/integration (no conflicts); security scan of owned paths (no secrets, no network, no exec, env-presence-only)",
+  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
+  "rebaseCommit": "94011e9597013651636ee972abfcfd12047eee6e",
+  "checksRun": "npx vitest run packages/capability-registry apps/cli/src/commands/providers-verify (24/24 PASS); full-suite vitest run (exit 0); git merge-tree vs origin/integration (no conflicts); security scan of owned paths (no secrets, no network, no exec, env-presence-only)",
   "defectsFound": 0,
   "defectsFixed": 0,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T14:40:00Z",
-  "notes": "Provider verify verified green: 24/24 tests (17 verify + 7 CLI wiring), typecheck clean, transient-never-rewrites-VERIFIED rule tested at throw/ok:false/timeout/per-field levels, applyOverrides immutable + verifiedFacts protected, env loader exposes presence only; merge-tree vs integration clean (index.ts one-line exports merge trivially).",
+  "notes": "Provider verify rebased clean onto origin/integration 5cb2c2e: packages/capability-registry/src/index.ts barrel resolved by unioning exports. All tests PASS. Merge-tree clean.",
   "blockers": [],
-  "updatedAt": "2026-08-28T14:55:00Z"
+  "updatedAt": "2026-08-28T15:00:00Z"
 }
