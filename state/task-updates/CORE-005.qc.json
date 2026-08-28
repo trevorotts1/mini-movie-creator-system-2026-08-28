@@ -1,13 +1,13 @@
 {
   "taskId": "CORE-005",
   "phase": "PASS",
-  "commit": "cf0ccd55ffb7e01e04733fac93920b6b2e2ae6c0",
-  "checksRun": "npx vitest run packages/database/src/repositories/characters packages/database/src/migrations packages/database/src/repositories/locations (60 passed/4 files); npx vitest run packages/database (75 passed/6 files); npx vitest run (332 passed/22 files, after worktree node_modules symlink repair); npx tsc --noEmit (packages/database) clean; no eslint config exists repo-wide (vacuous)",
-  "defectsFound": 2,
-  "defectsFixed": 2,
+  "commit": "a5ca06472a67c087275fcca3a8184063960fc92a",
+  "checksRun": "npx vitest run packages/database/src/repositories/characters (27 passed); npx vitest run packages/database (79 passed/6 files); npx vitest run full repo (336 passed/22 files); npx tsc --noEmit packages/database clean; independent SQL probes: PRAGMA table_info GHL columns, sqlite_master triggers, UNIQUE constraints, sha256 CHECK",
+  "defectsFound": 3,
+  "defectsFixed": 3,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
-  "queuedAt": "2026-08-28T15:30:00Z",
-  "notes": "Fixed: AppearanceVersionRepository.create skipped typed state validation (raw SQLite CHECK error) -> typed CharacterRepositoryError + regression test; characters-schema.test.ts asserted exact ledger equality -> contains assertion so sibling bands (010/030/040) can merge. Repaired worktree node_modules zod/commander symlinks (env, uncommitted).",
+  "queuedAt": "2026-08-28T15:55:00Z",
+  "notes": "Second QC pass (first pass fixed 2: typed appearance-state validation, ledger contains-assertion). This pass fixed 1: resolveForEpisode string-compared episode labels (S01E08>=S01E10 and S02E03>=S10E01 true lexicographically -> wrong canon) -> numeric episodeNumber mirroring CHAR-006, time-only versions skip episode queries, 4 regression tests. Verified non-defects: sha256 CHECK lowercase per CHAR-002 producers, UNIQUE(character_id,version_label) present on both history tables.",
   "blockers": []
 }
