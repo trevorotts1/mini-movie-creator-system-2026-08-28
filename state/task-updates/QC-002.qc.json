@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-002",
+  "phase": "PASS",
+  "commit": "3966596",
+  "checksRun": "npx vitest run packages/qc/src/identity (21/21 PASS); npx vitest run packages/qc (21/21 PASS); npx vitest run full monorepo (25 files, 429/429 PASS); tsc --noEmit packages/qc + packages/character-library (clean); security pass on packages/qc/src/identity (no secrets, no exec/spawn, no fs I/O, untrusted story text interpolated into prompt only, fail-closed parse)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:00:00Z",
+  "notes": "Fixed parseVisionComparison mis-extraction when adapter prose contains braces before the JSON object (brace-balance scan skipping string literals, first parseable candidate wins) + removed unused RESPONSE_JSON_SCHEMA_HINT; 3 regression tests added; doctored-fixture mismatch acceptance and imageQc slot enforcement verified against mocked vision model.",
+  "blockers": []
+}
