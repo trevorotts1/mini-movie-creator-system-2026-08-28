@@ -1,0 +1,9 @@
+{
+  "taskId": "GHL-003",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING_COMMIT_SHA",
+  "testsRun": "npx vitest run packages/media-storage/src/ghl/folders -> 20 passed (20); tsc --noEmit -p packages/media-storage/tsconfig.json -> exit 0",
+  "notes": "GHL folder ops: createFolder POST /medias/folder {altId, altType:location, name, parentId?}, listFolders/findFolderByName via GET /medias/files (type=folder, pagination), ensureFolder search-before-create (duplicate-root prevention). Docs verified 2026-08-28 (marketplace.gohighlevel.com /docs/ghl/medias/create-media-folder/ + /fetch-media-content). Auth injected via GhlFolderConfig/GhlTransport (GHL-001 boundary); no token handling in module. Note: tsconfig.json gained types:[node] (fetch/URL globals, @types/node already in root devDeps).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
