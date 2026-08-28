@@ -1,0 +1,9 @@
+{
+  "taskId": "VID-011",
+  "phase": "BUILDER_DONE",
+  "commit": "e28766b",
+  "testsRun": "npx vitest run packages/remotion-runtime/src/aspect -> Test Files 5 passed (5), Tests 52 passed (52); npx tsc --noEmit -p tsconfig.base.json -> 0 errors",
+  "notes": "Aspect module complete: parse W:H, series default + per-episode override plan resolution, canvas/safe-area/caption-zone geometry, compositions from one plan, plus new letterbox/crop fit policy for mismatched source assets (fit.ts + 26 tests). Default 1080p tier yields 1920x1080 (16:9) and 1080x1920 (9:16).",
+  "blockers": [],
+  "updatedAt": "2026-08-28T18:25:00Z"
+}
