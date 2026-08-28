@@ -1,7 +1,7 @@
 {
   "taskId": "SKL-001",
   "phase": "PASS",
-  "commit": "",
+  "commit": "c43ef54",
   "checksRun": "bash skills/mini-movie-creator/tests/run-tests.sh -> 49/49 (25 spec §27 behaviors teachable, SKILL.md 223 lines <= 500, references >= 60 lines each, secret-scan clean, mmcs-status.sh exit 0 vs stub state, unresolved-root exit 1 regression); bash skills/mini-movie-creator/scripts/mmcs-status.sh -> exit 0 vs stub state; sandbox unresolved-root run -> exit 1; independent secret scan (token shapes / secret assignments / URL creds) -> clean; bash -n both scripts -> clean; SKILL.md verb citations vs apps/cli/src/dispatch/registry.ts -> all registered; spec §24/§27 cross-check",
   "defectsFound": 3,
   "defectsFixed": 3,
