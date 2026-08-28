@@ -1,0 +1,9 @@
+{
+  "taskId": "CHAR-012",
+  "phase": "BUILDER_DONE",
+  "commit": "PENDING",
+  "testsRun": "npx vitest run packages/character-library/src/series-bible → 18/18 passed; npx vitest run packages/character-library → 117/117 passed; npx tsc --noEmit -p packages/character-library → clean",
+  "notes": "Series Bible (spec §10): CanonState covers premise, world rules, characters, relationships, locations, wardrobe, props, visual style, camera language, voice profiles, per-character canon events, plot threads; append-only episode summaries + timeline; Gate 6 canon changes (propose → approve/reject, sequential canonVersion); canonAtEpisode replays approved changes with effectiveEpisode <= query — historical episodes read canon-at-time; applyCanonMutation clones payloads so replays never share structure with the ledger; currentCanon for live-state reads; characterCanonAtEpisode continuity read for shot planners.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T14:40:00Z"
+}
