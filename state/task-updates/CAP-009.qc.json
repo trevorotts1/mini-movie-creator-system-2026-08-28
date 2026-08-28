@@ -1,16 +1,13 @@
 {
   "taskId": "CAP-009",
   "phase": "PASS",
-  "commit": "677f00dab4482fc3a31b9e57d3e74f9fdac027a6",
-  "rebasedOnto": "5cb2c2ea078a85bd7f3f27d991d9d294656b0183",
-  "rebaseCommit": "94011e9597013651636ee972abfcfd12047eee6e",
-  "checksRun": "npx vitest run packages/capability-registry apps/cli/src/commands/providers-verify (24/24 PASS); full-suite vitest run (exit 0); git merge-tree vs origin/integration (no conflicts); security scan of owned paths (no secrets, no network, no exec, env-presence-only)",
-  "defectsFound": 0,
-  "defectsFixed": 0,
+  "commit": "7f4561d",
+  "checksRun": "pnpm -r run typecheck (exit 0); vitest run packages/capability-registry/src/verify/verify.test.ts (17/17); vitest run apps/cli/src/commands/providers-verify/command.test.ts (12/12); full-suite vitest run (830/830, exit 0); pnpm -r run build (exit 0); pnpm -r run test (exit 0); git merge-tree vs origin/integration (no conflicts); security scan of owned paths (no secrets, no network, no exec, env-presence-only)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
-  "queuedAt": "2026-08-28T14:40:00Z",
-  "notes": "Provider verify rebased clean onto origin/integration 5cb2c2e: packages/capability-registry/src/index.ts barrel resolved by unioning exports. All tests PASS. Merge-tree clean.",
-  "blockers": [],
-  "updatedAt": "2026-08-28T15:00:00Z"
+  "queuedAt": "2026-08-28T19:15:00Z",
+  "notes": "TS6059 rootDir violation: command.ts imported @mmcs/capability-registry, breaking pnpm -r run typecheck. Fixed via CHAR-004 local-type pattern (CLI-local verify.ts/report.ts, structurally identical types; reverted apps/cli workspace dep + pnpm-lock.yaml). Added regression tests guarding the workspace import and the package.json dep.",
+  "blockers": []
 }
