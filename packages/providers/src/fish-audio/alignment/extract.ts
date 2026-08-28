@@ -7,7 +7,7 @@
  * validated. Throws on malformed input — never silently repairs timings
  * (a wrong caption beat is worse than a loud failure).
  *
- * The provider payload is UNTRUSTED data (spec §21): validated field by
+ * The provider payload is UNTRUSTED data (spec §29): validated field by
  * field, never evaluated, never interpolated into executable context.
  */
 import type {
@@ -162,7 +162,10 @@ export function extractAlignment(
     throw new Error("alignment text is required (options.text or payload.text)");
   }
   const unit: FishAlignmentTimeUnit = payload.timeUnit ?? "ms";
-  if (!UNIT_TO_MS[unit]) {
+  // Object.prototype.hasOwnProperty check — the payload is untrusted and
+  // values like "constructor"/"valueOf" would otherwise pass a truthiness
+  // check through the prototype chain and fail later with a wrong message.
+  if (!Object.prototype.hasOwnProperty.call(UNIT_TO_MS, unit)) {
     throw new Error(`alignment payload.timeUnit is unsupported: ${JSON.stringify(unit)}`);
   }
   if (!Array.isArray(payload.words)) {
@@ -179,7 +182,11 @@ export function extractAlignment(
   });
   const sorted = indexed.map((e) => e.w);
 
-  const lastEnd = sorted.length > 0 ? sorted[sorted.length - 1]!.endMs : 0;
+  // Max word end, NOT the last sorted word's end: multi-voice (S2) dialogue
+  // can legitimately overlap words (speaker 1 starts before speaker 0's word
+  // ends), so the array's final entry need not have the greatest endMs. The
+  // duration must cover every word or FISH-007's caption window is truncated.
+  const lastEnd = sorted.reduce((max, w) => (w.endMs > max ? w.endMs : max), 0);
   let durationMs = lastEnd;
   if (payload.duration !== undefined) {
     if (!isFiniteNumber(payload.duration)) {

@@ -16,7 +16,7 @@
  *       cache key of the asset the audio came from)
  *     → FISH-007 reads timings with `FishAlignmentStore.get`.
  *
- * Dialogue/story text is UNTRUSTED data (spec §21): it is stored verbatim,
+ * Dialogue/story text is UNTRUSTED data (spec §29): it is stored verbatim,
  * hashed-adjacent (the key is already a digest), never evaluated, and never
  * used to construct file paths (the file name is the hex digest key).
  */

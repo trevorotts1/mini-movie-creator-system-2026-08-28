@@ -8,7 +8,7 @@
  * the asset it belongs to and is addressed by the SAME cache key, so any
  * consumer (FISH-007 caption output, QC subtitle-sync checks) can resolve the
  * timings for a dialogue asset deterministically. Durable, migration-light,
- * consistent with the monorepo's V1 posture (spec §37). Writes are serialized
+ * consistent with the monorepo's V1 posture (spec §25). Writes are serialized
  * per store instance. Dialogue text is untrusted data — it is stored verbatim
  * and never used to construct paths (the file name is the hex digest key).
  *
@@ -20,6 +20,7 @@ import path from "node:path";
 import { isCurrentDialogueAssetKey } from "./key.js";
 import type {
   FishAlignmentFile,
+  FishAlignedWord,
   FishDialogueAlignment,
 } from "./types.js";
 
@@ -133,7 +134,12 @@ export class FishAlignmentStore {
   }
 }
 
-/** Parse + structurally check an on-disk document. */
+/**
+ * Parse + structurally check an on-disk document. Deeper than the writer's
+ * pre-check: a corrupted or hand-mangled file must never hand FISH-007 a
+ * record that crashes its caption loader (missing text), carries non-word
+ * entries, or lacks the fields the record contract guarantees.
+ */
 export function parseAlignmentDoc(raw: string, filePath: string): FishDialogueAlignment {
   let parsed: unknown;
   try {
@@ -142,19 +148,34 @@ export function parseAlignmentDoc(raw: string, filePath: string): FishDialogueAl
     throw new Error(`Alignment file at ${filePath} is not valid JSON`);
   }
   const doc = parsed as Partial<FishAlignmentFile>;
+  const a = doc?.alignment as Partial<FishDialogueAlignment> | undefined;
   if (
     doc?.formatVersion !== 1 ||
-    typeof doc.alignment !== "object" ||
-    doc.alignment === null ||
-    typeof doc.alignment.key !== "string" ||
-    typeof doc.alignment.text !== "string" ||
-    !Array.isArray(doc.alignment.words)
+    typeof a !== "object" ||
+    a === null ||
+    typeof a.key !== "string" ||
+    typeof a.text !== "string" ||
+    !Array.isArray(a.words) ||
+    typeof a.source !== "string" ||
+    typeof a.extractedAt !== "string" ||
+    typeof a.durationMs !== "number" ||
+    !Number.isFinite(a.durationMs) ||
+    a.words.some((w) => {
+      const word = w as Partial<FishAlignedWord> | null;
+      return (
+        typeof word !== "object" ||
+        word === null ||
+        typeof word.word !== "string" ||
+        typeof word.startMs !== "number" ||
+        typeof word.endMs !== "number"
+      );
+    })
   ) {
     throw new Error(
       `Alignment file at ${filePath} is malformed (expected formatVersion 1)`,
     );
   }
-  return doc.alignment;
+  return a as FishDialogueAlignment;
 }
 
 function isNodeENOENT(err: unknown): boolean {

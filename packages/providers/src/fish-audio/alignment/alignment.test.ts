@@ -381,6 +381,54 @@ describe("extractAlignment (known-alignment fixture)", () => {
       }),
     ).toThrow(/options\.source/);
   });
+
+  it("rejects a prototype-chain timeUnit with the unsupported-unit message (regression: truthiness gate inherited 'constructor')", () => {
+    for (const bogus of ["constructor", "valueOf", "toString", "__proto__"]) {
+      expect(() =>
+        extractAlignment(
+          {
+            text: FIXTURE_TEXT,
+            words: [{ word: "x", start: 0, end: 100 }],
+            timeUnit: bogus as never,
+          },
+          { key: FIXTURE_KEY, now: () => FIXED_NOW },
+        ),
+      ).toThrow(/timeUnit is unsupported/);
+    }
+  });
+
+  it("duration fallback covers overlapping multi-voice words (regression: last sorted entry not the max end)", () => {
+    // Speaker 1's word ENDS at 600ms but starts before speaker 0's word ends;
+    // sorted order puts the 600ms word LAST, so a "last sorted word" fallback
+    // would return 600 and truncate speaker 0's caption window.
+    const alignment = extractAlignment(
+      {
+        text: "Hello hi",
+        words: [
+          { word: "Hello", start: 0, end: 1000, speaker: 0 },
+          { word: "hi", start: 500, end: 600, speaker: 1 },
+        ],
+      },
+      { key: FIXTURE_KEY, now: () => FIXED_NOW },
+    );
+    expect(alignment.durationMs).toBe(1000);
+  });
+
+  it("rejects a duration that undercuts ANY overlapping word end (regression: max-end bound)", () => {
+    expect(() =>
+      extractAlignment(
+        {
+          text: "Hello hi",
+          words: [
+            { word: "Hello", start: 0, end: 1000, speaker: 0 },
+            { word: "hi", start: 500, end: 600, speaker: 1 },
+          ],
+          duration: 700,
+        },
+        { key: FIXTURE_KEY, now: () => FIXED_NOW },
+      ),
+    ).toThrow(/duration \(700ms\) is less than the last word end \(1000ms\)/);
+  });
 });
 
 describe("FishAlignmentStore", () => {
@@ -483,6 +531,81 @@ describe("FishAlignmentStore", () => {
       fs: mem.fs,
     });
     await expect(store.getByKey(FIXTURE_KEY)).rejects.toThrow(/malformed/);
+  });
+
+  it("rejects corrupt stored documents: null word entries, missing durationMs/source/extractedAt", async () => {
+    // Defect regression: parser accepted words:[null] and records missing the
+    // fields the FishDialogueAlignment contract guarantees — FISH-007 would
+    // crash reading them instead of getting a loud malformed-file error.
+    const corruptDocs = [
+      // null word entry inside words[]
+      {
+        formatVersion: 1,
+        alignment: {
+          key: FIXTURE_KEY,
+          text: FIXTURE_TEXT,
+          source: "provider_response",
+          durationMs: 100,
+          extractedAt: "x",
+          words: [null],
+        },
+      },
+      // missing durationMs
+      {
+        formatVersion: 1,
+        alignment: {
+          key: FIXTURE_KEY,
+          text: FIXTURE_TEXT,
+          source: "provider_response",
+          extractedAt: "x",
+          words: [],
+        },
+      },
+      // missing source
+      {
+        formatVersion: 1,
+        alignment: {
+          key: FIXTURE_KEY,
+          text: FIXTURE_TEXT,
+          durationMs: 0,
+          extractedAt: "x",
+          words: [],
+        },
+      },
+      // missing extractedAt
+      {
+        formatVersion: 1,
+        alignment: {
+          key: FIXTURE_KEY,
+          text: FIXTURE_TEXT,
+          source: "provider_response",
+          durationMs: 0,
+          words: [],
+        },
+      },
+      // word entry without startMs/endMs
+      {
+        formatVersion: 1,
+        alignment: {
+          key: FIXTURE_KEY,
+          text: FIXTURE_TEXT,
+          source: "provider_response",
+          durationMs: 100,
+          extractedAt: "x",
+          words: [{ word: "x" }],
+        },
+      },
+    ];
+    for (const doc of corruptDocs) {
+      const mem = memoryFs({
+        [`/tmp/test-alignment/${FIXTURE_KEY}.json`]: JSON.stringify(doc),
+      });
+      const store = new FishAlignmentStore({
+        directory: "/tmp/test-alignment",
+        fs: mem.fs,
+      });
+      await expect(store.getByKey(FIXTURE_KEY)).rejects.toThrow(/malformed/);
+    }
   });
 
   it("parseAlignmentDoc round-trips the fixture document verbatim", () => {
