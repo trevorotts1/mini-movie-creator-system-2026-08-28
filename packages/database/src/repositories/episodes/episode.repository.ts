@@ -32,7 +32,7 @@ export class SqliteEpisodeRepository extends SchemaRepository {
       throw new ValidationError("status", `must be one of ${STATUSES.join(", ")}`);
     }
     const aspectRatioOverride =
-      input.aspectRatioOverride === undefined
+      input.aspectRatioOverride === undefined || input.aspectRatioOverride === null
         ? null
         : this.requireAspectRatio("aspectRatioOverride", input.aspectRatioOverride, "16:9");
     const targetRuntimeSeconds =
@@ -44,6 +44,17 @@ export class SqliteEpisodeRepository extends SchemaRepository {
     }
     if (typeof input.seriesId !== "string" || input.seriesId.length === 0) {
       throw new ValidationError("seriesId", "must be a non-empty string");
+    }
+    // The denormalized project_id must agree with the series' own project
+    // (spec §25 hierarchy): a valid-but-different project id would pass the
+    // FK checks and silently corrupt listByProject and the GHL folder tree.
+    const seriesRow = this.db.get("SELECT project_id FROM series WHERE id = ?", input.seriesId);
+    if (seriesRow === undefined) {
+      throw new ValidationError("seriesId", `series "${input.seriesId}" does not exist`);
+    }
+    const seriesProjectId = String(seriesRow["project_id"]);
+    if (input.projectId !== seriesProjectId) {
+      throw new ValidationError("projectId", `must match the series' project ("${seriesProjectId}")`);
     }
     const code = formatEpisodeCode(seasonNumber, episodeNumber);
     const now = new Date().toISOString();

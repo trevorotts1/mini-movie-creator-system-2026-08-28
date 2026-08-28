@@ -112,6 +112,29 @@ describe("SqliteEpisodeRepository", () => {
     expect(episodes.findById(e.id)).toEqual(e);
   });
 
+  it("rejects a projectId that does not match the series' own project", () => {
+    const other = projects.create({ name: "Other Project" });
+    expect(() =>
+      episodes.create({ projectId: other.id, seriesId, seasonNumber: 1, episodeNumber: 30, title: "Cross-Wired" }),
+    ).toThrow(/project/);
+    // Unknown series must fail loudly too, not silently orphan.
+    expect(() =>
+      episodes.create({ projectId, seriesId: "ser_ghost", seasonNumber: 1, episodeNumber: 31, title: "Ghost" }),
+    ).toThrow(/series/);
+  });
+
+  it("stores an explicit null aspectRatioOverride as NULL inherit, not the default", () => {
+    const e = episodes.create({
+      projectId,
+      seriesId,
+      seasonNumber: 1,
+      episodeNumber: 32,
+      title: "Explicit Null",
+      aspectRatioOverride: null,
+    });
+    expect(e.aspectRatioOverride).toBeNull();
+  });
+
   it("formats deterministic codes across season boundaries", () => {
     expect(formatEpisodeCode(1, 3)).toBe("S01E03");
     expect(formatEpisodeCode(12, 345)).toBe("S12E345");
