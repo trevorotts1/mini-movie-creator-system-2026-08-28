@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-003",
+  "phase": "PASS",
+  "commit": "PENDING_COMMIT",
+  "checksRun": "npx vitest run --config packages/qc/src/wardrobe/vitest.config.mts packages/qc/src/wardrobe; npx tsc --noEmit -p packages/qc/tsconfig.json",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T18:30:00Z",
+  "notes": "Wardrobe/hair/prop checks verified: active appearance version vs shot spec + observation gate + wrong wardrobe flags. 27/27 tests pass, typecheck clean.",
+  "blockers": []
+}
