@@ -1,7 +1,7 @@
 {
   "taskId": "SKL-006",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "6f81327",
   "testsRun": "bash integrations/openclaw/global-install.sh --check -> exit 0 (acceptance; includes isolated-state-dir self-test of install --global, openclaw-managed visibility, and uninstall/rollback); npx vitest run --config integrations/openclaw/global-install/vitest.config.ts -> 11/11 passed (5 real-CLI end-to-end cases against isolated OPENCLAW_STATE_DIR temp dirs + 6 static/safety cases); bash -n syntax check clean; verified real managed dir (~/.openclaw/skills) untouched by all test runs (0 writes)",
   "notes": "global-install.sh: optional OpenClaw global install via 'openclaw skills install <src> --as mini-movie-creator --global --force' into <OPENCLAW_STATE_DIR|~/.openclaw>/skills; workspace install documented as supported default (SKL-005); verified precedence live (workspace beats managed); uninstall/rollback = managed-dir removal with timestamped backup + printed one-mv rollback (CLI has no skills uninstall, verified live docs.openclaw.ai/cli/skills 2026-08-28); --check self-tests full lifecycle in temp state dir, never touches real state; source resolution honors SKL-005 packaging dir, SKL-001 canonical dir, --source flag, MMCS_OPENCLAW_SKILL_SOURCE; no secrets printed (spec 26/29).",
   "blockers": [
