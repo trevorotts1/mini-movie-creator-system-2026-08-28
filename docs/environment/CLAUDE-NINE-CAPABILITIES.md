@@ -37,26 +37,25 @@ opus-chain; anything asking for sonnet lands on sonnet-chain. Full-name requests
 (`claude-opus-5` etc.) are also remapped by `modelOverrides`, so no request
 escapes to Anthropic directly — everything goes through :20128.
 
-## Skill discovery mechanism (verified)
+## Skill discovery mechanism (re-verified 2026-08-28, SKL-004)
 
-1. **Primary dir:** `~/.claude-nine/skills/` (per `CLAUDE_CONFIG_DIR`). Contains
-   49 real directories — claude-nine's own tuned copies (box-update, fix-unit,
-   judge-unit, look, merge-writer, orchestrate, purpose, skill-warfix,
-   skill-warroom, spec-protocol, swarm + fable-haiku/fable-mode/fable-sonnet,
-   fablize, fleet-access, fleet-roll, graphify, kaizen, live-ledger, slides, tonine,
-   ui-styling, ui-ux-pro-max, woo-guard, wp-guard, test-guard, docs-guard, eli5,
-   bro, brand, design, design-system, banner-design, clean-code-guard,
-   agw-ledger-tick/agw-resume/agw-work-loop, kimi-webbridge,
-   resume-after-limit, temp-fleet-standing-gate, nine-router-setup).
-2. **Sync from real CLI:** `~/.local/bin/sync-nine-skills.sh` runs on every launch.
+1. **Primary dir:** `~/.claude-nine/skills/` (per `CLAUDE_CONFIG_DIR`) —
+   **claude-nine's skill discovery root**. Live count 2026-08-28: **61 entries =
+   11 real directories + 50 symlinks**. The 11 real dirs are claude-nine's own
+   tuned copies, which **win over anything the real CLI carries**:
+   box-update, fix-unit, judge-unit, look, merge-writer, orchestrate, purpose,
+   skill-warfix, skill-warroom, spec-protocol, swarm.
+2. **Sync from real CLI:** `~/.local/bin/sync-nine-skills.sh` runs on every
+   launch (verified wired into the wrapper at `~/bin/claude-nine`, lines 93-94).
    It symlinks any skill present in `~/.claude/skills` but missing in
-   `~/.claude-nine/skills` (~52 links: graphify, fleet-access, gsap, tailwind,
-   three, lottie, animejs, hyperframes*, supabase, ui-*, etc. — the full
-   `.agents/skills` chain via the real CLI), prunes dead links, and **never
-   overwrites a real directory** (claude-nine's tuned copies win over the real
-   CLI's versions).
+   `~/.claude-nine/skills` (50 links as of 2026-08-28 — the full `.agents/skills`
+   chain via the real CLI), prunes dead links, and **never overwrites a real
+   directory**. Verified run output: `sync-nine-skills: already in sync
+   (61 skills).`, exit 0. So a skill installed at `~/.claude/skills/` (SKL-003
+   personal install) becomes visible to claude-nine on next launch automatically.
 3. **Project skills:** `.claude/skills/` under the working directory (standard
-   Claude Code behavior — MMCS can ship project-local skills there).
+   Claude Code behavior — MMCS can ship project-local skills there). Verified
+   live: see the MMCS probe section below.
 4. **Plugins:** `~/.claude-nine/plugins/` — installed set mirrors the real CLI's
    official plugins (frontend-design, github, playwright, security-guidance,
    supabase, figma, vercel, stripe, slack, context7) plus
@@ -150,6 +149,61 @@ via `--include-hook-events` (with `--output-format=stream-json`).
 - `--bare` mode exists (skips hooks/skills auto-discovery/CLAUDE.md; skills still
   resolve via /skill-name) — useful for clean-room test runs.
 - Debug: `-d/--debug [filter]` (categories like `api,hooks`), `--debug-file`.
+
+## MMCS verification (SKL-004, verified live 2026-08-28)
+
+The `mini-movie-creator` skill is one canonical source (`skills/mini-movie-creator/`,
+SKL-001). Every host — Claude Code, claude-nine, OpenClaw — calls the SAME engine
+(`apps/cli` → the `mmcs` CLI) and the SAME persistent project state. No host carries
+copied business logic; a skill is only a thin control interface over the engine.
+
+**How claude-nine reaches the skill (discovery path):**
+
+| Install scope | Location | How claude-nine sees it |
+|---|---|---|
+| Project (repo) | `<repo>/.claude/skills/mini-movie-creator` | Direct project-scope discovery under the working directory |
+| Personal | `~/.claude/skills/mini-movie-creator` | `sync-nine-skills.sh` (runs on every claude-nine launch) symlinks it into `~/.claude-nine/skills/` |
+| Primary root | `~/.claude-nine/skills/mini-movie-creator` (symlink) | Loaded directly from the `CLAUDE_CONFIG_DIR` skills root |
+
+Note: a symlink installed into `~/.claude-nine/skills/` manually persists — the sync
+script only removes links whose target was deleted, and only adds missing links.
+
+**Live probe results (2026-08-28, engine = `apps/cli` @ task/SKL-004 worktree,
+CLI handler still the documented §24 stub):**
+
+1. **Fresh claude-nine session + project skill → same engine.** A throwaway skill
+   `mmcs-nine-probe` at `<fresh-tmp-cwd>/.claude/skills/` was discovered and invoked
+   by a brand-new headless session
+   (`claude-nine -p "Invoke the /mmcs-nine-probe skill..." --allowedTools Bash`).
+   Per the skill, the session executed
+   `node <repo>/apps/cli/dist/index.js status` and returned verbatim:
+   `MMCS-NINE-PROBE-OK engine=[mmcs] status — STUB: registered, not implemented
+   yet (spec §24).` — proving discovery, invocation, and an engine call with zero
+   copied logic.
+2. **Config-dir root proven.** With an isolated `CLAUDE_CONFIG_DIR` containing only
+   `settings.json` + `skills/mmcs-nine-primary-probe/`, a fresh session resolved and
+   invoked the skill (marker `MMCS-NINE-PRIMARY-ROOT-OK`) — confirming
+   `$CLAUDE_CONFIG_DIR/skills` is the primary discovery root.
+3. **Sync behavior.** `sync-nine-skills.sh` re-run: exit 0, "already in sync
+   (61 skills)". Root mix: 11 real dirs (nine's own, never overwritten) + 50
+   symlinks into `~/.claude/skills`.
+
+**Re-run the verification:**
+
+```bash
+cd <repo-root>
+bash integrations/claude/nine-verify.sh             # full: live probes, ~2 model calls via 9Router
+bash integrations/claude/nine-verify.sh --selftest  # structural checks only, no model calls
+```
+
+The script rebuilds `apps/cli` if `dist/` is missing, so it always drives the real
+engine. Exit 0 = every check passed. Probe directories are `mktemp -d` scratch and
+removed on exit; nothing in the repo, `~/.claude`, or `~/.claude-nine` is modified.
+
+Practical notes for headless probe runs: pass `</dev/null` (a `-p` session otherwise
+waits ~3s on inherited stdin) and allow `--max-turns 15` (a skill → Bash tool →
+reply chain is unreliable at 6 turns and hit the cap once at 10; deterministic 3/3
+at 15).
 
 ## Sources checked for NOT-FOUND items
 
