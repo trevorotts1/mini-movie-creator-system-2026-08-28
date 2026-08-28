@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-011",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "9bd79d905d14c093d32309c9bd4c978f313c30e3",
   "testsRun": "npx vitest run packages/character-library/src/locations -> 27 passed, 0 failed (rc=0); npx tsc --noEmit (packages/character-library) -> clean",
   "notes": "Recurring location library per spec §11: LocationMaster with append-only versions (LOC_<NAME>_001 permanent IDs), required approved wide/medium/reverse x day/night assets (6 combos) with durable media (ghlFileId/ghlUrl/sha256), spec §9 asset lifecycle DRAFT→REVIEW→APPROVED→CANONICAL→RETIRED+REJECTED, version approval gated on full angle coverage, resolveVersion/resolveAsset by episode continuity point (season,episode) so historical episodes resolve canon-at-the-time version; pure TS, no new deps, no lockfile change",
   "blockers": [],
