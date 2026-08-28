@@ -1,5 +1,6 @@
 import {
   DEFAULT_REVISION_LOOP_CONFIG,
+  MAX_REVISION_ITERATIONS,
   SEVERITY_RANK,
   CRITIC_SCHEMA_VERSION,
   type CriticFinding,
@@ -27,6 +28,11 @@ export function resolveRevisionLoopConfig(
   if (!Number.isInteger(maxIterations) || maxIterations < 0) {
     throw new RevisionLoopError(
       `maxIterations must be an integer >= 0, received ${String(maxIterations)}`,
+    );
+  }
+  if (maxIterations > MAX_REVISION_ITERATIONS) {
+    throw new RevisionLoopError(
+      `maxIterations must be <= ${MAX_REVISION_ITERATIONS}, received ${String(maxIterations)}`,
     );
   }
   const actionableAtSeverity =
@@ -64,16 +70,20 @@ export function affectedSceneIds(
     if (id !== undefined) targeted.add(id);
   }
   if (global || targeted.size === 0) {
-    return screenplay.scenes.map((s) => s.id);
+    return screenplay.scenes.map((s) => s.sceneId);
   }
-  // Keep only ids that actually exist in the screenplay.
-  const known = new Set(screenplay.scenes.map((s) => s.id));
-  return screenplay.scenes.map((s) => s.id).filter((id) => known.has(id) && targeted.has(id));
+  // Emit each scene at most once, in screenplay order; ids the critic named
+  // that do not exist in the screenplay are dropped.
+  return screenplay.scenes
+    .map((s) => s.sceneId)
+    .filter((id, index, all) => targeted.has(id) && all.indexOf(id) === index);
 }
 
 /**
  * Stable, order-insensitive signature of the actionable finding set, used to
  * detect a stalled loop (writer keeps producing the same findings).
+ * Unrecognized severities are treated as non-actionable and excluded, so a
+ * schema-drifted finding cannot accidentally count as progress.
  */
 export function actionableSignature(findings: readonly CriticFinding[]): string {
   const actionable = [...findings].filter(
@@ -88,9 +98,14 @@ export function actionableSignature(findings: readonly CriticFinding[]): string 
         summary: f.summary,
         scene: f.target?.sceneId,
       }))
-      .sort((a, b) =>
-        a.id === b.id ? (a.summary < b.summary ? -1 : 1) : a.id < b.id ? -1 : 1,
-      ),
+      .sort((a, b) => {
+        const ai = String(a.id);
+        const bi = String(b.id);
+        if (ai !== bi) return ai < bi ? -1 : 1;
+        const as = String(a.summary ?? "");
+        const bs = String(b.summary ?? "");
+        return as < bs ? -1 : as > bs ? 1 : 0;
+      }),
   );
 }
 
@@ -102,6 +117,13 @@ function validateReport(report: CriticReport, iteration: number): void {
   }
   if (!Array.isArray(report.findings)) {
     throw new RevisionLoopError(`critic returned non-array findings at iteration ${iteration}`);
+  }
+  for (const f of report.findings) {
+    if (f === null || typeof f !== "object" || Array.isArray(f)) {
+      throw new RevisionLoopError(
+        `critic returned a non-object finding at iteration ${iteration}`,
+      );
+    }
   }
 }
 
@@ -133,16 +155,17 @@ export async function runRevisionLoop<TScreenplay extends RevisionScreenplayLike
   let current: TScreenplay = initial;
   let previousSignature: string | undefined;
   let iterationsUsed = 0;
-  let lastFindings: readonly CriticFinding[] = [];
 
   for (let iteration = 1; iteration <= config.maxIterations + 1; iteration++) {
     const report = await critic.criticize(current, {
       iteration,
       revisedScenes:
         iteration === 1 ? [] : iterations[iterations.length - 1]?.affectedScenes ?? [],
+      ...(input.context?.sceneIdLookup === undefined
+        ? {}
+        : { sceneIdLookup: input.context.sceneIdLookup }),
     });
     validateReport(report, iteration);
-    lastFindings = report.findings;
 
     const actionable = report.findings.filter((f) => isActionable(f, config.actionableAtSeverity));
     const sceneIds = affectedSceneIds(current, actionable);

@@ -8,20 +8,20 @@ import type { CriticFinding, CriticReport, RevisionScreenplayLike } from "./type
 
 export interface FixtureScreenplay extends RevisionScreenplayLike {
   title: string;
-  scenes: Array<{ id: string; heading: string; action: string; dialogue: string[] }>;
+  scenes: Array<{ sceneId: string; heading: string; action: string; dialogue: string[] }>;
 }
 
 export const FIXTURE_SCREENPLAY: FixtureScreenplay = {
   title: "The Vault",
   scenes: [
     {
-      id: "SC-01",
+      sceneId: "SC-01",
       heading: "INT. VAULT LOBBY - NIGHT",
       action: "Monica badges through the lobby door.",
       dialogue: ["MONICA: Stay close.", "MARCUS: I always do."],
     },
     {
-      id: "SC-02",
+      sceneId: "SC-02",
       heading: "INT. VAULT CORRIDOR - NIGHT",
       action: "Marcus checks the corridor. Monica hesitates.",
       dialogue: ["MONICA: Two minutes.", "MARCUS: Two minutes."],

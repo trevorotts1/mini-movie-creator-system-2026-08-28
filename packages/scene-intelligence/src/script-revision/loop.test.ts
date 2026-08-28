@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_REVISION_LOOP_CONFIG, CRITIC_SCHEMA_VERSION } from "./types.js";
 import {
-  DEFAULT_REVISION_LOOP_CONFIG,
-  CRITIC_SCHEMA_VERSION,
+  actionableSignature,
   affectedSceneIds,
   isActionable,
   resolveRevisionLoopConfig,
-  runRevisionLoop,
   RevisionLoopError,
-  actionableSignature,
-  finding,
-} from "./index.js";
+  runRevisionLoop,
+} from "./loop.js";
 import {
   FIXTURE_SCREENPLAY,
+  finding,
   RecordingReviser,
   ScriptedCritic,
   tagRevisedScenes,
   type FixtureScreenplay,
 } from "./fixtures.js";
+import type { CriticContext, CriticFinding, ScriptCritic } from "./types.js";
 
 function report(findings: Array<ReturnType<typeof finding>>, criticId = "test-critic") {
   return { schemaVersion: CRITIC_SCHEMA_VERSION, findings, criticId };
@@ -43,6 +43,14 @@ describe("config resolution (DIR-007)", () => {
     expect(() => resolveRevisionLoopConfig({ maxIterations: 1.5 })).toThrow(RevisionLoopError);
   });
 
+  it("rejects maxIterations above the hard ceiling (unbounded-retry guard)", () => {
+    expect(() => resolveRevisionLoopConfig({ maxIterations: 101 })).toThrow(RevisionLoopError);
+    expect(() => resolveRevisionLoopConfig({ maxIterations: 1e300 })).toThrow(
+      RevisionLoopError,
+    );
+    expect(resolveRevisionLoopConfig({ maxIterations: 100 }).maxIterations).toBe(100);
+  });
+
   it("rejects unknown severity thresholds", () => {
     expect(() =>
       resolveRevisionLoopConfig({ actionableAtSeverity: "catastrophic" as never }),
@@ -62,7 +70,7 @@ describe("severity/actionability helpers (DIR-007)", () => {
   });
 
   it("targets affected scenes; global findings affect all scenes", () => {
-    const screenplay = { scenes: [{ id: "SC-01" }, { id: "SC-02" }, { id: "SC-03" }] };
+    const screenplay = { scenes: [{ sceneId: "SC-01" }, { sceneId: "SC-02" }, { sceneId: "SC-03" }] };
     expect(
       affectedSceneIds(screenplay, [finding("f1", "major", "SC-02"), finding("f2", "major", "SC-03")]),
     ).toEqual(["SC-02", "SC-03"]);
@@ -71,6 +79,135 @@ describe("severity/actionability helpers (DIR-007)", () => {
       "SC-02",
       "SC-03",
     ]);
+  });
+
+  it("deduplicates scenes named by multiple findings and drops unknown ids", () => {
+    const screenplay = { scenes: [{ sceneId: "SC-01" }, { sceneId: "SC-02" }] };
+    expect(
+      affectedSceneIds(screenplay, [
+        finding("f1", "major", "SC-02"),
+        finding("f2", "major", "SC-02"),
+      ]),
+    ).toEqual(["SC-02"]);
+    // Critic names a scene id that does not exist: dropped, not invented.
+    expect(
+      affectedSceneIds(screenplay, [finding("f1", "major", "SC-GHOST")]),
+    ).toEqual([]);
+  });
+});
+
+describe("DIR-006 critic interop (regression)", () => {
+  // The DIR-006 script critic is this loop's upstream (task-graph DIR-007 ←
+  // DIR-006). Its real vocab is: categories with hyphen spelling
+  // ("character-consistency"), severities info|minor|major|critical. The loop
+  // must accept those shapes unchanged — no adapter rewriting required.
+  it("accepts DIR-006 finding shapes (hyphen category, critical severity)", async () => {
+    const dir006Finding = (n: number): CriticFinding => ({
+      schemaVersion: CRITIC_SCHEMA_VERSION,
+      id: `CON-${n}`,
+      category: "character-consistency",
+      severity: "critical",
+      summary: `continuity break ${n}`,
+    });
+    const critic = new ScriptedCritic([report([dir006Finding(1)]), "converged"]);
+    const reviser = new RecordingReviser(tagRevisedScenes);
+    const result = await runRevisionLoop({
+      screenplay: FIXTURE_SCREENPLAY,
+      critic,
+      reviser,
+      config: { maxIterations: 2 },
+    });
+    expect(result.converged).toBe(true);
+    expect(result.stopReason).toBe("converged");
+    expect(reviser.requests).toHaveLength(1);
+    expect(reviser.requests[0]?.findings[0]?.category).toBe("character-consistency");
+    expect(reviser.requests[0]?.findings[0]?.severity).toBe("critical");
+  });
+
+  it("ranks DIR-006 severities against the actionable threshold", () => {
+    const f = (severity: CriticFinding["severity"]): CriticFinding => ({
+      schemaVersion: CRITIC_SCHEMA_VERSION,
+      id: "x",
+      category: "pacing",
+      severity,
+      summary: "s",
+    });
+    expect(isActionable(f("critical"), "major")).toBe(true);
+    expect(isActionable(f("critical"), "blocker")).toBe(true); // alias rank
+    expect(isActionable(f("major"), "critical")).toBe(false);
+    expect(isActionable(f("info"), "minor")).toBe(false);
+    expect(isActionable(f("info"), "info")).toBe(true);
+  });
+
+  it("targets findings anchored by DIR-006 sceneIndex via sceneIdLookup", async () => {
+    // DIR-006 anchors findings by 1-based sceneIndex, not scene id. The
+    // context lookup translates index → sceneId before targeting.
+    const dir006Finding = (sceneIndex: number): CriticFinding => ({
+      schemaVersion: CRITIC_SCHEMA_VERSION,
+      id: `F-idx-${sceneIndex}`,
+      category: "dialogue",
+      severity: "major",
+      summary: `scene ${sceneIndex}`,
+      target: { sceneId: undefined },
+    });
+    const screenplay = {
+      scenes: [
+        { sceneId: "SC-01", heading: "", action: "", dialogue: [] as string[] },
+        { sceneId: "SC-02", heading: "", action: "", dialogue: [] as string[] },
+      ],
+    };
+    const received: Array<Partial<CriticContext>> = [];
+    const critic: ScriptCritic<typeof screenplay> = {
+      criticize(_screenplay, context) {
+        received.push({ ...context });
+        const f = dir006Finding(2); // scene 2, resolved via lookup
+        const sceneId = context.sceneIdLookup?.(2);
+        return {
+          schemaVersion: CRITIC_SCHEMA_VERSION,
+          findings: [sceneId ? { ...f, target: { sceneId } } : f],
+          criticId: "adapter",
+        };
+      },
+    };
+    const reviser = new RecordingReviser();
+    const result = await runRevisionLoop({
+      screenplay,
+      critic,
+      reviser,
+      config: { maxIterations: 2 },
+      context: { sceneIdLookup: (i) => screenplay.scenes[i - 1]?.sceneId },
+    });
+    expect(result.stopReason).toBe("no_progress"); // nothing revised changes nothing
+    expect(reviser.requests).toHaveLength(1);
+    expect(reviser.requests[0]?.affectedScenes).toEqual(["SC-02"]);
+    expect(received[0]?.sceneIdLookup).toBeDefined();
+    expect(received[0]?.sceneIdLookup?.(1)).toBe("SC-01");
+  });
+});
+
+describe("signature stability (DIR-007 regression)", () => {
+  it("treats signatures of findings with undefined summaries as distinct and sort-safe", () => {
+    const f = (id: string): CriticFinding => ({
+      schemaVersion: CRITIC_SCHEMA_VERSION,
+      id,
+      category: "pacing",
+      severity: "major",
+      summary: (undefined as unknown) as string, // hostile adapter output
+    });
+    expect(actionableSignature([f("a"), f("b")])).not.toBe(
+      actionableSignature([f("b"), f("a"), f("c")]),
+    );
+  });
+
+  it("excludes unrecognized severities from the stall signature", () => {
+    const weird = (id: string): CriticFinding => ({
+      schemaVersion: CRITIC_SCHEMA_VERSION,
+      id,
+      category: "pacing",
+      severity: "apocalyptic" as never,
+      summary: id,
+    });
+    expect(actionableSignature([weird("x")])).toBe(actionableSignature([]));
   });
 });
 
@@ -262,6 +399,25 @@ describe("revision loop: contract enforcement (DIR-007)", () => {
     await expect(
       runRevisionLoop({ screenplay: FIXTURE_SCREENPLAY, critic, reviser: new RecordingReviser() }),
     ).rejects.toThrow(/schemaVersion/);
+  });
+
+  it("rejects a critic report containing null/primitive findings with RevisionLoopError", async () => {
+    // Hostile adapter output: findings array with non-object elements must
+    // fail as a contract violation, not crash the loop with a TypeError.
+    for (const bad of [null, "x", 42, []]) {
+      const badReport = {
+        schemaVersion: CRITIC_SCHEMA_VERSION,
+        findings: [bad as unknown as CriticFinding],
+      };
+      const critic = { criticize: () => badReport };
+      await expect(
+        runRevisionLoop({
+          screenplay: FIXTURE_SCREENPLAY,
+          critic,
+          reviser: new RecordingReviser(),
+        }),
+      ).rejects.toThrow(RevisionLoopError);
+    }
   });
 
   it("rejects a reviser that returns null/undefined", async () => {
