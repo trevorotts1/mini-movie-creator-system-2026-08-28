@@ -86,3 +86,12 @@
 - [x] CAP-010 conflict on packages/capability-registry/src/index.ts — aborted, branch retains PASS (rebase required)
 - [x] CORE-006, CORE-007 conflict on packages/database/src/repositories/index.ts — aborted, branches retain PASS (rebase required)
 - [x] KIE-010 conflict on docs/provider-capabilities/kie.md (add/add) — aborted, branch retains PASS (rebase required)
+
+## Batch 6 Merge Evidence (2026-08-28T19:39:10Z, 9c90d71..01d5505)
+
+- [x] Regression PASS: `pnpm -r test` exit 0 (0 failures); `pnpm -r run typecheck` exit 0 (17/17 packages Done)
+- [x] Pushed origin/integration (01d5505), never force-pushed
+- [x] Merged (44): AGN-001, AGN-002, AGN-003, AGN-004, AGN-005, AGN-006, AGN-007, AGN-008, AGN-009, AGN-010, CHAR-015, CORE-006, DIR-001, DIR-004, DIR-005, DIR-006, DIR-007, DIR-009, DIR-010, DIR-011, DIR-012, DIR-013, DIR-014, GHL-012, KIE-007, QC-001, QC-006, QC-008, QC-009, QC-012, REC-008, SKL-001, SKL-006, SKL-007, VID-003, VID-004, VID-006, VID-007, VID-009, VID-010, VID-011, VID-012, VID-014, VID-016
+- [x] VID-008 merged then reverted (4e9e71e) — typecheck regression GraphicsViews.tsx(29,26) TS2345; task back to QC_FIXING
+- [x] SKL-002 merged then reverted (01d5505) — integrations/claude typecheck regression (node: imports without node types); task back to QC_FIXING
+- [x] Conflict/branch-blocked (11): CORE-007, DIR-002, QC-002, QC-003, QC-004, QC-010, REC-010, SKL-003, SKL-004, SKL-005, VID-005, VID-013 (12 total minus VID-008/SKL-002 which are reverts)

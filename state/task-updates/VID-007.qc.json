@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-007",
+  "phase": "PASS",
+  "commit": "dd28a8e883ec37b35b8345af2de8acc8a099c992",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/stock-layer -> 33/33 pass exit 0 (JSON reporter verified); npx tsc --noEmit -p packages/remotion-runtime -> clean; security grep (exec/spawn/fetch/secrets) over owned paths -> clean; git ls-files mode check -> no binary committed",
+  "defectsFound": 4,
+  "defectsFixed": 4,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:10:00Z",
+  "notes": "Fixed: (1) placeStockShots silently skipped non-generic-purpose stock_broll candidates instead of refusing per §22 — now throws StockPolicyViolationError before clip lookup; (2) placeholder stamped verifiedAt on kind:unknown — removed; (3) no validation for negative startSeconds / non-positive duration / sub-frame duration — added RangeError guards; (4) adapter factories unexported — exported. Tests 27->33. Repo-wide vitest.config.ts CommonJS-parse flake (shared file, not owned) occasionally fails test launch on ANY package; retry passes; recorded as environment note not blocker.",
+  "blockers": []
+}

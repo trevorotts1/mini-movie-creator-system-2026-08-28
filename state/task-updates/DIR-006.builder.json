@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-006",
+  "phase": "BUILDER_DONE",
+  "commit": "af30f3c",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/script-critic -> 30 passed (30), 2 files; packages/scene-intelligence tsc --noEmit -> clean",
+  "notes": "Script critic: versioned findings schema (v1, 4 mandated categories, strict parseCritique rejecting newer/invalid/counts-mismatched/verdict-inconsistent input) + CriticModel interface with deterministic HeuristicCriticModel (PAC/CON/DIA/CHA rule engine on fixture screenplays) and RemoteCriticModel validating untrusted model JSON; screenplay text treated as data, never executed.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:30:00Z"
+}
