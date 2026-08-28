@@ -1,0 +1,13 @@
+{
+  "taskId": "REC-008",
+  "phase": "PASS",
+  "commit": "PENDING",
+  "checksRun": "npx vitest run scripts/orchestration/watchdog.test.ts (37/37); npx tsx scripts/orchestration/watchdog.cli.ts --selftest (ok); npx tsx scripts/orchestration/watchdog.cli.ts --dry-run --root <live repo> (rc=0, state/ untouched); tsc --noEmit watchdog.ts watchdog.cli.ts",
+  "defectsFound": 16,
+  "defectsFixed": 16,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T19:25:00Z",
+  "notes": "16 defects fixed: branch-name drift flood, dry-run mutation, silent no-op queue push, REFILL_NOT_DISPATCHED silence, PASS_NOT_QUEUED false success, hostile task id path traversal, missing logs/watchdog cycle evidence, checkpoint not forced on absent file, qcGaps pollution, duplicate kill order, checkpoint field mismatch, weak BLOCKED validation, needsAttention ignoring warns, planRefills noise, SKILL.md dry-run/lock + needsAttention doc drift; 37/37 tests",
+  "blockers": []
+}

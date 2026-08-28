@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtemp, mkdir, writeFile, readFile, rm, realpath } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile, readdir, rm, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -8,6 +8,8 @@ import {
   MAX_GLOBAL_AGENTS,
   WatchdogEngine,
   RealGitAdapter,
+  RealRuntimeAdapter,
+  RealMergeQueueAdapter,
   acquireWatchdogLock,
   dependenciesSatisfied,
   readyTasksWithSatisfiedDeps,
@@ -152,6 +154,11 @@ describe("planRefills — under-capacity detection (acceptance)", () => {
     const plan = planRefills(live, ready, new Set(["R-1"]), 10);
     expect(plan[0]!.taskIds).not.toContain("R-1");
   });
+
+  it("emits no entry when a workflow has spare slots but no compatible READY tasks", () => {
+    const live: RuntimeWorkflow[] = [{ id: "WF10", agentIds: ["A-1"] }];
+    expect(planRefills(live, [], new Set(), 10)).toEqual([]);
+  });
 });
 
 describe("duplicateOwnership", () => {
@@ -289,6 +296,33 @@ describe("WatchdogEngine cycle", () => {
     expect(report.needsAttention).toBe(true);
   });
 
+  it("fails loud (REFILL_NOT_DISPATCHED) when dispatch is enabled but no adapter is wired", async () => {
+    await writeState(root, {
+      "tasks.json": {
+        schema_version: 1,
+        items: [task("R-1", "READY")],
+      },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+    });
+    const live: RuntimeWorkflow[] = [{ id: "WF10", agentIds: ["A-1"] }];
+    const engine = new WatchdogEngine(
+      baseConfig(root, {
+        dispatch: true,
+        runtime: { workflows: async () => live, agents: async () => [] },
+        // No dispatchAdapter: a real cycle must not silently merely-report.
+      }),
+    );
+    const report = await engine.run();
+    expect(report.underCapacity.length).toBeGreaterThan(0);
+    expect(report.refilled).toEqual([]);
+    const v = report.violations.find((x) => x.kind === "REFILL_NOT_DISPATCHED");
+    expect(v?.severity).toBe("fail");
+    expect(v?.message).toContain("WF10");
+    expect(report.needsAttention).toBe(true);
+  });
+
   it("pings stalled agents", async () => {
     const now = new Date("2026-08-28T12:00:00Z");
     const agents: RuntimeAgent[] = [
@@ -322,7 +356,24 @@ describe("WatchdogEngine cycle", () => {
     );
     const report = await engine.run();
     expect(report.duplicates).toHaveLength(1);
+    // Tie on activity: deterministic id order keeps A-1, kills A-2.
     expect(killed).toEqual(["A-2"]);
+  });
+
+  it("keeps the newest duplicate owner by activity, not by live order", async () => {
+    const agents: RuntimeAgent[] = [
+      { id: "A-OLD", taskId: "T-1", workflow: "W", lastActivityAt: "2026-08-28T10:00:00Z" },
+      { id: "A-NEW", taskId: "T-1", workflow: "W", lastActivityAt: "2026-08-28T12:00:00Z" },
+    ];
+    const killed: string[] = [];
+    const engine = new WatchdogEngine(
+      baseConfig(root, {
+        runtime: { workflows: async () => [], agents: async () => agents },
+        killAdapter: { kill: async (id) => { killed.push(id); } },
+      }),
+    );
+    await engine.run();
+    expect(killed).toEqual(["A-OLD"]);
   });
 
   it("flags BUILDER_DONE without Sonnet QC PASS evidence", async () => {
@@ -366,6 +417,43 @@ describe("WatchdogEngine cycle", () => {
     expect(pushed).toEqual(["T-PASS"]);
   });
 
+  it("excludes hostile task ids from the cycle and flags INVALID_TASK_ID", async () => {
+    await writeState(root, {
+      "tasks.json": {
+        schema_version: 1,
+        items: [
+          { id: "../evil", status: "BUILDER_DONE", dependsOn: [] },
+          { id: "T-OK", status: "BUILDER_DONE", dependsOn: [] },
+        ],
+      },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+    });
+    const engine = new WatchdogEngine(baseConfig(root));
+    const report = await engine.run();
+    const flagged = report.violations.filter((v) => v.kind === "INVALID_TASK_ID");
+    expect(flagged.length).toBe(1);
+    expect(flagged[0]?.severity).toBe("fail");
+    // The hostile id never reaches evidence reads (qcGaps only for T-OK).
+    expect(report.qcGaps.map((g) => g.taskId)).toEqual(["T-OK"]);
+    expect(report.recorded.tasks).toBe(1);
+  });
+
+  it("flags PASS_NOT_QUEUED when PASS tasks have no queue adapter (never a silent success)", async () => {
+    await writeState(root, {
+      "tasks.json": { schema_version: 1, items: [task("T-PASS", "PASS")] },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+    });
+    const engine = new WatchdogEngine(baseConfig(root));
+    const report = await engine.run();
+    const entry = report.queuePushes.find((q) => q.taskId === "T-PASS");
+    expect(entry?.accepted).toBe(false);
+    expect(report.violations.some((v) => v.kind === "PASS_NOT_QUEUED")).toBe(true);
+  });
+
   it("flags BLOCKED tasks without documented blockers", async () => {
     const now = new Date("2026-08-28T12:00:00Z");
     await writeState(root, {
@@ -382,6 +470,40 @@ describe("WatchdogEngine cycle", () => {
     const engine = new WatchdogEngine(baseConfig(root, { now: () => now }));
     const report = await engine.run();
     expect(report.violations.some((v) => v.kind === "BLOCKED_INCOMPLETE")).toBe(true);
+  });
+
+  it("flags BLOCKED tasks whose blockers are not real external dependencies", async () => {
+    await writeState(root, {
+      "tasks.json": { schema_version: 1, items: [task("T-1", "BLOCKED")] },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+      "task-updates/T-1.builder.json": {
+        taskId: "T-1",
+        phase: "BLOCKED",
+        blockers: ["fix it"],
+      },
+    });
+    const engine = new WatchdogEngine(baseConfig(root));
+    const report = await engine.run();
+    expect(report.violations.some((v) => v.kind === "BLOCKED_INCOMPLETE")).toBe(true);
+  });
+
+  it("accepts BLOCKED tasks with a real external dependency + next action", async () => {
+    await writeState(root, {
+      "tasks.json": { schema_version: 1, items: [task("T-1", "BLOCKED")] },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+      "task-updates/T-1.builder.json": {
+        taskId: "T-1",
+        phase: "BLOCKED",
+        blockers: ["BLOCKED on KIE-001 PASS before adapter wiring; next: run adapter tests"],
+      },
+    });
+    const engine = new WatchdogEngine(baseConfig(root));
+    const report = await engine.run();
+    expect(report.violations.some((v) => v.kind === "BLOCKED_INCOMPLETE")).toBe(false);
   });
 
   it("persists build-status.md (surgically) + ledger + atomic checkpoint when persist=true", async () => {
@@ -413,9 +535,50 @@ describe("WatchdogEngine cycle", () => {
     expect(ledger).toContain("WATCHDOG");
     const cp = JSON.parse(await readFile(path.join(stateDir, "checkpoint.json"), "utf8"));
     expect(cp.lastWatchdogAt).toBe("2026-08-28T12:00:00.000Z");
+    // snake_case mirror for the live checkpoint file's legacy field name.
+    expect(cp.last_watchdog_timestamp).toBe("2026-08-28T12:00:00.000Z");
+    // Cycle report evidence appended to logs/watchdog/ (runbook §7.1).
+    const logDir = path.join(root, "logs", "watchdog");
+    const files = await readdir(logDir);
+    expect(files.length).toBe(1);
+    const rep = JSON.parse(
+      await readFile(path.join(logDir, files[0]!), "utf8"),
+    );
+    expect(rep.cycleId).toBe(report.cycleId);
+    expect(rep.recorded.tasks).toBe(1);
+  });
+
+  it("forces a checkpoint file into existence when it is absent (persist=true)", async () => {
+    const now = new Date("2026-08-28T12:00:00Z");
+    const stateDir = path.join(root, "state");
+    await writeState(root, {
+      "tasks.json": { schema_version: 1, items: [task("T-1", "MERGED")] },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+      // No checkpoint.json at all.
+    });
+    const engine = new WatchdogEngine(
+      baseConfig(root, { persist: true, now: () => now }),
+    );
+    await engine.run();
+    const cp = JSON.parse(
+      await readFile(path.join(stateDir, "checkpoint.json"), "utf8"),
+    );
+    expect(cp.lastWatchdogAt).toBe("2026-08-28T12:00:00.000Z");
+    expect(cp.schemaVersion).toBe(1);
   });
 
   it("does not dispatch/persist in selftest mode", async () => {
+    await writeState(root, {
+      "tasks.json": {
+        schema_version: 1,
+        items: [task("R-1", "READY")],
+      },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+    });
     const live: RuntimeWorkflow[] = [{ id: "WF10", agentIds: ["A-1"] }];
     let dispatched = false;
     const engine = new WatchdogEngine(
@@ -460,6 +623,110 @@ describe("WatchdogEngine cycle", () => {
     const report = await engine.run();
     const missing = report.violations.filter((v) => v.kind === "WORKTREE_MISSING");
     expect(missing.map((v) => v.taskId)).toEqual(["T-2"]);
+  });
+
+  it("reconciles TASK-prefixed and remote branch naming drift (live repo convention)", async () => {
+    await writeState(root, {
+      "tasks.json": {
+        schema_version: 1,
+        items: [
+          // Planner records task/CORE-001-x; live branches carry the
+          // task/TASK-CORE-001-x convention. Same branch, different spelling.
+          { id: "T-1", status: "READY", branch: "task/CORE-001-upstream", worktree: "worktrees/CORE-001/" },
+          { id: "T-2", status: "READY", branch: "task/CHAR-003-flow", worktree: "worktrees/CHAR-003/" },
+        ],
+      },
+      "workflows.json": { schema_version: 1, items: [] },
+      "agents.json": { schema_version: 1, items: [] },
+      "merge-queue.json": { schema_version: 1, items: [] },
+    });
+    const git: GitAdapter = {
+      ...noopGit,
+      listWorktrees: async () => [
+        { path: "worktrees/CORE-001/", branch: "task/TASK-CORE-001-upstream", sha: "abc" },
+      ],
+      listBranches: async () => ["origin/task/CHAR-003-flow"],
+    };
+    const engine = new WatchdogEngine(baseConfig(root, { git }));
+    const report = await engine.run();
+    expect(report.violations.some((v) => v.kind === "WORKTREE_MISSING")).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Real runtime adapter (recorded visible state) + real merge-queue adapter
+// ---------------------------------------------------------------------------
+
+describe("RealRuntimeAdapter", () => {
+  it("reflects recorded workflows/agents instead of an empty view", async () => {
+    const root = await fixtureRoot();
+    await writeState(root, {
+      "workflows.json": {
+        schema_version: 1,
+        items: [
+          { id: "WF10", name: "wf-ten", agentIds: ["A-1"], taskIds: ["T-1"] },
+          { id: "WF01", name: "wf-one", agentIds: [] },
+        ],
+      },
+      "agents.json": {
+        schema_version: 1,
+        items: [
+          { id: "A-1", workflow: "WF10", taskId: "T-1" },
+          { id: "A-9", workflow: "WF99", taskId: "T-9" },
+        ],
+      },
+    });
+    const adapter = new RealRuntimeAdapter(path.join(root, "state"));
+    const wfs = await adapter.workflows();
+    const byId = new Map(wfs.map((w) => [w.id, w]));
+    expect(byId.get("WF10")!.agentIds).toEqual(["A-1"]);
+    expect(byId.get("WF01")!.agentIds).toEqual([]);
+    // WF99 exists only in agents.json — still a live visible workflow.
+    expect(byId.get("WF99")!.agentIds).toEqual(["A-9"]);
+    const agents = await adapter.agents();
+    expect(agents.map((a) => a.id)).toEqual(["A-1", "A-9"]);
+  });
+
+  it("returns an empty view when state files are missing (never throws)", async () => {
+    const root = await fixtureRoot();
+    const adapter = new RealRuntimeAdapter(path.join(root, "state"));
+    expect(await adapter.workflows()).toEqual([]);
+    expect(await adapter.agents()).toEqual([]);
+  });
+});
+
+describe("RealMergeQueueAdapter", () => {
+  it("pushes a PASS task into state/merge-queue.json atomically", async () => {
+    const root = await fixtureRoot();
+    await writeState(root, { "merge-queue.json": { schema_version: 1, items: [] } });
+    const adapter = new RealMergeQueueAdapter(
+      path.join(root, "state"),
+      () => new Date("2026-08-28T12:00:00Z"),
+    );
+    const res = await adapter.push("T-1");
+    expect(res.accepted).toBe(true);
+    const doc = JSON.parse(
+      await readFile(path.join(root, "state", "merge-queue.json"), "utf8"),
+    );
+    expect(doc.items).toEqual([{ taskId: "T-1", status: "PASS" }]);
+    expect(doc.updated_at).toBe("2026-08-28T12:00:00.000Z");
+    // idempotent: same task never queued twice.
+    await adapter.push("T-1");
+    const doc2 = JSON.parse(
+      await readFile(path.join(root, "state", "merge-queue.json"), "utf8"),
+    );
+    expect(doc2.items).toHaveLength(1);
+  });
+
+  it("creates the queue file when it is absent", async () => {
+    const root = await fixtureRoot();
+    const adapter = new RealMergeQueueAdapter(path.join(root, "state"));
+    const res = await adapter.push("T-2");
+    expect(res.accepted).toBe(true);
+    const doc = JSON.parse(
+      await readFile(path.join(root, "state", "merge-queue.json"), "utf8"),
+    );
+    expect(doc.items).toEqual([{ taskId: "T-2", status: "PASS" }]);
   });
 });
 

@@ -69,8 +69,9 @@ npx tsx scripts/orchestration/watchdog.cli.ts
 The engine prints a JSON summary: `recorded` vs `actual` counts, `overCap`,
 `underCapacity` (the refill plan), `refilled` (what was dispatched), `stalled`,
 `qcGaps`, `queuePushes`, `violations` with severities, and `needsAttention`.
-`needsAttention` is true when any `fail` violation, refill, stall, or QC gap
-exists — that is the signal to act, not just to read.
+`needsAttention` is true when any `warn` or `fail` violation, refill entry,
+stalled agent, or "no Sonnet" QC gap exists — that is the signal to act, not
+just to read.
 
 ## Notes
 
@@ -78,5 +79,10 @@ exists — that is the signal to act, not just to read.
   exits cleanly and the first cycle's plan is the one that executes.
 - Refill dispatch goes through the same visible workflow mechanism the
   orchestrator uses for every other launch — no hidden swarms.
-- `--selftest` and `--dry-run` never write: no lock, no dispatch, no
-  ledger/checkpoint/build-status mutation. Safe to run any time.
+- `--dry-run` never writes: no dispatch, no queue push, no
+  ledger/checkpoint/build-status mutation. It still takes and releases the
+  watchdog lock (a concurrent real cycle must be blocked during the read), so
+  it can exit with `lockAcquired: false` if a live cycle holds the lock.
+- `--selftest` never writes: no lock, no dispatch, no queue push, no
+  ledger/checkpoint/build-status mutation (fixture state in a temp dir).
+  Safe to run any time.

@@ -144,6 +144,8 @@ export interface QcEvidence {
 export interface CheckpointDoc {
   schemaVersion?: number;
   lastWatchdogAt?: string | null;
+  /** snake_case mirror kept by older writers of the live checkpoint file. */
+  last_watchdog_timestamp?: string | null;
   activeWorkflowIds?: string[];
   activeTaskIds?: string[];
   readyTaskIds?: string[];
@@ -267,7 +269,9 @@ export type ViolationKind =
   | "FAILED_TEST_NO_OWNER"
   | "BLOCKED_INCOMPLETE"
   | "WORKTREE_UNRECORDED"
-  | "WORKTREE_MISSING";
+  | "WORKTREE_MISSING"
+  | "REFILL_NOT_DISPATCHED"
+  | "INVALID_TASK_ID";
 
 export interface Violation {
   kind: ViolationKind;
@@ -557,17 +561,96 @@ export class RealGitAdapter implements GitAdapter {
 }
 
 export class RealRuntimeAdapter implements RuntimeAdapter {
+  private readonly stateDir: string;
+
+  /**
+   * The orchestrator's visible-runtime records live in state/workflows.json +
+   * state/agents.json (state/README.md: "machine-readable orchestration
+   * state, written by the MMCS orchestration agents"). The default adapter
+   * reflects the RECORDED visible state — the same source the orchestrator
+   * fed. Field-tolerant: missing files → empty view, never a throw.
+   */
+  constructor(stateDir: string) {
+    this.stateDir = stateDir;
+  }
+
   async workflows(): Promise<RuntimeWorkflow[]> {
-    // Visible runtime enumeration is CLI-specific; the orchestrator records
-    // what it sees in state/workflows.json + state/agents.json. The default
-    // runtime adapter therefore reflects the RECORDED visible state — the
-    // same source the orchestrator fed (the skill's job is to keep those
-    // files in sync with what it truly sees). Tests inject a double.
-    return [];
+    const doc = await readJsonOrNull<WorkflowsDoc>(
+      path.join(this.stateDir, "workflows.json"),
+    );
+    const agentsDoc = await readJsonOrNull<AgentsDoc>(
+      path.join(this.stateDir, "agents.json"),
+    );
+    const recordedAgents = agentsDoc?.items ?? [];
+    const byWorkflow = new Map<string, string[]>();
+    for (const a of recordedAgents) {
+      if (!a.workflow) continue;
+      const list = byWorkflow.get(a.workflow) ?? [];
+      if (a.id) list.push(a.id);
+      byWorkflow.set(a.workflow, list);
+    }
+    const items = doc?.items ?? [];
+    const out: RuntimeWorkflow[] = [];
+    for (const wf of items) {
+      const id = wf.id ?? wf.name ?? "";
+      if (id === "") continue;
+      const fromDoc = Array.isArray(wf.agentIds) ? wf.agentIds : [];
+      const fromAgents = byWorkflow.get(id) ?? [];
+      out.push({
+        id,
+        agentIds: [...new Set([...fromDoc, ...fromAgents])],
+      });
+    }
+    // Workflows present only in agents.json (no workflow doc) are still live
+    // visible workflows.
+    for (const [wf, ids] of byWorkflow) {
+      if (out.some((w) => w.id === wf)) continue;
+      out.push({ id: wf, agentIds: ids });
+    }
+    return out;
   }
 
   async agents(): Promise<RuntimeAgent[]> {
-    return [];
+    const doc = await readJsonOrNull<AgentsDoc>(
+      path.join(this.stateDir, "agents.json"),
+    );
+    return (doc?.items ?? []).map((a) => ({
+      id: a.id ?? "",
+      workflow: a.workflow ?? "",
+      taskId: a.taskId,
+      lastActivityAt: a.lastActivityAt ?? null,
+      model: a.model,
+      role: a.role,
+    }));
+  }
+}
+
+/** Real merge-queue push: appends the PASS task to state/merge-queue.json
+ *  (the batch merger's machine-readable queue — runbook §7.2 step 2) via
+ *  atomic temp+rename, skipping ids already present. */
+export class RealMergeQueueAdapter implements MergeQueueAdapter {
+  private readonly stateDir: string;
+  private readonly now: () => Date;
+
+  constructor(stateDir: string, now: () => Date = () => new Date()) {
+    this.stateDir = stateDir;
+    this.now = now;
+  }
+
+  async push(taskId: string): Promise<{ accepted: boolean }> {
+    const filePath = path.join(this.stateDir, "merge-queue.json");
+    const doc = await readJsonOrNull<MergeQueueDoc>(filePath);
+    const items = Array.isArray(doc?.items) ? [...doc.items] : [];
+    if (items.some((q) => q && q.taskId === taskId)) {
+      return { accepted: true };
+    }
+    items.push({ taskId, status: "PASS" });
+    await atomicWriteJson(filePath, {
+      schema_version: doc?.schema_version ?? 1,
+      updated_at: this.now().toISOString(),
+      items,
+    });
+    return { accepted: true };
   }
 }
 
@@ -634,12 +717,10 @@ export function planRefills(
 ): RefillEntry[] {
   const entries: RefillEntry[] = [];
   const used = new Set<string>(alreadyAssigned);
-  let totalSlots = 0;
   const sorted = [...liveWorkflows].sort((a, b) => a.id.localeCompare(b.id));
   for (const wf of sorted) {
     const slots = Math.max(0, limit - wf.agentIds.length);
     if (slots <= 0) continue;
-    totalSlots += slots;
     const taskIds: string[] = [];
     for (const t of ready) {
       if (used.has(t.id)) continue;
@@ -647,15 +728,12 @@ export function planRefills(
       taskIds.push(t.id);
       if (taskIds.length >= slots) break;
     }
-    if (taskIds.length === 0 && slots === 0) continue;
+    if (taskIds.length === 0) continue; // nothing to refill — not an undercapacity entry
     entries.push({
       workflow: wf.id,
       slots,
       taskIds,
-      reason:
-        taskIds.length > 0
-          ? `workflow ${wf.id} at ${wf.agentIds.length}/${limit} - ${taskIds.length} ready task(s) refilling`
-          : `workflow ${wf.id} at ${wf.agentIds.length}/${limit} - no compatible READY tasks`,
+      reason: `workflow ${wf.id} at ${wf.agentIds.length}/${limit} - ${taskIds.length} ready task(s) refilling`,
     });
   }
   return entries;
@@ -736,7 +814,7 @@ export class WatchdogEngine {
     this.stateDir = config.stateDir ?? path.join(config.repoRoot, "state");
     this.now = config.now ?? (() => new Date());
     this.git = config.git ?? new RealGitAdapter(config.repoRoot);
-    this.runtime = config.runtime ?? new RealRuntimeAdapter();
+    this.runtime = config.runtime ?? new RealRuntimeAdapter(this.stateDir);
   }
 
   private async loadDoc<T>(name: string, fallback: T): Promise<T> {
@@ -795,7 +873,23 @@ export class WatchdogEngine {
       const agentsDoc = await this.loadDoc<AgentsDoc>("agents.json", { items: [] });
       const queueDoc = await this.loadDoc<MergeQueueDoc>("merge-queue.json", { items: [] });
 
-      const tasks = tasksDoc.items ?? [];
+      // Task ids are interpolated into file paths under state/task-updates/
+      // (evidence reads) and passed to the merge-queue adapter. A malformed
+      // or hostile id (`../..`, absolute, etc.) must never escape that dir or
+      // reach an adapter — drop it from the cycle and flag it (§47 baseline).
+      const safeTaskId = (id: unknown): id is string =>
+        typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(id);
+      const rawTasks = tasksDoc.items ?? [];
+      const badIds = rawTasks.filter((t) => !safeTaskId(t.id));
+      for (const t of badIds) {
+        report.violations.push({
+          kind: "INVALID_TASK_ID",
+          severity: "fail",
+          message: `task record with id ${JSON.stringify(t.id)} is not a safe task id — excluded from the cycle`,
+          taskId: typeof t.id === "string" ? t.id : undefined,
+        });
+      }
+      const tasks = rawTasks.filter((t) => safeTaskId(t.id));
       const recordedWorkflows = workflowsDoc.items ?? [];
       const recordedAgents = agentsDoc.items ?? [];
       const queueTaskIds = new Set((queueDoc.items ?? []).map((q) => q.taskId));
@@ -879,18 +973,33 @@ export class WatchdogEngine {
         alreadyAssigned,
         MAX_AGENTS_PER_WORKFLOW,
       );
-      if (this.config.dispatch && !report.selftest && this.config.dispatchAdapter) {
-        for (const entry of report.underCapacity) {
-          if (entry.taskIds.length === 0) continue;
-          const res = await this.config.dispatchAdapter.dispatch({
-            workflow: entry.workflow,
-            taskIds: entry.taskIds,
-          });
-          report.refilled.push({
-            workflow: entry.workflow,
-            taskIds: res.accepted,
-            slots: entry.slots,
-          });
+      if (this.config.dispatch && !report.selftest) {
+        if (!this.config.dispatchAdapter) {
+          // A real cycle that computes a refill plan but has no dispatch
+          // adapter would silently "merely report" the undercapacity — the
+          // one thing runbook §7.1 forbids. Fail loud instead of pretending
+          // the refill happened.
+          for (const entry of report.underCapacity) {
+            if (entry.taskIds.length === 0) continue;
+            report.violations.push({
+              kind: "REFILL_NOT_DISPATCHED",
+              severity: "fail",
+              message: `workflow ${entry.workflow} under capacity by ${entry.slots} slots (tasks ${entry.taskIds.join(", ")}) but no dispatch adapter is wired in this cycle`,
+            });
+          }
+        } else {
+          for (const entry of report.underCapacity) {
+            if (entry.taskIds.length === 0) continue;
+            const res = await this.config.dispatchAdapter.dispatch({
+              workflow: entry.workflow,
+              taskIds: entry.taskIds,
+            });
+            report.refilled.push({
+              workflow: entry.workflow,
+              taskIds: res.accepted,
+              slots: entry.slots,
+            });
+          }
         }
       }
 
@@ -915,7 +1024,10 @@ export class WatchdogEngine {
         }
       }
 
-      // 15+16. duplicates → stop the loser(s)
+      // 15+16. duplicates → stop the loser(s). Keep the NEWEST owner by
+      // activity evidence (runbook §7.1 step 15: "keep the newest, kill the
+      // rest"); live-agent order is arbitrary, so never trust it. Ties
+      // (same/absent timestamp) fall back to agent id order for determinism.
       const taskByAgent = new Map<string, string>();
       for (const a of recordedAgents) {
         if (a.id && a.taskId) taskByAgent.set(a.id, a.taskId);
@@ -923,13 +1035,31 @@ export class WatchdogEngine {
       report.duplicates = duplicateOwnership(liveAgents, taskByAgent);
       report.violations.push(...report.duplicates);
       if (this.config.killAdapter && !report.selftest) {
-        const seen = new Set<string>();
+        const owners = new Map<string, RuntimeAgent[]>();
         for (const a of liveAgents) {
           if (!a.taskId) continue;
-          if (seen.has(a.taskId)) {
-            await this.config.killAdapter.kill(a.id, `duplicate owner of ${a.taskId}`);
+          const list = owners.get(a.taskId) ?? [];
+          list.push(a);
+          owners.set(a.taskId, list);
+        }
+        for (const [taskId, holders] of owners) {
+          if (holders.length < 2) continue;
+          const ranked = [...holders].sort((x, y) => {
+            const tx = Date.parse(x.lastActivityAt ?? "");
+            const ty = Date.parse(y.lastActivityAt ?? "");
+            if (Number.isFinite(tx) && Number.isFinite(ty) && tx !== ty) {
+              return ty - tx; // newest first
+            }
+            if (Number.isFinite(tx) && !Number.isFinite(ty)) return -1;
+            if (!Number.isFinite(tx) && Number.isFinite(ty)) return 1;
+            return x.id.localeCompare(y.id);
+          });
+          for (const loser of ranked.slice(1)) {
+            await this.config.killAdapter.kill(
+              loser.id,
+              `duplicate owner of ${taskId} — newer owner ${ranked[0]!.id} kept`,
+            );
           }
-          seen.add(a.taskId);
         }
       }
 
@@ -940,20 +1070,17 @@ export class WatchdogEngine {
         const qc = await readJsonOrNull<QcEvidence>(evidencePath);
         const missingQc =
           !qc || qc.phase !== "PASS" || (qc.finalTestResult ?? "") !== "PASS";
+        if (!missingQc) continue; // covered — no gap entry at all
         report.qcGaps.push({
           taskId: t.id,
-          reason: missingQc
-            ? "no Sonnet QC PASS evidence yet"
-            : "qc QC PASS present",
+          reason: "no Sonnet QC PASS evidence yet",
         });
-        if (missingQc) {
-          report.violations.push({
-            kind: "BUILDER_DONE_NO_QC",
-            severity: "warn",
-            message: `task ${t.id} is BUILDER_DONE but has no Sonnet QC PASS evidence`,
-            taskId: t.id,
-          });
-        }
+        report.violations.push({
+          kind: "BUILDER_DONE_NO_QC",
+          severity: "warn",
+          message: `task ${t.id} is BUILDER_DONE but has no Sonnet QC PASS evidence`,
+          taskId: t.id,
+        });
       }
       // Ensure an active QC dispatcher gets the gap list.
       if (this.config.qcDispatchAdapter && !report.selftest) {
@@ -984,7 +1111,7 @@ export class WatchdogEngine {
       for (const t of tasks) {
         if (t.status !== "PASS") continue;
         if (queueTaskIds.has(t.id)) continue;
-        let accepted = true;
+        let accepted = false;
         if (this.config.mergeQueueAdapter && !report.selftest) {
           const res = await this.config.mergeQueueAdapter.push(t.id);
           accepted = res.accepted;
@@ -1026,7 +1153,9 @@ export class WatchdogEngine {
         const ok =
           Array.isArray(blockers) &&
           blockers.length > 0 &&
-          blockers.every((x) => typeof x === "string" && x.length > 0);
+          blockers.every(
+            (x) => typeof x === "string" && /^BLOCKED\b|^AWAITING\b|^WAITING ON\b|^PENDING\b/i.test(x.trim()),
+          );
         if (!ok) {
           report.violations.push({
             kind: "BLOCKED_INCOMPLETE",
@@ -1037,18 +1166,26 @@ export class WatchdogEngine {
         }
       }
 
-      // Worktree/branch reconciliation vs recorded
+      // Worktree/branch reconciliation vs recorded. Branch names drift
+      // between conventions (`task/TASK-CORE-001-x` vs `task/CORE-001-x`),
+      // so compare on the normalized task-id stem, not the raw string.
+      const normBranch = (b: string): string =>
+        b
+          .replace(/^refs\/heads\//, "")
+          .replace(/^refs\/remotes\//, "")
+          .replace(/^origin\//, "")
+          .replace(/^task\//, "")
+          .replace(/^TASK-/, "");
+      const liveBranchKeys = new Set<string>();
+      for (const wt of worktrees) {
+        if (!wt.branch && !wt.sha) continue;
+        liveBranchKeys.add(normBranch(wt.branch ?? wt.sha ?? ""));
+      }
+      for (const b of branches) liveBranchKeys.add(normBranch(b));
       for (const t of tasks) {
         if (!t.branch) continue;
         const recordedBranch = t.branch;
-        const found = worktrees.some((wt) => {
-          // Detached/porcelain entries can omit `branch` (HEAD-only main
-          // worktree or bare checkout) — those carry no usable name.
-          if (!wt.branch && !wt.sha) return false;
-          const b = (wt.branch ?? wt.sha ?? "").replace(/^refs\/heads\//, "");
-          return b === recordedBranch || b === recordedBranch.replace(/^task\//, "");
-        }) || branches.some((b) => b === recordedBranch);
-        if (!found) {
+        if (!liveBranchKeys.has(normBranch(recordedBranch))) {
           report.violations.push({
             kind: "WORKTREE_MISSING",
             severity: "info",
@@ -1064,14 +1201,34 @@ export class WatchdogEngine {
         await appendLedger(this.config.repoRoot, line);
       }
 
-      // 24. atomic checkpoint update
+      // 23b. cycle report evidence (runbook §7.1 "append logs/watchdog/")
+      if (this.config.persist && !report.selftest) {
+        const reportPath = path.join(
+          this.config.repoRoot,
+          "logs",
+          "watchdog",
+          `${now.toISOString().replace(/[:.]/g, "-")}-watchdog.json`,
+        );
+        await atomicWriteJson(reportPath, this.finish(report, now));
+      }
+
+      // 24. atomic checkpoint update — FORCE it: create the file when absent,
+      // mirroring the snake_case live layout plus the camelCase core contract.
       if (this.config.persist && !report.selftest) {
         const checkpointPath = path.join(this.stateDir, "checkpoint.json");
-        const cp = await readJsonOrNull<CheckpointDoc>(checkpointPath);
-        if (cp) {
-          cp.lastWatchdogAt = now.toISOString();
-          await atomicWriteJson(checkpointPath, cp);
-        }
+        const cp =
+          (await readJsonOrNull<CheckpointDoc>(checkpointPath)) ?? {
+            schemaVersion: 1,
+            lastWatchdogAt: null,
+            last_watchdog_timestamp: null,
+          };
+        // CamelCase is the @mmcs/core CheckpointService contract
+        // (packages/core/src/recovery/checkpoint-schema.ts); the live
+        // state/checkpoint.json in this repo carries snake_case fields, so
+        // write both to keep either reader fresh. No invented fields.
+        cp.lastWatchdogAt = now.toISOString();
+        cp.last_watchdog_timestamp = now.toISOString();
+        await atomicWriteJson(checkpointPath, cp);
       }
 
       // 22. build-status.md with real counts — SURGICAL update: refresh the
@@ -1132,7 +1289,7 @@ export class WatchdogEngine {
       fail: report.violations.filter((v) => v.severity === "fail").length,
     };
     report.needsAttention =
-      report.violations.some((v) => v.severity === "fail") ||
+      report.violations.some((v) => v.severity === "warn" || v.severity === "fail") ||
       report.underCapacity.length > 0 ||
       report.stalled.length > 0 ||
       report.qcGaps.some((g) => g.reason.startsWith("no Sonnet"));

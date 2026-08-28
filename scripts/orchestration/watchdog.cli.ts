@@ -21,6 +21,7 @@ import path from "node:path";
 import {
   WatchdogEngine,
   RealGitAdapter,
+  RealMergeQueueAdapter,
   MAX_AGENTS_PER_WORKFLOW,
   type RuntimeWorkflow,
   type RuntimeAgent,
@@ -63,12 +64,32 @@ async function main(): Promise<void> {
     process.exit(ok ? 0 : 1);
   }
 
+  const stateDir = path.join(repoRoot, "state");
+  const dryPlanPushes: string[] = [];
   const engine = new WatchdogEngine({
     repoRoot,
     selftest: false,
     dispatch: !dryRun,
     persist: persist && !dryRun,
     git: new RealGitAdapter(repoRoot),
+    // The runtime view defaults to the orchestrator's recorded visible state
+    // (state/workflows.json + state/agents.json) via RealRuntimeAdapter.
+    // Refill dispatch through a live visible workflow mechanism is the
+    // skill's visible-action step (SKILL.md §5); the CLI has no hidden
+    // launcher, so a real refill must be planned here and executed by the
+    // skill. The machine push (PASS → merge queue) is the engine's own job
+    // and runs here through the real queue adapter — but ONLY in a real
+    // cycle. --dry-run must mutate nothing, and an absent adapter would turn
+    // the push into a silent no-op, so dry-run pushes a dry adapter that
+    // records an accepted plan without touching state/merge-queue.json.
+    mergeQueueAdapter: dryRun
+      ? {
+          push: async (taskId) => {
+            dryPlanPushes.push(taskId);
+            return { accepted: true };
+          },
+        }
+      : new RealMergeQueueAdapter(stateDir),
   });
   const report = await engine.run();
   const summary = {
