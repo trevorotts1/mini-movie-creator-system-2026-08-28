@@ -4,13 +4,21 @@
 // (never values), accept injected registry/probes, produce the runbook §61
 // report (configured vs documented vs observed + last verified + warnings),
 // and never let a transient probe failure rewrite documented VERIFIED state.
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   defaultProbes,
   loadConfiguredProviders,
   runProvidersVerify,
 } from "./command.js";
-import type { CapabilityProbe } from "@mmcs/capability-registry";
+import type { CapabilityProbe } from "./verify.js";
+import {
+  applyOverrides,
+  observedOverrides,
+  toDocumentedCapability,
+  verifyProviders,
+} from "./verify.js";
 
 const NOW = "2026-08-28T13:20:00.000Z";
 
@@ -137,5 +145,85 @@ describe("runProvidersVerify", () => {
 
   it("exposes an empty default probe set (no accidental network calls)", () => {
     expect(Object.keys(defaultProbes)).toHaveLength(0);
+  });
+});
+
+describe("rootDir isolation (TS6059 regression guard)", () => {
+  it("command sources never import @mmcs/capability-registry (CHAR-004 local-type pattern)", () => {
+    const dir = fileURLToPath(new URL(".", import.meta.url));
+    for (const file of ["command.ts", "command.test.ts", "verify.ts", "report.ts"]) {
+      const src = readFileSync(new URL(file, import.meta.url), "utf8");
+      expect(src, `${dir}${file} imports the workspace package`).not.toMatch(
+        /from\s+["']@mmcs\/capability-registry["']/,
+      );
+    }
+  });
+
+  it("CLI package.json declares no workspace dependency (rootDir stays closed)", () => {
+    const pkg = JSON.parse(
+      readFileSync(
+        fileURLToPath(new URL("../../../../../package.json", import.meta.url)),
+        "utf8",
+      ),
+    ) as { dependencies?: Record<string, string> };
+    expect(pkg.dependencies ?? {}).not.toHaveProperty(
+      "@mmcs/capability-registry",
+    );
+  });
+});
+
+describe("CLI-local verify engine mirrors the package contract", () => {
+  it("toDocumentedCapability narrows registry-shaped objects, never invents", () => {
+    expect(toDocumentedCapability(null)).toBeNull();
+    expect(toDocumentedCapability({})).toBeNull();
+    expect(
+      toDocumentedCapability({
+        provider: "agnes",
+        modelId: "m",
+        confidence: "VERIFIED",
+        lastVerifiedAt: "2026-08-20T00:00:00.000Z",
+        facts: { "references.maxImages": 5 },
+      }),
+    ).toEqual({
+      provider: "agnes",
+      modelId: "m",
+      confidence: "VERIFIED",
+      lastVerifiedAt: "2026-08-20T00:00:00.000Z",
+      facts: { "references.maxImages": 5 },
+    });
+  });
+
+  it("applyOverrides never rewrites a VERIFIED fact and never mutates input", () => {
+    const entries = [
+      {
+        provider: "agnes",
+        modelId: "m",
+        facts: { "references.maxImages": 5 as unknown },
+        verifiedFacts: { "references.maxImages": true as const },
+      },
+    ];
+    const snapshot = JSON.stringify(entries);
+    const out = applyOverrides(entries, [
+      {
+        provider: "agnes",
+        modelId: "m",
+        field: "references.maxImages",
+        value: 10,
+        observedAt: NOW,
+      },
+    ]);
+    expect(JSON.stringify(entries)).toBe(snapshot);
+    expect(out[0]!.facts["references.maxImages"]).toBe(5);
+  });
+
+  it("observedOverrides includes only probed non-null observations", async () => {
+    const flaky: CapabilityProbe = async () => ({ ok: false, error: "503" });
+    const result = await verifyProviders(
+      [{ provider: "agnes", credentialsPresent: true, configuredModels: ["m"] }],
+      [{ provider: "agnes", modelId: "m", confidence: "VERIFIED", lastVerifiedAt: "2026-08-20T00:00:00.000Z", facts: {} }],
+      { agnes: flaky },
+      { now: () => NOW },
+    );
+    expect(observedOverrides(result)).toEqual([]);
   });
 });

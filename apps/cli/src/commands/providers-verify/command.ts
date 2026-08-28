@@ -5,6 +5,15 @@
  * CLI entry (src/index.ts, CORE-011's) gains the real verb via a one-line
  * import at integration; that file is NOT owned by CAP-009.
  *
+ * CHAR-004 local-type pattern: this command does NOT import
+ * `@mmcs/capability-registry`. `apps/cli/tsconfig.json` pins
+ * `rootDir: src`, so a workspace import pulls package sources outside the
+ * CLI's rootDir and fails typecheck with TS6059. The verify engine and
+ * formatters are kept as CLI-local modules (./verify.js, ./report.js) with
+ * types structurally identical to the package's `src/verify/` exports —
+ * the package remains the canonical registry-facing engine; integration
+ * wiring feeds this command through the same shapes.
+ *
  * The command:
  *   1. reads the operator's provider configuration through an injected
  *      loader (no filesystem access at module import time — testable);
@@ -25,14 +34,45 @@
 
 import {
   verifyProviders,
-  formatVerifyReport,
-  verifyResultToJson,
   type CapabilityProbe,
   type ConfiguredProvider,
   type DocumentedCapability,
   type ProviderVerifyResult,
   type VerifyOptions,
-} from "@mmcs/capability-registry";
+} from "./verify.js";
+import {
+  formatVerifyReport,
+  verifyResultToJson,
+} from "./report.js";
+
+export type {
+  CapabilityProbe,
+  ConfiguredProvider,
+  Discrepancy,
+  DiscrepancySeverity,
+  DocumentedCapability,
+  ObservedOverride,
+  ObservationKind,
+  OverridableRegistryEntry,
+  ProbeResult,
+  ProviderVerifyReport,
+  ProviderVerifyResult,
+  RuntimeObservation,
+  VerifyConfidence,
+  VerifyOptions,
+} from "./verify.js";
+export {
+  applyOverrides,
+  observedOverrides,
+  toDocumentedCapability,
+  verifyProviders,
+} from "./verify.js";
+export {
+  formatDiscrepancyLine,
+  formatReportLine,
+  formatVerifyReport,
+  verifyResultToJson,
+} from "./report.js";
 
 /** Which env var names gate each provider's "configured" state. */
 export const PROVIDER_ENV_KEYS: Readonly<Record<string, readonly string[]>> = {
