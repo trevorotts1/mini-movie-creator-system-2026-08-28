@@ -1,7 +1,7 @@
 {
   "taskId": "QC-012",
   "phase": "PASS",
-  "commit": "a5b8c3cd496911283104960bf2097ac1d96a4947",
+  "commit": "29af75aa212171afb15d58929139c66dee9a74a6",
   "checksRun": "node node_modules/vitest/vitest.mjs run packages/qc/src/final-episode --no-file-parallelism (36 passed, 0 failed); node_modules/.bin/tsc --noEmit -p packages/qc/tsconfig.json (clean); lint: no eslint tooling in repo (not applicable)",
   "defectsFound": 6,
   "defectsFixed": 6,
