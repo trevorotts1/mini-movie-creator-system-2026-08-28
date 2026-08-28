@@ -95,6 +95,19 @@ describe("estimateRuntime — estimator mechanics", () => {
     ).toThrow(RuntimeEstimatorError);
   });
 
+  it("treats an explicitly-undefined option key as absent, never as a NaN clobber (regression)", () => {
+    // A spread-merge ({ ...defaults, ...options }) overwrites the default with
+    // `undefined` for explicitly-undefined keys, producing NaN runtimes.
+    const base = { id: "U", scenes: [{ id: "SC01", elements: [{ kind: "dialogue", text: "one two three" }] }] } as const;
+    const plain = estimateRuntime(base);
+    const undefinedOverride = estimateRuntime(base, { dialogueWordsPerSecond: undefined });
+    expect(undefinedOverride.totalSeconds).toBe(plain.totalSeconds);
+    expect(Number.isFinite(undefinedOverride.totalSeconds)).toBe(true);
+    expect(undefinedOverride.perScene[0]?.estimatedSeconds).toBe(
+      plain.perScene[0]?.estimatedSeconds,
+    );
+  });
+
   it("rejects structurally invalid screenplays", () => {
     expect(() => estimateRuntime(null as never)).toThrow(RuntimeEstimatorError);
     expect(() => estimateRuntime({ id: "", scenes: [] })).toThrow(RuntimeEstimatorError);
@@ -231,6 +244,27 @@ describe("RuntimeEstimateStore — persistence (acceptance: per-scene and total 
     ).toThrow(RuntimeEstimatorError);
   });
 
+  it("refuses scenes with a non-string sceneTitle (regression: was persisted verbatim)", () => {
+    const store = new RuntimeEstimateStore(db);
+    const valid = estimateRuntime(KNOWN_DURATION_FIXTURES[0]!.screenplay);
+    const badTitle = [
+      { ...valid.perScene[0]!, sceneTitle: 42 as unknown as string },
+    ] as unknown as RuntimeEstimate["perScene"];
+    expect(() => store.save({ ...valid, perScene: badTitle } as RuntimeEstimate)).toThrow(
+      RuntimeEstimatorError,
+    );
+  });
+
+  it("refuses estimates carrying NaN options (regression: serialized null into options_json)", () => {
+    const store = new RuntimeEstimateStore(db);
+    const valid = estimateRuntime(KNOWN_DURATION_FIXTURES[0]!.screenplay);
+    const nanOptions = {
+      ...valid,
+      options: { ...valid.options, sceneOverheadSeconds: Number.NaN },
+    } as unknown as RuntimeEstimate;
+    expect(() => store.save(nanOptions)).toThrow(RuntimeEstimatorError);
+  });
+
   it("keeps the latest batch intact when two saves share one estimatedAt timestamp", () => {
     const store = new RuntimeEstimateStore(db);
     const fixture = KNOWN_DURATION_FIXTURES[1]!;
@@ -258,6 +292,16 @@ describe("RuntimeEstimateStore — persistence (acceptance: per-scene and total 
     store.save(estimateRuntime(fixture.screenplay));
     // Corrupt the summary total directly; the consistency check must fire.
     db.exec("UPDATE runtime_estimate_screenplays SET total_seconds = 999;");
+    expect(() => store.persistedTotalSeconds(fixture.screenplay.id)).toThrow(/inconsistent/);
+  });
+
+  it("flags a non-zero summary total with zero persisted scene rows (regression: check skipped empty batches)", () => {
+    const store = new RuntimeEstimateStore(db);
+    const fixture = KNOWN_DURATION_FIXTURES[0]!;
+    store.save(estimateRuntime(fixture.screenplay));
+    // Delete every scene row for the latest batch; the summary total (23.4)
+    // then contradicts the empty scene sum (0) and must be reported.
+    db.exec("DELETE FROM runtime_estimate_scenes;");
     expect(() => store.persistedTotalSeconds(fixture.screenplay.id)).toThrow(/inconsistent/);
   });
 });

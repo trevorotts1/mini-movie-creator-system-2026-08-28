@@ -95,6 +95,12 @@ function isPersistableEstimate(value: RuntimeEstimate): boolean {
     value.inputVersion <= 0 ||
     value.options === null ||
     typeof value.options !== "object" ||
+    // Every resolved option is a finite non-negative number; a NaN/undefined
+    // option would serialize to `null` in options_json and poison reloads.
+    !validNumber(value.options.dialogueWordsPerSecond) ||
+    !validNumber(value.options.actionWordsPerSecond) ||
+    !validNumber(value.options.sceneOverheadSeconds) ||
+    !validNumber(value.options.minSceneSeconds) ||
     !Array.isArray(value.perScene)
   ) {
     return false;
@@ -105,6 +111,7 @@ function isPersistableEstimate(value: RuntimeEstimate): boolean {
       typeof scene !== "object" ||
       typeof scene.sceneId !== "string" ||
       scene.sceneId.trim() === "" ||
+      typeof scene.sceneTitle !== "string" ||
       !Number.isInteger(scene.sceneIndex) ||
       !validNumber(scene.dialogueWords) ||
       !validNumber(scene.actionWords) ||
@@ -268,8 +275,10 @@ export class RuntimeEstimateStore {
     }
     // Recompute from the persisted scene rows and require agreement with the
     // persisted summary total — persistence must never contradict itself.
+    // Checked unconditionally: an empty scene list with a non-zero total is
+    // exactly the kind of corruption this guard exists to catch.
     const sum = roundSeconds(latest.scenes.reduce((acc, s) => acc + s.estimatedSeconds, 0));
-    if (latest.scenes.length > 0 && Math.abs(sum - latest.totalSeconds) > 0.01) {
+    if (Math.abs(sum - latest.totalSeconds) > 0.01) {
       throw new RuntimeEstimatorError(
         `persisted estimate inconsistent: scene sum ${sum} != total ${latest.totalSeconds}`,
       );

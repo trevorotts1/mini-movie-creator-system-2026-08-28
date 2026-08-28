@@ -18,14 +18,21 @@ import {
  */
 
 function resolveOptions(options?: RuntimeEstimatorOptions): ResolvedRuntimeEstimatorOptions {
-  validateOptions(options ?? {});
-  const merged = { ...DEFAULT_RUNTIME_ESTIMATOR_OPTIONS, ...options };
-  return {
-    dialogueWordsPerSecond: merged.dialogueWordsPerSecond,
-    actionWordsPerSecond: merged.actionWordsPerSecond,
-    sceneOverheadSeconds: merged.sceneOverheadSeconds,
-    minSceneSeconds: merged.minSceneSeconds,
+  // Merge per-field with `??`, never by spread: an options object carrying an
+  // explicitly-`undefined` key (`{ dialogueWordsPerSecond: undefined }`) would
+  // clobber the default with `undefined` under spread and yield NaN runtimes,
+  // while `validateOptions` (which skips undefined keys) would never object.
+  const merged: Required<RuntimeEstimatorOptions> = {
+    dialogueWordsPerSecond:
+      options?.dialogueWordsPerSecond ?? DEFAULT_RUNTIME_ESTIMATOR_OPTIONS.dialogueWordsPerSecond,
+    actionWordsPerSecond:
+      options?.actionWordsPerSecond ?? DEFAULT_RUNTIME_ESTIMATOR_OPTIONS.actionWordsPerSecond,
+    sceneOverheadSeconds:
+      options?.sceneOverheadSeconds ?? DEFAULT_RUNTIME_ESTIMATOR_OPTIONS.sceneOverheadSeconds,
+    minSceneSeconds: options?.minSceneSeconds ?? DEFAULT_RUNTIME_ESTIMATOR_OPTIONS.minSceneSeconds,
   };
+  validateOptions(merged);
+  return merged;
 }
 
 /**
