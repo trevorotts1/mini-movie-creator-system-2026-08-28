@@ -1,0 +1,9 @@
+{
+  "taskId": "AGN-001",
+  "phase": "BUILDER_DONE",
+  "commit": "a6203c28fa6bd51a33377f3d2d82a3f8dd718ac0",
+  "testsRun": "npx vitest run packages/providers/src/agnes/client -> 22 passed, 0 failed (rc=0, JSON reporter); tsc --noEmit (packages/providers) -> clean",
+  "notes": "Agnes HTTP client mirroring KIE-001 pattern: bearer auth from config (AGNES_API_KEY via CORE-010), 30s per-attempt timeout, bounded retries (default 3) on network/timeout/429/5xx with exponential backoff + Retry-After, key-safe errors (sanitizeMsg redaction) and key-safe onRetry callback; POST /v1/videos + GET /agnesapi (host-root join, above /v1) per docs verified live 2026-08-28; transport facts table + sources added to docs/provider-capabilities/agnes.md; registry fragments untouched (CAP-010 owns assembly, CAP-002 owns data/agnes.ts)",
+  "blockers": [],
+  "updatedAt": "2026-08-28T15:55:00Z"
+}
