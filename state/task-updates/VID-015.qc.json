@@ -1,7 +1,7 @@
 {
   "taskId": "VID-015",
   "phase": "PASS",
-  "commit": "PENDING",
+  "commit": "932ff1e20c2a66eba4f59448b6ed00bb5902719c",
   "checksRun": "pnpm exec tsc -p packages/remotion-runtime/tsconfig.json --noEmit; npx vitest run packages/remotion-runtime/src/ffprobe (28/28 PASS)",
   "defectsFound": 1,
   "defectsFixed": 1,
