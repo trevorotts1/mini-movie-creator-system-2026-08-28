@@ -190,6 +190,50 @@ describe("FishDialogueCache — storage behavior", () => {
     expect(entry.key).toBe(key);
   });
 
+  it("structurally invalid on-disk docs count as a miss, not a broken hit", async () => {
+    const fsImpl = memoryFs();
+    const key = dialogueCacheKey(REQ);
+    const cache = new FishDialogueCache({
+      directory: "/tmp/fish-cache-structural",
+      fs: fsImpl,
+      now: () => FIXED_NOW,
+    });
+    // Parseable JSON but no entry payload.
+    await fsImpl.writeFile(`/tmp/fish-cache-structural/${key}.json`, '{"formatVersion":1,"audioBase64":"AAAA"}', "utf8");
+    expect(await cache.get(REQ)).toBeNull();
+    // Entry payload missing required fields.
+    await fsImpl.writeFile(
+      `/tmp/fish-cache-structural/${key}.json`,
+      JSON.stringify({ formatVersion: 1, entry: { key }, audioBase64: Buffer.from("x").toString("base64") }),
+      "utf8",
+    );
+    expect(await cache.get(REQ)).toBeNull();
+    // Tampered audio: decoded length disagrees with recorded audioByteLength.
+    await fsImpl.writeFile(
+      `/tmp/fish-cache-structural/${key}.json`,
+      JSON.stringify({
+        formatVersion: 1,
+        entry: { key, request: REQ, audioByteLength: 999, model: "s2-pro", createdAt: FIXED_NOW.toISOString(), origin: "synthesized" },
+        audioBase64: Buffer.from("tiny").toString("base64"),
+      }),
+      "utf8",
+    );
+    expect(await cache.get(REQ)).toBeNull();
+    // Entry key inside the file disagrees with the filename key.
+    const otherKey = "fsh1:" + "b".repeat(64);
+    await fsImpl.writeFile(
+      `/tmp/fish-cache-structural/${key}.json`,
+      JSON.stringify({
+        formatVersion: 1,
+        entry: { key: otherKey, request: REQ, audioByteLength: 4, model: "s2-pro", createdAt: FIXED_NOW.toISOString(), origin: "synthesized" },
+        audioBase64: Buffer.from("tiny").toString("base64"),
+      }),
+      "utf8",
+    );
+    expect(await cache.get(REQ)).toBeNull();
+    expect(await cache.getByKey(otherKey)).toBeNull();
+  });
+
   it("untrusted dialogue text is stored verbatim, never executed or path-built", async () => {
     const fsImpl = memoryFs();
     const cache = new FishDialogueCache({

@@ -80,8 +80,7 @@ export class FishDialogueCache {
   /** Look up by explicit key (loader seam for other packages). */
   async getByKey(key: string): Promise<FishDialogueCacheEntry | null> {
     if (!isCurrentKeyFormat(key)) return null;
-    const raw = await this.readEntryFile(this.filePathFor(key));
-    return raw;
+    return this.readEntryFile(this.filePathFor(key), key);
   }
 
   /**
@@ -209,7 +208,10 @@ export class FishDialogueCache {
     await this.fsImpl.writeFile(filePath, JSON.stringify(doc), "utf8");
   }
 
-  private async readEntryFile(filePath: string): Promise<FishDialogueCacheEntry | null> {
+  private async readEntryFile(
+    filePath: string,
+    expectedKey?: string,
+  ): Promise<FishDialogueCacheEntry | null> {
     let raw: string;
     try {
       raw = await this.fsImpl.readFile(filePath, "utf8");
@@ -219,7 +221,21 @@ export class FishDialogueCache {
     try {
       const doc = JSON.parse(raw) as FishDialogueCacheFile;
       if (doc.formatVersion !== 1) return null;
+      // Structurally corrupt entries (parseable JSON, wrong shape) count as a
+      // miss, never a broken hit.
+      if (doc.entry == null || typeof doc.entry !== "object") return null;
+      if (typeof doc.entry.key !== "string" || !isCurrentKeyFormat(doc.entry.key)) return null;
+      if (typeof doc.audioBase64 !== "string") return null;
+      if (expectedKey !== undefined && doc.entry.key !== expectedKey) return null;
       const audio = Uint8Array.from(Buffer.from(doc.audioBase64, "base64")).buffer;
+      // Integrity: decoded length must match the recorded byte length, so a
+      // truncated/tampered file is a miss (re-synthesized), not corrupt audio.
+      if (typeof doc.entry.audioByteLength !== "number" || audio.byteLength !== doc.entry.audioByteLength) {
+        return null;
+      }
+      if (typeof doc.entry.createdAt !== "string" || typeof doc.entry.model !== "string") {
+        return null;
+      }
       return { ...doc.entry, audio, origin: "synthesized" };
     } catch {
       return null; // corrupt entry counts as a miss, never a crash

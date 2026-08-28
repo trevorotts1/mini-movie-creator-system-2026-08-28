@@ -89,6 +89,13 @@ describe("dialogueCacheKey", () => {
     expect(dialogueCacheKey(withUndef)).toBe(dialogueCacheKey(base));
   });
 
+  it("empty prosody object is equivalent to absent prosody (cache hit, no re-bill)", () => {
+    expect(dialogueCacheKey({ ...base, prosody: {} })).toBe(dialogueCacheKey(base));
+    expect(
+      dialogueCacheKey({ ...base, prosody: { speed: undefined, volume: undefined } }),
+    ).toBe(dialogueCacheKey(base));
+  });
+
   it("untrusted story text is hashed, never interpreted", () => {
     const hostile: FishDialogueRequest = {
       text: '{"__proto__":{"polluted":true}}; process.exit(1); require("fs")',

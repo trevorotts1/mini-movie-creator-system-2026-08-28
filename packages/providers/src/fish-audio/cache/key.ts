@@ -42,10 +42,15 @@ export function canonicalizeRequest(request: FishDialogueRequest): Record<string
   if (request.topP !== undefined) canon.topP = request.topP;
   if (request.sampleRate !== undefined) canon.sampleRate = request.sampleRate;
   if (request.prosody !== undefined) {
-    canon.prosody = {
-      speed: request.prosody.speed,
-      volume: request.prosody.volume,
-    };
+    const speed = request.prosody.speed;
+    const volume = request.prosody.volume;
+    // `{ }` and `{ speed: undefined, volume: undefined }` are semantically
+    // identical to "no prosody": drop the field instead of keying an empty
+    // object, or the same request would miss the cache after any
+    // normalize-to-empty step.
+    if (speed !== undefined || volume !== undefined) {
+      canon.prosody = { speed, volume };
+    }
   }
   return canon;
 }
