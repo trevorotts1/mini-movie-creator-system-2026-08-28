@@ -1,0 +1,13 @@
+{
+  "taskId": "AGN-004",
+  "phase": "PASS",
+  "commit": "9ad42fad2b8623b30e586b230ec7d5359351fda6",
+  "checksRun": "npx vitest run packages/providers/src/agnes/video/submit (36/36 pass); npx vitest run (full suite 444/444 pass); tsc --noEmit -p packages/providers + packages/core + packages/database + packages/capability-registry (clean); security grep (no secrets, fixed-string DDL only, no shell injection, no path traversal, no retry loops)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:10:00Z",
+  "notes": "Fixed spec \u00a74 budget-reservation crash window: reservation id now persisted on the record immediately after reserve, resume releases stale hold before re-reserving (no double-hold); release failures after successful submit no longer mask the SUBMITTED state (persist-first ordering); store-save failures after reserve release the hold directly. 4 regression tests added (36 total).",
+  "blockers": []
+}

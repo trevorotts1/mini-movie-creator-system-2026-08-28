@@ -54,14 +54,17 @@ function scriptedClient(
 
 /** Budget gate that records reservations and exposes release outcomes. */
 function budgetGate(
-  options: { decline?: boolean } = {},
+  options: { decline?: boolean; failReleases?: boolean } = {},
 ): AgnesVideoBudgetGate & {
   reservations: { ref: string; estimatedCostUsd: number }[];
   released: { id: string; reason: string }[];
+  heldIds: () => string[];
 } {
   const gate = {
     reservations: [] as { ref: string; estimatedCostUsd: number }[],
     released: [] as { id: string; reason: string }[],
+    held: new Set<string>(),
+    heldIds: () => Array.from(gate.held),
     async reserve(request: { ref: string; estimatedCostUsd: number }) {
       if (options.decline) {
         throw new AgnesVideoBudgetDeclinedError(request.ref, request.estimatedCostUsd);
@@ -71,12 +74,24 @@ function budgetGate(
         estimatedCostUsd: request.estimatedCostUsd,
       });
       let id = `res-${gate.reservations.length}`;
+      gate.held.add(id);
       return {
         id,
         async release(reason: "submitted" | "failed") {
+          if (options.failReleases) {
+            throw new Error(`release failed for ${id}`);
+          }
+          gate.held.delete(id);
           gate.released.push({ id, reason });
         },
       };
+    },
+    async releaseById(reservationId: string, reason: "submitted" | "failed") {
+      if (options.failReleases) {
+        throw new Error(`releaseById failed for ${reservationId}`);
+      }
+      gate.held.delete(reservationId);
+      gate.released.push({ id: reservationId, reason });
     },
   };
   return gate as typeof gate & AgnesVideoBudgetGate;
@@ -386,9 +401,15 @@ describe("AgnesVideoSubmitter (mocked submit → SUBMITTED, spec §18)", () => {
     await submitter.submit("job-1", BASE_INPUT);
 
     const states = store.saveOrder.map((record) => record.state);
-    // BUDGET_RESERVED → SUBMITTING → SUBMITTED; the request payload is on the
+    // BUDGET_RESERVED (request) → BUDGET_RESERVED (reservation id, spec §4
+    // crash window) → SUBMITTING → SUBMITTED; the request payload is on the
     // very first durable record, the provider ID first appears on SUBMITTED.
-    expect(states).toEqual(["BUDGET_RESERVED", "SUBMITTING", "SUBMITTED"]);
+    expect(states).toEqual([
+      "BUDGET_RESERVED",
+      "BUDGET_RESERVED",
+      "SUBMITTING",
+      "SUBMITTED",
+    ]);
     expect(store.saveOrder[0]?.submitRequest?.prompt).toBe(BASE_INPUT.prompt);
     expect(store.saveOrder[0]?.providerJobId).toBeUndefined();
     const submitted = store.saveOrder.find((record) => record.state === "SUBMITTED");
@@ -539,6 +560,102 @@ describe("AgnesVideoSubmitter (mocked submit → SUBMITTED, spec §18)", () => {
     expect(recovered.state).toBe("SUBMITTED");
     expect(recovered.providerJobId).toBe("vid_recovered");
     expect(recovered.requestHash).not.toBe("stale");
+  });
+
+  it("persists the reservation id before the provider call and clears it on SUBMITTED", async () => {
+    const store = tracedStore();
+    const gate = budgetGate();
+    const submitter = new AgnesVideoSubmitter(
+      scriptedClient("vid_resid"),
+      store,
+      gate,
+      { now: fixedClock() },
+    );
+
+    await submitter.submit("job-resid", BASE_INPUT);
+
+    // The id must be durable on the pre-submit record (crash window) and
+    // cleared once the job landed (release happened).
+    const preSubmit = store.saveOrder.find((record) => record.state === "SUBMITTING");
+    expect(preSubmit?.budgetReservationId).toBe("res-1");
+    const submitted = store.saveOrder.find((record) => record.state === "SUBMITTED");
+    expect(submitted?.budgetReservationId).toBeUndefined();
+    expect(gate.released).toEqual([{ id: "res-1", reason: "submitted" }]);
+    expect(gate.heldIds()).toEqual([]);
+  });
+
+  it("resume with a stranded reservation releases the stale hold BEFORE re-reserving (spec §4 atomic)", async () => {
+    const calls = { submitCount: 0, seen: [] as AgnesVideoSubmitRequest[] };
+    const store = tracedStore();
+    const gate = budgetGate();
+    const submitter = new AgnesVideoSubmitter(
+      scriptedClient("vid_resume_hold", calls),
+      store,
+      gate,
+      { now: fixedClock() },
+    );
+
+    // Crash between reserve() and the SUBMITTED save: record carries a
+    // held reservation id but no provider job id.
+    await store.save({
+      ref: "job-stranded",
+      state: "SUBMITTING",
+      requestHash: "stale",
+      provider: "agnes",
+      model: "agnes-video-2.5-flash",
+      budgetReservationId: "res-stale",
+      createdAt: "2026-08-28T00:00:00.000Z",
+      updatedAt: "2026-08-28T00:00:00.000Z",
+    });
+
+    const recovered = await submitter.submit("job-stranded", BASE_INPUT);
+
+    expect(recovered.state).toBe("SUBMITTED");
+    expect(calls.submitCount).toBe(1);
+    // Stale hold released first, then exactly one new hold taken and released.
+    expect(gate.released).toEqual([
+      { id: "res-stale", reason: "failed" },
+      { id: "res-1", reason: "submitted" },
+    ]);
+    expect(gate.heldIds()).toEqual([]);
+    expect(gate.reservations).toHaveLength(1);
+  });
+
+  it("release failure after a successful submit does not fail the submit (job stays SUBMITTED)", async () => {
+    const store = tracedStore();
+    const gate = budgetGate({ failReleases: true });
+    const submitter = new AgnesVideoSubmitter(
+      scriptedClient("vid_release_fail"),
+      store,
+      gate,
+      { now: fixedClock() },
+    );
+
+    const record = await submitter.submit("job-release-fail", BASE_INPUT);
+    expect(record.state).toBe("SUBMITTED");
+    expect(record.providerJobId).toBe("vid_release_fail");
+  });
+
+  it("provider failure persists REJECTED with retry count even when the release also fails", async () => {
+    const failingClient: AgnesVideoClient = {
+      async createVideo() {
+        throw new Error("agnes 500: upstream unavailable");
+      },
+    };
+    const store = tracedStore();
+    const gate = budgetGate({ failReleases: true });
+    const submitter = new AgnesVideoSubmitter(failingClient, store, gate, {
+      now: fixedClock(),
+    });
+
+    await expect(submitter.submit("job-fail-release", BASE_INPUT)).rejects.toThrow(
+      "agnes 500: upstream unavailable",
+    );
+
+    const final = await store.load("job-fail-release");
+    expect(final?.state).toBe("REJECTED");
+    expect(final?.retryCount).toBe(1);
+    expect(final?.providerJobId).toBeUndefined();
   });
 });
 

@@ -22,6 +22,7 @@ import { buildAgnesVideoSubmitRequest } from "./request.js";
 import { agnesVideoCapability, estimateSpendUsd, validateAgnesVideoSubmit, AgnesVideoValidationError } from "./validate.js";
 import type {
   AgnesVideoBudgetGate,
+  AgnesVideoBudgetReservation,
   AgnesVideoClient,
   AgnesVideoJobRecord,
   AgnesVideoJobStore,
@@ -96,6 +97,21 @@ export class AgnesVideoSubmitter {
       return existing;
     }
 
+    // Crash between budgetGate.reserve and the SUBMITTED save leaves a held
+    // reservation id on the record. Release it before re-reserving so a
+    // resume can never double-hold (spec §4 cumulative atomic reservation).
+    if (existing?.budgetReservationId !== undefined) {
+      try {
+        await this.releaseById(existing.budgetReservationId, "failed");
+      } catch (error) {
+        this.log.error("failed to release stale budget reservation on resume", {
+          taskId: ref,
+          reservationId: existing.budgetReservationId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     const model: AgnesVideoModelId = input.model ?? "agnes-video-2.5-flash";
     const capability = agnesVideoCapability(model);
 
@@ -124,13 +140,14 @@ export class AgnesVideoSubmitter {
       estimatedCostUsd,
       archivalStatus: "PENDING",
       retryCount: existing?.retryCount ?? 0,
+      budgetReservationId: undefined,
       createdAt,
       updatedAt: this.now(),
     };
     await this.store.save(budgetReserved);
 
     // Budget reservation precedes submission (spec §4/§18).
-    let reservation;
+    let reservation: AgnesVideoBudgetReservation;
     try {
       reservation = await this.budgetGate.reserve({
         ref,
@@ -149,12 +166,48 @@ export class AgnesVideoSubmitter {
       throw error;
     }
 
-    const submitting: AgnesVideoJobRecord = {
+    // Persist the held reservation id IMMEDIATELY (spec §4): a crash between
+    // reserve and SUBMITTED now leaves a releasable trace on the record, so
+    // a resume releases this exact hold instead of stranding it and taking
+    // a second one.
+    const reserved: AgnesVideoJobRecord = {
       ...budgetReserved,
+      state: "BUDGET_RESERVED",
+      budgetReservationId: reservation.id,
+      updatedAt: this.now(),
+    };
+    try {
+      await this.store.save(reserved);
+    } catch (error) {
+      // The id never became durable: release the hold directly so it cannot
+      // strand (the record carries no trace a resume could use).
+      await reservation.release("failed");
+      throw error;
+    }
+
+    const submitting: AgnesVideoJobRecord = {
+      ...reserved,
       state: "SUBMITTING",
       updatedAt: this.now(),
     };
-    await this.store.save(submitting);
+    try {
+      await this.store.save(submitting);
+    } catch (error) {
+      // Cannot persist SUBMITTING: abort without touching the provider. The
+      // reservation id IS durable (previous save); release it now — the gate
+      // contract makes releaseById idempotent, so the caller's retry stays
+      // safe if this release also races a resume.
+      try {
+        await this.releaseById(reservation.id, "failed");
+      } catch (releaseError) {
+        this.log.error("failed to release budget reservation on store failure", {
+          taskId: ref,
+          reservationId: reservation.id,
+          error: releaseError instanceof Error ? releaseError.message : String(releaseError),
+        });
+      }
+      throw error;
+    }
 
     try {
       const created = await this.client.createVideo(request);
@@ -163,6 +216,7 @@ export class AgnesVideoSubmitter {
         state: "SUBMITTED",
         providerJobId: created.videoId,
         submittedAt: this.now(),
+        budgetReservationId: undefined,
         updatedAt: this.now(),
       };
       // Persist the provider job ID BEFORE any polling (spec §18). This
@@ -177,17 +231,46 @@ export class AgnesVideoSubmitter {
         seconds: request.seconds,
         estimatedCostUsd,
       });
-      await reservation.release("submitted");
+      try {
+        await reservation.release("submitted");
+      } catch (error) {
+        // Job is already submitted and persisted; a failed release must not
+        // masquerade as a failed submit. The held amount stays visible to
+        // CORE-009's ledger reconciliation.
+        this.log.error("failed to release budget reservation after submit", {
+          taskId: ref,
+          reservationId: reservation.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
       return submitted;
     } catch (error) {
-      await reservation.release("failed");
+      // Persist REJECTED FIRST, then release: a store failure must not mask
+      // the provider error, and the durable record carries the retry count.
       const failed: AgnesVideoJobRecord = {
         ...submitting,
         state: "REJECTED",
         retryCount: (submitting.retryCount ?? 0) + 1,
+        budgetReservationId: undefined,
         updatedAt: this.now(),
       };
-      await this.store.save(failed);
+      try {
+        await this.store.save(failed);
+      } catch (storeError) {
+        this.log.error("failed to persist REJECTED record", {
+          taskId: ref,
+          error: storeError instanceof Error ? storeError.message : String(storeError),
+        });
+      }
+      try {
+        await reservation.release("failed");
+      } catch (releaseError) {
+        this.log.error("failed to release budget reservation on submit failure", {
+          taskId: ref,
+          reservationId: reservation.id,
+          error: releaseError instanceof Error ? releaseError.message : String(releaseError),
+        });
+      }
       this.log.error("agnes video submit failed", {
         taskId: ref,
         model,
@@ -195,5 +278,13 @@ export class AgnesVideoSubmitter {
       });
       throw error;
     }
+  }
+
+  /** Release a persisted reservation id; idempotent (spec §4). */
+  private async releaseById(
+    reservationId: string,
+    reason: "submitted" | "failed",
+  ): Promise<void> {
+    await this.budgetGate.releaseById(reservationId, reason);
   }
 }

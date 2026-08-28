@@ -80,6 +80,13 @@ export interface AgnesVideoJobRecord {
   promptCharacterCount?: number;
   /** Estimated cost from the budget stage (spec §4: derive cost BEFORE spend). */
   estimatedCostUsd?: number;
+  /**
+   * Held budget reservation id (spec §4 cumulative atomic reservation).
+   * Persisted immediately after {@link AgnesVideoBudgetGate.reserve} resolves
+   * so a crash between reserve and submit cannot strand an unreleased hold:
+   * a resume at BUDGET_RESERVED releases this id before re-reserving.
+   */
+  budgetReservationId?: string;
   /** ISO-8601 submission timestamp. */
   submittedAt?: string;
   /** ISO-8601 last poll timestamp. Owned by AGN-005. */
@@ -152,6 +159,13 @@ export interface AgnesVideoBudgetGate {
   reserve(
     request: AgnesVideoBudgetReservationRequest,
   ): Promise<AgnesVideoBudgetReservation>;
+  /**
+   * Release a reservation by its persisted id (crash recovery, spec §4).
+   * Must be idempotent: releasing an already-released id resolves, never
+   * throws. CORE-009's ledger keys holds by id exactly so a resume can
+   * release the held amount it persisted on the job record.
+   */
+  releaseById(reservationId: string, reason: "submitted" | "failed"): Promise<void>;
 }
 
 /** Options for {@link AgnesVideoSubmitter}. */
