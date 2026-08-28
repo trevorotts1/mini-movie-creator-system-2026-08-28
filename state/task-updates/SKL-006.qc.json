@@ -1,7 +1,7 @@
 {
   "taskId": "SKL-006",
   "phase": "PASS",
-  "commit": "TBD",
+  "commit": "33aba39ea519a9acca781dfb658434a3b646a33a",
   "checksRun": "bash integrations/openclaw/global-install.sh --check (exit 0); ./node_modules/.bin/vitest run --config integrations/openclaw/global-install/vitest.config.ts integrations/openclaw/global-install/global-install.test.ts (14/14); full vitest regression via same config (422/422, 25 files); bash -n syntax; shellcheck (exit 0); tsc --noEmit --strict on test file (exit 0)",
   "defectsFound": 4,
   "defectsFixed": 4,
