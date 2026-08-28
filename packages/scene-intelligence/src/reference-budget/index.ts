@@ -42,7 +42,12 @@ export class ReferenceBudgetError extends Error {
   }
 }
 
-/** The eight spec §8 scoring dimensions (also the need axes). */
+/**
+ * The seven spec §8 value axes that form shot needs and candidate value
+ * profiles. The eighth scoring dimension, model-specific historical
+ * success, is a rate rather than a value axis and is applied separately
+ * in {@link scoreCandidate}.
+ */
 export const NEED_AXES = [
   "identity",
   "wardrobe",
@@ -278,11 +283,16 @@ async function combinedReferenceRate(
   if (!oracle || characters.length === 0) return null;
   const rates: number[] = [];
   for (const characterId of characters) {
-    const result = await oracle.successRateForReference(
-      characterId,
-      model,
-      referenceId,
-    );
+    let result: ReferenceSuccessRate;
+    try {
+      result = await oracle.successRateForReference(
+        characterId,
+        model,
+        referenceId,
+      );
+    } catch {
+      continue; // history store failure degrades to no history, never breaks planning
+    }
     if (result.rate !== null && result.rate !== undefined) rates.push(result.rate);
   }
   if (rates.length === 0) return null;
@@ -579,9 +589,6 @@ export async function planReferenceBudget(
   if (!input.shotId.trim()) {
     throw new ReferenceBudgetError("shotId must be non-empty");
   }
-  if (input.candidates.length === 0 && input.strategy !== "zero-keyframes") {
-    // Empty candidates still produce a plan; notes carry the reason.
-  }
   const seen = new Set<string>();
   for (const candidate of input.candidates) {
     if (!candidate.assetId.trim()) {
@@ -616,8 +623,7 @@ export async function planReferenceBudget(
       capability: input.capability,
     }).strategy;
 
-  const maxImages = input.capability.maxImages;
-  if (maxImages === 0) {
+  if (input.capability.maxImages === 0) {
     notes.push("model accepts no reference inputs: zero references");
     return {
       ...buildPlan(input, strategy, [], needs, new Map(), notes, options, {}),
@@ -625,106 +631,161 @@ export async function planReferenceBudget(
     };
   }
 
-  // Frame strategies: the frames ARE the minimum sufficient set. Never add
-  // extra portraits on top of a precise transition (spec §8).
-  if (strategy === "start-end-keyframes" || strategy === "one-starting-keyframe") {
-    const needStart = strategy === "start-end-keyframes";
-    const wants = needStart ? 2 : 1;
-    const canFrames = needStart
-      ? input.capability.firstLastFrame ||
-        (input.capability.firstFrame && input.capability.lastFrame)
-      : input.capability.firstFrame;
-    if (!canFrames) {
-      notes.push(
-        `strategy ${strategy} requested but model does not support the required frame input: zero references`,
-      );
-      return buildPlan(input, strategy, [], needs, new Map(), notes, options, {});
-    }
-    const start = input.candidates.find((c) => c.isStartFrame);
-    const end = input.candidates.find((c) => c.isEndFrame);
-    if (!start) {
-      if (input.strategy === undefined) {
-        // Auto-classified from a start-frame candidate that then vanished
-        // (or an exact-need misfire) — degrade to reference selection
-        // instead of failing a plan that could still be minimal-sufficient.
-        notes.push(
-          `auto-classified ${strategy} but no start-frame candidate present: falling back to reference selection`,
-        );
-      } else {
-        throw new ReferenceBudgetError(
-          `strategy ${strategy} requires a start-frame candidate for shot ${input.shotId}`,
-        );
-      }
-    }
-    const selected: ReferenceCandidate[] = [];
-    if (start) selected.push(start);
-    if (needStart && end) selected.push(end);
-    if (maxImages !== null && selected.length > maxImages) {
-      notes.push(
-        `model ceiling ${maxImages} is below the ${wants}-frame strategy: kept ${selected.length} frame(s)`,
-      );
-      selected.length = maxImages;
-    }
-    if (selected.length === 0) {
-      notes.push("no frame candidates available: zero references");
-      return buildPlan(input, strategy, [], needs, new Map(), notes, options, {});
-    }
-    notes.push(
-      `precise ${needStart ? "start+end" : "start"} transition: frames only, no extra references`,
-    );
-    const historicalRates: Record<string, number | null> = {};
-    for (const candidate of selected) {
-      historicalRates[candidate.assetId] = await combinedReferenceRate(
-        input.history,
-        input.characters,
-        input.model,
-        candidate.assetId,
-      );
-    }
-    const packRate = await packHistory(input, strategy, selected.map((c) => c.assetId));
-    const plan = buildPlan(input, strategy, selected, needs, new Map(), notes, options, historicalRates);
-    return { ...plan, packHistoricalRate: packRate };
-  }
-
   if (strategy === "zero-keyframes") {
     notes.push("zero keyframes: text-to-video acceptable");
     return buildPlan(input, strategy, [], needs, new Map(), notes, options, {});
   }
 
-  // Selection is capped by the known ceiling (never invent one when null).
-  // Per-strategy companion caps keep the pack minimal even when needs are
-  // partially covered by a scene master.
+  if (strategy === "start-end-keyframes" || strategy === "one-starting-keyframe") {
+    const framePlan = await planFrameStrategy(input, strategy, needs, options, notes);
+    if (framePlan !== null) return framePlan;
+    // Auto-classified frame strategy whose start-frame candidate never
+    // materialized: fall through to reference selection instead of failing
+    // a plan that could still be minimal-sufficient.
+  }
+
+  return selectReferences(input, strategy, needs, options, notes);
+}
+
+/**
+ * Frame strategies: the frames ARE the minimum sufficient set — never add
+ * extra portraits on top of a precise transition (spec §8). Returns `null`
+ * only for the auto-classified misfire (no start-frame candidate present),
+ * which falls back to reference selection.
+ */
+async function planFrameStrategy(
+  input: ReferenceBudgetInput,
+  strategy: "start-end-keyframes" | "one-starting-keyframe",
+  needs: ShotReferenceNeeds,
+  options: ReferenceBudgetOptions,
+  notes: string[],
+): Promise<ReferenceBudgetPlan | null> {
+  const maxImages = input.capability.maxImages;
+  const needStart = strategy === "start-end-keyframes";
+  const wants = needStart ? 2 : 1;
+  const canFrames = needStart
+    ? input.capability.firstLastFrame ||
+      (input.capability.firstFrame && input.capability.lastFrame)
+    : input.capability.firstFrame;
+  if (!canFrames) {
+    notes.push(
+      `strategy ${strategy} requested but model does not support the required frame input: zero references`,
+    );
+    return buildPlan(input, strategy, [], needs, new Map(), notes, options, {});
+  }
+  const start = input.candidates.find((c) => c.isStartFrame);
+  const end = input.candidates.find((c) => c.isEndFrame);
+  if (!start) {
+    if (input.strategy === undefined) {
+      notes.push(
+        `auto-classified ${strategy} but no start-frame candidate present: falling back to reference selection`,
+      );
+      return null;
+    }
+    throw new ReferenceBudgetError(
+      `strategy ${strategy} requires a start-frame candidate for shot ${input.shotId}`,
+    );
+  }
+  if (needStart && !end && input.strategy !== undefined) {
+    throw new ReferenceBudgetError(
+      `strategy ${strategy} requires an end-frame candidate for shot ${input.shotId}`,
+    );
+  }
+  const selected: ReferenceCandidate[] = [start];
+  if (needStart && end) selected.push(end);
+  if (selected.length < wants) {
+    notes.push(
+      `exact ${needStart ? "end" : "start"}-frame candidate unavailable: ${selected.length} of ${wants} frame(s) planned`,
+    );
+  }
+  if (maxImages !== null && selected.length > maxImages) {
+    notes.push(
+      `model ceiling ${maxImages} is below the ${wants}-frame strategy: kept ${selected.length} frame(s)`,
+    );
+    selected.length = maxImages;
+  }
+  notes.push(
+    `precise ${needStart ? "start+end" : "start"} transition: frames only, no extra references`,
+  );
+  const historicalRates: Record<string, number | null> = {};
+  for (const candidate of selected) {
+    historicalRates[candidate.assetId] = await combinedReferenceRate(
+      input.history,
+      input.characters,
+      input.model,
+      candidate.assetId,
+    );
+  }
+  const packRate = await packHistory(input, strategy, selected.map((c) => c.assetId));
+  const plan = buildPlan(input, strategy, selected, needs, new Map(), notes, options, historicalRates);
+  return { ...plan, packHistoricalRate: packRate };
+}
+
+/**
+ * Coverage-driven greedy reference selection for reference-taking strategies.
+ *
+ * Candidates are scored against the REMAINING uncovered needs (weighted, plus
+ * the historical-success term) and the best candidate is added — but only
+ * while it RAISES coverage on some still-uncovered axis. Once an axis's best
+ * available value is already in the pack, further candidates on that axis can
+ * never help and are skipped; this is what keeps the pack from filling the
+ * model's slots with redundant near-duplicates. Selection stops as soon as
+ * every needed axis is covered, even when the ceiling is far higher. A
+ * ceiling is a hard cap and a constraint, never a target.
+ */
+async function selectReferences(
+  input: ReferenceBudgetInput,
+  strategy: ReferenceStrategy,
+  needs: ShotReferenceNeeds,
+  options: ReferenceBudgetOptions,
+  notes: string[],
+): Promise<ReferenceBudgetPlan> {
+  const maxImages = input.capability.maxImages;
+  const coverageThreshold = options.coverageThreshold ?? 0.85;
   let selected: ReferenceCandidate[] = [];
   const historicalRates: Record<string, number | null> = {};
   const statsByAsset = new Map<string, CandidateStats>();
 
+  let masterSelected = false;
   if (strategy === "scene-master-plus-references" && input.sceneMaster) {
     if (!input.sceneMaster.approved) {
       notes.push("scene master exists but is not approved: treated as unavailable");
     } else {
-      selected.push({
+      const master: ReferenceCandidate = {
         assetId: input.sceneMaster.assetId,
         kind: "scene-master",
         valueProfile: input.sceneMaster.valueProfile,
-      });
+      };
+      selected.push(master);
+      masterSelected = true;
+      historicalRates[master.assetId] = await combinedReferenceRate(
+        input.history,
+        input.characters,
+        input.model,
+        master.assetId,
+      );
       notes.push("approved scene master selected: establishes identities, wardrobe, room, lighting, props, positions");
     }
   }
 
-  const ceiling =
-    maxImages !== null
-      ? maxImages
-      : Number.POSITIVE_INFINITY;
+  // Selection is capped by the known ceiling (never invent one when null).
+  // The scene-master companion cap keeps the pack minimal even when needs
+  // are partially uncovered: one master plus at most a couple of targeted
+  // companions, never a portrait stack.
+  const ceiling = maxImages !== null ? maxImages : Number.POSITIVE_INFINITY;
+  const companionCap = masterSelected
+    ? (options.maxSceneMasterCompanions ?? 1)
+    : Number.POSITIVE_INFINITY;
 
-  const companionCap =
-    strategy === "scene-master-plus-references" && input.sceneMaster?.approved
-      ? (options.maxSceneMasterCompanions ?? 1)
-      : Number.POSITIVE_INFINITY;
-
-  let remaining = uncovered(selected, needs, options.coverageThreshold ?? 0.85);
+  let remaining = uncovered(selected, needs, coverageThreshold);
+  let stoppedByCompanionCap = false;
   let rounds = 0;
   while (remaining.length > 0 && selected.length < ceiling) {
-    if (rounds++ > 100) break; // defensive; pure coverage loop terminates below
+    if (rounds++ > 100) break; // defensive; the improvement filter terminates below
+    const currentCoverage = new Map<NeedAxis, number>();
+    for (const axis of remaining) {
+      currentCoverage.set(axis, coverageValue(selected, axis));
+    }
     const remainingNeedsMap = remainingNeeds(remaining, needs);
     const statsForRound: CandidateStats[] = [];
     for (const candidate of input.candidates) {
@@ -735,11 +796,14 @@ export async function planReferenceBudget(
       // frame strategies — a frame is not a "reference".
       if (candidate.kind === "scene-master") continue;
       if (candidate.isStartFrame || candidate.isEndFrame) continue;
-      if (
-        valueScore(candidate, remainingNeedsMap) <= 0
-      ) {
-        continue; // no value on any remaining axis: can never help
-      }
+      // MINIMUM SUFFICIENT: a candidate earns a slot only by raising
+      // coverage on some still-uncovered axis. Equal-or-lower value on
+      // every remaining axis = redundant = skipped.
+      const improves = remaining.some(
+        (axis) =>
+          axisValue(candidate.valueProfile, axis) > (currentCoverage.get(axis) ?? 0),
+      );
+      if (!improves) continue;
       const historyRate = await combinedReferenceRate(
         input.history,
         input.characters,
@@ -763,16 +827,19 @@ export async function planReferenceBudget(
     selected.push(best.candidate);
     historicalRates[best.candidate.assetId] = best.historyRate;
     statsByAsset.set(best.candidate.assetId, best);
-    remaining = uncovered(selected, needs, options.coverageThreshold ?? 0.85);
-    if (strategy === "scene-master-plus-references" && input.sceneMaster?.approved) {
-      const companions = selected.length - 1;
-      if (companions >= companionCap) {
-        remaining = [];
-      }
+    remaining = uncovered(selected, needs, coverageThreshold);
+    if (masterSelected && selected.length - 1 >= companionCap) {
+      stoppedByCompanionCap = true;
+      break;
     }
   }
 
-  if (remaining.length === 0) {
+  if (stoppedByCompanionCap) {
+    notes.push(
+      `scene-master companion cap ${companionCap} reached: remaining model slots unused` +
+        (remaining.length > 0 ? `; uncovered: ${remaining.join(", ")}` : ""),
+    );
+  } else if (remaining.length === 0) {
     notes.push("all needed axes covered: selection stopped, remaining model slots unused");
   } else if (selected.length >= ceiling) {
     notes.push(`model ceiling ${maxImages} constrained selection; uncovered: ${remaining.join(", ")}`);

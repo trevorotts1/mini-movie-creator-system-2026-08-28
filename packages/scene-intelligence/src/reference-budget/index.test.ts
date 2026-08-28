@@ -384,6 +384,154 @@ describe("planReferenceBudget — minimum sufficient selection", () => {
     expect(plan.uncoveredNeeds).toContain("identity");
   });
 
+  it("REGRESSION (stuffing): redundant same-axis candidates never fill remaining slots", async () => {
+    // Close-up with identity need 1.0 and a 4-slot model: once REF_FACE
+    // (identity 1.0) is in, every other identity candidate is redundant —
+    // coverage is max-based, so lower-value portraits cannot help. The old
+    // loop kept selecting them until the ceiling was hit.
+    const plan = await planReferenceBudget(
+      baseInput({
+        shotType: "close-up",
+        candidates: [
+          faceRef("REF_FACE", MONICA),
+          faceRef("REF_FACE_ALT_1", MONICA),
+          faceRef("REF_FACE_ALT_2", MONICA),
+          faceRef("REF_FACE_ALT_3", MONICA),
+        ],
+      }),
+    );
+    expect(plan.referenceIds).toEqual(["REF_FACE"]);
+    expect(plan.total).toBe(1);
+    expect(plan.underLimit).toBe(true);
+  });
+
+  it("REGRESSION (stuffing): wardrobe stack on a full shot stops at first wardrobe hit", async () => {
+    const plan = await planReferenceBudget(
+      baseInput({
+        shotType: "full",
+        candidates: [
+          wardrobeRef("REF_WARD_1", MONICA),
+          wardrobeRef("REF_WARD_2", MONICA),
+          wardrobeRef("REF_WARD_3", MONICA),
+        ],
+      }),
+    );
+    expect(plan.referenceIds).toEqual(["REF_WARD_1"]);
+  });
+
+  it("REGRESSION: explicit start-end strategy with missing end-frame candidate errors, never silently plans 1 frame", async () => {
+    await expect(
+      planReferenceBudget(
+        baseInput({
+          strategy: "start-end-keyframes",
+          candidates: [
+            { assetId: "KF_START", kind: "keyframe-start", isStartFrame: true, valueProfile: { startState: 1.0 } },
+            faceRef("REF_FACE", MONICA),
+          ],
+        }),
+      ),
+    ).rejects.toBeInstanceOf(ReferenceBudgetError);
+  });
+
+  it("REGRESSION: auto-classified start strategy with no start-frame candidate falls back to reference selection", async () => {
+    // A start-frame candidate in the list auto-classifies as
+    // one-starting-keyframe; if the caller then filters frames out before
+    // planning, the planner must degrade to reference selection, not fail.
+    const plan = await planReferenceBudget(
+      baseInput({
+        shotType: "close-up",
+        candidates: [faceRef("REF_FACE", MONICA)],
+        needs: { startState: 1.0 },
+      }),
+    );
+    expect(plan.total).toBeGreaterThanOrEqual(1);
+    expect(plan.referenceIds[0]).toBe("REF_FACE");
+  });
+
+  it("REGRESSION: companion-cap stop is honest, not 'all needed axes covered'", async () => {
+    const sceneMaster: ReferenceBudgetInput["sceneMaster"] = {
+      assetId: "ASSET_MASTER",
+      approved: true,
+      valueProfile: { identity: 0.3 }, // covers nothing above threshold
+    };
+    const plan = await planReferenceBudget(
+      baseInput({
+        shotId: "SC03-SH09",
+        shotType: "two-shot",
+        characters: [MONICA, MARCUS],
+        sceneMaster,
+        candidates: [faceRef("REF_FACE_MONICA", MONICA)],
+      }),
+    );
+    expect(plan.referenceIds).toEqual(["ASSET_MASTER", "REF_FACE_MONICA"]);
+    expect(plan.notes.some((n) => n.includes("companion cap"))).toBe(true);
+    expect(plan.notes.some((n) => n.startsWith("all needed axes covered"))).toBe(false);
+  });
+
+  it("REGRESSION: maxSceneMasterCompanions=0 selects master only", async () => {
+    const plan = await planReferenceBudget(
+      baseInput({
+        shotId: "SC03-SH10",
+        shotType: "two-shot",
+        characters: [MONICA, MARCUS],
+        sceneMaster: {
+          assetId: "ASSET_MASTER",
+          approved: true,
+          valueProfile: { identity: 1.0, wardrobe: 0.9, location: 0.9 },
+        },
+        candidates: [faceRef("REF_FACE_MONICA", MONICA)],
+        options: { maxSceneMasterCompanions: 0 },
+      }),
+    );
+    expect(plan.referenceIds).toEqual(["ASSET_MASTER"]);
+  });
+
+  it("REGRESSION: scene-master-only plan (all needs covered by master) has historical rate", async () => {
+    const oracle: ReferenceHistoryOracle = {
+      successRateForReference: (_c, _m, referenceId) => ({
+        samples: 4,
+        accepted: 3,
+        rejected: 1,
+        rate: referenceId === "ASSET_MASTER" ? 0.9 : null,
+      }),
+    };
+    const plan = await planReferenceBudget(
+      baseInput({
+        shotId: "SC03-SH11",
+        shotType: "two-shot",
+        characters: [MONICA, MARCUS],
+        sceneMaster: {
+          assetId: "ASSET_MASTER",
+          approved: true,
+          valueProfile: { identity: 1.0, wardrobe: 1.0, location: 1.0, pose: 1.0, prop: 1.0, startState: 1.0, endState: 1.0 },
+        },
+        candidates: [faceRef("REF_FACE_MONICA", MONICA)],
+        history: oracle,
+      }),
+    );
+    expect(plan.referenceIds).toEqual(["ASSET_MASTER"]);
+    expect(plan.historicalRates["ASSET_MASTER"]).toBe(0.9);
+  });
+
+  it("REGRESSION: oracle throwing per-reference degrades to neutral, planning continues", async () => {
+    let calls = 0;
+    const plan = await planReferenceBudget(
+      baseInput({
+        candidates: [faceRef("REF_FACE", MONICA), wardrobeRef("REF_WARD", MONICA)],
+        needs: { identity: 1.0, wardrobe: 1.0, location: 0, prop: 0, pose: 0, startState: 0, endState: 0 },
+        history: {
+          successRateForReference: () => {
+            calls += 1;
+            throw new Error("metrics store down");
+          },
+        },
+      }),
+    );
+    expect(plan.referenceIds).toEqual(["REF_FACE", "REF_WARD"]);
+    expect(plan.historicalRates["REF_FACE"]).toBeNull();
+    expect(calls).toBeGreaterThan(0);
+  });
+
   it("duplicate candidate assetIds are rejected", async () => {
     await expect(
       planReferenceBudget(
