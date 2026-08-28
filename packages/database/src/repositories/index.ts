@@ -4,7 +4,6 @@ export {
   type Repository,
   type RowMapper,
 } from "./base.js";
-
 export {
   PLANNING_STATUSES,
   VISUAL_SOURCE_TYPES,
@@ -42,3 +41,6 @@ export {
   type ShotReferenceInput,
   type ShotReferencePatch,
 } from "./references/index.js";
+
+export { SqliteProjectRepository, SqliteSeriesRepository } from "./projects/index.js";
+export { SqliteEpisodeRepository, formatEpisodeCode } from "./episodes/index.js";

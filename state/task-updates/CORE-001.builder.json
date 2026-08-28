@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-001",
+  "phase": "BUILDER_DONE",
+  "commit": "daa1d2a",
+  "testsRun": "node docs/upstream-audit/validate.mjs — 60/60 checks PASS; acceptance: test -s docs/upstream-audit/preservation-map.md && grep -q PF-1 — PASS",
+  "notes": "Preservation map: every upstream tool/script/skill/kit/comp/contract dispositioned keep|rewrite|drop|superseded (zero drops), PF-1+PF-2 carried, spec §2 reconciled 1:1.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

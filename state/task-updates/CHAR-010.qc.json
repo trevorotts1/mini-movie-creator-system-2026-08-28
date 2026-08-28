@@ -1,0 +1,13 @@
+{
+  "taskId": "CHAR-010",
+  "phase": "PASS",
+  "commit": "d96fc03",
+  "checksRun": "npx vitest run packages/character-library/src/cast (26/26 PASS); npx vitest run packages/character-library (26/26 PASS); npx tsc --noEmit -p packages/character-library (rc=0); security scan of packages/character-library/src/cast (no exec/secrets/env)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed NUL-byte store key separator in memory.ts (binary source file, replaced with JSON-encoded composite key) and inverted duplicate error (add() threw NotInCastError for an already-cast character; added DuplicateCastLinkError). 2 regression tests added; 26/26 green; typecheck clean.",
+  "blockers": []
+}

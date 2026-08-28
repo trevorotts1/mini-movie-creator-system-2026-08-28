@@ -1,5 +1,6 @@
 import type { Migration } from "./types.js";
 import { baselineMigrations } from "./000-init/index.js";
+import { projectSchemaMigrations } from "./010-project-series-episode/index.js";
 import { scenesMigrations } from "./030-scenes-shots/index.js";
 
 /**
@@ -9,4 +10,8 @@ import { scenesMigrations } from "./030-scenes-shots/index.js";
  * directory under `migrations/` and is registered here exactly once.
  * The runner rejects duplicate ids, so band collisions fail loudly.
  */
-export const MIGRATIONS: readonly Migration[] = [...baselineMigrations, ...scenesMigrations];
+export const MIGRATIONS: readonly Migration[] = [
+  ...baselineMigrations,
+  ...projectSchemaMigrations,
+  ...scenesMigrations,
+];

@@ -1,0 +1,13 @@
+{
+  "taskId": "CAP-008",
+  "phase": "PASS",
+  "commit": "2553eb8",
+  "checksRun": "pnpm vitest run packages/capability-registry/src/max-reasoning; pnpm --filter @mmcs/capability-registry typecheck",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "MAX_REASONING mapper verified green: 22/22 vitest tests pass, typecheck clean, adapter table guards literal max per endpoint.",
+  "blockers": []
+}
