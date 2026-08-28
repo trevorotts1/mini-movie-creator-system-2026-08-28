@@ -1,7 +1,7 @@
 {
   "taskId": "CORE-013",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "f515d20",
   "testsRun": "npx vitest run packages/core/src/idempotency -> 24 passed (24); npx tsc --noEmit -p packages/core/tsconfig.json -> rc=0",
   "notes": "Idempotency primitives done: atomicWriteFile/Json (temp+fsync+rename), canonical requestHash (sha256, key-order stable), IdempotencyStore/onceOnly (duplicate submit returns original result, in-process same-key serialization, temp-litter sweep, traversal-safe keys); crash-mid-write covered by temp-litter + failed-rename-preserves-prior-record + fn-crash-reruns tests.",
   "blockers": [
