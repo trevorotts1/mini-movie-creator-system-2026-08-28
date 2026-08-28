@@ -2,12 +2,14 @@
   "taskId": "QC-003",
   "phase": "PASS",
   "commit": "fa7899b",
-  "checksRun": "npx vitest run --config packages/qc/src/wardrobe/vitest.config.mts packages/qc/src/wardrobe; npx tsc --noEmit -p packages/qc/tsconfig.json",
+  "checksRun": "npx vitest run --config packages/qc/src/wardrobe/vitest.config.mts packages/qc/src/wardrobe; npx tsc --noEmit -p packages/qc/tsconfig.json; post-rebase: npx vitest run --config vitest.config.ts packages/qc (7 files / 158 tests PASS); pnpm -r run typecheck (all PASS)",
   "defectsFound": 0,
   "defectsFixed": 0,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T18:30:00Z",
-  "notes": "Wardrobe/hair/prop checks verified: active appearance version vs shot spec + observation gate + wrong wardrobe flags. 27/27 tests pass, typecheck clean.",
+  "notes": "Wardrobe/hair/prop checks verified: active appearance version vs shot spec + observation gate + wrong wardrobe flags. 27/27 tests pass, typecheck clean. Rebased onto origin/integration (38974b3) — resolved packages/qc/src/index.ts barrel (kept both sides, append-only).",
+  "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
+  "rebaseCommit": "c8b60ba",
   "blockers": []
 }
