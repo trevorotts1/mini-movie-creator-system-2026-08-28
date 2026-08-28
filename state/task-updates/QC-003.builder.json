@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-003",
+  "phase": "BUILDER_DONE",
+  "commit": "7830883",
+  "testsRun": "npx vitest run packages/qc/src/wardrobe — 27/27 PASS; npx tsc --noEmit (packages/qc) — clean",
+  "notes": "Wardrobe/hair/prop checks: resolveActiveAppearance (canon-at-the-time episode+time resolution), checkAppearance planning gate (shot-spec pins vs active appearance version) + observation gate (generated media vs requirements), checkShot multi-character roll-up; wrong-wardrobe fixtures flagged in tests.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T17:50:00Z"
+}
