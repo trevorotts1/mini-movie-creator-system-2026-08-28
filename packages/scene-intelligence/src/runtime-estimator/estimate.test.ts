@@ -133,6 +133,14 @@ describe("estimateRuntime — estimator mechanics", () => {
     expect(isValidRuntimeEstimate(null)).toBe(false);
     expect(isValidRuntimeEstimate({})).toBe(false);
     expect(isValidRuntimeEstimate({ screenplayId: "X", totalSeconds: "many", perScene: [] })).toBe(false);
+    expect(isValidRuntimeEstimate({ screenplayId: "X", totalSeconds: -5, perScene: [] })).toBe(false);
+    expect(
+      isValidRuntimeEstimate({
+        screenplayId: "X",
+        totalSeconds: 10,
+        perScene: [{ sceneId: "SC01", estimatedSeconds: Number.NaN }],
+      }),
+    ).toBe(false);
   });
 });
 
@@ -199,6 +207,49 @@ describe("RuntimeEstimateStore — persistence (acceptance: per-scene and total 
     const store = new RuntimeEstimateStore(db);
     const broken = { screenplayId: "", totalSeconds: 5, perScene: [{}] } as unknown as RuntimeEstimate;
     expect(() => store.save(broken)).toThrow(RuntimeEstimatorError);
+  });
+
+  it("refuses estimates whose scene numbers are missing or NaN", () => {
+    const store = new RuntimeEstimateStore(db);
+    const valid = estimateRuntime(KNOWN_DURATION_FIXTURES[0]!.screenplay);
+    const brokenScenes = [
+      {
+        ...valid.perScene[0],
+        estimatedSeconds: Number.NaN,
+      },
+    ] as unknown as RuntimeEstimate["perScene"];
+    expect(() =>
+      store.save({ ...valid, perScene: brokenScenes } as RuntimeEstimate),
+    ).toThrow(RuntimeEstimatorError);
+  });
+
+  it("refuses an estimate whose summary total contradicts its scene sum", () => {
+    const store = new RuntimeEstimateStore(db);
+    const valid = estimateRuntime(KNOWN_DURATION_FIXTURES[0]!.screenplay);
+    expect(() =>
+      store.save({ ...valid, totalSeconds: valid.totalSeconds + 100 } as RuntimeEstimate),
+    ).toThrow(RuntimeEstimatorError);
+  });
+
+  it("keeps the latest batch intact when two saves share one estimatedAt timestamp", () => {
+    const store = new RuntimeEstimateStore(db);
+    const fixture = KNOWN_DURATION_FIXTURES[1]!;
+    const sharedTimestamp = "2026-08-28T20:00:00.000Z";
+
+    const first = estimateRuntime(fixture.screenplay);
+    const second = estimateRuntime(fixture.screenplay, { sceneOverheadSeconds: 9, minSceneSeconds: 9 });
+    (first as { estimatedAt: string }).estimatedAt = sharedTimestamp;
+    (second as { estimatedAt: string }).estimatedAt = sharedTimestamp;
+    store.save(first);
+    store.save(second);
+
+    const restored = store.latest(fixture.screenplay.id);
+    // Exactly the second save's scenes — never a mix of both batches.
+    expect(restored!.totalSeconds).toBe(second.totalSeconds);
+    expect(restored!.scenes.map((s) => s.estimatedSeconds)).toEqual(
+      second.perScene.map((s) => s.estimatedSeconds),
+    );
+    expect(store.persistedTotalSeconds(fixture.screenplay.id)).toBe(second.totalSeconds);
   });
 
   it("detects inconsistent persisted state", () => {

@@ -107,16 +107,16 @@ export function isValidRuntimeEstimate(value: unknown): value is RuntimeEstimate
     return false;
   }
   const v = value as Partial<RuntimeEstimate>;
+  const validNumber = (n: unknown): n is number =>
+    typeof n === "number" && Number.isFinite(n) && n >= 0;
   return (
     typeof v.screenplayId === "string" &&
-    typeof v.totalSeconds === "number" &&
-    Number.isFinite(v.totalSeconds) &&
+    validNumber(v.totalSeconds) &&
     Array.isArray(v.perScene) &&
     v.perScene.every(
       (scene) =>
         typeof scene?.sceneId === "string" &&
-        typeof scene?.estimatedSeconds === "number" &&
-        Number.isFinite(scene.estimatedSeconds),
+        validNumber(scene.estimatedSeconds),
     )
   );
 }

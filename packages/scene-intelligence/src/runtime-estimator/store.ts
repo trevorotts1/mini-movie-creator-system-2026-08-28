@@ -4,7 +4,6 @@ import { roundSeconds } from "./count-words.js";
 import {
   RuntimeEstimatorError,
   type RuntimeEstimate,
-  type RuntimeEstimatorOptions,
 } from "./types.js";
 
 /**
@@ -16,6 +15,11 @@ import {
  * per-scene estimates; the total lives with each scene row and in the
  * screenplays summary row. Re-estimating a screenplay supersedes prior rows
  * (keep-latest by inserted sequence, versioned by estimator version).
+ *
+ * Scene rows are anchored to their summary row by `summary_id` (the summary
+ * row's rowid) — never by `estimated_at`, which is millisecond-precision
+ * and can collide when two estimates are computed within the same
+ * millisecond. Anchoring guarantees `latest()` returns exactly one batch.
  */
 
 const CREATE_TABLES_SQL = `
@@ -31,6 +35,7 @@ CREATE TABLE IF NOT EXISTS runtime_estimate_screenplays (
 );
 CREATE TABLE IF NOT EXISTS runtime_estimate_scenes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  summary_id INTEGER REFERENCES runtime_estimate_screenplays(id),
   screenplay_id TEXT NOT NULL,
   scene_index INTEGER NOT NULL,
   scene_id TEXT NOT NULL,
@@ -71,11 +76,76 @@ export interface PersistedRuntimeEstimate {
   }>;
 }
 
+/** Strict shape check for an estimate handed to `save` (numbers finite + non-negative). */
+function isPersistableEstimate(value: RuntimeEstimate): boolean {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const validNumber = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n >= 0;
+  if (
+    typeof value.screenplayId !== "string" ||
+    value.screenplayId.trim() === "" ||
+    typeof value.screenplayTitle !== "string" ||
+    typeof value.estimatorVersion !== "string" ||
+    value.estimatorVersion.trim() === "" ||
+    typeof value.estimatedAt !== "string" ||
+    value.estimatedAt.trim() === "" ||
+    !validNumber(value.totalSeconds) ||
+    !Number.isInteger(value.inputVersion) ||
+    value.inputVersion <= 0 ||
+    value.options === null ||
+    typeof value.options !== "object" ||
+    !Array.isArray(value.perScene)
+  ) {
+    return false;
+  }
+  for (const scene of value.perScene) {
+    if (
+      scene === null ||
+      typeof scene !== "object" ||
+      typeof scene.sceneId !== "string" ||
+      scene.sceneId.trim() === "" ||
+      !Number.isInteger(scene.sceneIndex) ||
+      !validNumber(scene.dialogueWords) ||
+      !validNumber(scene.actionWords) ||
+      !validNumber(scene.dialogueSeconds) ||
+      !validNumber(scene.actionSeconds) ||
+      !validNumber(scene.overheadSeconds) ||
+      !validNumber(scene.estimatedSeconds)
+    ) {
+      return false;
+    }
+  }
+  // Persistence must never contradict itself: the summary total must equal
+  // the sum of the per-scene estimates it stores beside.
+  const sum = roundSeconds(value.perScene.reduce((acc, s) => acc + s.estimatedSeconds, 0));
+  if (value.perScene.length === 0) {
+    return value.totalSeconds === 0;
+  }
+  return Math.abs(sum - roundSeconds(value.totalSeconds)) <= 0.01;
+}
+
 export class RuntimeEstimateStore {
   readonly name = "runtime-estimates";
 
   constructor(private readonly db: SqliteDatabase) {
     this.db.exec(CREATE_TABLES_SQL);
+    this.ensureSummaryAnchor();
+  }
+
+  /**
+   * Add the `summary_id` anchor column to pre-existing tables (created by an
+   * earlier build of this task before the anchor existed). Nullable so legacy
+   * rows stay untouched; they are simply never returned by `latest()`.
+   */
+  private ensureSummaryAnchor(): void {
+    const columns = this.db.all("PRAGMA table_info(runtime_estimate_scenes)");
+    const hasAnchor = columns.some((row) => String(row["name"]) === "summary_id");
+    if (!hasAnchor) {
+      this.db.exec(
+        "ALTER TABLE runtime_estimate_scenes ADD COLUMN summary_id INTEGER REFERENCES runtime_estimate_screenplays(id)",
+      );
+    }
   }
 
   /**
@@ -83,11 +153,11 @@ export class RuntimeEstimateStore {
    * Returns the number of scene rows written.
    */
   save(estimate: RuntimeEstimate): number {
-    if (!estimate.screenplayId || estimate.perScene.length === 0 && estimate.totalSeconds !== 0) {
+    if (!isPersistableEstimate(estimate)) {
       throw new RuntimeEstimatorError("refusing to persist a malformed estimate");
     }
     return this.db.transaction(() => {
-      this.db
+      const summary = this.db
         .prepare(
           `INSERT INTO runtime_estimate_screenplays
              (screenplay_id, screenplay_title, total_seconds, estimator_version, input_version,
@@ -103,17 +173,19 @@ export class RuntimeEstimateStore {
           JSON.stringify(estimate.options),
           estimate.estimatedAt,
         );
+      const summaryId = summary.lastInsertRowid;
 
       for (const scene of estimate.perScene) {
         this.db
           .prepare(
             `INSERT INTO runtime_estimate_scenes
-               (screenplay_id, scene_index, scene_id, scene_title, dialogue_words, action_words,
-                dialogue_seconds, action_seconds, overhead_seconds, estimated_seconds,
+               (summary_id, screenplay_id, scene_index, scene_id, scene_title, dialogue_words,
+                action_words, dialogue_seconds, action_seconds, overhead_seconds, estimated_seconds,
                 total_seconds, estimator_version, estimated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
+            summaryId,
             estimate.screenplayId,
             scene.sceneIndex,
             scene.sceneId,
@@ -133,10 +205,10 @@ export class RuntimeEstimateStore {
     });
   }
 
-  /** Latest estimate for a screenplay (by estimated_at, then insertion order). */
+  /** Latest estimate for a screenplay (by insertion order of the summary row). */
   latest(screenplayId: string): PersistedRuntimeEstimate | undefined {
     const summary = this.db.get(
-      `SELECT screenplay_id, screenplay_title, total_seconds, estimator_version, estimated_at
+      `SELECT id, screenplay_id, screenplay_title, total_seconds, estimator_version, estimated_at
        FROM runtime_estimate_screenplays
        WHERE screenplay_id = ?
        ORDER BY id DESC LIMIT 1`,
@@ -145,17 +217,16 @@ export class RuntimeEstimateStore {
     if (summary === undefined) {
       return undefined;
     }
+    const summaryId = Number(summary["id"]);
 
     const scenes = this.db
       .all(
         `SELECT scene_index, scene_id, scene_title, dialogue_words, action_words,
                 dialogue_seconds, action_seconds, overhead_seconds, estimated_seconds
          FROM runtime_estimate_scenes
-         WHERE screenplay_id = ? AND estimator_version = ? AND estimated_at = ?
+         WHERE summary_id = ?
          ORDER BY scene_index`,
-        String(summary["screenplay_id"]),
-        String(summary["estimator_version"]),
-        String(summary["estimated_at"]),
+        summaryId,
       )
       .map((row) => ({
         sceneIndex: Number(row["scene_index"]),
