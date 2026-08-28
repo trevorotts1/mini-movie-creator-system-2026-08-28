@@ -341,6 +341,95 @@ describe("appearance versions — effective episode + immutable history (spec §
     expect(appearances.resolveForEpisode(MONICA, "S02E01")?.hairVersion).toBe("short-hair-v2");
   });
 
+  it("episode resolution is numeric, not lexicographic (S02E03 < S10E01)", () => {
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v1",
+      hairVersion: "long-braids-v1",
+      wardrobeVersion: "business-blue-v1",
+      baseIdentityVersionId,
+      effectiveEpisode: "S02E03",
+      state: "APPROVED",
+    });
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v2",
+      hairVersion: "short-hair-v2",
+      wardrobeVersion: "business-blue-v2",
+      baseIdentityVersionId,
+      effectiveEpisode: "S10E01",
+      state: "APPROVED",
+    });
+
+    // String compare: "S02E03" >= "S10E01" is TRUE — numeric keeps v1 canon.
+    expect(appearances.resolveForEpisode(MONICA, "S02E04")?.hairVersion).toBe("long-braids-v1");
+    expect(appearances.resolveForEpisode(MONICA, "S10E01")?.hairVersion).toBe("short-hair-v2");
+    expect(appearances.resolveForEpisode(MONICA, "S10E02")?.hairVersion).toBe("short-hair-v2");
+  });
+
+  it("two-digit episodes do not outrank single-digit ones (S01E08 stays v1)", () => {
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v1",
+      hairVersion: "long-braids-v1",
+      wardrobeVersion: "business-blue-v1",
+      baseIdentityVersionId,
+      effectiveEpisode: "S01E01",
+      state: "APPROVED",
+    });
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v2",
+      hairVersion: "short-hair-v2",
+      wardrobeVersion: "business-blue-v2",
+      baseIdentityVersionId,
+      effectiveEpisode: "S01E10",
+      state: "APPROVED",
+    });
+
+    // String compare: "S01E08" >= "S01E10" is TRUE — numeric keeps v1 canon.
+    expect(appearances.resolveForEpisode(MONICA, "S01E08")?.hairVersion).toBe("long-braids-v1");
+    expect(appearances.resolveForEpisode(MONICA, "S01E10")?.hairVersion).toBe("short-hair-v2");
+  });
+
+  it("rejects malformed episode labels in resolution", () => {
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v1",
+      hairVersion: "long-braids-v1",
+      wardrobeVersion: "business-blue-v1",
+      baseIdentityVersionId,
+      effectiveEpisode: "S01E01",
+    });
+    expect(() => appearances.resolveForEpisode(MONICA, "episode-three")).toThrow(
+      /must match S<season>E<episode>/,
+    );
+  });
+
+  it("time-only appearance versions never resolve for episode-only queries", () => {
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v1",
+      hairVersion: "long-braids-v1",
+      wardrobeVersion: "business-blue-v1",
+      baseIdentityVersionId,
+      effectiveEpisode: "S01E01",
+      state: "APPROVED",
+    });
+    appearances.create({
+      characterId: MONICA,
+      versionLabel: "v2",
+      hairVersion: "short-hair-v2",
+      wardrobeVersion: "business-blue-v2",
+      baseIdentityVersionId,
+      effectiveTime: "2026-01-15T00:00:00.000Z",
+      state: "APPROVED",
+    });
+
+    expect(appearances.resolveForEpisode(MONICA, "S01E02")?.hairVersion).toBe("long-braids-v1");
+    expect(appearances.resolveForEpisode(MONICA, "S03E01")?.hairVersion).toBe("long-braids-v1");
+  });
+
   it("base identity master id never changes across appearance versions", () => {
     appearances.create({
       characterId: MONICA,

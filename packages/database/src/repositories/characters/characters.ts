@@ -88,6 +88,22 @@ function mapIdentityAsset(row: Record<string, SqlOutputValue>): IdentityAsset {
   };
 }
 
+/**
+ * Episode order key (mirrors @mmcs/character-library CHAR-006):
+ * `S01E09` -> 10009. Lexicographic string comparison is WRONG for
+ * episodes (S01E08 >= S01E10 and S02E03 >= S10E01 are both true as
+ * strings and both false numerically).
+ */
+function episodeNumber(episode: string): number {
+  const match = /^S(\d+)E(\d+)$/.exec(episode);
+  if (match === null) {
+    throw new CharacterRepositoryError(
+      `episode must match S<season>E<episode>, got "${episode}"`,
+    );
+  }
+  return Number(match[1]) * 10000 + Number(match[2]);
+}
+
 function mapAppearanceVersion(row: Record<string, SqlOutputValue>): AppearanceVersion {
   return {
     id: num(row["id"]),
@@ -416,9 +432,11 @@ export class AppearanceVersionRepository extends BaseRepository {
    * Resolve the canon-at-the-time appearance version for one episode:
    * the newest version whose effective point is at or before the query
    * (spec §9 — Monica v1 braids for E01–E08, v2 short from E09). Versions
-   * with only an effectiveTime never apply to an episode-only query.
+   * with only an effectiveTime never apply to an episode-only query; the
+   * query point is matched against the newest version in creation order.
    */
   resolveForEpisode(characterId: string, episode: string): AppearanceVersion | undefined {
+    const queryNumber = episodeNumber(episode);
     const history = this.listForCharacter(characterId);
     const first = history[0];
     if (first === undefined) {
@@ -426,9 +444,13 @@ export class AppearanceVersionRepository extends BaseRepository {
     }
     let resolved = first;
     for (const version of history.slice(1)) {
-      if (version.effectiveEpisode !== null && episode >= version.effectiveEpisode) {
-        resolved = version;
+      if (version.effectiveEpisode === null) {
+        continue;
       }
+      if (queryNumber < episodeNumber(version.effectiveEpisode)) {
+        continue;
+      }
+      resolved = version;
     }
     return resolved;
   }
