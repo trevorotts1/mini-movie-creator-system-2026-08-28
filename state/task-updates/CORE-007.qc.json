@@ -1,0 +1,13 @@
+{
+  "taskId": "CORE-007",
+  "phase": "PASS",
+  "commit": "0fa4899c1ec2f9dd41ba8d33ef7ab61c64b83508",
+  "checksRun": "npx vitest run packages/database/src/repositories/jobs -> 3 files 26/26 PASS; npx vitest run packages/database -> 6 files 56/56 PASS; npx tsc --noEmit -p packages/database -> clean; security grep on owned paths (no exec/eval/spawn/secrets, all SQL parameterized) -> clean; spec §19 field count + §18 state enum verified by introspection tests",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T15:30:00Z",
+  "notes": "Fixed: JOB_SAFETY_FIELDS omitted request_hash (explicit §18 field; schema had it, constant did not) + regression test. Migration band 040_ registry merge conflicts with CORE-004/005/006 bands are expected at merge time (integration still carries 000_ only) — merger rebases registry.ts line.",
+  "blockers": []
+}
