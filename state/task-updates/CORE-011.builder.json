@@ -1,0 +1,9 @@
+{
+  "taskId": "CORE-011",
+  "phase": "BUILDER_DONE",
+  "commit": "c4c8ce4162c3bed734f978e0eab8d1eab2f8e405",
+  "testsRun": "npx vitest run apps/cli => 13/13 passed (registry-vs-spec-24 drift test, stub output contract, dispatch of all 30 verbs, nested multi-word verbs, unknown-command exit 1, missing-required-arg exit 1, handler overrides, --help); apps/cli tsc --noEmit clean; pnpm -r typecheck clean; built apps/cli with tsc and verified node apps/cli/dist/index.js doctor exits 0 plus smoke of providers verify / character show / approve concept / recover / bogus-cmd(1) / missing-arg(1)",
+  "notes": "CLI scaffold: data-driven command registry (apps/cli/src/dispatch/registry.ts) covering the full spec \u00a724 verb list; dispatcher nests multi-word verbs (approve concept, providers verify, character show, storage status, canon review/approve) which commander cannot parse as flat names; parent verbs (providers, approve, character, canon, storage) are themselves invocable stubs per spec \u00a724; stub handlers print documented one-line STUB message, exit 0, never touch FS/network/spend; feature tasks override via HandlerOverrides + mergeSpecs at integration (ownership.md: commands/<group>.ts files owned by feature tasks, wired by this dispatcher); package.json gains build script emitting dist/ for the node apps/cli/dist/index.js acceptance check; tsconfig cli-local NodeNext ESM build config (tsconfig.base.json untouched \u2014 CORE-002 owns it)",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}
