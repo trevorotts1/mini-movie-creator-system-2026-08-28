@@ -100,15 +100,6 @@ function chatPayload(body: unknown): unknown {
   };
 }
 
-function checkedClient(response: unknown): { wires: DirectorWire[] } {
-  const { transport, wires } = mockTransport(chatPayload(response));
-  prepareDirectorModel({
-    connection: { modelId: KNOWN_MODEL, baseUrl: OPENROUTER_BASE_URL, apiKey: "test-key" },
-    transport,
-  });
-  return { wires };
-}
-
 describe("acceptance: idea → developed concept via mocked director model", () => {
   it("produces concept options with a recommendation through the capability gate", async () => {
     const { transport, wires } = mockTransport(chatPayload(GOOD_RESPONSE_BODY));
@@ -250,7 +241,6 @@ describe("response contract is fail-closed", () => {
   });
 
   it("error messages stay value-free — raw model output never in exceptions", async () => {
-    const hostile = "SECRET-MODEL-OUTPUT-STRING";
     const { transport } = mockTransport({ choices: [{ message: { content: "!!! no json" } }] });
     const client = prepareDirectorModel({
       connection: { modelId: KNOWN_MODEL, baseUrl: OPENROUTER_BASE_URL, apiKey: "k" },
@@ -264,6 +254,57 @@ describe("response contract is fail-closed", () => {
       expect(message).not.toContain("no json");
       expect(message).not.toContain("SECRET-IDEA-TEXT");
     }
+  });
+
+  it("value-free errors even when JSON.parse echoes the raw model output", async () => {
+    // V8's JSON.parse error messages embed the offending input text (proven
+    // on node 26: `Unexpected token 'S', "SECRET..."`). The parser must never
+    // let that reach an exception message (spec §29 value-free doctrine).
+    // Two branches: brace-less input fails the no-object check; brace-bearing
+    // input reaches JSON.parse, whose echo would leak the raw output.
+    const hostile = 'SECRET-IDEA {"x": oops} TAIL';
+    const { transport } = mockTransport({
+      choices: [{ message: { content: hostile } }],
+    });
+    const client = prepareDirectorModel({
+      connection: { modelId: KNOWN_MODEL, baseUrl: OPENROUTER_BASE_URL, apiKey: "k" },
+      transport,
+    });
+    try {
+      await generateConcept({ intake: INTAKE, client });
+      expect.unreachable("should have thrown");
+    } catch (error) {
+      const message = (error as Error).message;
+      expect(message).toBe("director model response is not valid JSON");
+      expect(message).not.toContain("SECRET-IDEA");
+      expect(message).not.toContain("oops");
+      expect(message).not.toContain("TAIL");
+    }
+    expect(() => parseJsonFromText("SECRET-MODEL-OUTPUT-STRING")).toThrowError(
+      /^director model response contains no JSON object$/,
+    );
+    expect(() => parseJsonFromText('SECRET {"x": oops} TAIL')).toThrowError(
+      /^director model response is not valid JSON$/,
+    );
+  });
+
+  it("reasoning preference 'none' omits the reasoning parameter from the wire", async () => {
+    const { transport, wires } = mockTransport(chatPayload(GOOD_RESPONSE_BODY));
+    const client = prepareDirectorModel({
+      connection: {
+        modelId: KNOWN_MODEL,
+        baseUrl: OPENROUTER_BASE_URL,
+        apiKey: "test-key",
+        reasoningPreference: "none",
+      },
+      transport,
+    });
+    expect(client.capabilityCheck.effort).toBeNull();
+    await generateConcept({ intake: INTAKE, client, optionCount: 2 });
+    expect(wires).toHaveLength(1);
+    const body = wires[0]?.body as Record<string, unknown>;
+    expect(body.reasoning).toBeUndefined();
+    expect(body.reasoning_effort).toBeUndefined();
   });
 });
 

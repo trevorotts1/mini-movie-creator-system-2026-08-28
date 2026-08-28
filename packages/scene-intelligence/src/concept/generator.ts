@@ -97,9 +97,9 @@ export async function generateConcept(
       ],
       temperature,
       max_tokens: maxTokens,
-      ...(request.client.capabilityCheck.effort !== null
-        ? { reasoning: { effort: request.client.capabilityCheck.effort } }
-        : {}),
+      // Wire shape is adapter-owned: merge the CAP-008 mapper's resolved
+      // fragment from gate time verbatim (never hand-built from `effort`).
+      ...request.client.reasoningPatch,
     },
   };
 
@@ -236,24 +236,33 @@ export function extractChatContent(payload: unknown): unknown {
 /**
  * Pull the first JSON value out of a model output string. Supports a single
  * balanced ```json … ``` fence (strip + parse) and a prose-wrapped object
- * (first { to last }). Never evaluates anything — JSON.parse only.
+ * (first { to last }). Never evaluates anything — JSON.parse only, and every
+ * failure is value-free (spec §29): raw model output never reaches the
+ * exception message.
  */
 export function parseJsonFromText(text: string): unknown {
   const trimmed = text.trim();
 
-  // Balanced markdown fence, no other non-spacing content around it.
-  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
-  if (fenced !== null) {
-    const inner = fenced[1];
-    if (inner !== undefined) return JSON.parse(inner);
-  }
+  try {
+    // Balanced markdown fence, no other non-spacing content around it.
+    const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
+    if (fenced !== null) {
+      const inner = fenced[1];
+      if (inner !== undefined) return JSON.parse(inner);
+    }
 
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("director model response contains no JSON object");
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) {
+      throw new Error("director model response contains no JSON object");
+    }
+    return JSON.parse(trimmed.slice(start, end + 1));
+  } catch (error) {
+    if (error instanceof Error && error.message === "director model response contains no JSON object") {
+      throw error;
+    }
+    throw new Error("director model response is not valid JSON");
   }
-  return JSON.parse(trimmed.slice(start, end + 1));
 }
 
 /** Merge validated options into the finalized ConceptOption shape. */

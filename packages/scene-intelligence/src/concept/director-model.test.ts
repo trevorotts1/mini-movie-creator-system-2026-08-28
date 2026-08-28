@@ -16,6 +16,7 @@ import {
   checkDirectorCapability,
   isOpenRouterModelId,
   prepareDirectorModel,
+  toPerToken1k,
   type DirectorTransport,
 } from "./director-model.js";
 
@@ -104,6 +105,16 @@ describe("checkDirectorCapability — no call without capability check", () => {
     const verdict = checkDirectorCapability({ connection: GOOD_CONNECTION });
     expect(verdict.effort === "max").toBe(false);
     expect(verdict.effort).toBe("high");
+  });
+
+  it("rescales per-million seed pricing to the per_token_1k unit it labels", () => {
+    // CAP-007 seeds carry usdPerMillionInput; the gate hands CAP-006 a
+    // per_token_1k block — the amount must match the unit or any downstream
+    // estimate is off by 1000x (runbook §33 spend gate integrity).
+    expect(toPerToken1k(0.075)).toBeCloseTo(0.000075, 10);
+    expect(toPerToken1k(null)).toBeNull();
+    const verdict = checkDirectorCapability({ connection: GOOD_CONNECTION });
+    expect(verdict.allowed).toBe(true); // rescaled amount still passes validation
   });
 });
 

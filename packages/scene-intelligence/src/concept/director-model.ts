@@ -111,6 +111,14 @@ export interface DirectorModelClient {
   readonly hasApiKey: boolean;
   /** Capability snapshot the gate stamped when this client was built. */
   readonly capabilityCheck: DirectorCapabilitySnapshot;
+  /**
+   * Resolved reasoning wire fragment from the CAP-008 mapper at gate time.
+   * The generator merges it verbatim into the request body — the wire shape
+   * (effort string at `reasoning.effort`, numeric budget at `thinking.*`,
+   * or nothing) is adapter-owned and must never be rebuilt by hand. `{}` when
+   * reasoning is omitted.
+   */
+  readonly reasoningPatch: Readonly<Record<string, unknown>>;
 }
 
 export type DirectorModelErrorCode =
@@ -146,6 +154,16 @@ export function getReasoningProfile(modelId: string) {
 }
 
 /**
+ * Convert the CAP-007 seed's `usdPerMillionInput` (price per 1,000,000 input
+ * tokens) into the CAP-006 `per_token_1k` unit (price per 1,000 tokens) so the
+ * value handed to `validatePricingProfile`/`estimateSpend` carries the unit
+ * its label claims. Null stays null (unknown pricing is never guessed).
+ */
+export function toPerToken1k(usdPerMillionInput: number | null): number | null {
+  return usdPerMillionInput === null ? null : usdPerMillionInput / 1_000;
+}
+
+/**
  * Run the capability gate alone (no client). Exposed for tests and for
  * CLI/diagnostics: returns the verdict instead of throwing.
  */
@@ -169,10 +187,10 @@ export function checkDirectorCapability(options: {
     });
   }
 
-  // 2. adapter present (CAP-008 table guards the wire format).
-  const adapterId = connection.reasoningPreference?.toLowerCase() !== "none"
-    ? OPENROUTER_REASONING_ADAPTER
-    : OPENROUTER_REASONING_ADAPTER;
+  // 2. adapter present (CAP-008 table guards the wire format). DIR-002 talks
+  //    OpenRouter-compatible endpoints only; preference "none" omits the
+  //    reasoning parameter on the wire, it does not change the adapter.
+  const adapterId = OPENROUTER_REASONING_ADAPTER;
   let adapter: ReasoningAdapter | null = null;
   try {
     adapter = getReasoningAdapter(adapterId);
@@ -213,11 +231,10 @@ export function checkDirectorCapability(options: {
         modelId: profile.modelId,
         kind: "reasoning",
         pricing: {
+          // CAP-007 seeds price per million tokens; CAP-006's closest unit is
+          // per_token_1k — rescale so amount matches the unit label.
           unit: profile.pricing.usdPerMillionInput !== null ? "per_token_1k" : null,
-          amount:
-            profile.pricing.usdPerMillionInput !== null
-              ? profile.pricing.usdPerMillionInput
-              : null,
+          amount: toPerToken1k(profile.pricing.usdPerMillionInput),
           currency: profile.pricing.currency,
           quota: null,
           overage: null,
@@ -301,10 +318,23 @@ export function prepareDirectorModel(options: {
   const baseUrl = (options.connection.baseUrl ?? OPENROUTER_BASE_URL).trim().replace(/\/+$/, "");
   const modelId = options.connection.modelId.trim();
   const preference = options.connection.reasoningPreference ?? "MAX_REASONING";
-  const adapter = getReasoningAdapter(OPENROUTER_REASONING_ADAPTER);
   const profile = getReasoningProfile(modelId);
-  const resolved =
-    profile !== null ? resolveReasoning(adapter, preference, modelId) : null;
+  const adapter = getReasoningAdapter(OPENROUTER_REASONING_ADAPTER);
+
+  // The verdict already resolved this exact (adapter, preference, model)
+  // triple at gate time — resolving again here could only diverge, and the
+  // verdict's effort is the audited value. Store the full wire fragment from
+  // the mapper so the generator merges the adapter's real shape (effort
+  // string, numeric thinking budget, or omitted) instead of rebuilding it.
+  let effort: string | null = verdict.effort;
+  let reasoningPatch: Readonly<Record<string, unknown>> = {};
+  if (profile !== null) {
+    const resolved = resolveReasoning(adapter, preference, modelId);
+    if (!resolved.omit && resolved.effort === verdict.effort) {
+      effort = resolved.effort;
+      reasoningPatch = resolved.bodyPatch;
+    }
+  }
 
   return {
     transport: options.transport,
@@ -314,11 +344,12 @@ export function prepareDirectorModel(options: {
     capabilityCheck: {
       modelId,
       adapterId: verdict.adapterId,
-      effort: resolved?.effort ?? null,
+      effort,
       confidence: profile !== null ? profile.confidence : "UNKNOWN",
       unknownModelAllowed: profile === null,
       checkedAt: verdict.checkedAt,
     },
+    reasoningPatch,
   };
 }
 
