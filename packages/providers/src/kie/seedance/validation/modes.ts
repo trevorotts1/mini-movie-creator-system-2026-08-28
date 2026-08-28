@@ -111,12 +111,25 @@ export const SEEDANCE_MODE_CAPABILITIES: Readonly<
 export function isReferenceUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
   const v = value.trim();
-  if (v.length === 0) return false;
+  const scheme = ["http://", "https://", "asset://"].find((s) => v.startsWith(s));
+  if (scheme === undefined) return false;
+  // Require a non-empty, non-path/non-query authority: "http://", "https://",
+  // "asset://", "asset:///x" are all unusable.
+  const rest = v.slice(scheme.length);
   return (
-    v.startsWith("http://") ||
-    v.startsWith("https://") ||
-    // asset:// requires a non-empty asset id after the scheme.
-    (v.startsWith("asset://") && v.length > "asset://".length)
+    rest.length > 0 && !rest.startsWith("/") && !rest.startsWith("?") && !rest.startsWith("#")
+  );
+}
+
+/** True for a usable http(s) webhook URL. asset:// refs are NOT callbacks. */
+export function isCallbackUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const v = value.trim();
+  const scheme = ["https://", "http://"].find((s) => v.startsWith(s));
+  if (scheme === undefined) return false;
+  const rest = v.slice(scheme.length);
+  return (
+    rest.length > 0 && !rest.startsWith("/") && !rest.startsWith("?") && !rest.startsWith("#")
   );
 }
 
@@ -152,7 +165,11 @@ export interface SeedanceRequest {
   generateAudio?: boolean;
   /** Optional content-filter toggle. Default false per provider docs. */
   nsfwChecker?: boolean;
-  /** Optional provider callback URL (pass-through to createTask). */
+  /**
+   * Optional provider callback URL (http(s):// only — Kie webhooks reach out,
+   * so asset:// refs are meaningless here). Emitted as `callBackUrl` on the
+   * createTask body (KIE-002 `KieCreateTaskRequest.callBackUrl`).
+   */
   callBackUrl?: string;
 }
 
@@ -186,10 +203,10 @@ function impliedMode(request: SeedanceRequest): SeedanceMode | null {
     (request.referenceImageUrls?.length ?? 0) > 0 ||
     (request.referenceVideoUrls?.length ?? 0) > 0 ||
     (request.referenceAudioUrls?.length ?? 0) > 0;
-  if ((hasFirst || hasLast) && hasRefs) return "multimodal-reference"; // conflict; reported below
+  if ((hasFirst || hasLast) && hasRefs) return "multimodal-reference"; // conflict; caller must reject
   if (hasFirst && hasLast) return "first-last-frame";
   if (hasFirst) return "first-frame";
-  if (hasLast) return "first-frame"; // last-only is illegal; mode match still fails below
+  // hasLast-only is illegal; inferSeedanceMode rejects it before this branch.
   if (hasRefs) return "multimodal-reference";
   return "text-to-video";
 }
@@ -389,6 +406,13 @@ function scalarErrors(request: SeedanceRequest): SeedanceValidationIssue[] {
       message: "lastFrameUrl must be an http(s):// or asset:// URL",
     });
   }
+  if (request.callBackUrl !== undefined && !isCallbackUrl(request.callBackUrl)) {
+    errors.push({
+      field: "callBackUrl",
+      code: "INVALID_CALLBACK_URL",
+      message: "callBackUrl must be an http(s):// URL",
+    });
+  }
 
   const countChecks: Array<[string, string[] | undefined, number]> = [
     ["referenceImageUrls", request.referenceImageUrls, SEEDANCE_MAX_REFERENCE_IMAGES],
@@ -445,6 +469,18 @@ export function validateSeedanceRequest(request: SeedanceRequest): void {
 }
 
 /**
+ * Full createTask body for `bytedance/seedance-2-mini`. `input` holds the
+ * model-specific payload; `callBackUrl` is a createTask-level field
+ * (KIE-002 `KieCreateTaskRequest`), NOT an input field — KIE-003's
+ * `buildSeedanceRequest` has the same shape.
+ */
+export interface SeedanceTaskRequest {
+  model: string;
+  input: Record<string, unknown>;
+  callBackUrl?: string;
+}
+
+/**
  * Map a validated request onto the Kie createTask `input` payload for
  * `bytedance/seedance-2-mini`. Only mode-permitted fields are emitted —
  * validation guarantees no mutually exclusive fields coexist. Defaults mirror
@@ -475,15 +511,31 @@ export function buildSeedanceInput(request: SeedanceRequest): Record<string, unk
 }
 
 /**
+ * Full createTask body for a validated request: model slug, the mode-scoped
+ * `input` payload, and the optional `callBackUrl` at the createTask level
+ * (matches KIE-002 `KieCreateTaskRequest` / KIE-003 `buildSeedanceRequest`).
+ */
+export function buildSeedanceTaskRequest(request: SeedanceRequest): SeedanceTaskRequest {
+  const body: SeedanceTaskRequest = {
+    model: SEEDANCE_2_MINI_MODEL,
+    input: buildSeedanceInput(request),
+  };
+  if (request.callBackUrl !== undefined) body.callBackUrl = request.callBackUrl;
+  return body;
+}
+
+/**
  * Convenience for the video router (spec §27): the single mode a request's
- * fields imply, or null when no image/reference field is present (pure t2v).
- * Callers still must state `mode` explicitly; this helper only powers
- * diagnostics and fallback routing.
+ * fields imply — "text-to-video" when no image/reference field is present —
+ * or null when the fields are invalid or conflicting (last-frame without
+ * first, frames + references mixed). Callers still must state `mode`
+ * explicitly; this helper only powers diagnostics and fallback routing.
  */
 export function inferSeedanceMode(request: SeedanceRequest): SeedanceMode | null {
   const presence = fieldPresence(request);
   const usesFrames = presence.firstFrame || presence.lastFrame;
   const usesRefs = presence.images > 0 || presence.videos > 0 || presence.audios > 0;
-  if (usesFrames && usesRefs) return null;
+  if (usesFrames && usesRefs) return null; // cross-mode conflict
+  if (presence.lastFrame && !presence.firstFrame) return null; // illegal last-only
   return impliedMode(request);
 }

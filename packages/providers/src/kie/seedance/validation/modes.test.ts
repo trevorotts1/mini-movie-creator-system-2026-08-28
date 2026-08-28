@@ -7,7 +7,9 @@ import {
   SEEDANCE_MAX_REFERENCE_IMAGES,
   SeedanceValidationError,
   buildSeedanceInput,
+  buildSeedanceTaskRequest,
   inferSeedanceMode,
+  isCallbackUrl,
   isReferenceUrl,
   validateSeedanceRequest,
   type SeedanceMode,
@@ -244,6 +246,47 @@ describe("scalar field validation", () => {
     expect(isReferenceUrl(42)).toBe(false);
     expect(isReferenceUrl(null)).toBe(false);
   });
+
+  it("isReferenceUrl rejects scheme-only and authority-less URLs", () => {
+    // scheme-only garbage must never reach the provider as a usable ref.
+    expect(isReferenceUrl("http://")).toBe(false);
+    expect(isReferenceUrl("https://")).toBe(false);
+    expect(isReferenceUrl("asset:///x")).toBe(false);
+    expect(isReferenceUrl("asset://?query")).toBe(false);
+    expect(isReferenceUrl("https:///missing-host")).toBe(false);
+    expect(isReferenceUrl("ftp://a.png")).toBe(false);
+  });
+
+  it("validates callBackUrl: http(s) only, emitted at createTask level", () => {
+    expect(() =>
+      validateSeedanceRequest({ ...baseRequest("text-to-video"), callBackUrl: "https://hooks.example.com/done" }),
+    ).not.toThrow();
+    expect(() =>
+      validateSeedanceRequest({ ...baseRequest("text-to-video"), callBackUrl: "asset://abc" }),
+    ).toThrow(/INVALID_CALLBACK_URL/);
+    expect(() =>
+      validateSeedanceRequest({ ...baseRequest("text-to-video"), callBackUrl: "https://" }),
+    ).toThrow(/INVALID_CALLBACK_URL/);
+
+    // Emitted on the createTask body (KIE-002 KieCreateTaskRequest shape), not the input.
+    const body = buildSeedanceTaskRequest({
+      ...baseRequest("first-frame"),
+      callBackUrl: "https://hooks.example.com/done",
+    });
+    expect(body.model).toBe(SEEDANCE_2_MINI_MODEL);
+    expect(body.callBackUrl).toBe("https://hooks.example.com/done");
+    expect("callBackUrl" in body.input).toBe(false);
+    expect(body.input["first_frame_url"]).toBe(IMG);
+  });
+
+  it("isCallbackUrl accepts http(s) webhooks only", () => {
+    expect(isCallbackUrl("https://hooks.example.com/done")).toBe(true);
+    expect(isCallbackUrl("http://hooks.example.com/done")).toBe(true);
+    expect(isCallbackUrl("asset://abc")).toBe(false);
+    expect(isCallbackUrl("https://")).toBe(false);
+    expect(isCallbackUrl("")).toBe(false);
+    expect(isCallbackUrl(42)).toBe(false);
+  });
 });
 
 describe("buildSeedanceInput", () => {
@@ -295,11 +338,17 @@ describe("buildSeedanceInput", () => {
 });
 
 describe("inferSeedanceMode (router diagnostics)", () => {
-  it("infers the mode from fields, null for pure t2v or conflicts", () => {
+  it("infers the mode from fields, t2v for empty, null for conflicts", () => {
     expect(inferSeedanceMode(baseRequest("text-to-video"))).toBe("text-to-video");
     expect(inferSeedanceMode(baseRequest("first-frame"))).toBe("first-frame");
     expect(inferSeedanceMode(baseRequest("first-last-frame"))).toBe("first-last-frame");
     expect(inferSeedanceMode(baseRequest("multimodal-reference"))).toBe("multimodal-reference");
     expect(inferSeedanceMode({ ...baseRequest("first-frame"), referenceImageUrls: [REF1] })).toBeNull();
+  });
+
+  it("returns null for the illegal last-frame-only payload (no silent remap)", () => {
+    expect(
+      inferSeedanceMode({ mode: "first-frame", prompt: PROMPT, lastFrameUrl: IMG2 }),
+    ).toBeNull();
   });
 });
