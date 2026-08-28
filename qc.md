@@ -54,3 +54,50 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T10:05:00Z | CAP-008 | MAX_REASONING mapper | Sonnet QC | PASS | 0 | 0 | MERGED |
 | 2026-08-28T10:05:00Z | KIE-002 | Generic task submit/poll | Sonnet QC | PASS | 0 | 0 | MERGED |
 | 2026-08-28T10:05:00Z | KIE-003 | Seedance 2.0 Mini profile | Sonnet QC | PASS | 1 | 1 | MERGED |
+| 2026-08-28T14:38:00Z | CAP-004 | Reference-count validator | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-007 | Wardrobe versions | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CORE-001 | Upstream audit + preservation map | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CORE-004 | Project/series/episode schema | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | FISH-001 | Fish Audio client | Sonnet QC | PASS | 4 | 4 | MERGED |
+| 2026-08-28T14:38:00Z | GHL-001 | GHL auth/config | Sonnet QC | PASS | 1 | 1 | MERGED |
+| 2026-08-28T14:38:00Z | KIE-004 | Seedance modes/validation | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | KIE-009 | Failure normalization | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-003 | Candidate generation flow (3 designs) | Sonnet QC | PASS | 0 | 0 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-010 | Series cast links | Sonnet QC | PASS | 2 | 2 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-012 | Series Bible events | Sonnet QC | PASS | 4 | 4 | MERGED |
+| 2026-08-28T14:38:00Z | FISH-002 | Voice profile management | Sonnet QC | PASS | 6 | 6 | MERGED |
+| 2026-08-28T14:38:00Z | GHL-002 | List/search media | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | GHL-007 | URL/file validation | Sonnet QC | PASS | 3 | 3 | MERGED |
+| 2026-08-28T14:38:00Z | CHAR-004 | Selection/retry UI-CLI contract | Sonnet QC | PASS | 1 | 1 | MERGED |
+| 2026-08-28T14:38:00Z | FISH-004 | Pronunciation dictionary | Sonnet QC | PASS | 1 | 1 | MERGED |
+
+## Batch 5 Merge Records (2026-08-28, batch be5ae16..56ceb82)
+
+| Timestamp (UTC) | Task ID | Component | Checker | Result | Defects Found | Fixes Applied | Final Verdict |
+|---|---|---|---|---|---|---|---|
+| 2026-08-28T~20:00Z | CAP-007 | CAP-007 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CAP-009 | CAP-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CHAR-011 | CHAR-011 | qc-batch | PASS | 6 | 6 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CHAR-014 | CHAR-014 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | CORE-005 | CORE-005 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-008 | FISH-008 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-009 | FISH-009 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | FISH-010 | FISH-010 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-003 | GHL-003 | qc-batch | PASS | 4 | 4 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-004 | GHL-004 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-005 | GHL-005 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-006 | GHL-006 | qc-batch | PASS | 5 | 5 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-008 | GHL-008 | qc-batch | PASS | 2 | 2 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-009 | GHL-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-010 | GHL-010 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | GHL-011 | GHL-011 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-001 | KIE-001 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-005 | KIE-005 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-006 | KIE-006 | qc-batch | PASS | 3 | 3 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | KIE-008 | KIE-008 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | REC-001 | REC-001 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | REC-009 | REC-009 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-001 | VID-001 | qc-batch | PASS | 0 | 0 | MERGED (PASS) |
+| 2026-08-28T~20:00Z | VID-015 | VID-015 | qc-batch | PASS | 1 | 1 | MERGED (PASS) |
+| 2026-08-28T19:38:52Z | VID-008 | regression | merger | REVERTED | 3+1 (typecheck regression surfaced post-merge) | 0 | QC_FIXING — typecheck regression: GraphicsViews.tsx(29,26) TS2345 FrameSize->number; invisible on branch because its tsconfig lacked |
+| 2026-08-28T19:38:52Z | SKL-002 | regression | merger | REVERTED | 0+1 (typecheck regression surfaced post-merge) | 0 | QC_FIXING — typecheck regression: integrations/claude/src/project-install.test.ts uses node: imports + import.meta.url without node  |

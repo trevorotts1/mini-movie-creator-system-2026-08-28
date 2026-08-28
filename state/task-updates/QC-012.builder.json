@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-012",
+  "phase": "BUILDER_DONE",
+  "commit": "024697538de1fe5dc2502df03331d34571763621",
+  "testsRun": "npx vitest run packages/qc/src/final-episode \u2014 30 passed (30); pnpm exec tsc --noEmit -p packages/qc/tsconfig.json \u2014 clean",
+  "notes": "Final episode QC + spec \u00a721 production report implemented: presentation gate, runtime/aspect integrity, providers/models grouping, cost/quota/characters/canon aggregation, nativeQuality provenance, strict input validation incl. real-calendar timestamp check",
+  "blockers": [],
+  "updatedAt": "2026-08-28T19:05:00Z"
+}

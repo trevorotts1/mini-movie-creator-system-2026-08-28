@@ -1,0 +1,9 @@
+{
+  "taskId": "KIE-004",
+  "phase": "BUILDER_DONE",
+  "commit": "d00bdbf",
+  "testsRun": "npx vitest run packages/providers/src/kie/seedance/validation \u2014 23 passed (23), 1 file; full-worktree npx vitest run \u2014 23 passed; tsc --noEmit -p packages/providers clean",
+  "notes": "Seedance 2.0 Mini modes/validation: explicit per-request mode (t2v/first-frame/first-last-frame/multimodal-reference), pre-flight rejection of mutually exclusive combos (frames+refs, last-without-first, web_search outside t2v), documented scalar bounds (prompt 3-20000, duration 4-15s, refs 9/3/3, 480p/720p, 7 aspect ratios), buildSeedanceInput emits mode-permitted Kie fields only. Schema verified live against docs.kie.ai/market/bytedance/seedance-2-mini 2026-08-28.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T13:20:00Z"
+}

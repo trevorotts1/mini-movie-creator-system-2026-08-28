@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-014",
+  "phase": "PASS",
+  "commit": "6fe77c3",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/storyboard -> 34 passed (34), 0 failed; npx tsc --noEmit -p packages/scene-intelligence clean; npx tsc --noEmit -p tsconfig.base.json clean; full-worktree npx vitest run -> 442 passed (25 files), 0 failed; security scan of owned paths (no secrets/exec/fs/network/unbounded retries) clean",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:40:00Z",
+  "notes": "Fixed 3 defects: (1) MockImageClient URL label crashed encodeURIComponent with URIError when prompt.slice(0,32) split an astral pair at the UTF-16 boundary on untrusted story text (spec §29) — now truncates on code points and strips lone surrogates, regression test added; (2) planStoryboard silently accepted mixed-episodeCode shot lists and collapsed plan.episodeCode to the first shot — now hard-fails (plan is a per-episode artifact, runbook §25 step 15), regression test added; (3) dead aggregateNotes accumulation removed. Builder diff confined to owned paths packages/scene-intelligence/src/storyboard/.",
+  "blockers": []
+}

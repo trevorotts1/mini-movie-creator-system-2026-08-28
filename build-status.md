@@ -1,8 +1,8 @@
 # Build Status Dashboard (build-status.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T10:05:00Z
-**Current Stage:** Wave-1 Batch Merge 2 Landed
+**Updated:** 2026-08-28T19:38:57Z
+**Current Stage:** Wave-1 Batch Merge 6 Pushed
 
 ---
 
@@ -11,14 +11,14 @@
 | Metric | Count |
 |---|---|
 | Total Tasks | 149 |
-| Ready Tasks | 116 |
-| Blocked Tasks | 19 |
+| Ready Tasks | 16 |
+| Blocked Tasks | 14 |
 | Building Tasks | 0 |
 | QC Tasks | 0 |
-| QC-fixing Tasks | 0 |
+| QC-fixing Tasks | 2 |
 | Merge Queue Tasks | 0 |
-| Merged Tasks | 19 |
-| Verified Tasks | 26 |
+| Merged Tasks | 103 |
+| Verified (PASS, unmerged) Tasks | 8 |
 
 ---
 
@@ -26,10 +26,8 @@
 
 | Metric | Value |
 |---|---|
-| Last Batch Merge Timestamp | 2026-08-28T13:30:06Z |
-| Current Integration Commit | `e973ac2` |
-| Batch 1 Merged Count | 14 |
-| Batch 2 Merged Count | 5 (CAP-005, CAP-006, CAP-008, KIE-002, KIE-003) |
-| Batch 2 Conflict-Blocked QC PASS | 7 (CORE-001, CAP-004, CAP-007, CAP-009, CAP-010, CHAR-007, KIE-001) |
-| Batch 1 Regression Status | PASS (287/287 tests) |
-| Batch 2 Regression Status | PASS (408/408 tests, 24 files; typecheck green on code packages; apps/web + integrations/* tsc scaffold gaps pre-existing from cycle 1) |
+| Last Batch Merge Timestamp | 2026-08-28T19:38:57Z |
+| Current Integration Commit | `01d5505` (pushed to origin/integration) |
+| Batch 6 Merged Count | 44 |
+| Batch 6 Conflict-Blocked | 13 (CAP-001..010, CHAR-003/010, CORE-007, DIR-002, FISH-001..007/009/010, GHL-001..007/011, KIE-001..006/009/010, QC-002/003/004/007/010, REC-010, SKL-002..005, VID-001/002/005/008/013 — no mergeable branch or conflict; see ledger) |
+| Batch 6 Regression Status | PASS after 2 selective reverts (pnpm -r test exit 0; pnpm -r typecheck exit 0, 17/17 Done) |

@@ -1,0 +1,13 @@
+{
+  "taskId": "VID-009",
+  "phase": "PASS",
+  "commit": "59c0ccefd340dba2078c7a65daf6989111fd4158",
+  "checksRun": "npx vitest run packages/remotion-runtime/src/transitions -> 26 passed (3 files); npx vitest run (full repo) -> 434 passed (27 files); tsc --noEmit (packages/remotion-runtime) -> clean; lint -> no lint script/config exists repo-wide (pre-existing, not a defect)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T20:40:00Z",
+  "notes": "Independent verify: catalog cut/crossfade/wipe applied from plan data at shot boundaries; overlap math frame-exact integer (globalIn=globalOut-overlap, clamped to shorter adjacent shot, cut forced 0, identities tested); validation collects all issues, assembly total. src/transitions path matches task acceptance command (ownership.md layers/transitions.tsx row superseded). Shared src/index.ts untouched. Security clean.",
+  "blockers": []
+}
