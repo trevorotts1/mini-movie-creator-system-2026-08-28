@@ -185,14 +185,14 @@ describe("migration ordering and identity", () => {
 });
 
 describe("shipped MIGRATIONS registry", () => {
-  it("applies twice cleanly and idempotently on a temp file DB (band 000_ is framework-only; later bands append as their tasks land)", () => {
+  it("applies twice cleanly and idempotently on a temp file DB", () => {
     const db = freshDb();
     const first = migrate(db, MIGRATIONS);
     expect(first.applied).toEqual([...first.applied].sort());
     expect(migrate(db, MIGRATIONS).applied).toEqual([]);
-    expect(migrate(db, MIGRATIONS).applied).toEqual([]);
-    // The ledger records exactly what was applied, ascending.
     expect(db.all(`SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY id`).map((r) => String(r["id"]))).toEqual(first.applied);
+    const tables = db.all("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").map((r) => String(r["name"]));
+    expect(tables).toContain(MIGRATIONS_TABLE);
     db.close();
   });
 });

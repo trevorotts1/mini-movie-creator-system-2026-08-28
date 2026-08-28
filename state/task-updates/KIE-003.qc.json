@@ -1,0 +1,13 @@
+{
+  "taskId": "KIE-003",
+  "phase": "PASS",
+  "commit": "5f12b39",
+  "checksRun": "npx vitest run packages/providers/src/kie/seedance --reporter=json (25/25 pass, success:true); npx tsc --noEmit -p packages/providers (clean); git rebase onto origin/integration (resolved docs/provider-capabilities/kie.md merge); security pass (no secrets, no shell exec, no fs writes, encodeURIComponent on taskId, URL scheme validation, no retry loops)",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T14:40:00Z",
+  "notes": "Rebased onto integration HEAD 223d779 (docs/provider-capabilities/kie.md merged preserving registry copy + KIE-003 verified-limits content); fixed duplicate SeedanceInput interface declaration (interface-merging drift trap); 25/25 seedance tests green, tsc clean.",
+  "blockers": []
+}

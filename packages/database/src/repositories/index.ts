@@ -30,3 +30,6 @@ export {
   type AssetManifestField,
   type AssetPatch,
 } from "./assets/index.js";
+
+export { SqliteProjectRepository, SqliteSeriesRepository } from "./projects/index.js";
+export { SqliteEpisodeRepository, formatEpisodeCode } from "./episodes/index.js";
