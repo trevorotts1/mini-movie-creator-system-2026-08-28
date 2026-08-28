@@ -1,7 +1,7 @@
 {
   "taskId": "VID-009",
   "phase": "BUILDER_DONE",
-  "commit": "PENDING",
+  "commit": "1239dfe5a04641737e46f15223671d55c6dbb52a",
   "testsRun": "npx vitest run packages/remotion-runtime/src/transitions -> 26 passed, 0 failed (3 files: catalog.test.ts, overlap.test.ts, validate.test.ts), rc=0; tsc --noEmit (packages/remotion-runtime) -> clean, rc=0",
   "notes": "Transition catalog (cut/crossfade/wipe, 4 wipe directions) + frame-exact integer overlap math: globalIn(i)=globalOut(i-1)-overlap, overlap clamped to shorter adjacent shot, cut forced 0-overlap, boundary resolved from incoming shot's plan data; validate/assembly split so assembly never throws; self-contained (no remotion import) so vitest runs without remotion installed; VID-003 integration can map its shot sequences onto TransitionPlan",
   "blockers": [],
