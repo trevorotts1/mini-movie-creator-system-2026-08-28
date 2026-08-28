@@ -387,6 +387,23 @@ describe("resumeEmergencyArchival — BLOCKED paths never regenerate", () => {
     expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
     expect(outcome.detail).toContain("unparseable storage URL");
   });
+
+  it("hosted ingest ARCHIVED with empty/blank name → BLOCKED HOSTED_INGEST_FAILED (canonical name is part of the payload contract, spec §19)", async () => {
+    const probe = okProbe();
+    for (const name of ["", "   "]) {
+      const hosted = makeHosted(async () =>
+        archivedResult({ fileId: "file-999", name }),
+      );
+      const outcome = await resumeEmergencyArchival(baseRecord(), hosted, {
+        now: () => FIXED_NOW,
+        probe: probe.probe,
+      });
+      expect(outcome.status).toBe("BLOCKED");
+      if (outcome.status !== "BLOCKED") return;
+      expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
+      expect(outcome.detail).toContain("empty name");
+    }
+  });
 });
 
 describe("resumeEmergencyArchival — entry-state gate", () => {
@@ -539,5 +556,29 @@ describe("time behavior", () => {
     expect(outcome.status).toBe("BLOCKED");
     if (outcome.status !== "BLOCKED") return;
     expect(outcome.blockedAt).toBe("2026-08-28T16:00:00.000Z");
+  });
+
+  it("blockedAt is read at RECORD time, after the probe/ingest awaits — not the pre-I/O reading", async () => {
+    // Clock advances 10s on every read (probe + ingest each burn ~10s).
+    let tick = FIXED_NOW;
+    const clock = vi.fn(() => {
+      tick += 10_000;
+      return tick;
+    });
+    const probe = okProbe();
+    const outcome = await resumeEmergencyArchival(
+      baseRecord({ providerUrl: "https://cdn.kie.example/tmp/result-abc.mp4" }),
+      makeHosted(async () => {
+        throw new Error("[UNREACHABLE] GHL storage URL failed reachability verification");
+      }),
+      { now: clock, probe: probe.probe },
+    );
+    expect(outcome.status).toBe("BLOCKED");
+    if (outcome.status !== "BLOCKED") return;
+    expect(outcome.reason).toBe("HOSTED_INGEST_FAILED");
+    // Clock reads: 16:00:10 (pre-I/O) … then 16:00:20 when the block is
+    // RECORDED, after the probe and ingest awaits. A stale pre-I/O
+    // blockedAt would be 16:00:10.
+    expect(outcome.blockedAt).toBe("2026-08-28T16:00:20.000Z");
   });
 });

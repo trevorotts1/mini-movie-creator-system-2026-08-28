@@ -285,17 +285,22 @@ function validateRecord(record: EmergencyArchivalRecord): void {
   }
 }
 
+/**
+ * Build a BLOCKED outcome. `now` is the injected clock — read at RECORD time
+ * (after any probe/ingest awaits), so blockedAt is the instant the block was
+ * actually recorded, not a reading captured before the network I/O.
+ */
 function blocked(
   reason: EmergencyBlockReason,
   record: EmergencyArchivalRecord,
-  now: number,
+  now: () => number,
   detail?: string,
 ): EmergencyBlockedOutcome {
   const outcome: EmergencyBlockedOutcome = {
     status: "BLOCKED",
     reason,
     providerTaskId: record.providerTaskId,
-    blockedAt: new Date(now).toISOString(),
+    blockedAt: new Date(now()).toISOString(),
     nextAction: EMERGENCY_BLOCK_NEXT_ACTIONS[reason],
   };
   if (typeof record.providerUrl === "string" && record.providerUrl !== "") {
@@ -352,20 +357,20 @@ export async function resumeEmergencyArchival(
     providerUrl === null ||
     providerUrl.trim() === ""
   ) {
-    return blocked("MISSING_PROVIDER_URL", record, nowMs);
+    return blocked("MISSING_PROVIDER_URL", record, now);
   }
 
   let parsed: URL;
   try {
     parsed = new URL(providerUrl);
   } catch {
-    return blocked("URL_INVALID", record, nowMs, "URL is unparseable");
+    return blocked("URL_INVALID", record, now, "URL is unparseable");
   }
   if (!ALLOWED_SCHEMES.has(parsed.protocol)) {
     return blocked(
       "URL_INVALID",
       record,
-      nowMs,
+      now,
       `scheme must be http/https, got ${parsed.protocol}`,
     );
   }
@@ -375,7 +380,7 @@ export async function resumeEmergencyArchival(
     return blocked(
       "EXPIRED_URL",
       record,
-      nowMs,
+      now,
       `expiredAt ${record.providerUrlExpiresAt} <= now`,
     );
   }
@@ -397,7 +402,7 @@ export async function resumeEmergencyArchival(
     return blocked(
       "URL_UNREACHABLE",
       record,
-      nowMs,
+      now,
       probeStatus === undefined
         ? "probe failed (network error/timeout)"
         : `probe status ${probeStatus}`,
@@ -415,19 +420,20 @@ export async function resumeEmergencyArchival(
       return blocked(
         "HOSTED_INGEST_FAILED",
         record,
-        nowMs,
+        now,
         "hosted ingest returned a non-ARCHIVED result",
       );
     }
     // Spec §17 step 3: ARCHIVED is only meaningful with a real fileId +
-    // storage URL. A sloppy adapter must never let the caller persist
-    // ARCHIVED with empty/garbage IDs — that would mark a paid asset as
-    // safely persisted when no GHL copy is addressable.
+    // storage URL + the canonical name the caller asked for. A sloppy
+    // adapter must never let the caller persist ARCHIVED with empty/garbage
+    // IDs — that would mark a paid asset as safely persisted when no GHL
+    // copy is addressable.
     if (typeof result.fileId !== "string" || result.fileId.trim() === "") {
       return blocked(
         "HOSTED_INGEST_FAILED",
         record,
-        nowMs,
+        now,
         "hosted ingest returned ARCHIVED with an empty fileId",
       );
     }
@@ -435,8 +441,16 @@ export async function resumeEmergencyArchival(
       return blocked(
         "HOSTED_INGEST_FAILED",
         record,
-        nowMs,
+        now,
         "hosted ingest returned ARCHIVED with an empty storage URL",
+      );
+    }
+    if (typeof result.name !== "string" || result.name.trim() === "") {
+      return blocked(
+        "HOSTED_INGEST_FAILED",
+        record,
+        now,
+        "hosted ingest returned ARCHIVED with an empty name",
       );
     }
     try {
@@ -445,7 +459,7 @@ export async function resumeEmergencyArchival(
         return blocked(
           "HOSTED_INGEST_FAILED",
           record,
-          nowMs,
+          now,
           `hosted ingest returned ARCHIVED with non-http(s) storage URL scheme ${resultUrl.protocol}`,
         );
       }
@@ -453,7 +467,7 @@ export async function resumeEmergencyArchival(
       return blocked(
         "HOSTED_INGEST_FAILED",
         record,
-        nowMs,
+        now,
         "hosted ingest returned ARCHIVED with an unparseable storage URL",
       );
     }
@@ -466,6 +480,6 @@ export async function resumeEmergencyArchival(
     };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    return blocked("HOSTED_INGEST_FAILED", record, nowMs, reason);
+    return blocked("HOSTED_INGEST_FAILED", record, now, reason);
   }
 }
