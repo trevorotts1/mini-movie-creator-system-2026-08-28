@@ -71,7 +71,12 @@ export interface GhlListAllOptions extends GhlListPageOptions {
 export interface GhlListAllResult {
   entries: GhlMediaEntry[];
   total?: number;
-  /** True when maxPages was hit before the listing was exhausted. */
+  /**
+   * True when the listing stopped before reaching the end. Two cases:
+   * (a) the paging cap was hit and `total` proves entries remain, or
+   * (b) the cap was hit and the server reported no `total` — the listing is
+   *     KNOWN INCOMPLETE even though the remaining count is unknown.
+   */
   truncated: boolean;
 }
 
@@ -196,15 +201,11 @@ export async function listMediaPage(
   const fullPage = parsed.entries.length >= limit;
   const hasMore = parsed.hasMore ?? fullPage;
   const total = parsed.total;
-  const nextOffset =
-    hasMore && (total === undefined || parsed.entries.length === 0 || true)
-      ? (options.offset ?? 0) + parsed.entries.length
-      : undefined;
   return {
     entries: parsed.entries,
     total,
     hasMore,
-    nextOffset: hasMore ? nextOffset : undefined,
+    nextOffset: hasMore ? (options.offset ?? 0) + parsed.entries.length : undefined,
   };
 }
 
@@ -231,6 +232,7 @@ export async function listMedia(
   const all: GhlMediaEntry[] = [];
   let offset = 0;
   let total: number | undefined;
+  let capped = false;
   for (let page = 0; page < maxPages; page++) {
     const one = await listMediaPage(http, { ...options, limit, offset });
     all.push(...one.entries);
@@ -238,10 +240,12 @@ export async function listMedia(
     if (one.hasMore === false) break;
     if (total !== undefined && all.length >= total) break;
     if (one.entries.length < limit) break;
-    offset += one.entries.length;
     if (one.entries.length === 0) break;
+    offset += one.entries.length;
+    if (page === maxPages - 1) capped = true;
   }
-  const truncated = all.length > 0 && total !== undefined ? all.length < total : false;
+  const truncated =
+    capped || (all.length > 0 && total !== undefined && all.length < total);
   return { entries: all, total, truncated };
 }
 
@@ -250,35 +254,48 @@ export async function listMedia(
  * the location, optionally scoped to a parent folder. Returns the matching
  * folder entry or null when absent — callers (GHL-003/GHL-004) use this for
  * search-before-create.
+ *
+ * A null is a claim "this folder does not exist", so a paging cap hit is NOT
+ * null (that would cause callers to create a duplicate root). It throws
+ * `GhlMediaListTruncatedError` instead — the search was inconclusive.
  */
 export async function findFolderByName(
   http: GhlHttp,
   name: string,
   options: Omit<GhlListPageOptions, "type" | "query"> = { altId: "" },
 ): Promise<GhlMediaEntry | null> {
-  const page = await listMediaPage(http, {
-    ...options,
-    type: "folder",
-    limit: options.limit ?? 100,
-  });
-  for (const entry of page.entries) {
-    if (entry.type === "folder" && entry.name === name) return entry;
-  }
-  // Exact name may sit on a later page; keep paging until exhausted.
-  let offset = page.nextOffset;
-  while (offset !== undefined) {
-    const next = await listMediaPage(http, {
+  const maxPages = 100;
+  let offset: number | undefined;
+  for (let pagesFetched = 0; pagesFetched < maxPages; pagesFetched++) {
+    const page = await listMediaPage(http, {
       ...options,
       type: "folder",
       limit: options.limit ?? 100,
-      offset,
+      ...(offset !== undefined ? { offset } : {}),
     });
-    for (const entry of next.entries) {
+    for (const entry of page.entries) {
       if (entry.type === "folder" && entry.name === name) return entry;
     }
-    offset = next.nextOffset;
+    offset = page.nextOffset;
+    if (offset === undefined) return null;
   }
-  return null;
+  // Cap exhausted without exhausting the listing: inconclusive, not "absent".
+  throw new GhlMediaListTruncatedError(maxPages, name);
+}
+
+/** Thrown when folder search hit the paging cap without exhausting the listing. */
+export class GhlMediaListTruncatedError extends Error {
+  readonly maxPages: number;
+  readonly folderName: string;
+
+  constructor(maxPages: number, folderName: string) {
+    super(
+      `GHL media list: folder search for "${folderName}" hit the ${maxPages}-page cap before the listing was exhausted; result inconclusive (treat as "unknown", not "absent")`,
+    );
+    this.name = "GhlMediaListTruncatedError";
+    this.maxPages = maxPages;
+    this.folderName = folderName;
+  }
 }
 
 /**

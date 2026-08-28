@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   GhlMediaApiError,
+  GhlMediaListTruncatedError,
   findFolderByName,
   findFolderPath,
   listMedia,
@@ -158,6 +159,21 @@ describe("listMediaPage", () => {
       status: 401,
     });
   });
+
+  it("computes nextOffset by entries received, not requested limit", async () => {
+    // Two full pages of 2 with limit 2: nextOffset must advance by entries
+    // received (2, then 4) — offset accounting stays exact across pages.
+    const page1 = [file("a"), file("b")];
+    const page2 = [file("c"), file("d")];
+    const http = makeHttp((_path, q) =>
+      q.offset === "2" ? { files: page2, total: 4 } : { files: page1 },
+    );
+    const pageA = await listMediaPage(http, { altId: "L", limit: 2 });
+    expect(pageA.nextOffset).toBe(2);
+    const pageB = await listMediaPage(http, { altId: "L", limit: 2, offset: 2 });
+    expect(pageB.nextOffset).toBe(4);
+    expect(http.calls.map((c) => c.query.offset)).toEqual([undefined, "2"]);
+  });
 });
 
 describe("listMedia pagination (client-side paging)", () => {
@@ -193,6 +209,16 @@ describe("listMedia pagination (client-side paging)", () => {
     }));
     const result = await listMedia(http, { altId: "L", limit: 2, maxPages: 2 });
     expect(result.entries).toHaveLength(4);
+    expect(result.truncated).toBe(true);
+  });
+
+  it("reports truncated when maxPages hit without a server total", async () => {
+    // Regression: cap hit with no `total` from the server previously reported
+    // truncated:false — a false "listing complete" claim. Must be true.
+    const http = makeHttp(() => ({ files: [file("x"), file("y")] }));
+    const result = await listMedia(http, { altId: "L", limit: 2, maxPages: 2 });
+    expect(result.entries).toHaveLength(4);
+    expect(result.total).toBeUndefined();
     expect(result.truncated).toBe(true);
   });
 
@@ -266,6 +292,23 @@ describe("findFolderByName — exact-name folder resolution", () => {
     const http = makeHttp(() => ({ files: [folder("child", "Series")] }));
     await findFolderByName(http, "Series", { altId: "L", parentId: "root-1" });
     expect(http.calls[0]?.query.parentId).toBe("root-1");
+  });
+
+  it("caps paging — throws GhlMediaListTruncatedError instead of false null", async () => {
+    // Server keeps returning full pages without hasMore:false. Pre-fix this
+    // looped forever; a silent null would make callers create a duplicate root.
+    const http = makeHttp((_path, q) => ({
+      files: [folder(`f-${q.offset ?? 0}`, `folder-${q.offset ?? 0}`)],
+    }));
+    await expect(
+      findFolderByName(http, "Convert and Flow", { altId: "L", limit: 1 }),
+    ).rejects.toMatchObject({
+      name: "GhlMediaListTruncatedError",
+      maxPages: 100,
+      folderName: "Convert and Flow",
+    });
+    // 1 page per iteration, capped at 100.
+    expect(http.calls).toHaveLength(100);
   });
 });
 

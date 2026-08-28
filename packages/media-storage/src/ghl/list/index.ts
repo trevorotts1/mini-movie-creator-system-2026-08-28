@@ -1,5 +1,6 @@
 export {
   GhlMediaApiError,
+  GhlMediaListTruncatedError,
   findFolderByName,
   findFolderPath,
   listMedia,
