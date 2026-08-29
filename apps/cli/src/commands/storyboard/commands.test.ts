@@ -13,6 +13,7 @@ import {
   parseStoryboardOptions,
   runApproveStoryboard,
   runStoryboardCommand,
+  type GateDecisionInputLike,
   type GateSnapshotLike,
   type GateStateLike,
   type StoryboardApprovalPortLike,
@@ -53,6 +54,8 @@ function memoryGates(initial?: Partial<Record<string, GateStateLike>>) {
   const states: Record<string, GateStateLike> = {};
   for (const gate of ALL_GATES) states[gate] = "PENDING";
   Object.assign(states, initial ?? {});
+  /** Decision inputs seen by approve()/reject(), in call order. */
+  const seen: Array<{ op: "approve" | "reject"; gate: string; decision?: GateDecisionInputLike }> = [];
 
   const snapshotOf = (gate: string): GateSnapshotLike => ({
     gate,
@@ -63,7 +66,11 @@ function memoryGates(initial?: Partial<Record<string, GateStateLike>>) {
     note: null,
   });
 
-  const transition = (gate: string, to: GateStateLike): { state: string } => {
+  const transition = (
+    gate: string,
+    to: GateStateLike,
+    decision?: GateDecisionInputLike,
+  ): { state: string } => {
     const from = states[gate] ?? "PENDING";
     const legal: Record<GateStateLike, readonly GateStateLike[]> = {
       PENDING: ["APPROVED", "REJECTED"],
@@ -74,13 +81,15 @@ function memoryGates(initial?: Partial<Record<string, GateStateLike>>) {
       throw new Error(`illegal gate transition ${from} → ${to} for "${gate}"`);
     }
     states[gate] = to;
+    void decision;
     return { state: to };
   };
 
   const port: StoryboardApprovalPortLike & {
     reopen(gate: string): Promise<{ state: string }>;
   } = {
-    async approve(gate) {
+    async approve(gate, decision) {
+      seen.push({ op: "approve", gate, decision });
       const index = ALL_GATES.indexOf(gate as (typeof ALL_GATES)[number]);
       for (let i = 0; i < index; i++) {
         const earlier = ALL_GATES[i] as string;
@@ -90,10 +99,11 @@ function memoryGates(initial?: Partial<Record<string, GateStateLike>>) {
           );
         }
       }
-      return transition(gate, "APPROVED");
+      return transition(gate, "APPROVED", decision);
     },
-    async reject(gate) {
-      return transition(gate, "REJECTED");
+    async reject(gate, decision) {
+      seen.push({ op: "reject", gate, decision });
+      return transition(gate, "REJECTED", decision);
     },
     async snapshot(gate) {
       return snapshotOf(gate);
@@ -106,6 +116,7 @@ function memoryGates(initial?: Partial<Record<string, GateStateLike>>) {
   return {
     port,
     states,
+    seen,
     approveEarlierGates(): void {
       states.concept = "APPROVED";
       states.script = "APPROVED";
@@ -193,6 +204,24 @@ describe("runStoryboardCommand", () => {
     expect(result.lines.join(" ")).toContain("no shot plan available for S01E09");
   });
 
+  it("--aspect reaches the planner (the flag is honored, not dropped)", async () => {
+    const double = memoryGates();
+    const seenAspects: Array<string | undefined> = [];
+    const result = await runStoryboardCommand(
+      ["--episode", "S01E01", "--aspect", "9:16"],
+      {
+        loadPlan: (_episodeCode, aspect) => {
+          seenAspects.push(aspect);
+          return { ...planSummary(), aspectRatio: aspect ?? "16:9" };
+        },
+        gates: double.port,
+      },
+    );
+    expect(result.exitCode).toBe(0);
+    expect(seenAspects).toEqual(["9:16"]);
+    expect(result.lines.join("\n")).toContain("at 9:16");
+  });
+
   it("--json emits the scriptable summary with the stop marker", async () => {
     const double = memoryGates();
     const result = await runStoryboardCommand(
@@ -259,6 +288,50 @@ describe("runApproveStoryboard", () => {
     );
     expect(result.exitCode).toBe(1);
     expect(result.lines.join(" ")).toContain("already APPROVED");
+  });
+
+  it("approve records the operator identity (decidedBy) in the decision", async () => {
+    const double = memoryGates();
+    double.approveEarlierGates();
+    const result = await runApproveStoryboard(
+      ["--episode", "S01E01"],
+      ports(planSummary(), double.port),
+    );
+    expect(result.exitCode).toBe(0);
+    const seen = double.seen.filter((s) => s.op === "approve");
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.decision?.decidedBy).toBe("trevor"); // gate records name their decider
+  });
+
+  it("reject records the operator identity and the note in the decision", async () => {
+    const double = memoryGates();
+    double.approveEarlierGates();
+    const result = await runApproveStoryboard(
+      ["--episode", "S01E01", "--reject", "framing wrong"],
+      ports(planSummary(), double.port),
+    );
+    expect(result.exitCode).toBe(0);
+    const seen = double.seen.filter((s) => s.op === "reject");
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.decision?.decidedBy).toBe("trevor");
+    expect(seen[0]?.decision?.note).toBe("framing wrong");
+  });
+
+  it("reject on an already-APPROVED plan exits 1 with the reopen hint (never a raw flip error)", async () => {
+    const double = memoryGates();
+    double.approveEarlierGates();
+    double.states.storyboard = "APPROVED";
+    const approved = { ...planSummary(), approvalState: "APPROVED" as const };
+    const result = await runApproveStoryboard(
+      ["--episode", "S01E01", "--reject", "changed my mind"],
+      ports(approved, double.port),
+    );
+    expect(result.exitCode).toBe(1);
+    const text = result.lines.join(" ");
+    expect(text).toContain("already APPROVED");
+    expect(text).toContain("reopen the gate before rejecting");
+    expect(double.states.storyboard).toBe("APPROVED"); // gate untouched
+    expect(double.seen).toHaveLength(0); // nothing reached the store
   });
 
   it("reject on an already-REJECTED gate propagates the store transition error", async () => {

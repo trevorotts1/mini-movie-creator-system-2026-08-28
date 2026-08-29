@@ -139,9 +139,14 @@ export interface StoryboardCommandPorts {
   /**
    * Plan (or reload) the current episode's storyboard contracts through
    * the engine's pure planner. Returns undefined when there is nothing to
-   * plan yet (no shots — the caller reports exit 1).
+   * plan yet (no shots — the caller reports exit 1). `aspect` carries the
+   * operator's `--aspect` override when given (the planner's production
+   * aspect ratio; undefined = planner default).
    */
-  loadPlan(episodeCode: string): StoryboardPlanSummaryLike | undefined;
+  loadPlan(
+    episodeCode: string,
+    aspect?: string,
+  ): StoryboardPlanSummaryLike | undefined;
   /** The durable approval store (spec §3 gate records). */
   gates: StoryboardApprovalPortLike;
 }
@@ -229,7 +234,7 @@ export async function runStoryboardCommand(
     };
   }
   const episodeCode = options.episode.trim();
-  const plan = ports.loadPlan(episodeCode);
+  const plan = ports.loadPlan(episodeCode, options.aspect);
   if (plan === undefined) {
     return {
       exitCode: 1,
@@ -329,17 +334,19 @@ export async function runApproveStoryboard(
       ],
     };
   }
-  if (plan.approvalState === "APPROVED" && options.rejectNote === undefined) {
+  if (plan.approvalState === "APPROVED") {
     return {
       exitCode: 1,
       lines: [
-        `[mmcs] approve-storyboard: storyboard for ${episodeCode} is already APPROVED — reopen the gate and re-present a revised plan to change the decision (spec §3: never flip in one step)`,
+        options.rejectNote === undefined
+          ? `[mmcs] approve-storyboard: storyboard for ${episodeCode} is already APPROVED — reopen the gate and re-present a revised plan to change the decision (spec §3: never flip in one step)`
+          : `[mmcs] approve-storyboard: storyboard for ${episodeCode} is already APPROVED — reopen the gate before rejecting (spec §3: never flip a decision in one step)`,
       ],
     };
   }
 
-  const decidedBy = "trevor"; // operator identity for gate records
   const decision: GateDecisionInputLike = {
+    decidedBy: "trevor", // operator identity for gate records
     ...(options.rejectNote !== undefined ? { note: options.rejectNote } : {}),
   };
 
