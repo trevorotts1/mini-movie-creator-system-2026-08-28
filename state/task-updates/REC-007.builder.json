@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-007",
+  "phase": "BUILDER_DONE",
+  "commit": "a157b77475425234a495e82af802373fada319ab",
+  "testsRun": "npx tsx scripts/hooks/teammate-idle.ts --selftest -> TEAMMATE-IDLE SELFTEST PASS (exit 0); npx vitest run scripts/hooks/teammate-idle.test.ts -> 41/41 PASS (exit 0); npx tsc --noEmit scripts/hooks/teammate-idle.ts scripts/hooks/teammate-idle.test.ts -> clean; live-state sh-chain probe: --agent agent-a vs real state/tasks.json -> exit 0 allow-idle, --workflow WF10 -> exit 2 claim directive",
+  "notes": "Read-only decision gate scripts/hooks/teammate-idle.ts + executable .claude/hooks/teammate-idle.sh + .claude/settings.json TeammateIdle wiring (matcher *, timeout 30): exit 2 + continue instruction naming owned ACTIVE/QC_FIXING tasks, else exit 2 directing claim of next compatible READY task in same workflow (deps satisfied via PASS/MERGED/DONE, not claimed by another agent, deterministic natural sort, capped at 3), else exit 0 allow-idle; fail-open (exit 0) on unreadable/corrupt state or unexpected hook error so a broken store cannot wedge teammates — watchdog owns flagging corruption; identity from stdin payload (teammate_name/agent_id/agent_name/name variants), --agent flag, MMCS_AGENT_ID, plus MMCS_TASK_ID/MMCS_WORKFLOW overrides.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T12:00Z"
+}
