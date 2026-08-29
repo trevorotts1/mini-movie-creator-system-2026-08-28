@@ -51,7 +51,7 @@ log() { printf '  %s\n' "$*"; }
 # 0. Source skill comes from the MMCS checkout (this repo).
 SRC_APPEND_PICK() { :; }
 find_src() {
-  for c in "${MMCS_ROOT:-}" /home/node/mmcs "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"; do
+  for c in "${MMCS_ROOT:-}" /home/node/.openclaw/workspace/mmcs /home/node/mmcs "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"; do
     if [ -n "$c" ] && [ -d "$c/integrations/openclaw/mini-movie-creator" ]; then echo "$c/integrations/openclaw/mini-movie-creator"; return; fi
   done
   echo "$REPO_MOUNT/integrations/openclaw/mini-movie-creator"
@@ -105,7 +105,7 @@ fi
 MARK="## MMCS mini-movie engine (skill $SKILL_SLOT)"
 BLOCK="
 $MARK
-Series/episodes with a LOCKED recurring character → skills/$SKILL_SLOT-$SLUG (engine CLI at /home/node/mmcs; preflight: skills/$SKILL_SLOT-$SLUG/scripts/env-preflight.sh; provider = KIE_API_KEY, never fal.ai).
+Series/episodes with a LOCKED recurring character → skills/$SKILL_SLOT-$SLUG (engine CLI at HOME/.openclaw/workspace/mmcs — persisted across container recreates; preflight: skills/$SKILL_SLOT-$SLUG/scripts/env-preflight.sh; provider = KIE_API_KEY, never fal.ai).
 One-off montage / brief → finished video → 47-movie-producer instead.
 "
 if [ -f "$AGENTS" ] && grep -qF "$MARK" "$AGENTS"; then

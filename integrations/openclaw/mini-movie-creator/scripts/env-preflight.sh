@@ -26,7 +26,7 @@ for a in "$@"; do
 done
 
 REPO=""
-for c in "${MMCS_ROOT:-}" . /home/node/mmcs; do
+for c in "${MMCS_ROOT:-}" . /home/node/.openclaw/workspace/mmcs /home/node/mmcs; do
   if [ -n "$c" ] && [ -f "$c/package.json" ] && grep -q '"name": "mmcs-monorepo"' "$c/package.json" 2>/dev/null; then
     REPO="$c"; break
   fi

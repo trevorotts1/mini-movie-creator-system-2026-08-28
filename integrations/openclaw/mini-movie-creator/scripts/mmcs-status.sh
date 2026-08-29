@@ -57,6 +57,16 @@ if [ -z "$MMCS_ROOT" ]; then
   MMCS_ROOT="$(resolve_root_from "$PWD" || true)"
 fi
 
+# Persistent-location fallback (survives container recreates): the engine is
+# installed at the client workspace's persisted mmcs/ dir by install-client.sh.
+if [ -z "$MMCS_ROOT" ]; then
+  for c in "$HOME/.openclaw/workspace/mmcs" "$HOME/.openclaw/workspace/mmcs"; do
+    if [ -n "$c" ] && [ -f "$c/package.json" ] && grep -q "\"name\"[[:space:]]*:[[:space:]]*\"${MMCS_PACKAGE_NAME}\"" "$c/package.json" 2>/dev/null; then
+      MMCS_ROOT="$c"; break
+    fi
+  done
+fi
+
 if [ -z "$MMCS_ROOT" ]; then
   echo "mmcs-status.sh: MMCS engine root not resolvable." >&2
   echo "Set MMCS_ROOT to the mmcs-monorepo checkout, run from inside it," >&2
