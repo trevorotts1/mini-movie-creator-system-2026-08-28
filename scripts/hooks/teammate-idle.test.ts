@@ -115,6 +115,15 @@ describe("teammate-idle hook (REC-007)", () => {
       expect(compareTaskIds("A-1", "A-1")).toBe(0);
     });
 
+    it("orders ids with differing numeric-group lengths without NaN", () => {
+      // Regression (REC-007 QC): the digit-pair loop under
+      // noUncheckedIndexedAccess must never produce undefined arithmetic.
+      expect(compareTaskIds("A-1", "A-1-2")).toBeLessThan(0);
+      expect(compareTaskIds("A-1-2", "A-1")).toBeGreaterThan(0);
+      expect(Number.isNaN(compareTaskIds("T-7", "T-7-1"))).toBe(false);
+      expect(compareTaskIds("NO-DIGIT", "NO-DIGITS")).toBeLessThan(0);
+    });
+
     it("satisfies deps only on PASS/MERGED/DONE", () => {
       const statusOf = new Map([
         ["PASS-1", "PASS"],
@@ -176,6 +185,27 @@ describe("teammate-idle hook (REC-007)", () => {
       });
       // Only the override maps here; with agents.json both would appear.
       expect(d.owned.map((t) => t.id)).toEqual(["B-002"]);
+    });
+
+    it("sorts and names every owned in-flight task from agents.json", () => {
+      // Regression (REC-007 QC): multi-owned sort exercises the first owned
+      // record's workflow lookup (owned[0]?.id under strict indexing).
+      const d = decide({
+        tasks: [
+          { id: "B-010", workflow: "WF3", status: "QC_FIXING" },
+          { id: "B-002", workflow: "WF3", status: "ACTIVE" },
+          { id: "B-001", workflow: "WF3", status: "ACTIVE" },
+        ],
+        agents: [{ id: "multi", workflow: "", taskId: "B-010" }, { id: "multi", taskId: "B-002" }],
+        agent: "multi",
+      });
+      expect(d.decision).toBe("continue-owned");
+      expect(d.owned.map((t) => t.id)).toEqual(["B-002", "B-010"]);
+      expect(d.workflow).toBe("WF3");
+      const text = renderInstruction(d);
+      expect(text).toContain("B-002");
+      expect(text).toContain("B-010");
+      expect(text).toContain("WF3");
     });
   });
 

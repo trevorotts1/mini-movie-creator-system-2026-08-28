@@ -16,9 +16,10 @@ import { Readable } from "node:stream";
  *
  * Decision order (runbook §4.1 status vocabulary):
  *
- *   1. Resolve the teammate's identity from the hook payload (agent id /
- *      teammate name fields), then `--agent`, then MMCS_AGENT_ID, and an
- *      optional direct MMCS_TASK_ID claim. An unresolvable identity owns
+ *   1. Resolve the teammate's identity: `--agent` flag first (explicit
+ *      override), then the hook payload (agent id / teammate name fields),
+ *      then MMCS_AGENT_ID, plus an optional direct MMCS_TASK_ID claim. An
+ *      unresolvable identity owns
  *      nothing provable → idle is allowed (fail-open: a broken state store
  *      must not wedge every teammate into a blocked-idle loop; the watchdog,
  *      not this hook, flags state corruption).
@@ -168,7 +169,9 @@ export function compareTaskIds(a: string, b: string): number {
   const nb = b.match(/\d+/g)?.map(Number) ?? [];
   const len = Math.min(na.length, nb.length);
   for (let i = 0; i < len; i += 1) {
-    if (na[i] !== nb[i]) return na[i] - nb[i];
+    const va = na[i] ?? 0;
+    const vb = nb[i] ?? 0;
+    if (va !== vb) return va - vb;
   }
   return a.localeCompare(b);
 }
@@ -232,7 +235,7 @@ export function decide(input: DecideInput): IdleDecision {
       decision: "continue-owned",
       exitCode: 2,
       agent,
-      workflow: str(input.workflowOverride) || str(records[0]?.workflow) || str(byId.get(str(owned[0].id))?.workflow),
+      workflow: str(input.workflowOverride) || str(records[0]?.workflow) || str(byId.get(str(owned[0]?.id))?.workflow),
       owned,
       suggestions: [],
     };
@@ -592,11 +595,9 @@ export async function runHook(
       io.stderr(`${result.instruction}\n`);
       return 2;
     }
-    if (result.decision.decision === "allow-idle" && (opts.repoRoot ?? "") !== "" && result.decision.workflow === "") {
-      // Quiet allow on the normal path; the fail-open variant already carries
-      // its reason in the instruction, surfaced on stdout here for operators.
-      io.stdout(`${result.instruction}\n`);
-    } else if (result.decision.decision === "allow-idle") {
+    if (result.decision.decision === "allow-idle") {
+      // The fail-open variant carries its reason in the instruction; surface
+      // every allow message on stdout for operators reading hook logs.
       io.stdout(`${result.instruction}\n`);
     }
     return 0;
