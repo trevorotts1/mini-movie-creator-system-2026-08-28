@@ -92,6 +92,16 @@ describe("task-completed hook (REC-006)", () => {
       expect(normalizeInput("garbage").taskId).toBe("");
       expect(normalizeInput({ task_id: "   " }).taskId).toBe("");
     });
+
+    it("coerces numeric task ids so they reach the NOT_MMCS allow path (QC-fix REC-006)", async () => {
+      // The harness task tool uses numeric ids; they must not collapse to ""
+      // (which would false-block with NO_TASK_ID).
+      expect(normalizeInput({ task_id: 12 }).taskId).toBe("12");
+      expect(normalizeInput({ task: { task_id: 7 } }).taskId).toBe("7");
+      const out0 = await evaluateTaskCompletion("/nonexistent-repo-root", "12");
+      expect(out0.allowed).toBe(true);
+      expect(out0.reason).toBe("NOT_MMCS_TASK");
+    });
   });
 
   describe("task id vocabulary", () => {
@@ -230,6 +240,33 @@ describe("task-completed hook (REC-006)", () => {
       ]);
       const out2 = await evaluateTaskCompletion(dir, "HH-2");
       expect(out2.remaining.find((r) => r.includes("ACTIVE→MERGED jump"))).toBeUndefined();
+    });
+
+    it("does not fabricate an ACTIVE→MERGED jump for a qcRequired:false task (QC-fix REC-006)", async () => {
+      // Opt-out task marked MERGED with its (reduced) trail complete: legal.
+      await writeTasks([
+        {
+          id: "HH-3",
+          status: "MERGED",
+          branch: "task/h-3",
+          worktree: "worktrees/H-3/",
+          qcRequired: false,
+        },
+      ]);
+      await writeBuilder("HH-3");
+      let out = await evaluateTaskCompletion(dir, "HH-3");
+      expect(out.allowed).toBe(true);
+      expect(out.remaining.find((r) => r.includes("ACTIVE→MERGED jump"))).toBeUndefined();
+
+      // Same opt-out task but builder evidence missing: the jump is real and
+      // must name the builder gap while marking QC "not required".
+      await rm(join(dir, "state", "task-updates", "HH-3.builder.json"));
+      out = await evaluateTaskCompletion(dir, "HH-3");
+      expect(out.allowed).toBe(false);
+      const jump = out.remaining.find((r) => r.includes("ACTIVE→MERGED jump"));
+      expect(jump).toBeDefined();
+      expect(jump).toContain("builder evidence: missing");
+      expect(jump).toContain("QC PASS: not required");
     });
 
     it("allows a fully-evidenced task (exit-0 path)", async () => {

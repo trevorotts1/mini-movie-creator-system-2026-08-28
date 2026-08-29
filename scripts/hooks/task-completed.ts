@@ -83,8 +83,15 @@ export interface TaskCompletedHookInput {
 /** Coerce the loose hook payload into the strings we evaluate. */
 export function normalizeInput(raw: unknown): { taskId: string; sessionId: string } {
   const obj = (raw && typeof raw === "object" ? raw : {}) as TaskCompletedHookInput;
+  // Numbers coerce to their string form so the harness task tool's numeric
+  // ids reach the NOT_MMCS_TASK allow path — collapsing them to "" here
+  // would false-block a non-MMCS close with NO_TASK_ID.
   const str = (v: unknown): string =>
-    typeof v === "string" && v.trim() !== "" ? v.trim() : "";
+    typeof v === "string" && v.trim() !== ""
+      ? v.trim()
+      : typeof v === "number" && Number.isFinite(v)
+        ? String(v)
+        : "";
   const task = obj.task && typeof obj.task === "object" ? obj.task : undefined;
   return {
     taskId:
@@ -283,11 +290,14 @@ export async function evaluateTaskCompletion(
   }
 
   // 7. ACTIVE→MERGED jump: MERGED without the full evidence trail.
+  // A record-level qcRequired: false opt-out (check 6) means QC PASS is not
+  // part of this task's trail — it must not manufacture a false jump.
   const status = (record.status ?? "").trim().toUpperCase();
   const hasBuilder = builder !== null;
-  if (status === "MERGED" && (!hasBuilder || !qcPass)) {
+  const qcSatisfied = !qcRequired || qcPass;
+  if (status === "MERGED" && (!hasBuilder || !qcSatisfied)) {
     remaining.push(
-      `ACTIVE→MERGED jump: task ${id} is marked MERGED but the evidence trail is incomplete (builder evidence: ${hasBuilder ? "present" : "missing"}, QC PASS: ${qcPass ? "present" : "missing"}) — a task may only be MERGED after BUILDER_DONE + QC PASS`,
+      `ACTIVE→MERGED jump: task ${id} is marked MERGED but the evidence trail is incomplete (builder evidence: ${hasBuilder ? "present" : "missing"}, QC PASS: ${qcSatisfied ? (qcRequired ? "present" : "not required") : "missing"}) — a task may only be MERGED after BUILDER_DONE + QC PASS`,
     );
   }
 
