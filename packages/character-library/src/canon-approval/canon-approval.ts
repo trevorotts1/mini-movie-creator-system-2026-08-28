@@ -53,9 +53,20 @@ import type {
 /** The one gate id this module reads. */
 const CANON_GATE_ID = "canon";
 
-/** Assert `value` is an ISO-8601 instant. Untrusted input must surface. */
+/** ISO-8601 calendar date, optional time and zone suffix. */
+const ISO_DATE_RE =
+  /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
+
+/** Assert `value` is an ISO-8601 instant. Untrusted input must surface.
+ * Date.parse alone is not enough: it silently accepts prose like
+ * "tomorrow"/"next Friday" (spec §10 review text is untrusted input that
+ * must not masquerade as a persisted timestamp). */
 function assertIsoTimestamp(value: string, field: string): void {
-  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+  if (
+    typeof value !== "string" ||
+    !ISO_DATE_RE.test(value) ||
+    Number.isNaN(Date.parse(value))
+  ) {
     throw new CanonApprovalError(
       `canon-approval field "${field}" is not an ISO-8601 timestamp: ${JSON.stringify(value)}`,
     );
@@ -173,12 +184,15 @@ function proposeCanOnChangeSafe(
   },
 ): void {
   try {
+    // Clone at the staging boundary: the ledger must not share structure
+    // with caller-owned draft objects (post-stage tampering would otherwise
+    // flow silently into a later approval).
     proposeCanonChange(bible, {
       changeId: draft.changeId,
       description: draft.description,
       effectiveEpisode: draft.effectiveEpisode,
       proposedAt: draft.proposedAt,
-      mutations: draft.mutations,
+      mutations: structuredClone(draft.mutations),
     });
   } catch (error) {
     if (error instanceof SeriesBibleError) {
@@ -216,6 +230,9 @@ export function proposeEndOfEpisodeChanges(
   },
 ): ProposedCanonChangesList {
   assertIsoTimestamp(input.proposedAt, "proposedAt");
+  if (input.decidedAt !== undefined) {
+    assertIsoTimestamp(input.decidedAt, "decidedAt");
+  }
   if (input.drafts.length === 0) {
     throw new CanonApprovalError(
       `end-of-episode proposal for ${input.episode} has no drafts`,
@@ -240,7 +257,7 @@ export function proposeEndOfEpisodeChanges(
       changeId,
       description: draft.description ?? describeCanonChange(draft.mutations),
       effectiveEpisode,
-      mutations: draft.mutations,
+      mutations: structuredClone(draft.mutations),
       proposedAt: input.proposedAt,
       decidedAt: input.decidedAt ?? input.proposedAt,
     };

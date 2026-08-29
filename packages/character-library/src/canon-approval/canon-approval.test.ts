@@ -185,6 +185,81 @@ describe("proposeEndOfEpisodeChanges — Proposed Canon Changes list", () => {
     expect(bible.canonChanges).toHaveLength(1);
   });
 
+  it("stages an independent copy: post-stage draft tampering cannot reach canon", () => {
+    const bible = seedBible();
+    const mutations = [
+      {
+        op: "record_character_event" as const,
+        event: {
+          characterId: MARCUS,
+          event: "broke his arm",
+          effectiveEpisode: "S01E09",
+        },
+      },
+    ];
+    proposeEndOfEpisodeChanges(bible, {
+      episode: "S01E09",
+      proposedAt: "2026-08-10T00:00:00Z",
+      drafts: [{ changeId: "CC_S01E09_001", mutations }],
+    });
+    // Caller mutates their draft object after staging.
+    const first = mutations[0]!;
+    if (first.op !== "record_character_event") throw new Error("test setup");
+    first.event.event = "ERASED";
+    approveProposedCanonChange(bible, "CC_S01E09_001", {
+      gate: approvedGate(),
+      decidedAt: "2026-08-10T01:00:00Z",
+    });
+    const staged = bible.canonChanges.find((c) => c.changeId === "CC_S01E09_001");
+    expect(staged?.mutations[0]).not.toBe(mutations[0]);
+    expect(currentCanon(bible).characterEvents.some((e) => e.event === "ERASED")).toBe(
+      false,
+    );
+    expect(currentCanon(bible).characterEvents.some((e) => e.event === "broke his arm")).toBe(
+      true,
+    );
+  });
+
+  it("rejects non-ISO timestamps that Date.parse would leniently accept", () => {
+    const bible = seedBible();
+    // Regression: Date.parse("August 10") is a valid instant, but it is
+    // not ISO-8601 — persisted canon timestamps must be ISO-8601.
+    expect(() =>
+      proposeEndOfEpisodeChanges(bible, {
+        episode: "S01E04",
+        proposedAt: "August 10",
+        drafts: endOfEpisodeDrafts(),
+      }),
+    ).toThrow(CanonApprovalError);
+    expect(() =>
+      proposeEndOfEpisodeChanges(bible, {
+        episode: "S01E04",
+        proposedAt: "2026-08-04T00:00:00Z",
+        decidedAt: "August 10",
+        drafts: endOfEpisodeDrafts(),
+      }),
+    ).toThrow(CanonApprovalError);
+    expect(bible.canonChanges).toHaveLength(1);
+    // Approval-side timestamps get the same check.
+    proposeEndOfEpisodeChanges(bible, {
+      episode: "S01E09",
+      proposedAt: "2026-08-10T00:00:00Z",
+      drafts: endOfEpisodeDrafts(),
+    });
+    expect(() =>
+      approveProposedCanonChange(bible, "CC_S01E09_001", {
+        gate: approvedGate(),
+        decidedAt: "10/8/2026",
+      }),
+    ).toThrow(CanonApprovalError);
+    expect(
+      bible.canonChanges.find((c) => c.changeId === "CC_S01E09_001")?.status,
+    ).toBe("PROPOSED");
+    expect(() =>
+      rejectProposedCanonChange(bible, "CC_S01E09_001", "when the heat death"),
+    ).toThrow(CanonApprovalError);
+  });
+
   it("rejects duplicate change IDs — within the batch and against the ledger", () => {
     const bible = seedBible();
     expect(() =>
