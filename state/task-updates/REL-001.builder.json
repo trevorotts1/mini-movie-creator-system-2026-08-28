@@ -1,0 +1,9 @@
+{
+  "taskId": "REL-001",
+  "phase": "BUILDER_DONE",
+  "commit": "e0d8de9064071278d49fa5dc4a148177bc69b14d",
+  "testsRun": "pnpm vitest run scripts/release/clean-install.test.ts -> 14 passed / 0 failed; bash -n clean-install.sh -> OK; full suite pnpm vitest run -> 3504 passed, 3 pre-existing remotion-runtime failures (missing react for .tsx imports, unrelated to REL-001); pnpm -r run typecheck -> clean; live pristine run: rm -rf apps/cli/dist && bash scripts/release/clean-install.sh -> rc=0, 12 checks passed, doctor exit 0",
+  "notes": "clean-install.sh: 5-step idempotent installer (prereqs gate node>=20/git/ffmpeg, repo-layout gate, pnpm install --frozen-lockfile via corepack fallback, CLI build, mmcs doctor no-secrets gate) + .env scaffold only on clean pass; docs/installation.md: prerequisites, step-by-step, exit codes, full .env variable tables (MMCS engine + inherited upstream), config-loading rules, skill hosts, Remotion note, troubleshooting",
+  "blockers": [],
+  "updatedAt": "2026-08-28T10:05Z"
+}
