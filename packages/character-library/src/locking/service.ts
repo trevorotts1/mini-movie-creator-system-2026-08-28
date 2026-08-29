@@ -64,6 +64,7 @@ export interface AssetRecordStore {
 export interface LockEvent {
   readonly at: string;
   readonly kind:
+    | "ASSET_TO_REVIEW"
     | "ASSET_TO_APPROVED"
     | "ASSET_TO_CANONICAL"
     | "CHARACTER_TO_CANONICAL";
@@ -129,6 +130,10 @@ export class CharacterLockService {
       throw new AlreadyLockedError(characterId);
     }
     assertCanonicalizable(character.state);
+    // The character itself must already be APPROVED (spec §3: the LOCK gate
+    // follows candidate approval). Validate its edge BEFORE touching any
+    // asset — a REVIEW/DRAFT character must abort the lock with zero writes.
+    assertTransition(character.state, "CANONICAL");
 
     // Validate the whole batch BEFORE mutating anything: a single illegal
     // asset state aborts the lock with zero writes (all-or-nothing).
@@ -145,8 +150,9 @@ export class CharacterLockService {
     const events: LockEvent[] = [];
     const lockedAssetIds: string[] = [];
     for (const asset of assets) {
-      this.applyAssetTransition(asset, events, characterId, now);
-      lockedAssetIds.push(asset.assetId);
+      if (this.applyAssetTransition(asset, events, characterId, now)) {
+        lockedAssetIds.push(asset.assetId);
+      }
     }
 
     assertTransition(character.state, "CANONICAL");
@@ -174,7 +180,14 @@ export class CharacterLockService {
     events: LockEvent[],
     characterId: string,
     now: string,
-  ): void {
+  ): boolean {
+    // Idempotent pass-through: an asset that is already CANONICAL (out-of-band
+    // write while the character record lagged behind) must not abort the lock
+    // mid-batch — CANONICAL -> APPROVED is an illegal hop. Nothing was
+    // flipped for this asset, so it is excluded from lockedAssetIds.
+    if (asset.state === "CANONICAL") {
+      return false;
+    }
     let from = asset.state;
     while (from !== "APPROVED") {
       const to: AssetState = from === "DRAFT" ? "REVIEW" : "APPROVED";
@@ -182,7 +195,7 @@ export class CharacterLockService {
       this.assets.setState(asset.assetId, to, now);
       events.push({
         at: now,
-        kind: to === "APPROVED" ? "ASSET_TO_APPROVED" : "ASSET_TO_CANONICAL",
+        kind: to === "APPROVED" ? "ASSET_TO_APPROVED" : "ASSET_TO_REVIEW",
         characterId,
         assetId: asset.assetId,
         from,
@@ -200,6 +213,7 @@ export class CharacterLockService {
       from: "APPROVED",
       to: "CANONICAL",
     });
+    return true;
   }
 
   /** Gate check shared by every mutating path — throws before any mutation. */

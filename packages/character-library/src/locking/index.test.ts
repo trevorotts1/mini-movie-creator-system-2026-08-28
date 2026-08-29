@@ -198,14 +198,65 @@ describe("canonical transition (spec §9 DRAFT → APPROVED → CANONICAL)", () 
     ]);
     const kinds = result.events.map((e) => e.kind);
     expect(kinds).toEqual([
-      "ASSET_TO_CANONICAL",
+      "ASSET_TO_REVIEW",
       "ASSET_TO_APPROVED",
       "ASSET_TO_CANONICAL",
-      "ASSET_TO_CANONICAL",
+      "ASSET_TO_REVIEW",
       "ASSET_TO_APPROVED",
       "ASSET_TO_CANONICAL",
       "CHARACTER_TO_CANONICAL",
     ]);
+    // Every event's kind must name the state it actually transitioned INTO.
+    for (const e of result.events) {
+      const suffix = e.kind.startsWith("CHARACTER_") ? "CANONICAL" : e.kind.slice("ASSET_TO_".length);
+      expect(e.to).toBe(suffix);
+    }
+  });
+
+  it("a not-yet-APPROVED character aborts the lock with zero writes", () => {
+    // Regression: the character edge used to be validated only AFTER the
+    // asset loop, so a DRAFT character with APPROVED assets flipped every
+    // asset to CANONICAL and then threw — partial writes, broken contract.
+    for (const bad of ["DRAFT", "REVIEW"] as const) {
+      const stores = makeStores(
+        { characterId: CHARACTER.characterId, state: bad },
+        approvedAssets(),
+      );
+      const service = new CharacterLockService({
+        gateReader: gateReader(gateSnapshot("APPROVED")),
+        characters: stores.characters,
+        assets: stores.assets,
+      });
+      expect(() => service.lock(CHARACTER.characterId, NOW)).toThrow(
+        CandidateStateError,
+      );
+      expect(stores.assetWrites).toHaveLength(0);
+      expect(stores.characterWrites).toHaveLength(0);
+    }
+  });
+
+  it("an already-CANONICAL asset does not abort the batch lock", () => {
+    // Regression: an out-of-band CANONICAL asset made the walk hop
+    // CANONICAL -> APPROVED, throwing mid-batch after prior assets mutated.
+    const mixed: LockableAssetShape[] = [
+      { assetId: "A1", characterId: CHARACTER.characterId, state: "DRAFT" },
+      { assetId: "A2", characterId: CHARACTER.characterId, state: "CANONICAL" },
+    ];
+    const stores = makeStores(CHARACTER, mixed);
+    const service = new CharacterLockService({
+      gateReader: gateReader(gateSnapshot("APPROVED")),
+      characters: stores.characters,
+      assets: stores.assets,
+    });
+    const result = service.lock(CHARACTER.characterId, NOW);
+    // A2 was already canonical: nothing flipped for it, so it is not listed.
+    expect(result.lockedAssetIds).toEqual(["A1"]);
+    expect(stores.assetWrites.map((w) => `${w.assetId}:${w.state}`)).toEqual([
+      "A1:REVIEW",
+      "A1:APPROVED",
+      "A1:CANONICAL",
+    ]);
+    expect(result.characterState).toBe("CANONICAL");
   });
 
   it("already-APPROVED assets go straight APPROVED -> CANONICAL", () => {
