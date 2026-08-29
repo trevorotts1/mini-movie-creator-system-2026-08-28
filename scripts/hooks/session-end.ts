@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { appendFile, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { dirname, join } from "node:path";
 import { uniqueIds } from "../../packages/core/src/recovery/index.js";
@@ -69,10 +69,15 @@ export interface SessionEndResult {
   };
 }
 
-/** Coerce the loose hook payload into the strings we record. */
+/** Coerce the loose hook payload into the strings we record. The payload
+ * arrives over stdin and is not trusted: whitespace runs (incl. newlines and
+ * carriage returns) are collapsed to single spaces so a hostile `reason` or
+ * `session_id` can never forge an extra ledger.md row or break out of the
+ * single-line recovery.md format inside the marker block. */
 export function normalizeInput(raw: unknown): { reason: string; sessionId: string } {
   const obj = (raw && typeof raw === "object" ? raw : {}) as SessionEndHookInput;
-  const str = (v: unknown): string => (typeof v === "string" && v.trim() !== "" ? v.trim() : "");
+  const str = (v: unknown): string =>
+    typeof v === "string" && v.trim() !== "" ? v.trim().replace(/\s+/g, " ") : "";
   return {
     reason: str(obj.reason) || "unknown",
     sessionId: str(obj.session_id),
@@ -283,12 +288,22 @@ export async function runSessionEnd(opts: RunSessionEndOptions): Promise<Session
   return { ok: true, repoRoot, reason, lastCheckpointAt, recoveryUpdated, ledgerAppended, resume };
 }
 
-/** Atomic text write (temp + rename) for recovery.md. */
+/** Atomic text write (temp + fsync + rename) for recovery.md — the same
+ * durability protocol as the checkpoint service: rename must not become
+ * visible to a later reader before the bytes are on disk, or a crash between
+ * the two leaves an empty/truncated recovery.md, which is precisely the file
+ * a crashed session depends on. */
 async function atomicWriteText(filePath: string, data: string): Promise<void> {
   await mkdir(dirname(filePath), { recursive: true });
   const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   try {
-    await writeFile(tempPath, data);
+    const handle = await open(tempPath, "w");
+    try {
+      await handle.writeFile(data);
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
     await rename(tempPath, filePath);
   } catch (err) {
     await unlink(tempPath).catch(() => undefined);
