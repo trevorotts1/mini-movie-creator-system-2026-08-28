@@ -1747,8 +1747,8 @@
       "branch": "task/QC-007-agnes-flash-route",
       "worktree": "worktrees/QC-007/",
       "acceptance": "Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure \u2192 one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.",
-      "status": "QC_FIXING",
-      "notes": "batch-10: admission rejected (defectsFound=3 > defectsFixed=2) \u2014 fixer round 2 then re-QC"
+      "status": "PASS",
+      "notes": "QC PASS verified: defectsFixed=2/defectsFound=2, 28/28 tests green, ready for merge"
     },
     {
       "id": "QC-008",
