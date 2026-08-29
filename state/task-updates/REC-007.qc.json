@@ -1,0 +1,13 @@
+{
+  "taskId": "REC-007",
+  "phase": "PASS",
+  "commit": "3b15bbf91ad9fc107d7a55fabc2d189bc4130215",
+  "checksRun": "node ../../node_modules/vitest/vitest.mjs run scripts/hooks/teammate-idle.test.ts (43/43 PASS exit 0, incl. real .claude/hooks/teammate-idle.sh end-to-end both branches); tsc --noEmit -p <tsconfig.base.json flags: strict+noUncheckedIndexedAccess+isolatedModules> on scripts/hooks/teammate-idle.ts + .test.ts (rc 0); bash .claude/hooks/teammate-idle.sh --selftest (PASS exit 0); live-state probes via sh chain: owned-none/no-compatible -> exit 0 allow-idle, --workflow WF10 -> exit 2 claim directive naming REC-002/REL-002/REC-003; security pass on owned paths (read-only gate, no secrets, hook payload never exec'd, no path input from payload, timeout 30s, no retry loop, fail-open exit 0 cannot wedge team)",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T03:30Z",
+  "notes": "Builder's tsc used default flags, not repo tsconfig.base.json: 3 strict-mode errors (compareTaskIds indexed digit compare possibly-undefined, decide() owned[0] unguarded); fixed with ?? 0 / owned[0]?.id + 2 regression tests. Dead allow-idle conditional in runHook collapsed (both branches identical, no behavior change). Header doc identity order corrected to flag>payload>env. Acceptance verified independently: exit 2 + continue instruction on owned ACTIVE/QC_FIXING, claim-next-READY directive, allow-idle with no useful work, both-branch sh-entry test green.",
+  "blockers": []
+}
