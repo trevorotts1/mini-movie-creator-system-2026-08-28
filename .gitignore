@@ -38,4 +38,4 @@ coverage/
 .env
 .env.*
 !.env.example
-*.md.bak-batch*
+*.bak-batch*
