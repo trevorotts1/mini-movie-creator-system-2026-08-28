@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-008",
+  "phase": "BUILDER_DONE",
+  "commit": "4b76579",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/screenplay/approval => 21 passed; npx vitest run apps/cli/src/commands/write-script => 14 passed (35 total green); npx tsc --noEmit packages/scene-intelligence + apps/cli clean; full npx vitest run 3524 passed with 1 pre-existing failure (scripts/orchestration/checkpoint.test.ts cross-process writers — fails identically on integration baseline, not DIR-008)",
+  "notes": "Script approval gate (spec gate 2): screenplay/approval module (types/presenter/guard) + write-script & approve-script CLI contracts; gate-2 guard blocks all cast/candidate work until APPROVED; order-enforced on gate 1; reject-note path feeds DIR-007 revision loop.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T10:05Z"
+}
