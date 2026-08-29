@@ -166,3 +166,11 @@ Install, operate, and recover it without reading source code:
 ## Next action
 - Merger (batch-16 closeout, REL-006 acceptance): promote integration -> main after final regression, push annotated release tag (git tag -a vX -m ... && git push origin vX), verify docs-verify.sh rc=0 on the tag
 - Operator: launch MMCS per README quickstart / session.md 'How to launch MMCS'
+
+## Release — v1.0.0 (2026-08-29T12:30:00Z)
+- Main promotion: integration 938238d..5889ebc fast-forwarded to main and pushed (no history rewrite — main was strict ancestor, merge-base verified)
+- Annotated release tag v1.0.0 -> 5889ebc pushed to origin (tag object 09d8164)
+- Final state: main == integration == origin/main == 5889ebc; 149/149 tasks MERGED
+
+## Next action
+- OPERATOR: launch MMCS — see README quickstart or session.md 'How to launch MMCS' section
