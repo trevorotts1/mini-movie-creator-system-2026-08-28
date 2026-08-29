@@ -88,6 +88,17 @@ note() {
   STEPS+=("NOTE: $1")
 }
 
+# Hard gates (prerequisites, repo layout) must abort BEFORE any mutation —
+# install/build/env-copy never run on a tree that failed the gate.
+abort_if_gated() {
+  if [ "$FAIL" -gt 0 ]; then
+    echo
+    echo "clean-install: FAILED — $PASS passed, $FAIL failed (aborted before install; fix the FAIL lines above and rerun)"
+    [ "$JSON_OUT" -eq 1 ] && emit_json
+    exit 1
+  fi
+}
+
 emit_json() {
   # One JSON line, stdout, no secret values ever (names only).
   local status="ok"
@@ -140,17 +151,32 @@ for req in apps/cli packages/core pnpm-workspace.yaml pnpm-lock.yaml .env.exampl
   fi
 done
 
+# Hard gates passed — only now is mutation (install/build/.env) allowed.
+abort_if_gated
+
 step "3/5 pnpm workspace install"
 PNPM_V="$(pnpm_version_from_package_manager "$REPO_ROOT/package.json" || true)"
 if command -v pnpm >/dev/null 2>&1; then
   ok "pnpm $(pnpm --version) on PATH"
 elif command -v corepack >/dev/null 2>&1; then
-  # Pin to the repo's packageManager version via corepack (no global mutation
-  # beyond corepack's own managed cache).
+  # Pin to the repo's packageManager version via corepack. `corepack enable
+  # --install-directory` writes real pnpm shims into a directory we control
+  # and prepend to PATH (plain `corepack prepare --activate` does NOT put a
+  # shim on PATH — verified: the shim still fails to resolve). No global
+  # mutation beyond corepack's own managed download cache.
   if [ -n "$PNPM_V" ]; then
     note "pnpm missing — corepack provisioning pnpm@$PNPM_V (repo packageManager pin)"
-    if corepack prepare "pnpm@$PNPM_V" --activate >/dev/null 2>&1 && command -v pnpm >/dev/null 2>&1; then
-      ok "pnpm $PNPM_V activated via corepack"
+    COREPACK_BIN="${TMPDIR:-/tmp}/mmcs-corepack-bin-$$"
+    mkdir -p "$COREPACK_BIN" 2>/dev/null || true
+    if COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack enable pnpm \
+         --install-directory "$COREPACK_BIN" >/dev/null 2>&1 &&
+       PATH="$COREPACK_BIN:$PATH" command -v pnpm >/dev/null 2>&1; then
+      export PATH="$COREPACK_BIN:$PATH"
+      # The actual pnpm download happens on first use (inside the install
+      # step). Newer corepacks prompt for it by default; this is the repo's
+      # own pinned version, so no interactive prompt.
+      export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+      ok "pnpm $PNPM_V activated via corepack ($COREPACK_BIN on PATH)"
     else
       bad "corepack failed to activate pnpm@$PNPM_V — install pnpm manually: corepack enable pnpm (or npm i -g pnpm@$PNPM_V)"
     fi

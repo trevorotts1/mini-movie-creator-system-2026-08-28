@@ -92,11 +92,14 @@ function withSandbox(
 
 /** Fake pnpm shim: simulates install + CLI build side effects, logs args. */
 function makeFakePnpm(binDir: string): void {
-  const pnpm = `#!/usr/bin/env bash
-# fake pnpm for REL-001 clean-install tests — simulates workspace install + CLI build
+  writeFileSync(path.join(binDir, "pnpm"), fakePnpmBody(), { mode: 0o755 });
+}
+
+/** Fake pnpm shim body — shared by makeFakePnpm and the fake-corepack shim. */
+function fakePnpmBody(): string {
+  return `#!/usr/bin/env bash
 if [ "$1" = "--version" ]; then echo "11.24.0"; exit 0; fi
 if [ "$1" = "--filter" ]; then
-  # pnpm --filter @mmcs/cli build
   mkdir -p apps/cli/dist
   echo 'console.log("[mmcs] fake cli")' > apps/cli/dist/index.js
   exit 0
@@ -109,7 +112,33 @@ if [ "$1" = "install" ]; then
 fi
 exit 0
 `;
-  writeFileSync(path.join(binDir, "pnpm"), pnpm, { mode: 0o755 });
+}
+
+/** Fake corepack implementing the real `enable --install-directory DIR`
+ * contract (writes a working pnpm shim into DIR). `prepare --activate` is a
+ * no-op with no PATH effect — exactly like the real corepack, which is why
+ * the script must use enable --install-directory, not prepare. */
+function makeFakeCorepack(binDir: string): void {
+  const body = fakePnpmBody();
+  const corepack = `#!/usr/bin/env bash
+if [ "$1" = "enable" ]; then
+  shift
+  dir=""
+  while [ $# -gt 0 ]; do
+    if [ "$1" = "--install-directory" ]; then dir="$2"; shift 2; else shift; fi
+  done
+  if [ -n "$dir" ]; then
+    mkdir -p "$dir"
+    printf '%s' '${body.replace(/'/g, "'\\''")}' > "$dir/pnpm"
+    chmod +x "$dir/pnpm"
+    exit 0
+  fi
+  exit 1
+fi
+if [ "$1" = "prepare" ]; then exit 0; fi
+exit 0
+`;
+  writeFileSync(path.join(binDir, "corepack"), corepack, { mode: 0o755 });
 }
 
 /** Fake node shim reporting a controllable version for the node-floor check. */
@@ -146,11 +175,26 @@ describe("clean-install.sh — prerequisites gate", () => {
   it("fails before mutating when node is below the engines floor", () => {
     withSandbox((root, binDir, run) => {
       makeFakeNode(binDir, "18"); // below engines floor
+      makeFakePnpm(binDir); // pnpm WOULD succeed — the gate must abort anyway
       const r = run();
       expect(r.status).toBe(1);
       expect(r.stdout).toContain("node >= 20");
-      // No install attempted (prerequisite gate reports before mutation).
+      // Regression: the script must NOT proceed to install after a failed
+      // hard gate (docs: "aborts with a fix hint BEFORE any mutation").
+      expect(existsSync(path.join(root, "fake-pnpm.log"))).toBe(false);
       expect(existsSync(path.join(root, "node_modules"))).toBe(false);
+      expect(existsSync(path.join(root, ".env"))).toBe(false);
+    });
+  });
+
+  it("aborts before mutating when a repo-layout file is missing", () => {
+    withSandbox((root, binDir, run) => {
+      makeFakePnpm(binDir);
+      rmSync(path.join(root, "pnpm-lock.yaml")); // fails the layout gate
+      const r = run();
+      expect(r.status).toBe(1);
+      expect(r.stdout).toContain("missing: pnpm-lock.yaml");
+      expect(existsSync(path.join(root, "fake-pnpm.log"))).toBe(false);
       expect(existsSync(path.join(root, ".env"))).toBe(false);
     });
   });
@@ -255,6 +299,23 @@ describe("clean-install.sh — pristine-clone happy path (fake toolchain)", () =
       expect(parsed.status).toBe("ok");
       expect(parsed.fail).toBe(0);
       expect(parsed.pass).toBeGreaterThan(0);
+    });
+  });
+
+  it("falls back to corepack enable --install-directory when pnpm is missing", () => {
+    // Regression: the original fallback used `corepack prepare --activate`,
+    // which does NOT put a pnpm shim on PATH (verified against real corepack
+    // 0.34 — `command -v pnpm` still failed after prepare --activate).
+    withSandbox((root, binDir, run) => {
+      makeFakeCorepack(binDir); // corepack present, pnpm absent from PATH
+      const r = run();
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain("activated via corepack");
+      // The corepack-provisioned shim actually ran install + build.
+      const log = readFileSync(path.join(root, "fake-pnpm.log"), "utf8");
+      expect(log).toContain("--frozen-lockfile");
+      expect(existsSync(path.join(root, "apps/cli/dist/index.js"))).toBe(true);
+      expect(existsSync(path.join(root, ".env"))).toBe(true);
     });
   });
 

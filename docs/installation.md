@@ -16,7 +16,7 @@ The script verifies prerequisites, installs the pnpm workspace, builds the
 | Requirement | Minimum | Why | Check |
 |---|---|---|---|
 | git | any recent | clone + repo integrity | `git --version` |
-| Node.js | **20+** (`engines` floor in root `package.json`) | engine + CLI runtime; the SQLite driver is Node's built-in `node:sqlite` | `node --version` |
+| Node.js | **20+** (`engines` floor in root `package.json`) | engine + CLI runtime (install/doctor); `node:sqlite` (stable in Node 22.5+) drives the database layer | `node --version` |
 | pnpm | pinned by `packageManager` in root `package.json` (corepack auto-provisions when missing) | workspace install | `pnpm --version` |
 | ffmpeg + ffprobe | 6.x+ | media probing/transcoding/normalization (spec §21) | `ffmpeg -version` |
 
