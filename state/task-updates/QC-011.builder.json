@@ -1,0 +1,9 @@
+{
+  "taskId": "QC-011",
+  "phase": "BUILDER_DONE",
+  "commit": "5ae7bab",
+  "testsRun": "npx vitest run packages/qc/src/human-review -> 1 file, 30/30 passed; npx vitest run apps/cli/src/commands/qc -> 1 file, 14/14 passed; npx vitest run packages/qc apps/cli -> 19 files, 408/408 passed; npx vitest run (full repo) -> 177 files, 3578 passed / 1 skipped / 0 failed; npx tsc --noEmit -p packages/qc/tsconfig.json and -p apps/cli/tsconfig.json -> clean",
+  "notes": "Human REVIEW state per spec §20: decide.ts maps merged pipeline outcomes to triggers (routes-exhausted from QC-006 terminal ladder action, qc-verdict-review from QC-001 rollup, review-unavailable from QC-005 route refusal; PASS never enters review, FAIL with routes left stays with the repair loop); store.ts is a durable HumanReviewStore mirroring CORE-008's ApprovalStore discipline (atomic temp+fsync+rename, corrupt documents throw, frozen records, write queue) where markReview persists immediately and approve/reject REQUIRE decidedBy — an APPROVED/REJECTED row without decidedAt/decidedBy on disk is rejected as corrupt, so no silent auto-approval at any layer; apps/cli/src/commands/qc/ wires `mmcs qc` (lists open REVIEW items oldest-first, --episode/--all/--json; approve/reject exit 1 without --by). Branch based on origin/integration and merged local integration tip 36de8bd (ENV-001 react deps) — needed to run the full suite in the worktree; no conflicts. Consumes CORE-008 approvals read-only; packages/core/ untouched.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T21:30:00Z"
+}

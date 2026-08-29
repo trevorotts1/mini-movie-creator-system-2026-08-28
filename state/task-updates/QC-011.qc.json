@@ -1,0 +1,13 @@
+{
+  "taskId": "QC-011",
+  "phase": "PASS",
+  "commit": "e40027e",
+  "checksRun": "pnpm exec vitest run packages/qc/src/human-review (35 pass); pnpm exec vitest run apps/cli/src/commands/qc packages/qc (335 pass, 13 files); pnpm exec vitest run apps/cli (92 pass); pnpm exec tsc --noEmit in packages/qc (rc=0) and apps/cli (rc=0); prototype-chain probe tests for shotIds toString/constructor/__proto__/hasOwnProperty round-tripping through store restart",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T10:35Z",
+  "notes": "Found+fixed 3 defects in owned paths: (1) snapshot/openCount/listReviews resolved Object.prototype members through the ?? null guard (shot named toString fabricated a record); (2) markReview of a shot named __proto__ silently lost the record on persistence reload (openCount 1->0) — fixed with null-prototype reviews maps at all construction points + 5 regression tests; (3) isReviewTrigger carried a third hardcoded copy of the trigger list, now derives from HUMAN_REVIEW_TRIGGERS. Pre-existing, NOT mine: packages/database/src/backup/backup.test.ts 'produces a .mmcsbak archive' 5s timing flake fails in full-suite runs identically on origin/integration (CORE-015 owns that path; passes in isolation). No eslint config exists repo-wide, lint step N/A.",
+  "blockers": []
+}
