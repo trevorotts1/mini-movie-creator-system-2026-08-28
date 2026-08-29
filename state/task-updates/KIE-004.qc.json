@@ -1,7 +1,7 @@
 {
   "taskId": "KIE-004",
   "phase": "PASS",
-  "commit": "7dad00d",
+  "commit": "6a2bcdb674ae4cf7f4f39f34cf9a59dbb133d2ee",
   "checksRun": "npx vitest run --config packages/providers/src/kie/seedance/validation/vitest.config.mts packages/providers/src/kie/seedance/validation (27/27 passed); npx vitest run --config apps/cli/vitest.config.ts packages/providers/src/kie (67/67 passed, 3 files); npx tsc --noEmit -p packages/providers/tsconfig.json (clean); security pass clean",
   "defectsFound": 0,
   "defectsFixed": 0,
