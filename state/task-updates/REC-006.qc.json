@@ -1,0 +1,13 @@
+{
+  "taskId": "REC-006",
+  "phase": "PASS",
+  "commit": "e7a7f0f",
+  "checksRun": "npx vitest run scripts/hooks/task-completed.test.ts → 29/29 PASS (27 builder + 2 QC regression); npx vitest run scripts/ → 142/142 PASS; npx vitest run scripts/orchestration/ → 97/97 PASS (no regression); npx tsc --noEmit --strict scripts/hooks/task-completed.ts + task-completed.test.ts → clean; npx tsx scripts/hooks/task-completed.ts --selftest → PASS exit 0; bash .claude/hooks/task-completed.sh --selftest → PASS exit 0; live gate: REC-006 pre-QC exits 2 naming QC gap, REC-001 (MERGED, full trail) exits 0 ALLOW, empty payload exits 2 NO_TASK_ID; exec bit 100755 verified in git index",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T03:35:13Z",
+  "notes": "Fixed: qcRequired:false MERGED tasks false-blocked as ACTIVE→MERGED jumps (opt-out now satisfies check 7); numeric harness task ids collapsed to empty and false-blocked NO_TASK_ID instead of hitting NOT_MMCS allow path; gate otherwise sound — vocabulary covers all 149 real ids, traversal impossible (id pattern-checked before any path join), fail-closed verified",
+  "blockers": []
+}
