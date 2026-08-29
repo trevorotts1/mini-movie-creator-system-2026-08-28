@@ -1,7 +1,7 @@
 {
   "taskId": "REL-001",
   "phase": "PASS",
-  "commit": "PENDING",
+  "commit": "9cbf6aa10f32818d0a928641278153bdb265a0cc",
   "checksRun": "bash -n scripts/release/clean-install.sh; npx vitest run scripts/release/clean-install.test.ts (16/16); npx vitest run scripts/ (113/113); rm -rf apps/cli/dist && bash scripts/release/clean-install.sh -> rc 0 (12 checks, doctor exit 0, .env blank scaffold); node apps/cli/dist/index.js doctor with .env removed -> rc 0 (no secrets required); real-corepack-0.34 live fallback exercise -> pnpm activated via enable --install-directory; pnpm -r run typecheck -> clean; repo has no lint scripts (ERR_PNPM_RECURSIVE_RUN_NO_SCRIPT) -> n/a",
   "defectsFound": 3,
   "defectsFixed": 3,
