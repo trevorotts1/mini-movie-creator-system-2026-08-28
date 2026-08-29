@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-011",
+  "phase": "BUILDER_DONE",
+  "commit": "ae6ae5d",
+  "testsRun": "npx tsx scripts/orchestration/compact-sim.ts -> PASS all 3 scenarios, exit 0; npx vitest run scripts/orchestration/compact-sim.test.ts -> 14/14; npx vitest run scripts/hooks scripts/orchestration -> 281/281 (11 files); full repo vitest 3950 pass with only pre-existing remotion-runtime react/clean-install failures (missing node_modules in worktree, reproduced on stashed control tree, not REC-011 scope)",
+  "notes": "Auto-compact sim: real REC-002/REC-003/REC-004 hooks + CORE-014 service in temp sandboxes; fixed draft defects (mapSame shadow, dup interface, missing CheckpointState import) and added dual-shape (camel-first/snake-fallback) checkpoint snapshot read per REC-002 addSnakeAliases contract",
+  "blockers": [],
+  "updatedAt": "2026-08-29T04:46:00Z"
+}
