@@ -1,0 +1,13 @@
+{
+  "taskId": "REC-005",
+  "phase": "PASS",
+  "commit": "3458611eddcb0b843803b6d3a6c570e6f6bf2567",
+  "checksRun": "node ./node_modules/vitest/vitest.mjs run scripts/hooks/session-end.test.ts (26/26 after fixes); node ./node_modules/vitest/vitest.mjs run scripts/orchestration/checkpoint.test.ts packages/core/src/recovery/ (43/43, no regression); tsc --noEmit --strict --noUncheckedIndexedAccess --noImplicitOverride --noFallthroughCasesInSwitch --isolatedModules scripts/hooks/session-end.ts scripts/hooks/session-end.test.ts (rc 0); bash .claude/hooks/session-end.sh --selftest (SESSION-END SELFTEST PASS rc 0); live simulated invocation with real hook JSON on stdin (rc 0, flush ok)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T03:30Z",
+  "notes": "Fixed: (1) untrusted stdin reason/session_id could carry newlines+pipes to forge extra ledger.md rows / break recovery.md single-line format — whitespace now collapsed in normalizeInput, 2 regression tests added; (2) atomicWriteText for recovery.md lacked fsync before rename (crash could truncate the one file a resumed session reads first) — now open+write+sync+rename matching checkpoint service protocol. Builder 24/24 independently re-verified; acceptance (final checkpoint + exact resume command/state in recovery.md + simulated invocation) proven. Merge caveat for batch merger: REC-002/003/005 each add a whole .claude/settings.json — add/add must be resolved by UNION of hook events (SessionEnd+PreCompact+PostCompact+…), not first-wins.",
+  "blockers": []
+}
