@@ -258,6 +258,80 @@ describe("pre-compact hook (REC-002)", () => {
     }, 30_000);
   });
 
+  describe("legacy snake_case checkpoint (real bootstrap state/checkpoint.json)", () => {
+    // The committed control-plane checkpoint.json uses runbook PART II §4
+    // snake_case keys. The registered PreCompact hook MUST flush against it —
+    // if it throws (fail-closed exit 2) every compaction of the real project
+    // is blocked. Regression for the QC-found defect where normalizeCheckpoint
+    // rejected schema_version and service.save would have dropped legacy keys.
+    const legacyDoc = {
+      schema_version: 1,
+      project_id: "mmcs",
+      timestamp: "2026-08-28T20:05:00Z",
+      current_main_sha: "773054bebbe460de0f31dcfda5315970b1c8b4f2",
+      current_integration_sha: "b43743aefded95186bd5bf1c83a02f2e243a8855",
+      active_dependency_wave: 1,
+      ready_task_ids: ["CORE-008", "REC-002"],
+      active_task_ids: [],
+      qc_task_ids: [],
+      merge_queue_ids: [],
+      blocked_task_ids: [],
+      active_workflow_ids: [],
+      active_agent_ids: [],
+      last_watchdog_timestamp: null,
+      last_batch_merge_timestamp: "2026-08-28T15:26:14Z",
+      next_recommended_actions: ["preexisting hint"],
+      last_batch_merge: { batch: 5, merged_count: 24 },
+    };
+
+    beforeEach(async () => {
+      await writeFile(join(dir, "state", CHECKPOINT_FILE), JSON.stringify(legacyDoc, null, 2), "utf8");
+    });
+
+    it("flushes without throwing and stamps both camelCase and snake_case", async () => {
+      await runPreCompact({ repoRoot: dir, input: { trigger: "auto" } });
+      const doc = await readCheckpoint();
+      expect(doc.schemaVersion).toBe(1);
+      expect(doc.schema_version).toBe(1); // legacy alias refreshed
+      expect(doc.lastCheckpointAt).toBeTruthy();
+      expect((doc.nextActions as string[])).toContain(PRECOMPACT_NEXT_ACTION);
+      expect((doc.nextActions as string[])).toContain("preexisting hint"); // hints preserved
+      expect(doc.next_recommended_actions).toEqual(doc.nextActions); // snake mirror
+    });
+
+    it("preserves legacy buckets and control-writer keys untouched by the flush", async () => {
+      await runPreCompact({ repoRoot: dir, input: { trigger: "manual" } });
+      const doc = await readCheckpoint();
+      expect(doc.ready_task_ids).toEqual(["CORE-008", "REC-002"]);
+      expect(doc.readyTaskIds).toEqual(["CORE-008", "REC-002"]);
+      expect(doc.current_main_sha).toBe("773054bebbe460de0f31dcfda5315970b1c8b4f2");
+      expect(doc.active_dependency_wave).toBe(1);
+      expect(doc.last_batch_merge).toEqual({ batch: 5, merged_count: 24 });
+    });
+
+    it("exits 0 via the hook CLI against the legacy doc (no fail-closed block)", async () => {
+      const stderr: string[] = [];
+      const code = await runHook(["--repo-root", dir], {
+        stdin: (() => {
+          const { Readable } = require("node:stream") as typeof import("node:stream");
+          return Readable.from([JSON.stringify({ trigger: "auto", session_id: "legacy" })]);
+        })(),
+        stdout: () => undefined,
+        stderr: (s) => stderr.push(s),
+      });
+      expect(stderr.join("")).toBe("");
+      expect(code).toBe(0);
+    });
+
+    it("idempotent second flush does not duplicate the resume hint", async () => {
+      await runPreCompact({ repoRoot: dir, input: { trigger: "auto" } });
+      await runPreCompact({ repoRoot: dir, input: { trigger: "auto" } });
+      const doc = await readCheckpoint();
+      const actions = doc.nextActions as string[];
+      expect(actions.filter((a) => a === PRECOMPACT_NEXT_ACTION)).toHaveLength(1);
+    });
+  });
+
   describe("parseArgs", () => {
     it("parses flags", () => {
       expect(parseArgs(["--repo-root", "/x", "--trigger", "manual", "--selftest"])).toEqual({

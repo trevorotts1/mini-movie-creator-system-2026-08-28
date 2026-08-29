@@ -2,8 +2,17 @@
 import { appendFile, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { dirname, join } from "node:path";
-import { uniqueIds } from "../../packages/core/src/recovery/index.js";
-import { CheckpointWiring, withCheckpointLock } from "../orchestration/checkpoint.js";
+import {
+  CHECKPOINT_FILE,
+  CHECKPOINT_SCHEMA_VERSION,
+  atomicWriteJson,
+  emptyCheckpoint,
+  normalizeCheckpoint,
+  readJsonFileOrNull,
+  uniqueIds,
+  type CheckpointState,
+} from "../../packages/core/src/recovery/index.js";
+import { withCheckpointLock } from "../orchestration/checkpoint.js";
 
 /**
  * REC-002 — PreCompact hook (runbook §6 "PreCompact"; todo.md TASK-REC-002;
@@ -146,6 +155,72 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/**
+ * Live bootstrap checkpoint docs carry snake_case keys (runbook PART II §4
+ * names): schema_version, project_id, *_task_ids, etc. @mmcs/core's
+ * CheckpointService contract is camelCase (runbook §5 names). REC-002 owns
+ * the PreCompact flush, and the flush MUST succeed against the real committed
+ * state/checkpoint.json — a registerd hook that fails closed would block
+ * every compaction. So: normalize the legacy doc before handing it to the
+ * service, and mirror the camelCase field set back into snake_case aliases
+ * after the write, preserving every non-overlapping key the legacy doc
+ * carried (control-writer fields like last_batch_merge, timestamps, etc.).
+ * Precedent: watchdog.ts writes both styles "to keep either reader fresh".
+ */
+const SNAKE_TO_CAMEL: Record<string, keyof CheckpointState> = {
+  project_id: "project",
+  active_dependency_wave: "currentWave",
+  ready_task_ids: "readyTaskIds",
+  active_task_ids: "activeTaskIds",
+  qc_task_ids: "qcTaskIds",
+  merge_queue_ids: "mergeQueueTaskIds",
+  blocked_task_ids: "blockedTaskIds",
+  active_workflow_ids: "activeWorkflowIds",
+  active_agent_ids: "activeAgentIds",
+  current_main_sha: "currentMainSha",
+  current_integration_sha: "currentIntegrationSha",
+  last_watchdog_timestamp: "lastWatchdogAt",
+  last_batch_merge_timestamp: "lastMergeAt",
+  next_recommended_actions: "nextActions",
+};
+
+/** Convert a snake_case legacy checkpoint doc into the core camelCase shape. */
+export function checkpointFromLegacy(doc: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...doc };
+  out.schemaVersion = doc.schemaVersion ?? doc.schema_version;
+  for (const [snake, camel] of Object.entries(SNAKE_TO_CAMEL)) {
+    if (out[camel] === undefined && doc[snake] !== undefined) out[camel] = doc[snake];
+  }
+  // snake keys carry the legacy authoritative values; drop them so the
+  // service normalizes from the camelCase mirror only.
+  delete out.schema_version;
+  return out;
+}
+
+/** Re-stamp the snake_case aliases + preserved legacy keys onto the written doc. */
+function addSnakeAliases(
+  written: Record<string, unknown>,
+  legacy: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...written };
+  // Any key the legacy doc had that the service output did not produce stays
+  // verbatim (e.g. last_batch_merge, timestamp) — except the snake aliases we
+  // maintain below, which are refreshed from the camelCase truth.
+  for (const [key, value] of Object.entries(legacy)) {
+    if (!(key in merged) && !Object.keys(SNAKE_TO_CAMEL).includes(key)) {
+      merged[key] = value;
+    }
+  }
+  merged.schema_version = written.schemaVersion;
+  for (const [snake, camel] of Object.entries(SNAKE_TO_CAMEL)) {
+    const value = written[camel];
+    if (value !== undefined) merged[snake] = value;
+  }
+  // The bootstrap doc also carried a top-level timestamp alias.
+  if (written.lastCheckpointAt) merged.timestamp = written.lastCheckpointAt;
+  return merged;
+}
+
 export interface RunPreCompactOptions {
   repoRoot: string;
   input?: unknown;
@@ -166,7 +241,6 @@ export async function runPreCompact(opts: RunPreCompactOptions): Promise<PreComp
   const { trigger, sessionId, customInstructions } = normalizeInput(opts.input);
   const now = opts.now ?? nowIso;
 
-  const wiring = new CheckpointWiring(repoRoot);
   let lastCheckpointAt = "";
   let sessionUpdated = false;
   let ledgerAppended = false;
@@ -174,16 +248,44 @@ export async function runPreCompact(opts: RunPreCompactOptions): Promise<PreComp
   await withCheckpointLock(
     repoRoot,
     async () => {
-      // 1. checkpoint.json — atomic write under the lock (invalidate first:
-      // another process may have written since our last look).
-      wiring.service.invalidate();
-      const state = await wiring.service.update((draft) => {
-        draft.nextActions = uniqueIds([
+      // 1. checkpoint.json — legacy-aware read + normalize + atomic write
+      // under the lock. The committed bootstrap doc is snake_case (see
+      // checkpointFromLegacy); CheckpointService.load would reject it, and
+      // service.save would drop its control-writer keys. So this flush
+      // speaks to the file directly, then mirrors the updated camelCase
+      // contract back onto the preserved legacy doc (watchdog precedent).
+      const checkpointPath = join(repoRoot, "state", CHECKPOINT_FILE);
+      const rawDoc = await readJsonFileOrNull<unknown>(checkpointPath);
+      let legacy: Record<string, unknown> = {};
+      let base: CheckpointState;
+      if (rawDoc === null) {
+        base = emptyCheckpoint(repoRoot, repoRoot);
+      } else {
+        legacy = typeof rawDoc === "object" && rawDoc !== null ? (rawDoc as Record<string, unknown>) : {};
+        // checkpointFromLegacy is a no-op on an already-camelCase doc (it only
+        // fills missing camel keys from snake aliases and drops schema_version).
+        base = normalizeCheckpoint(checkpointFromLegacy(legacy));
+      }
+      const stampedAt = new Date().toISOString();
+      const updated: CheckpointState = {
+        ...base,
+        lastCheckpointAt: stampedAt,
+        nextActions: uniqueIds([
           PRECOMPACT_NEXT_ACTION,
           ...(customInstructions ? [`compact-instructions:${customInstructions}`] : []),
-        ]);
+          // Keep any resume hints recorded by the other cadence writers.
+          ...base.nextActions.filter(
+            (a) => a !== PRECOMPACT_NEXT_ACTION && !a.startsWith("compact-instructions:"),
+          ),
+        ]),
+      };
+      const normalized = normalizeCheckpoint({
+        ...updated,
+        schemaVersion: CHECKPOINT_SCHEMA_VERSION,
+        lastCheckpointAt: stampedAt,
       });
-      lastCheckpointAt = state.lastCheckpointAt;
+      await atomicWriteJson(checkpointPath, addSnakeAliases(normalized as unknown as Record<string, unknown>, legacy));
+      lastCheckpointAt = normalized.lastCheckpointAt;
 
       // 2. session.md — idempotent marker block.
       const sessionPath = join(repoRoot, "session.md");
