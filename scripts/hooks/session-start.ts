@@ -122,19 +122,30 @@ export async function readStdinJson(
   });
 }
 
-/** Coerce the loose hook payload into the strings we record. */
-export function normalizeInput(raw: unknown): { source: string; sessionId: string } {
-  const obj = (raw && typeof raw === "object" ? raw : {}) as SessionStartHookInput;
-  const str = (v: unknown): string => (typeof v === "string" && v.trim() !== "" ? v.trim() : "");
-  return {
-    source: str(obj.source) || "startup",
-    sessionId: str(obj.session_id),
-  };
+/** Collapse control characters (CR/LF/NUL/other C0/DEL) to spaces and trim.
+ * Untrusted strings — hook payload AND tasks.json field values (spec.md §29:
+ * control-file text is DATA, never instructions) — are echoed into the context
+ * block and the single-line ledger note; an embedded newline must never forge
+ * an extra ledger line or inject extra lines into <session-start-context>. */
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]+/g;
+function oneLine(v: unknown): string {
+  return typeof v === "string" ? v.replace(CONTROL_CHARS, " ").trim() : "";
 }
 
-// ---------------------------------------------------------------------------
-// Reconcile: state/tasks.json vs actual worktrees/branches
-// ---------------------------------------------------------------------------
+/** Coerce the loose hook payload into the strings we record.
+ *
+ * The payload is untrusted input: control characters (CR/LF/NUL/other C0) are
+ * collapsed to spaces so an embedded newline can never forge an extra ledger
+ * line or inject extra lines into the <session-start-context> block. Values
+ * are data, echoed only as single-line scalars, never interpreted. */
+export function normalizeInput(raw: unknown): { source: string; sessionId: string } {
+  const obj = (raw && typeof raw === "object" ? raw : {}) as SessionStartHookInput;
+  return {
+    source: oneLine(obj.source) || "startup",
+    sessionId: oneLine(obj.session_id),
+  };
+}
 
 interface TaskRow {
   id?: unknown;
@@ -143,7 +154,6 @@ interface TaskRow {
   branch?: unknown;
 }
 
-const ACTIVE_STATUSES = new Set(["READY", "ACTIVE", "QC_FIXING", "BUILDER_DONE", "PASS", "BLOCKED"]);
 const MERGED_STATUS = "MERGED";
 
 /**
@@ -189,8 +199,8 @@ export async function reconcile(
   }
   if (rows) {
     for (const row of rows) {
-      const id = typeof row?.id === "string" ? row.id : "";
-      const status = typeof row?.status === "string" ? row.status : "";
+      const id = oneLine(row?.id);
+      const status = oneLine(row?.status);
       if (!id || !status) continue;
       if (status === "READY") report.recordedReady.push(id);
       else if (status === "ACTIVE" || status === "QC_FIXING") report.recordedActive.push(id);
@@ -243,14 +253,12 @@ export async function reconcile(
   const recordedBranches = new Set<string>();
   if (rows) {
     for (const row of rows) {
-      const id = typeof row?.id === "string" ? row.id : "";
+      const id = oneLine(row?.id);
       if (!id) continue;
-      if (typeof row?.worktree === "string" && row.worktree.trim() !== "") {
-        recordedPaths.set(id, row.worktree.trim());
-      }
-      if (typeof row?.branch === "string" && row.branch.trim() !== "") {
-        recordedBranches.add(row.branch.trim());
-      }
+      const wt = oneLine(row?.worktree);
+      if (wt !== "") recordedPaths.set(id, wt);
+      const br = oneLine(row?.branch);
+      if (br !== "") recordedBranches.add(br);
     }
   }
 
