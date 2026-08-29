@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-003",
+  "phase": "PASS",
+  "commit": "ce86971",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/concept/approval (1 file, 26/26 PASS); npx vitest run apps/cli/src/commands/develop-concept (1 file, 19/19 PASS); regression: npx vitest run packages/scene-intelligence apps/cli (25 files, 536/536 PASS); npx tsc --noEmit packages/scene-intelligence + apps/cli (clean both); security grep owned paths: zero exec/eval/spawn/env hits",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T21:45:00Z",
+  "notes": "Builder clean. Approval gate (26 tests), CLI dispatch (19 tests), regression full scene-intelligence+cli (536 tests), typecheck clean, security clean. Zero defects. Gate 1: requireConceptApproved throws on PENDING/REJECTED, approve concept wired, DIR-004 bridge structural with drop-in CORE-008 store proof.",
+  "blockers": []
+}
