@@ -586,12 +586,28 @@ describe("demo series — non-paid pipeline (S01E01)", () => {
         characterGate: () => characterSnap,
       },
       characters: {
+        // The DB record's CharacterState and the lock's AssetState are
+        // different unions (DB adds LOCKED; lock adds REJECTED/REVIEW), so
+        // this adapter narrows both directions instead of trusting the DB
+        // state verbatim. The character is APPROVED here by construction.
         get: (id) => {
           const rec = characters.findById(id);
-          return rec ? { characterId: rec.characterId, state: rec.state } : null;
+          if (rec === undefined || rec.state !== "APPROVED") return null;
+          return { characterId: rec.characterId, state: "APPROVED" as const };
         },
         setState: (id, state) => {
-          characters.update(id, { state });
+          const rec = characters.findById(id);
+          if (rec === undefined || state !== "CANONICAL") {
+            throw new Error(
+              `lock adapter: refusing to write AssetState ${JSON.stringify(state)} to DB character ${id} (found: ${rec === undefined ? "no record" : rec.state})`,
+            );
+          }
+          if (rec.state !== "APPROVED") {
+            throw new Error(
+              `lock adapter: character ${id} is ${rec.state}, not APPROVED — refusing CANONICAL write`,
+            );
+          }
+          characters.update(id, { state: "CANONICAL" });
         },
       },
       assets: {
@@ -762,6 +778,9 @@ describe("demo series — non-paid pipeline (S01E01)", () => {
       ],
     });
     const composition = getCompositionForEpisode(registry, "S01E01");
+    if (composition === undefined) {
+      throw new Error(`composition registry has no entry for S01E01`);
+    }
     expect(composition.compositionId).toBe("S01E01");
     expect(composition.durationInFrames).toBe(54 * 24);
 

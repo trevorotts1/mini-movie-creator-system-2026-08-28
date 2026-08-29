@@ -62,7 +62,9 @@ rough-cut → canon`):
    (`optionCount: 2` — the response validator requires exactly the requested
    count). Gate `concept` approved.
 3. **Gate 2 — script.** `parseScreenplay` parses the 2-scene screenplay with
-   the known-cast list; `estimateRuntime` derives 54s. Gate `script` approved.
+   the known-cast list; `estimateRuntime` derives 49.5s from the script text
+   itself (a screenplay-prose estimate — the planner's scene durations are set
+   separately as 30s + 24s = 54s of planned runtime). Gate `script` approved.
 4. **Shot planning.** `planEpisodeShots` decomposes the planned scenes into 9
    shots inside the Agnes video window (4–12s each, 6s each here). The planner
    warns (non-fatal) that SC02's 4 beats clamp its 5-shot pace target.
@@ -76,14 +78,18 @@ rough-cut → canon`):
    selects the minimum-sufficient reference pack per shot, under the model's
    ceiling, with a deterministic justification log.
 7. **Storyboard + mocked frames.** `planStoryboard` mints one
-   `ASSET_S01E01_*_SB01` contract per shot. Two rules of the paid boundary:
+   `ASSET_S01E01_<SHOT>_SB01` contract per shot (shot form `SC01_SH01`; the
+   underscore between scene and shot is kept — the id is filename-safe). Two
+   rules of the paid boundary:
    - `generateStoryboardFrames` ONLY accepts the `MockImageClient` (kind
      `"mock"`) and only while the plan is DRAFT — real paid generation happens
      after gate 4;
-   - `assertPaidGenerationAllowed` is the fail-closed check: with a real-cost
-     client kind it throws while the plan is DRAFT or gate `storyboard` is
-     PENDING, and passes only after both are APPROVED. The test exercises the
-     throw, then the pass.
+   - `assertPaidGenerationAllowed` is the fail-closed check: it defaults to
+     client kind `"real"` and throws while the plan is non-APPROVED or the
+     gate is anything but APPROVED (a missing snapshot blocks too), and passes
+     only after both are APPROVED. Mocked clients never spend and are always
+     legal. The test exercises the throw (no clientKind — defaults to real),
+     then the pass.
 8. **Gate 3 — character, BEFORE gate 4.** The candidate flow
    (`startCandidateFlow` → `generateCandidates` → `applySelection("1")`)
    leaves the chosen design APPROVED and the two unselected designs REJECTED
