@@ -1,7 +1,7 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — MERGED: **148** — READY: **1** (REL-005, all deps MERGED after batch-14) — BLOCKED: **1** — PASS: **0**. Batch-14: PROBE-SONNET (KIE-004 rebase-merge, QC PASS 0 defects; KIE-004 already MERGED — control fold only) and REL-004 merged clean (4c21b10, 7df92d2); regression PASS; pushed 6475dc3..7df92d2. REL-005 unblocked READY — orchestrator to dispatch build.
+Total tasks: **149** — MERGED: **149** — READY: **0** — BLOCKED: **1** (REL-006 — release docs + final merge; all 10 deps MERGED after batch-15) — PASS: **0**. Batch-15: REL-005 merged clean (merge 4edaf7c; QC PASS 3/3 defects fixed, certified sha da8d1c1 ancestor of tip badfd6c); regression PASS; pushed 7396092..5c9bef0. REL-006 unblocks — orchestrator to dispatch REL-006 build (last task, then main promotion).
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
@@ -9,7 +9,7 @@ WF01 CORE-001,002,003,010,011,012,013,014 · WF02 CHAR-001,002,003,004,006,007,0
 
 ## BLOCKED set (1)
 
-REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except REL-005, which is READY batch-14 and must merge first).
+REL-006 (needs REL-002..005 + REC-010/011 — ALL 10 MERGED after batch-15: REL-005 merged batch-15 4edaf7c). Unblocks NOW — orchestrator dispatches REL-006 release-docs build.
 
 ## Status policy (binding)
 
@@ -1673,7 +1673,7 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
   - Branch: task/TASK-REL-005-provider-smoke
   - Worktree: worktrees/TASK-REL-005/
   - Acceptance: minimal paid smoke (≥1 Agnes generation; ≥1 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED — never falsely passed (spec §30); report records spend + job IDs.
-  - Status: READY (unblocked batch-14: REL-004 MERGED 7df92d2; AGN-004/KIE-002/FISH-003/GHL-005/CORE-009 all MERGED)
+  - Status: MERGED (batch-15, merge 4edaf7c; QC PASS 3/3 defects fixed, certified sha da8d1c1 ancestor of tip badfd6c; provider smoke report-only RC 0 spend $0, $25 gate held, 4/4 providers BLOCKED-not-false-PASS; regression PASS on integration)
 
 - [ ] TASK-REL-006 — Release docs + final merge
   - Workflow: WF10
@@ -1684,7 +1684,7 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
   - Branch: task/TASK-REL-006-release-docs
   - Worktree: worktrees/TASK-REL-006/
   - Acceptance: spec §33 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.
-  - Status: BLOCKED (on REL-005, READY batch-14; everything else MERGED)
+  - Status: READY (unblocked batch-15: REL-005 MERGED 4edaf7c; REL-002/003/004 + SKL-003/004/006/007 + REC-010/011 all MERGED batches 11-15)
 
 <!-- WF10-END -->
 
@@ -1712,5 +1712,6 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
 - CORE-003 merge unblocks CORE-004/005/006/007 immediately; CORE-004 merge unblocks CORE-008; CORE-007 + CORE-008 unblock CORE-009; all five schema merges unblock CORE-015.
 - CORE-008 merge unblocks CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011 immediately.
 - All other dependencies are contract-first (interface per spec.md); builders build against the spec contract in wave 1 and bind to merged implementations as dependencies land. Unlock dependents the moment a dependency hits MERGED — never wait for a wave boundary (runbook §10).
-- REL-006 unblocks on REL-005 merge (batch-15). REL-* is wave-3 release state by design (runbook §10 wave 3).
+- REL-006 unblocked batch-15 (REL-005 MERGED 4edaf7c) — final task before main promotion. REL-* is wave-3 release state by design (runbook §10 wave 3).
 - Batch-14 (2026-08-29): REL-004 MERGED 7df92d2 -> REL-005 unblocked READY; PROBE-SONNET rebase-merge folded (KIE-004 content already MERGED; state record added).
+- Batch-15 (2026-08-29): REL-005 MERGED 4edaf7c -> REL-006 unblocked READY (all 10 deps MERGED); 148→149 MERGED, one task remaining.

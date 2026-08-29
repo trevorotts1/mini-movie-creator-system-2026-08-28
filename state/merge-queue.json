@@ -1,16 +1,15 @@
 {
  "schema_version": 1,
  "items": [],
- "updated_at": "2026-08-29T11:30:00Z",
+ "updated_at": "2026-08-29T12:05:00Z",
  "last_batch": {
-  "batch": "batch-14",
+  "batch": "batch-15",
   "merged": [
-   "PROBE-SONNET",
-   "REL-004"
+   "REL-005"
   ],
   "failed": [],
-  "preBatchHead": "6475dc3630698771579ae2192b649ebd921838c1",
-  "postBatchHead": "7df92d2191d93b7ca8e7f4ccbfc06d8d3ec8d7fe",
-  "notes": "Dep-order merges --no-ff, zero conflicts: PROBE-SONNET 4c21b10 (rebase fixer branch task/TASK-KIE-004-seedance-modes tip bbda06b; re-certified QC sha fb47e6d verified ancestor; KIE-004 task status already MERGED \u2014 branch merge folds the rebase content + state record), REL-004 7df92d2 (tip 3cb1165; certified sha 2ece632 verified ancestor). ENV-001 admitted by rules (PASS, 1/1 defects) but task/ENV-react-dependency tip be07460 verified ALREADY an ancestor of integration \u2014 skip merge, control fold only. Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 4014 passed/1 skipped clean rerun (first run hit known backup.test.ts exportBackup 5s-timeout flake \u2014 batch-11/12/13-proven non-deterministic; one disclosed retry, then 4014/0). Post-merge acceptance re-verified on integration: scripts/release/e2e-dry-run.sh RC 0 (11/11), vitest scripts/release 4/4, tsc -p scripts/release clean. pnpm-lock.yaml unchanged \u2014 no pnpm install. Pushed 6475dc3..7df92d2. Unblocked: REL-005 -> READY (deps REL-004 MERGED this batch; AGN-004/KIE-002/FISH-003/GHL-005/CORE-009 all MERGED). Control fold only \u2014 orchestrator dispatches REL-005 build. REL-006 remains BLOCKED (on REL-005)."
+  "preBatchHead": "e7a5dadf09983e5cade6e2697677ba3b3c4b72fd",
+  "postBatchHead": "5c9bef09a73e8f849ef7427261c82635b7b62a00",
+  "notes": "Single candidate: REL-005 (QC PASS 3/3 defects fixed, finalTestResult PASS, certified sha da8d1c1 verified ancestor of branch tip badfd6c). Merge --no-ff 4edaf7c, zero conflicts, 6 files +609. Control commits: e7a5dad (stray batch-14 ledger lines committed pre-batch for clean tree), 5c9bef0 (regression evidence: e2e-dry-run-report.md re-run 11/11 PASS + provider-smoke-report.md regenerated from actual run on integration). pnpm-lock.yaml unchanged \u2014 no pnpm install. Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests), pnpm -r run typecheck RC=0 (17/17 Done), full-repo vitest 4028 passed/1 skipped clean rerun (first run: known backup.test.ts exportBackup 5s-timeout flake \u2014 batch-11/12/13/14-proven non-deterministic; one disclosed retry; isolated rerun 12/12 green), scripts/release vitest 51/51, tsc -p scripts/release clean, provider-smoke --report-only RC 0 (4/4 BLOCKED, spend $0, $25 gate held), e2e-dry-run.sh RC 0 (11/11). Pushed 7396092..5c9bef0. Unblocked: REL-006 -> READY (all 10 deps MERGED; control fold only \u2014 orchestrator dispatches REL-006 release-docs build; 149/149 tasks then MERGED, main promotion next)."
  }
 }

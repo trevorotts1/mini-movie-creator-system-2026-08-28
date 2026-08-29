@@ -56,3 +56,6 @@
 | Batch 14 Regression Status | PASS (pnpm -r test RC=0; typecheck 17/17 RC=0; full vitest 4014 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake first run, batch-11/12/13-proven non-deterministic, one disclosed retry; e2e-dry-run.sh RC 0 on integration; pnpm-lock unchanged) |
 | Batch 14 Baseline Notes | providers bare-subpath '@mmcs/core/idempotency' local-include load failure unchanged — pre-existing, no active owner (carried from batch-13); no new baseline items |
 | Batch 14 Unblocks | REL-005 (BLOCKED->READY — control fold only, orchestrator dispatches); REL-006 remains BLOCKED |
+| Batch 15 Merged Count | 1 (REL-005 4edaf7c — provider smoke; 7396092..5c9bef0; zero conflicts; certified sha da8d1c1 ancestor of tip badfd6c) |
+| Batch 15 Regression Status | PASS (pnpm -r test RC=0; typecheck 17/17 RC=0; full vitest 4028 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake first run, batch-11..14-proven non-deterministic, one disclosed retry; scripts/release 51/51; tsc clean; provider-smoke RC 0 spend $0; e2e-dry-run.sh RC 0 11/11; pnpm-lock unchanged) |
+| Batch 15 Unblocks | REL-006 (BLOCKED->READY — all 10 deps MERGED; 149/149 tasks MERGED after REL-006; main promotion next) |

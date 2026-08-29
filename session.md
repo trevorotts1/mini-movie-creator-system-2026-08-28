@@ -108,3 +108,12 @@
 
 ## Next action
 - Orchestrator: dispatch REL-005 build (task/TASK-REL-005-provider-smoke), then REL-006 (release docs + final merge) after REL-005 merges
+
+## Batch 15 — Merged (2026-08-29T12:05Z, integration 7396092..5c9bef0, pushed)
+- REL-005 (4edaf7c) — minimal provider smoke task/REL-005-provider-smoke (tip badfd6c): certified sha da8d1c1 verified ancestor; single candidate, zero conflicts, 6 files +609; QC PASS 3/3 defects fixed (env-var gating to engine MMCS_ENV_KEYS, --live cost-ack consent gate, liveStatus NOT_RUN honesty — never false PASS)
+- Control commits: e7a5dad (stray batch-14 ledger lines committed pre-batch for clean tree), 5c9bef0 (regression evidence: e2e 11/11 report re-run + provider-smoke report regenerated from actual run on integration)
+- Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23); typecheck 17/17 RC=0; full vitest 4028 passed/1 skipped clean rerun (backup.test.ts 5s-timeout flake first run — batch-11..14-proven, one disclosed retry, isolated rerun 12/12 green); scripts/release vitest 51/51; tsc -p scripts/release clean; provider-smoke --report-only RC 0 (4/4 providers BLOCKED, spend $0.0000, $25 gate held); e2e-dry-run.sh RC 0 (11/11); pnpm-lock unchanged
+- Unblocked: REL-006 -> READY (all 10 deps MERGED batches 11-15; control fold only — orchestrator dispatches REL-006 release-docs build)
+
+## Next action
+- Orchestrator: dispatch REL-006 build (task/REL-006-release-docs) — FINAL task; after REL-006 QC PASS + merge, full regression, then integration -> main promotion + annotated release tag

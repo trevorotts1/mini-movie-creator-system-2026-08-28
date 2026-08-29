@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-08-29T11:30:00Z",
+ "updated_at": "2026-08-29T12:05:00Z",
  "items": [
   {
    "id": "CORE-001",
@@ -2180,7 +2180,7 @@
    "branch": "task/REL-005-provider-smoke",
    "worktree": "worktrees/REL-005/",
    "acceptance": "minimal paid smoke (\u22651 Agnes generation; \u22651 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED \u2014 never falsely passed (spec \u00a730); report records spend + job IDs.",
-   "status": "READY"
+   "status": "MERGED"
   },
   {
    "id": "REL-006",
@@ -2202,7 +2202,7 @@
    "branch": "task/REL-006-release-docs",
    "worktree": "worktrees/REL-006/",
    "acceptance": "spec \u00a733 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.",
-   "status": "BLOCKED"
+   "status": "READY"
   }
  ]
 }
