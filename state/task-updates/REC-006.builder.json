@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-006",
+  "phase": "BUILDER_DONE",
+  "commit": "f7b6ed11635dc1b558692330407e769a37abb629",
+  "testsRun": "npx vitest run scripts/hooks/task-completed.test.ts → 27/27 PASS; npx vitest run scripts/orchestration/checkpoint.test.ts → 25/25 PASS (no regression); npx vitest run scripts/orchestration/watchdog.test.ts scripts/orchestration/batch-merge.test.ts → 61/61 PASS (no regression); tsc --noEmit strict on scripts/hooks/task-completed.ts + test → clean; bash .claude/hooks/task-completed.sh --selftest → TASKCOMPLETED SELFTEST PASS (exit 0); real sh entry: missing-evidence task exits 2 with all 4 gaps named on stderr, fully-evidenced task exits 0 ALLOW; executable bit -rwxr-xr-x verified",
+  "notes": "TaskCompleted gate: sh entry → tsx → runHook; read-only over state/tasks.json + task-updates evidence; blocks (exit 2) on unregistered task, unrecorded branch/worktree, missing/empty/FAIL testsRun, missing or non-PASS or blocker-carrying QC (qcRequired opt-out honored), ACTIVE→MERGED jump; collects ALL gaps in one pass; non-MMCS ids allowed without opinion; fail-closed on unusable repo",
+  "blockers": [],
+  "updatedAt": "2026-08-28T12:00Z"
+}
