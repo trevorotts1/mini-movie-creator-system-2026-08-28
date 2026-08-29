@@ -1,7 +1,7 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — MERGED: **146** — READY: **1** (REL-004, all deps MERGED after batch-13) — BLOCKED: **2** — PASS: **0**. Batch-13: REC-010 (re-cert 8fd8217 ancestor of tip 2c85766), REC-011, REL-003 merged clean (REC-010 state-record add/add resolved to branch round); regression PASS; pushed ddd5748..c365e8e. REL-004 unblocked READY — orchestrator to dispatch build.
+Total tasks: **149** — MERGED: **143** — READY: **2** (REC-011, REL-003) — BLOCKED: **3** — PASS: **1** (REC-010, deps all MERGED now — needs re-cert: qc sha 3588299 not ancestor of rebased tip 8fd8217). Batch-12: REC-002, REC-003, REC-004, REC-005, REC-006, REC-007, REL-002 merged (.claude/settings.json add/add conflicts resolved by unioning all 6 hook events — every registration survives); REC-011 unblocked READY.
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
@@ -9,7 +9,7 @@ WF01 CORE-001,002,003,010,011,012,013,014 · WF02 CHAR-001,002,003,004,006,007,0
 
 ## BLOCKED set (3)
 
-REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (needs REL-004) · REL-006 (needs REL-002..005 + REC-010/011 — REC-010/011 now MERGED batch-13, REL-006 still blocked on REL-004/005).
+REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002..005 + REC-010/011). Batch-11 merged CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-007, QC-011, REL-001 — REL-002, REL-003 unblocked READY (needed only REL-001).
 
 ## Status policy (binding)
 
@@ -1607,7 +1607,7 @@ REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (
   - Branch: task/TASK-REC-010-restart-sim
   - Worktree: worktrees/TASK-REC-010/
   - Acceptance: simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission → resume polls existing task ID (no resubmit — spec §32 recovery acceptance); simulation script exits 0.
-  - Status: MERGED (batch-13, merge ecf4722; re-cert QC sha 8fd8217 verified ancestor of rebased tip 2c85766; QC PASS 1/1 defects fixed; restart-sim suite green on integration; state-record add/add resolved to branch round)
+  - Status: PASS (deps REC-002..005/008/009 ALL MERGED batch-12 — admission now requires re-certification: qc sha 3588299 is not an ancestor of rebased branch tip 8fd8217)
 
 - [ ] TASK-REC-011 — Auto-compact simulation
   - Workflow: WF10
@@ -1618,7 +1618,7 @@ REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (
   - Branch: task/TASK-REC-011-compact-sim
   - Worktree: worktrees/TASK-REC-011/
   - Acceptance: manual /compact (simulated PreCompact→PostCompact) updates checkpoint; simulated new/resumed session injects + reads state; no data loss across compaction; simulation script exits 0.
-  - Status: MERGED (batch-13, merge 550a6da; QC PASS 2/2 defects fixed; compact-sim 148-line doc + 616-line sim + 207-line suite green on integration)
+  - Status: READY
 
 - [x] TASK-REL-001 —
   - Workflow: WF10
@@ -1651,7 +1651,7 @@ REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (
   - Branch: task/TASK-REL-003-example-project
   - Worktree: worktrees/TASK-REL-003/
   - Acceptance: example series + episode seed (fixtures, no paid generation) loads via `mmcs create-series`/`create-episode` and exercises the non-paid pipeline steps; docs/first-series.md walkthrough verified step-by-step; `npx vitest run examples/demo-series` green.
-  - Status: MERGED (batch-13, merge c365e8e; QC PASS 3/3 defects fixed; examples acceptance 7/7 + tsc --noEmit -p examples green on integration)
+  - Status: READY (unblocked batch-11: REL-001 merged 00d4bca)
 
 - [ ] TASK-REL-004 — End-to-end dry run
   - Workflow: WF10
@@ -1662,7 +1662,7 @@ REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (
   - Branch: task/TASK-REL-004-e2e-dry-run
   - Worktree: worktrees/TASK-REL-004/
   - Acceptance: controlled short sample project exercises concept → script → character candidate selection → storyboard → (mocked paid generation where credentials absent) → GHL archival → Remotion assembly → QC → rough cut → final render → restart/resume simulation; every defect found fixed before PASS; report written; script exits 0.
-  - Status: READY (unblocked batch-13: REL-002 MERGED batch-12, REL-003 MERGED c365e8e; CHAR-005/DIR-003/DIR-008/DIR-015/QC-011/VID-012/GHL-008 all MERGED)
+  - Status: BLOCKED
 
 - [ ] TASK-REL-005 — Minimal provider smoke run
   - Workflow: WF10
@@ -1673,7 +1673,7 @@ REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (
   - Branch: task/TASK-REL-005-provider-smoke
   - Worktree: worktrees/TASK-REL-005/
   - Acceptance: minimal paid smoke (≥1 Agnes generation; ≥1 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED — never falsely passed (spec §30); report records spend + job IDs.
-  - Status: BLOCKED (on REL-004, which is now READY batch-13)
+  - Status: BLOCKED
 
 - [ ] TASK-REL-006 — Release docs + final merge
   - Workflow: WF10
@@ -1684,7 +1684,7 @@ REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (
   - Branch: task/TASK-REL-006-release-docs
   - Worktree: worktrees/TASK-REL-006/
   - Acceptance: spec §33 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.
-  - Status: BLOCKED (on REL-004 + REL-005; REC-010/011 side cleared batch-13)
+  - Status: BLOCKED
 
 <!-- WF10-END -->
 

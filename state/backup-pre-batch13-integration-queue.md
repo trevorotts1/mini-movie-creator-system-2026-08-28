@@ -35,7 +35,7 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 | IQ-B6C | QC-003 | task/QC-003-wardrobe-check | builder | qc-batch | PASS | `origin/integration` | MERGED | 692b20f9f83fc934ab561668026b0c610a350a88 |
 | IQ-B6C | QC-004 | task/QC-004-continuity | builder | qc-batch | PASS | `origin/integration` | MERGED | b43743aefded95186bd5bf1c83a02f2e243a8855 |
 | IQ-B6C | QC-010 | task/QC-010-wan-fallback | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-9) | 47f919e7897295509934538afff2353d1345cd60 |
-| IQ-B6C | REC-010 | task/REC-010-restart-sim | builder | qc-batch | PASS | `origin/integration` | SUPERSEDED (batch-13 re-merge under IQ-B12, ecf4722) | ecf4722 |
+| IQ-B6C | REC-010 | task/REC-010-restart-sim | builder | qc-batch | PASS | `origin/integration` | CONFLICT_BLOCKED (rebase required) | Pending |
 | IQ-B6C | SKL-003 | task/SKL-003-personal-install | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | 7c6a79f |
 | IQ-B6C | SKL-004 | task/SKL-004-nine-verify | builder | qc-batch | PASS | `origin/integration` | MERGED | fef49fcb5a61f8ee99a58e73c854e4aacd44e791 |
 | IQ-B6C | SKL-005 | task/SKL-005-openclaw-workspace | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-7) | f1689ba |
@@ -47,7 +47,7 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 | IQ-B10 | CORE-015 | task/CORE-015-db-backup | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-10) | b2992b910b18b1785347d7077a19b05b032bcd50 |
 | IQ-B10 | QC-005 | task/QC-005-qc-route | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-10) | 73de2a2c7ac612518d88b27fdae7da8e332e8bac |
 | IQ-B10 | SKL-002 | task/SKL-002-claude-project-install | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-10, cycle-2 re-admission) | dfa9ba76134486e6c7b16b2e005e326b91767b57 |
-| IQ-B10 | REC-010 | task/REC-010-restart-sim | builder | qc-batch | PASS | `origin/integration` | SUPERSEDED (admitted batch-13, ecf4722) | ecf4722 |
+| IQ-B10 | REC-010 | task/REC-010-restart-sim | builder | qc-batch | PASS | `origin/integration` | NOT_ADMITTED (deps REC-002..005 unmerged, batch-11) | Pending |
 | IQ-B11 | CHAR-005 | task/CHAR-005-character-locking | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-11) | 2e1fb2a |
 | IQ-B11 | CHAR-013 | task/CHAR-013-canon-approval | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-11) | dd9106a |
 | IQ-B11 | DIR-003 | task/DIR-003-concept-approval | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-11) | 88cc4dc |
@@ -62,9 +62,6 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 | IQ-B12 | REC-005 | task/REC-005-session-end | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-12) | 42f5146 |
 | IQ-B12 | REC-006 | task/REC-006-task-completed | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-12) | 7a5dde4 |
 | IQ-B12 | REC-007 | task/REC-007-teammate-idle | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-12) | ec03405 |
-| IQ-B12 | REC-010 | task/REC-010-restart-sim (re-cert QC sha 8fd8217 ancestor of tip 2c85766) | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-13; state-record add/add resolved to branch) | ecf4722 |
-| IQ-B13 | REC-011 | task/REC-011-compact-sim | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-13) | 550a6da |
-| IQ-B13 | REL-003 | task/REL-003-example-project | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-13) | c365e8e |
 | IQ-B12 | REL-002 | task/REL-002-full-regression | builder | qc-batch | PASS | `origin/integration` | MERGED (batch-12) | 2478ef6 |
 
 *(Batch-7 2026-08-28T22:05:00Z: 7 IQ-B6C rows merged; QC-003/004/010, SKL-004, VID-002 still conflict-blocked; REC-010 not admitted — deps unmerged; plus 12 new merges CAP-003, CAP-010, FISH-003, FISH-005, FISH-006, FISH-007, KIE-010. Pushed 38974b3..6d8cce1.)*
@@ -78,5 +75,3 @@ A task may only enter the Integration Queue when ALL 10 conditions are satisfied
 *(Batch-11 2026-08-29T02:20:00Z: 8 merged — CHAR-005 2e1fb2a, CHAR-013 dd9106a, DIR-003 88cc4dc, DIR-008 ff2ce06, DIR-015 0c174e1, QC-011 4006d69, REL-001 00d4bca, QC-007 c5802ad (add/add conflict on its own state record resolved to the branch round-2 QC file; batch-10's 3>2 rejection superseded — the 3rd item was a repo-wide lint-script infra gap outside owned paths). Regression PASS: full vitest 3795/1 skipped (one non-deterministic 5s timeout in backup.test.ts proven flake), typecheck 17/17 RC=0. Pushed f5e9fb8..c5802ad. Not admitted: REC-010 (deps REC-002..005, 5th cycle). Unblocked: REL-002, REL-003 -> READY.)*
 
 *(Batch-12 2026-08-29T04:40:00Z: 7 merged — REC-002 36c9a62, REC-003 f706e04, REC-004 3822ff5, REC-005 42f5146, REC-006 7a5dde4, REC-007 ec03405, REL-002 2478ef6. The six hook branches each carried their own single-event .claude/settings.json; add/add conflicts resolved by deep union — all 6 hook events verified present. Regression PASS: pnpm -r test, typecheck 17/17, full vitest 3982/1 skipped (backup.test.ts 5s-timeout flake recurrence, proven non-deterministic again), REL-002 acceptance 17/17 after remotion npm ci. Pushed d92b62c..2478ef6. Not admitted: REC-010 (qc sha not ancestor of rebased tip). Unblocked: REC-011.)*
-
-*(Batch-13 2026-08-29T08:30:00Z: 3 merged — REC-010 ecf4722 (re-cert QC sha 8fd8217 verified ancestor of tip 2c85766; deps all MERGED; one state-record add/add resolved to branch round), REC-011 550a6da, REL-003 c365e8e — both clean. Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23), pnpm -r run typecheck RC=0 (17/17 Done), full vitest 4010 passed/1 skipped clean rerun (one backup.test.ts 5s-timeout flake on first run — batch-11/12-proven non-deterministic), examples acceptance 7/7, sim suites 28/28, providers idempotency suites 68/68 from root (bare-subpath load failure reproduces only under packages/providers local include pattern — identical on integration base, pre-existing baseline, not batch-caused). Pushed ddd5748..c365e8e. Unblocked: REL-004 -> READY (deps: REL-002 MERGED batch-12, REL-003 MERGED batch-13, CHAR-005/DIR-003/DIR-008/DIR-015/QC-011/VID-012/GHL-008 all MERGED earlier). REL-005/006 remain BLOCKED.)*

@@ -1,21 +1,17 @@
 {
   "schema_version": 1,
   "items": [],
-  "updated_at": "2026-08-29T04:40:00Z",
+  "updated_at": "2026-08-29T08:30:00Z",
   "last_batch": {
-    "batch": "batch-12",
+    "batch": "batch-13",
     "merged": [
-      "REC-002",
-      "REC-003",
-      "REC-004",
-      "REC-005",
-      "REC-006",
-      "REC-007",
-      "REL-002"
+      "REC-010",
+      "REC-011",
+      "REL-003"
     ],
     "failed": [],
-    "preBatchHead": "d92b62c3d33f4d3cce8d655498632e4f420edaf5",
-    "postBatchHead": "2478ef6bb977f8a2b454dc0f8c0d879c570770b6",
-    "notes": "All 6 REC hook branches carried their own .claude/settings.json with a single hook event; add/add conflicts on that file resolved by deep union of the hooks object (PreCompact, PostCompact, SessionStart, SessionEnd, TaskCompleted, TeammateIdle all present; every command file exists; JSON parses). REL-002 merged clean. Regression: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; remaining packages --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 3982 passed/1 skipped (first two runs showed the known non-deterministic 5s timeout in packages/database backup.test.ts > exportBackup under parallel load \u2014 same flake proven in batch-11; passed isolated x2 and clean full run). REL-002 acceptance suite 17/17 after npm ci in standalone remotion workspace (regression.sh requires remotion/node_modules \u2014 environment setup, not a batch defect). pnpm-lock.yaml unchanged. Pushed d92b62c..2478ef6. Unblocked REC-011 (READY, was already), REC-010 deps fully MERGED -> next-cycle admission (branch rebased, qc-cert sha 3588299 NOT ancestor of tip 8fd8217 \u2014 needs re-certification or control ruling); REL-004/005/006 remain BLOCKED on REL-003."
+    "preBatchHead": "ddd57484824e9b3cc80416157f82537a022484b9",
+    "postBatchHead": "c365e8e668694f4a956d0f0aebfe87ccd5c369c9",
+    "notes": "Dep-order merges --no-ff: REC-010 ecf4722 (re-cert QC sha 8fd8217 verified ancestor of rebased tip 2c85766; one state/task-updates/REC-010.qc.json add/add resolved to the branch round per briefing rule), REC-011 550a6da clean, REL-003 c365e8e clean. Regression: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 4010 passed/1 skipped (first run showed the known non-deterministic 5s timeout in packages/database backup.test.ts > exportBackup \u2014 same flake proven in batches 11/12; retry run clean 4010/0, one disclosed retry). Examples acceptance 7/7 (REL-003), tsc --noEmit -p examples RC=0, restart/compact sim suites 28/28. Baseline carried (not batch-caused): 2 providers test files fail to load importing '@mmcs/core/idempotency' bare subpath under packages/providers local vitest include pattern (agnes/retry + agnes/video/submit) \u2014 identical on integration base; both suites pass 68/68 from repo root config. No active owner. pnpm-lock.yaml unchanged \u2014 no pnpm install needed. Pushed ddd5748..c365e8e. Unblocked: REL-004 -> READY (deps REL-002 MERGED + REL-003 merged this batch; CHAR-005/DIR-003/DIR-008/DIR-015/QC-011/VID-012/GHL-008 all MERGED). Control fold only \u2014 orchestrator dispatches REL-004 build. REL-005/006 remain BLOCKED."
   }
 }

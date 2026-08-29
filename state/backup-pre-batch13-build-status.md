@@ -48,7 +48,4 @@
 | Batch 6 Regression Status | PASS after 2 selective reverts (pnpm -r test exit 0; pnpm -r typecheck exit 0, 17/17 Done) |
 | Batch 7 Regression Status | PASS (pnpm -r test exit 0; pnpm -r typecheck exit 0; repo-wide vitest 3188 passed / 1 skipped) |
 | Batch 8 Regression Status | PASS (vitest areas=ALL 3188 passed / 1 skipped; typecheck via affected-area sweep) |
-| Batch 9 Regression Status | PASS (pnpm -r test exit 0; pnpm -r typecheck exit 0; repo-wide vitest 3364 passed / 1 skipped; 3 pre-existing react-env collection failures identical at pre-batch sha — not batch-induced) || Batch 13 Merged Count | 3 (REC-010 ecf4722, REC-011 550a6da, REL-003 c365e8e; ddd5748..c365e8e; 1 state-record add/add conflict resolved to branch round) |
-| Batch 13 Regression Status | PASS (pnpm -r test RC=0; pnpm -r run typecheck RC=0, 17/17 Done; full vitest 4010 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake on first run, batch-11/12-proven non-deterministic, one disclosed retry; examples acceptance 7/7; sim suites 28/28; pnpm-lock unchanged) |
-| Batch 13 Baseline Notes | 2 providers test files fail to load importing '@mmcs/core/idempotency' bare subpath under packages/providers local include (agnes/retry, agnes/video/submit) — identical on integration base, no active owner; suites pass 68/68 from repo root |
-| Batch 13 Unblocks | REL-004 (BLOCKED->READY — control fold only, orchestrator dispatches); REL-005/006 remain BLOCKED |
+| Batch 9 Regression Status | PASS (pnpm -r test exit 0; pnpm -r typecheck exit 0; repo-wide vitest 3364 passed / 1 skipped; 3 pre-existing react-env collection failures identical at pre-batch sha — not batch-induced) |
