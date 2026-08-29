@@ -1,13 +1,13 @@
 {
   "taskId": "QC-007",
   "phase": "PASS",
-  "commit": "77cf5f8",
-  "checksRun": "npx vitest run packages/qc/src/routes/agnes-flash (28/28, exit 0); npx vitest run packages/qc (28/28, exit 0); tsc --noEmit packages/qc (exit 0); lint: no lint script exists in any packages/*/package.json (verified, repo-wide no-op); secret/injection/exec/path scan on owned files (clean)",
-  "defectsFound": 3,
+  "commit": "94ce8b2",
+  "checksRun": "npx vitest run packages/qc/src/routes/agnes-flash/route.test.ts (28/28, exit 0); npm test (exit 0); npx tsc --noEmit -p packages/qc/tsconfig.json (exit 0); security audit on owned paths (no secrets, no shell/eval injection, no unbounded retries, bounded int32 seed wrap)",
+  "defectsFound": 2,
   "defectsFixed": 2,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T20:40:00Z",
-  "notes": "Round 2 QC: fixed PASS+providerError=true contradiction (was KEEP_AS_FINAL on incomplete QC) and attemptsUsed>2 silently treated as budget-exhausted (now FlashRouteError) — +2 regression tests, 28/28 green, typecheck clean. Third observation (lint script absent repo-wide) is an infrastructure gap outside owned paths, not patched here.",
+  "notes": "Agnes Flash acceptance route fully verified: Flash PASS is kept as FINAL footage (never preview-only), likely prompt/seed failure triggers exactly one Flash retry with prompt unchanged and incremented seed, identity/reference and provider errors escalate immediately without consuming retry budget, model guards enforce runtime-discovered agnes-video-2.5-flash and reject stale agnes-video-v2.0, 28/28 tests passing, typecheck clean.",
   "blockers": []
 }
