@@ -1,0 +1,9 @@
+{
+  "taskId": "REL-002",
+  "phase": "BUILDER_DONE",
+  "commit": "9486ce9b181aaa517ae47b2173371cb42ffcbe7b",
+  "testsRun": "npx vitest run scripts/release/regression.test.ts → 17 passed (16 sandbox unit tests, fake toolchain: all-areas-green, --json, ffprobe missing/non-executable, vitest fail, flake-retry rescue + persistent-fail, gen drift, tsc fail, base-tsconfig skip, lint fail + silent-green control, smoke fail, node_modules missing, exit 2 usage/help, recursion guards) + ACCEPTANCE e2e (real repo/toolchain): bash scripts/release/regression.sh → exit 0, all 6 areas PASS (tools ffmpeg/ffprobe 8.1.1; vitest 3795 passed | 1 skipped; gen clean 14 shots/1 episode; typecheck 18 project tsconfigs clean, 1 base skipped; lint runner+control; render-smoke 9:16 540x960 h264 + 16:9 960x540 h264 ffprobe-validated); full monorepo suite standalone: 187 files 3795 passed | 1 skipped",
+  "notes": "scripts/release/regression.sh: 6-area gate (tools/vitest/gen/typecheck/lint/render-smoke), honest vitest flake-retry of failing files only (disclosed in note, persistent failure still fails), typecheck skips base-only tsconfigs (anchored find so it works inside worktrees/), lint control per negative-result contract, smoke via bundle→selectComposition→renderMedia over real media with ffprobe gate and cleanup-on-failure; unit tests in sandbox with fake toolchain mirroring clean-install.test.ts precedent",
+  "blockers": [],
+  "updatedAt": "2026-08-28T11:20Z"
+}
