@@ -1,0 +1,9 @@
+{
+  "taskId": "CHAR-005",
+  "phase": "BUILDER_DONE",
+  "commit": "5106b52",
+  "testsRun": "npx vitest run packages/character-library/src/locking -> 16/16 green; npx vitest run packages/character-library -> 275/275 (14 files, no regression); npx vitest run packages/character-library/src/locking packages/core/src/approvals -> 45/45 (CORE-008 consumer regression); npx tsc --noEmit -p packages/character-library/tsconfig.json clean",
+  "notes": "LOCK CHARACTER canonical transition in packages/character-library/src/locking/ (index.ts, gate-snapshot.ts, errors.ts, service.ts): CharacterLockService flips selected candidate assets DRAFT->REVIEW->APPROVED->CANONICAL on the shared CHAR-003 transition table + character APPROVED->CANONICAL; lock without gate-3 APPROVED throws LockNotApprovedError with zero writes (all-or-nothing batch validation); REJECTED never becomes CANONICAL (assertCanonicalizable + canBecomeCanonical + transition-table edge test); double-lock throws CharacterAlreadyLockedError; foreign-asset and unknown-character guards; audit LockEvent log; structural GateSnapshot mirror of CORE-008 approvals (no runtime core import)",
+  "blockers": [],
+  "updatedAt": "2026-08-28T10:05Z"
+}
