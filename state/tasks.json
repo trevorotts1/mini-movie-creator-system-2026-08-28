@@ -282,7 +282,7 @@
       "branch": "task/CHAR-005-lock-canonical",
       "worktree": "worktrees/CHAR-005/",
       "acceptance": "LOCK CHARACTER approval \u2192 candidate asset states transition DRAFT\u2192APPROVED\u2192CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "CHAR-006",
@@ -393,7 +393,7 @@
       "branch": "task/CHAR-013-canon-approval",
       "worktree": "worktrees/CHAR-013/",
       "acceptance": "end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "CHAR-014",
@@ -468,7 +468,8 @@
       "branch": "task/DIR-003-concept-approval",
       "worktree": "worktrees/DIR-003/",
       "acceptance": "no screenplay work while concept unapproved (state throws); `mmcs develop-concept` + `mmcs approve concept` wired; `npx vitest run packages/scene-intelligence/src/concept/approval` green.",
-      "status": "READY"
+      "status": "PASS",
+      "notes": "QC PASS 0 defects (agent transport-dropped after writing qc.json; work verified by orchestrator 26/26 green)"
     },
     {
       "id": "DIR-004",
@@ -550,7 +551,7 @@
       "branch": "task/DIR-008-script-approval",
       "worktree": "worktrees/DIR-008/",
       "acceptance": "no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "DIR-009",
@@ -665,7 +666,7 @@
       "branch": "task/DIR-015-storyboard-approval",
       "worktree": "worktrees/DIR-015/",
       "acceptance": "no paid generation while storyboard unapproved; `mmcs storyboard` + `mmcs approve-storyboard` wired; `npx vitest run packages/scene-intelligence/src/storyboard/approval` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "CAP-001",
@@ -1808,7 +1809,7 @@
       "branch": "task/QC-011-human-review",
       "worktree": "worktrees/QC-011/",
       "acceptance": "automated routes exhausted \u2192 shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "QC-012",
@@ -2098,7 +2099,7 @@
       "branch": "task/REL-001-clean-install",
       "worktree": "worktrees/REL-001/",
       "acceptance": "fresh clean clone \u2192 install \u2192 `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.",
-      "status": "READY"
+      "status": "PASS"
     },
     {
       "id": "REL-002",
