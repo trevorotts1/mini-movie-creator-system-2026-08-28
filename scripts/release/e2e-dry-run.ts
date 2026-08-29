@@ -636,25 +636,6 @@ class ScriptedAgnesClient implements AgnesVideoClient {
   }
 }
 
-/**
- * In-memory Agnes task store whose load() reads THROUGH a shared delegate
- * map. Two instances over the same map = two "processes" over one disk —
- * the restart boundary for the submit→kill→resume scenario. (The submit
- * side ALSO persists through AgnesVideoJobStoreSqlite into the scratch
- * SQLite, so the durable record genuinely crosses a DB boundary.)
- */
-class SharedMapAgnesStore {
-  constructor(private readonly map: Map<string, unknown>) {}
-  async load(ref: string): Promise<unknown> {
-    const raw = this.map.get(ref);
-    return raw === undefined ? undefined : JSON.parse(raw as string);
-  }
-  async save(record: unknown): Promise<void> {
-    const withRef = record as { ref: string };
-    this.map.set(withRef.ref, JSON.stringify(record));
-  }
-}
-
 /** Fish TTS synthesizer fake: deterministic bytes, counts synthesize calls. */
 class ScriptedFishSynthesizer implements FishTtsSynthesizer {
   synthesizeCount = 0;
@@ -1303,8 +1284,6 @@ async function scenarioSubmitResumeArchive(
 ): Promise<ScenarioResult> {
   const steps: ScenarioStep[] = [];
   const REF = `${CODE}:SC01:SH02`;
-  const sharedMap = new Map<string, string>();
-  void sharedMap;
   const client = new ScriptedAgnesClient();
 
   const ledger = new CostLedger(db, { limitUsd: 25, now: () => NOW });
@@ -1743,7 +1722,6 @@ async function scenarioRoughFinal(
 
   // Gate 5 (rough-cut) approval, then the FULL final-render pipeline.
   await approvals.approve("rough-cut", { decidedBy: "rel004-dry-run", note: "rough cut accepted (dry run)", now: NOW });
-  const port = async (gate: import("@mmcs/core").GateId) => approvals.snapshot(gate);
   const spec = {
     seriesId: "SER_E2E",
     episodeId: "EP_E2E",
@@ -1763,13 +1741,6 @@ async function scenarioRoughFinal(
     },
     outputDir: outDir,
   };
-  const ports = {
-    approvals: (gate: import("@mmcs/core").GateId) => {
-      // runFinalRender expects the Sync port shape — resolve the async store.
-      throw new Error("replaced below");
-    },
-  } as never;
-  void ports;
 
   // Wrap the async ApprovalStore into the required ApprovalGatePort shape.
   const gatePort = (() => {
@@ -1956,7 +1927,7 @@ export function renderMarkdown(result: E2eDryRunResult): string {
   lines.push("## Restart boundaries proved");
   lines.push("");
   for (const b of [
-    "S9/S13/S17/S22 run FRESH service instances over the SAME durable store (SQLite or shared map) — the restart boundary — and resume without resubmitting (createVideo call counts and request hashes prove it in the evidence).",
+    "S9/S13/S17/S22 run FRESH service instances over the SAME durable store (SQLite or in-memory map) — the restart boundary — and resume without resubmitting (createVideo call counts and request hashes prove it in the evidence).",
     "S22 is the runbook §5 boundary: CheckpointService save → fresh instance loadExisting → toResumeView.",
     "Emergency archival proved both ways: ARCHIVED on a reachable hosted URL, BLOCKED (EXPIRED_URL, no ingest call) on a known-expired one.",
     "Every render touched real ffmpeg/ffprobe: fixture adapters rendered h264 previews and the ffprobe gate validated codec/duration before any PASS.",

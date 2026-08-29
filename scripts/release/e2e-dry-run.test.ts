@@ -62,6 +62,11 @@ describe("e2e-dry-run (REL-004)", () => {
     expect(md).toContain("MMCS End-to-End Dry Run Report");
     expect(md).toContain("**Result: PASS**");
     expect(md).toContain("BLOCKED — credentials absent");
+    // Honesty regression (QC fix): the restart-boundary bullet must describe
+    // the mechanics that actually ran (SQLite / in-memory map) — no phantom
+    // "shared map" store claimed without being exercised.
+    expect(md).toContain("SAME durable store (SQLite or in-memory map)");
+    expect(md).not.toContain("shared map");
     // Every scenario line carries its verdict.
     for (const s of result.scenarios) {
       expect(md).toContain(s.scenario);
