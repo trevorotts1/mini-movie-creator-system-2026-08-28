@@ -1,9 +1,9 @@
 {
   "taskId": "REC-002",
   "phase": "BUILDER_DONE",
-  "commit": "",
-  "testsRun": "npx vitest run scripts/hooks/pre-compact.test.ts → 19/19 PASS; npx vitest run scripts/orchestration/checkpoint.test.ts → 25/25 PASS (no regression); tsc --noEmit strict on scripts/hooks/pre-compact.ts + test → clean; bash .claude/hooks/pre-compact.sh --selftest → PRECOMPACT SELFTEST PASS; real sh entry fed hook JSON on stdin → exit 0, ledger PRECOMPACT_CHECKPOINT line verified; executable bit -rwxr-xr-x verified",
-  "notes": "PreCompact hook: sh entry → tsx → runHook; checkpoint lock + atomic checkpoint.json + idempotent session.md block + ledger append; exit 0 flush / exit 2 fail-closed; fixed stdin string-chunk Buffer.concat hang + NodeJS.ReadableStream type union + rewrote simulated-invocation test to run the real sh with --repo-root",
+  "commit": "814bddc394c56c3989109d53c7755307180f7833",
+  "testsRun": "npx vitest run scripts/hooks/pre-compact.test.ts \u2192 19/19 PASS; npx vitest run scripts/orchestration/checkpoint.test.ts \u2192 25/25 PASS (no regression); tsc --noEmit strict on scripts/hooks/pre-compact.ts + test \u2192 clean; bash .claude/hooks/pre-compact.sh --selftest \u2192 PRECOMPACT SELFTEST PASS; real sh entry fed hook JSON on stdin \u2192 exit 0, ledger PRECOMPACT_CHECKPOINT line verified; executable bit -rwxr-xr-x verified",
+  "notes": "PreCompact hook: sh entry \u2192 tsx \u2192 runHook; checkpoint lock + atomic checkpoint.json + idempotent session.md block + ledger append; exit 0 flush / exit 2 fail-closed; fixed stdin string-chunk Buffer.concat hang + NodeJS.ReadableStream type union + rewrote simulated-invocation test to run the real sh with --repo-root",
   "blockers": [],
   "updatedAt": "2026-08-28T11:45Z"
 }
