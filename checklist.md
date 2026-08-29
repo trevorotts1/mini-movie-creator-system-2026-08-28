@@ -129,3 +129,15 @@
 - [x] Not admitted: REC-010 (deps REC-002..005 unmerged), QC-007 (defects 3 found > 2 fixed)
 - [x] Unblocked (tasks.json BLOCKED->READY + todo.md): CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001
 - [x] pnpm-lock.yaml unchanged — no install needed
+
+## Batch 11 (2026-08-29T02:20Z)
+- [x] Admitted 8 QC-PASS tasks (phase=PASS, finalTestResult=PASS, defectsFixed >= defectsFound, final commit sha, branch+worktree verified): CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-007, QC-011, REL-001
+- [x] Merged deps-first, then by ID — all --no-ff: CHAR-005 (2e1fb2a), CHAR-013 (dd9106a), DIR-003 (88cc4dc), DIR-008 (ff2ce06), DIR-015 (0c174e1), QC-011 (4006d69), REL-001 (00d4bca) clean; QC-007 first attempt aborted on add/add conflict in state/task-updates/QC-007.qc.json, re-merged (c5802ad) resolving that file to the branch's authoritative round-2 record (2/2 defects, verified 94ce8b2) — code files merged clean, never force-pushed
+- [x] QC-007 admission: batch-10 rejected on defectsFound=3 > defectsFixed=2; the round-2 re-QC on the branch (04b3664, a694162) records 2/2 — the third batch-10 "defect" was a repo-wide missing lint script outside owned paths, and control commit 3f55d17 already stamped QC-007 PASS 2/2. Branch qc.json is the §11.1 admission artifact and passes
+- [x] Regression PASS: pnpm -r test exit 0; full-repo vitest 3795 passed / 1 skipped (first parallel run showed one 5s-timeout in packages/database/src/backup/backup.test.ts > exportBackup — proven flake: passed isolated x2 and in two clean full runs; CORE-015 code untouched by this batch); pnpm -r run typecheck exit 0 (17/17 Done); QC-007 flash suite 28/28 on integration
+- [x] Pushed origin/integration f5e9fb8..00d4bca then 00d4bca..c5802ad
+- [x] Not admitted: REC-010 (deps REC-002..REC-005 unmerged — 5th cycle); REC-011/REL-004/005/006 still deps-blocked
+- [x] Unblocked (tasks.json BLOCKED->READY + todo.md): REL-002, REL-003 (REL-001 merged)
+- [x] Branch-field corrections: CHAR-005 task/CHAR-005-lock-canonical -> task/CHAR-005-character-locking; REL-001 -> task/TASK-REL-001-clean-install (QC record lives at worktrees/TASK-REL-001/state/task-updates/REL-001.qc.json)
+- [x] Folded active-worktree updates (step 11): QC-007 folded via its merge (c5802ad); REC-010 worktree qc/builder files byte-identical to integration copies — nothing to fold; worktrees retained for all active tasks
+- [x] pnpm-lock.yaml unchanged — no install needed

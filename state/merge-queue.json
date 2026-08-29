@@ -1,27 +1,27 @@
 {
   "schema_version": 1,
   "items": [],
-  "updated_at": "2026-08-28T23:35:00Z",
+  "updated_at": "2026-08-29T02:20:00Z",
   "last_batch": {
-    "batch": "batch-10",
+    "batch": "batch-11",
     "merged": [
-      "CORE-008",
-      "CORE-009",
-      "CORE-015",
-      "QC-005",
-      "SKL-002"
+      "CHAR-005",
+      "CHAR-013",
+      "DIR-003",
+      "DIR-008",
+      "DIR-015",
+      "QC-007",
+      "QC-011",
+      "REL-001"
     ],
     "failed": [
       {
         "id": "REC-010",
-        "reason": "deps REC-002..REC-005 not yet merged \u2014 admission rule 6"
-      },
-      {
-        "id": "QC-007",
-        "reason": "defectsFound=3 > defectsFixed=2 \u2014 admission rule defectsFixed >= defectsFound"
+        "reason": "deps REC-002..REC-005 not yet merged \u2014 admission rule 6 (5th consecutive cycle)"
       }
     ],
-    "preBatchHead": "f023247a3cd713556077e8a39ac799b3fd4115c3",
-    "postBatchHead": "dfa9ba76134486e6c7b16b2e005e326b91767b57"
+    "preBatchHead": "f5e9fb8ab96431992f476a1f3e0425791ee3b72b",
+    "postBatchHead": "c5802adf0ec50dc8b7763c1022dabb5a21fae13f",
+    "notes": "QC-007 add/add conflict on state/task-updates/QC-007.qc.json resolved to branch record (2/2 defects, verified 94ce8b2); integration's stale 3/2 fold counted repo-wide lint-script infra gap outside owned paths. Regression: full vitest 3795 pass / 1 skip (one 5s-timeout flake in backup.test.ts under parallel load, passed isolated x2 and in full re-run x2); pnpm -r run typecheck RC=0 (17 Done). Pushed f5e9fb8..00d4bca then 00d4bca..c5802ad."
   }
 }

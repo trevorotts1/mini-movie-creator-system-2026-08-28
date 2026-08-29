@@ -134,3 +134,12 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-28T23:35:00Z | QC-005 | Video direct vs extracted-frame route | merger | PASS | 2 | 2 | PASS — merged batch-10 (73de2a2): stem path-traversal guard + count validation in frame planner; route suite 24/24 |
 | 2026-08-28T23:35:00Z | SKL-002 | Claude project install | merger | PASS | 2 | 2 | PASS — merged batch-10 (dfa9ba7): cycle-2 re-admission after IQ-B6 revert; node-types fix verified on integration (tsc clean, 45/45 claude tests) |
 | 2026-08-28T23:35:00Z | QC-007 | Agnes flash route | merger | FAIL | 3 | 2 | NOT ADMITTED — defectsFound 3 > defectsFixed 2; back to fixer |
+| 2026-08-29T02:20:00Z | CHAR-005 | Lock/canonical state transition | merger | PASS | 3 | 3 | PASS — merged batch-11 (2e1fb2a): locking suite in packages/character-library/src/locking green on integration |
+| 2026-08-29T02:20:00Z | CHAR-013 | Canon proposal approval (gate 6) | merger | PASS | 3 | 3 | PASS — merged batch-11 (dd9106a): canon-approval 600-line test suite green on integration |
+| 2026-08-29T02:20:00Z | DIR-003 | Concept approval gate (gate 1) | merger | PASS | 0 | 0 | PASS — merged batch-11 (88cc4dc): concept approval + develop-concept CLI wired, 1756 insertions |
+| 2026-08-29T02:20:00Z | DIR-008 | Script approval gate (gate 2) | merger | PASS | 0 | 0 | PASS — merged batch-11 (ff2ce06): screenplay approval guard + write-script CLI wired |
+| 2026-08-29T02:20:00Z | DIR-015 | Storyboard approval gate (gate 4) | merger | PASS | 4 | 4 | PASS — merged batch-11 (0c174e1): storyboard approval + CLI commands, 515-line command tests |
+| 2026-08-29T02:20:00Z | QC-007 | Agnes Flash acceptance route | merger | PASS | 2 | 2 | PASS — merged batch-11 (c5802ad): round-2 QC verified 94ce8b2, 28/28 flash route tests green on integration; batch-10 rejection (3>2) superseded — 3rd item was repo-wide lint infra gap, control 3f55d17 already recorded 2/2 PASS |
+| 2026-08-29T02:20:00Z | QC-011 | Human REVIEW state | merger | PASS | 3 | 3 | PASS — merged batch-11 (4006d69): human-review store/decide + qc CLI surface, 466-line suite |
+| 2026-08-29T02:20:00Z | REL-001 | Clean install | merger | PASS | 3 | 3 | PASS — merged batch-11 (00d4bca): clean-install.sh + docs/installation.md, 402-line test |
+| 2026-08-29T02:20:00Z | REC-010 | Restart simulation | merger | HOLD | 1 | 1 | NOT ADMITTED batch-11 — deps REC-002..REC-005 unmerged; remains PASS awaiting merge engine |

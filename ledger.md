@@ -219,3 +219,13 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 | 2026-08-28T23:35:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 still unmerged (admission rule 6) |
 | 2026-08-28T23:35:00Z | QC-007 | merger | NOT_ADMITTED | defectsFound=3 > defectsFixed=2 (admission rule: defectsFixed >= defectsFound) |
 | 2026-08-28T23:35:00Z | BATCH-10 | merger | MERGED | 5 merged, 0 conflict-blocked, regression PASS (pnpm -r test exit 0; pnpm -r run typecheck exit 0; 219/219 on batch-touched suites; apps/cli 78, integrations/claude 45, integrations/openclaw 23), pushed f023247..dfa9ba7 |
+| 2026-08-29T02:20:00Z | CHAR-005 | merger | MERGED | batch-11 merge 2e1fb2a (QC PASS 3/3, commit 5803aa4; branch corrected to task/CHAR-005-character-locking — tasks.json field was stale) |
+| 2026-08-29T02:20:00Z | CHAR-013 | merger | MERGED | batch-11 merge dd9106a (QC PASS 3/3, commit 2c117abd) |
+| 2026-08-29T02:20:00Z | DIR-003 | merger | MERGED | batch-11 merge 88cc4dc (QC PASS 0 defects, commit ce86971) |
+| 2026-08-29T02:20:00Z | DIR-008 | merger | MERGED | batch-11 merge ff2ce06 (QC PASS 0 defects, commit 60b816a4) |
+| 2026-08-29T02:20:00Z | DIR-015 | merger | MERGED | batch-11 merge 0c174e1 (QC PASS 4/4, commit 06b4812) |
+| 2026-08-29T02:20:00Z | QC-007 | merger | MERGED | batch-11 merge c5802ad (QC PASS round-2 2/2, verified 94ce8b2; add/add conflict on state/task-updates/QC-007.qc.json resolved to branch record — stale integration fold counted a repo-wide lint-script infra gap outside owned paths as a defect; batch-10 rejection superseded by control 3f55d17) |
+| 2026-08-29T02:20:00Z | QC-011 | merger | MERGED | batch-11 merge 4006d69 (QC PASS 3/3, commit e40027e) |
+| 2026-08-29T02:20:00Z | REL-001 | merger | MERGED | batch-11 merge 00d4bca (QC PASS 3/3, commit 9cbf6aa; QC record at worktrees/TASK-REL-001/) |
+| 2026-08-29T02:20:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 still unmerged (admission rule 6) — 5th consecutive cycle; worktree qc/builder files identical to integration copies, nothing to fold |
+| 2026-08-29T02:20:00Z | BATCH-11 | merger | MERGED | 8 merged (7 clean, QC-007 state-record conflict resolved to branch), regression PASS (full vitest 3795/1 skipped after backup.test.ts 5s-timeout flake proven non-deterministic — isolated x2 pass, full re-run x2 pass; pnpm -r typecheck RC=0 17 Done), pushed f5e9fb8..00d4bca..c5802ad; unblocked REL-002, REL-003 -> READY |

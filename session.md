@@ -1,17 +1,22 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-28T23:35:00Z
-**Session Type:** Batch Merge Cycle 10 Pushed
+**Updated:** 2026-08-29T02:20:00Z
+**Session Type:** Batch Merge Cycle 11 Pushed
 
 ---
 
 ## Current Status
 
-- **Phase:** Batch Merge Cycle 10 complete. 5 tasks merged deps-first, zero conflicts: CORE-008 (afe126e, approval state machine + gates), CORE-009 (362a985, cost/quota reservations engine), CORE-015 (b2992b9, database backup/export), QC-005 (73de2a2, video direct vs extracted-frame route), SKL-002 (dfa9ba7, claude project install — cycle-2 re-admission after IQ-B6 revert; node-types typecheck fix verified on integration: tsc RC=0, claude tests 45/45). Regression PASS. Pushed to origin/integration.
-- **Integration HEAD:** dfa9ba7 (== origin/integration)
-- **Regression Result:** PASS — `pnpm -r test` exit 0 (apps/cli 78/78, integrations/claude 45/45, integrations/openclaw 23/23); `pnpm -r run typecheck` exit 0 (17/17 packages Done); batch-touched suites 219/219 (approvals, gate-machine, cost-engine ledger, db backup round-trip, qc route, claude project-install, openclaw). pnpm-lock.yaml unchanged — no install needed. Known env defect from batch-9 (react not resolvable for 3 remotion-runtime test files) did NOT surface in `pnpm -r test` this cycle (those files live under remotion/, a separate npm project, not a workspace package).
-- **Next Action:** REC-010 still waits on REC-002..REC-005 (READY, need build+QC). QC-007 NOT admitted (defects 3 found > 2 fixed — needs fixer round 2 then re-QC). Newly unblocked READY: CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001 (all were waiting on CORE-008/SKL-002).
+- **Phase:** Batch Merge Cycle 11 complete. 8 tasks merged deps-first: CHAR-005 (2e1fb2a, lock/canonical transitions), CHAR-013 (dd9106a, canon approval gate 6), DIR-003 (88cc4dc, concept approval gate 1), DIR-008 (ff2ce06, script approval gate 2), DIR-015 (0c174e1, storyboard approval gate 4), QC-011 (4006d69, human REVIEW state), REL-001 (00d4bca, clean install), QC-007 (c5802ad, Agnes Flash route — first attempt aborted on add/add conflict in its own state record, re-merged resolving to the branch round-2 qc.json). Regression PASS. Pushed f5e9fb8..c5802ad.
+- **Integration HEAD:** c5802ad (== origin/integration)
+- **Regression Result:** PASS — `pnpm -r test` exit 0; full-repo vitest 3795 passed / 1 skipped (first parallel run showed a single 5s-timeout failure in packages/database/src/backup/backup.test.ts > exportBackup — proven non-deterministic: passed isolated x2 and in two clean full runs; CORE-015 code untouched by this batch); `pnpm -r run typecheck` exit 0 (17/17 packages Done); QC-007 flash route 28/28 on integration. pnpm-lock.yaml unchanged — no install needed.
+- **Next Action:** REC-010 still waits on REC-002..REC-005 (READY, need build+QC — 5th cycle deps-blocked). REC-011 needs REC-002/003 built. REL-002, REL-003 newly READY (dispatch next wave). REL-004..006 remain blocked behind REL-002/003 + REC items.
+
+## Batch 11 — Notes
+- QC-007 admission revisited: §11.1 artifact (worktree qc.json, 2 defects / 2 fixed, commit 94ce8b2) passes; batch-10's rejection (3>2) counted a repo-wide missing lint script outside owned paths — control commit 3f55d17 had already stamped QC-007 PASS 2/2. The add/add conflict existed only in state/task-updates/QC-007.qc.json; code files (packages/qc/src/routes/agnes-flash/) merged clean.
+- CHAR-005 real branch is task/CHAR-005-character-locking (tasks.json branch field stale, corrected). REL-001 QC record lives at worktrees/TASK-REL-001/state/task-updates/REL-001.qc.json.
+- Step 11 fold: REC-010 worktree builder/qc files byte-identical to integration copies — nothing to fold; worktrees of all active tasks retained.
 
 ## Batch 10 — Merged (5)
 - CORE-008 (afe126e), CORE-009 (362a985), CORE-015 (b2992b9), QC-005 (73de2a2), SKL-002 (dfa9ba7)

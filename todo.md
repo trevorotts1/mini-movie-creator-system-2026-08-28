@@ -1,15 +1,15 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — MERGED: **128** — READY: **14** — BLOCKED: **5** — PASS: **1** (REC-010, deps REC-002..005) — BUILDER_DONE: **1** (QC-007, defects 3 found / 2 fixed — back to fixer). Batch-10: CORE-008, CORE-009, CORE-015, QC-005, SKL-002 merged; CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001 unblocked.
+Total tasks: **149** — MERGED: **136** — READY: **9** — BLOCKED: **3** — PASS: **1** (REC-010, deps REC-002..005). Batch-11: CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-007, QC-011, REL-001 merged (7 clean + QC-007 add/add state-record conflict resolved to branch); REL-002, REL-003 unblocked READY.
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
 WF01 CORE-001,002,003,010,011,012,013,014 · WF02 CHAR-001,002,003,004,006,007,008,009,010,011,012,014,015 · WF03 DIR-001,002,004,005,006,007,009,010,011,012,013,014 · WF09 CAP-001..010, QC-001..010,012 · WF04 AGN-001..010 · WF05 KIE-001..010 · WF06 FISH-001..010 · WF07 GHL-001..012 · WF08 VID-001..016 · WF10 SKL-001..007, REC-001..011.
 
-## BLOCKED set (5)
+## BLOCKED set (3)
 
-REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked set) · REL-005 (needs REL-004) · REL-006 (needs REL-002..005 + REC-010/011). Batch-10 unblocked CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011, REL-001 (all CORE-008 dependents) — CORE-008, CORE-009, CORE-015, QC-005, SKL-002 merged batch-10.
+REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002..005 + REC-010/011). Batch-11 merged CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-007, QC-011, REL-001 — REL-002, REL-003 unblocked READY (needed only REL-001).
 
 ## Status policy (binding)
 
@@ -238,16 +238,16 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: `mmcs choose-character <1|2|3|4>` maps 4=Try Again; `mmcs approve-character <id>` requires gate 3; invalid selections rejected with usage text; `npx vitest run apps/cli/src/commands/choose-character` green.
   - Status: MERGED
 
-- [ ] TASK-CHAR-005 — Lock/canonical state transition
+- [x] TASK-CHAR-005 — Lock/canonical state transition
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
   - Depends on: CORE-008, CHAR-002, CHAR-003
   - Owns: packages/character-library/src/locking/
-  - Branch: task/TASK-CHAR-005-lock-canonical
+  - Branch: task/CHAR-005-character-locking (corrected batch-11: tasks.json branch field was stale)
   - Worktree: worktrees/TASK-CHAR-005/
   - Acceptance: LOCK CHARACTER approval → candidate asset states transition DRAFT→APPROVED→CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge 2e1fb2a; QC PASS 3/3 defects fixed, commit 5803aa4)
 
 - [x] TASK-CHAR-006 — Appearance versions (effective episode)
   - Workflow: WF02
@@ -326,7 +326,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: bible stores premise, world rules, characters, relationships, locations, wardrobe, props, visual style, camera language, voice profiles, timeline, episode summaries, plot threads, versioned canon changes (spec §10); historical episodes read canon-at-time; `npx vitest run packages/character-library/src/series-bible` green.
   - Status: MERGED
 
-- [ ] TASK-CHAR-013 — Canon proposal approval (gate 6)
+- [x] TASK-CHAR-013 —
   - Workflow: WF02
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -335,7 +335,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-CHAR-013-canon-approval
   - Worktree: worktrees/TASK-CHAR-013/
   - Acceptance: end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge dd9106a; QC PASS 3/3 defects fixed, commit 2c117abd)
 
 - [x] TASK-CHAR-014 — GHL asset-link refresh/fallback
   - Workflow: WF02
@@ -383,7 +383,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: idea → developed concept via director-model interface (OpenRouter-compatible, CAP-007 registry); mocked-LLM test produces concept options; no provider call without capability check; `npx vitest run packages/scene-intelligence/src/concept` green.
   - Status: MERGED
 
-- [ ] TASK-DIR-003 — Concept approval gate (gate 1)
+- [x] TASK-DIR-003 —
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -392,7 +392,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-DIR-003-concept-approval
   - Worktree: worktrees/TASK-DIR-003/
   - Acceptance: no screenplay work while concept unapproved (state throws); `mmcs develop-concept` + `mmcs approve concept` wired; `npx vitest run packages/scene-intelligence/src/concept/approval` green.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge 88cc4dc; QC PASS 0 defects, commit ce86971)
 
 - [x] TASK-DIR-004 — Screenplay generator
   - Workflow: WF03
@@ -438,7 +438,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: critic findings → targeted revision → re-criticize; loop bounded (max iterations configurable); convergence test on fixture; `npx vitest run packages/scene-intelligence/src/script-revision` green.
   - Status: MERGED
 
-- [ ] TASK-DIR-008 — Script approval gate (gate 2)
+- [x] TASK-DIR-008 —
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -447,7 +447,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-DIR-008-script-approval
   - Worktree: worktrees/TASK-DIR-008/
   - Acceptance: no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge ff2ce06; QC PASS 0 defects, commit 60b816a4)
 
 - [x]  TASK-DIR-009 — Scene parser
   - Workflow: WF03
@@ -515,7 +515,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: storyboard plan = per-shot image-generation contract (image model by capability profile, spec §15); no paid generation in this task (mocked image client); `npx vitest run packages/scene-intelligence/src/storyboard` green.
   - Status: MERGED
 
-- [ ] TASK-DIR-015 — Storyboard approval gate (gate 4)
+- [x] TASK-DIR-015 —
   - Workflow: WF03
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -524,7 +524,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-DIR-015-storyboard-approval
   - Worktree: worktrees/TASK-DIR-015/
   - Acceptance: no paid generation while storyboard unapproved; `mmcs storyboard` + `mmcs approve-storyboard` wired; `npx vitest run packages/scene-intelligence/src/storyboard/approval` green.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge 0c174e1; QC PASS 4/4 defects fixed, commit 06b4812)
 
 ## WF09A — MODEL REGISTRY / CAPABILITIES (CAP-* live in WF09)
 
@@ -1354,7 +1354,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: targeted repair of affected shot only — never whole-episode regeneration (test proves single-shot scope); retry bounded by cost policy; `npx vitest run packages/qc/src/retry` green.
   - Status: MERGED
 
-- [ ] TASK-QC-007 — Agnes Flash acceptance route
+- [x] TASK-QC-007 —
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1363,7 +1363,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-QC-007-agnes-flash-route
   - Worktree: worktrees/TASK-QC-007/
   - Acceptance: Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure → one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.
-  - Status: QC_FIXING (batch-10 admission rejected: defects 3 found / 2 fixed — fixer round 2 then re-QC)
+  - Status: MERGED (batch-11, merge c5802ad; QC PASS round-2 2/2 defects fixed, verified 94ce8b2; batch-10 rejection superseded — the 3rd 'defect' was a repo-wide lint-script infra gap outside owned paths)
 
 - [x]  TASK-QC-008 — Agnes regular fallback
   - Workflow: WF09
@@ -1398,7 +1398,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: especially complex/long/hero/action shots route to Wan 3.0; routing policy considers capability/quality-history/cost/quota (policy table test); `npx vitest run packages/qc/src/routes/wan` green.
   - Status: MERGED — batch-9 (merge 47f919e; rebased twice onto integration, merged clean, regression PASS)
 
-- [ ] TASK-QC-011 — Human REVIEW state
+- [x] TASK-QC-011 —
   - Workflow: WF09
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1407,7 +1407,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-QC-011-human-review
   - Worktree: worktrees/TASK-QC-011/
   - Acceptance: automated routes exhausted → shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge 4006d69; QC PASS 3/3 defects fixed, commit e40027e)
 
 - [x]  TASK-QC-012 — Final episode QC
   - Workflow: WF09
@@ -1607,7 +1607,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-REC-010-restart-sim
   - Worktree: worktrees/TASK-REC-010/
   - Acceptance: simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission → resume polls existing task ID (no resubmit — spec §32 recovery acceptance); simulation script exits 0.
-  - Status: PASS
+  - Status: PASS (re-admission held: deps REC-002..005 READY, not merged — batch-11 again not admitted)
 
 - [ ] TASK-REC-011 — Auto-compact simulation
   - Workflow: WF10
@@ -1620,7 +1620,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Acceptance: manual /compact (simulated PreCompact→PostCompact) updates checkpoint; simulated new/resumed session injects + reads state; no data loss across compaction; simulation script exits 0.
   - Status: READY
 
-- [ ] TASK-REL-001 — Clean install
+- [x] TASK-REL-001 —
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1629,7 +1629,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-REL-001-clean-install
   - Worktree: worktrees/TASK-REL-001/
   - Acceptance: fresh clean clone → install → `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.
-  - Status: READY (unblocked batch-10: CORE-008/SKL-002 merged)
+  - Status: MERGED (batch-11, merge 00d4bca; QC PASS 3/3 defects fixed, commit 9cbf6aa)
 
 - [ ] TASK-REL-002 — Full regression
   - Workflow: WF10
@@ -1640,7 +1640,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-REL-002-full-regression
   - Worktree: worktrees/TASK-REL-002/
   - Acceptance: full vitest suite + `npm run gen` + `npx tsc --noEmit` + lint + Remotion render smoke (16:9 + 9:16) + ffprobe availability check all pass in one scripted run; script exits 0 with per-area summary.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-11: REL-001 merged 00d4bca)
 
 - [ ] TASK-REL-003 — Example project
   - Workflow: WF10
@@ -1651,7 +1651,7 @@ REL-002, REL-003 (need REL-001) · REL-004 (needs REL-002+003 + wave-2 unblocked
   - Branch: task/TASK-REL-003-example-project
   - Worktree: worktrees/TASK-REL-003/
   - Acceptance: example series + episode seed (fixtures, no paid generation) loads via `mmcs create-series`/`create-episode` and exercises the non-paid pipeline steps; docs/first-series.md walkthrough verified step-by-step; `npx vitest run examples/demo-series` green.
-  - Status: BLOCKED
+  - Status: READY (unblocked batch-11: REL-001 merged 00d4bca)
 
 - [ ] TASK-REL-004 — End-to-end dry run
   - Workflow: WF10

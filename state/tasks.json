@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-28T23:35:00Z",
+  "updated_at": "2026-08-29T02:20:00Z",
   "items": [
     {
       "id": "CORE-001",
@@ -279,10 +279,12 @@
         "CHAR-003"
       ],
       "owns": "packages/character-library/src/locking/",
-      "branch": "task/CHAR-005-lock-canonical",
+      "branch": "task/CHAR-005-character-locking",
       "worktree": "worktrees/CHAR-005/",
       "acceptance": "LOCK CHARACTER approval \u2192 candidate asset states transition DRAFT\u2192APPROVED\u2192CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "2e1fb2a"
     },
     {
       "id": "CHAR-006",
@@ -393,7 +395,9 @@
       "branch": "task/CHAR-013-canon-approval",
       "worktree": "worktrees/CHAR-013/",
       "acceptance": "end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "dd9106a"
     },
     {
       "id": "CHAR-014",
@@ -468,8 +472,10 @@
       "branch": "task/DIR-003-concept-approval",
       "worktree": "worktrees/DIR-003/",
       "acceptance": "no screenplay work while concept unapproved (state throws); `mmcs develop-concept` + `mmcs approve concept` wired; `npx vitest run packages/scene-intelligence/src/concept/approval` green.",
-      "status": "PASS",
-      "notes": "QC PASS 0 defects (agent transport-dropped after writing qc.json; work verified by orchestrator 26/26 green)"
+      "status": "MERGED",
+      "notes": "QC PASS 0 defects (agent transport-dropped after writing qc.json; work verified by orchestrator 26/26 green)",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "88cc4dc"
     },
     {
       "id": "DIR-004",
@@ -551,7 +557,9 @@
       "branch": "task/DIR-008-script-approval",
       "worktree": "worktrees/DIR-008/",
       "acceptance": "no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "ff2ce06"
     },
     {
       "id": "DIR-009",
@@ -666,7 +674,9 @@
       "branch": "task/DIR-015-storyboard-approval",
       "worktree": "worktrees/DIR-015/",
       "acceptance": "no paid generation while storyboard unapproved; `mmcs storyboard` + `mmcs approve-storyboard` wired; `npx vitest run packages/scene-intelligence/src/storyboard/approval` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "0c174e1"
     },
     {
       "id": "CAP-001",
@@ -1748,8 +1758,10 @@
       "branch": "task/QC-007-agnes-flash-route",
       "worktree": "worktrees/QC-007/",
       "acceptance": "Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure \u2192 one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.",
-      "status": "PASS",
-      "notes": "QC PASS verified: defectsFixed=2/defectsFound=2, 28/28 tests green, ready for merge"
+      "status": "MERGED",
+      "notes": "QC PASS verified: defectsFixed=2/defectsFound=2, 28/28 tests green, ready for merge",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "c5802ad"
     },
     {
       "id": "QC-008",
@@ -1809,7 +1821,9 @@
       "branch": "task/QC-011-human-review",
       "worktree": "worktrees/QC-011/",
       "acceptance": "automated routes exhausted \u2192 shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "4006d69"
     },
     {
       "id": "QC-012",
@@ -2096,10 +2110,12 @@
         "SKL-005"
       ],
       "owns": "scripts/release/clean-install.sh, docs/installation.md",
-      "branch": "task/REL-001-clean-install",
-      "worktree": "worktrees/REL-001/",
+      "branch": "task/TASK-REL-001-clean-install",
+      "worktree": "worktrees/TASK-REL-001/",
       "acceptance": "fresh clean clone \u2192 install \u2192 `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.",
-      "status": "PASS"
+      "status": "MERGED",
+      "mergedAt": "2026-08-29T02:20:00Z",
+      "mergeCommit": "00d4bca"
     },
     {
       "id": "REL-002",
@@ -2112,7 +2128,7 @@
       "branch": "task/REL-002-full-regression",
       "worktree": "worktrees/REL-002/",
       "acceptance": "full vitest suite + `npm run gen` + `npx tsc --noEmit` + lint + Remotion render smoke (16:9 + 9:16) + ffprobe availability check all pass in one scripted run; script exits 0 with per-area summary.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "REL-003",
@@ -2125,7 +2141,7 @@
       "branch": "task/REL-003-example-project",
       "worktree": "worktrees/REL-003/",
       "acceptance": "example series + episode seed (fixtures, no paid generation) loads via `mmcs create-series`/`create-episode` and exercises the non-paid pipeline steps; docs/first-series.md walkthrough verified step-by-step; `npx vitest run examples/demo-series` green.",
-      "status": "BLOCKED"
+      "status": "READY"
     },
     {
       "id": "REL-004",
