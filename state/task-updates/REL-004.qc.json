@@ -1,0 +1,13 @@
+{
+  "taskId": "REL-004",
+  "phase": "PASS",
+  "commit": "2ece632b2c9cb0dc04d1f0b52e3fbf2ba0e2b7d1",
+  "checksRun": "npx tsx --tsconfig scripts/release/tsconfig.json scripts/release/e2e-dry-run.ts (RC 0, 11/11 PASS); bash scripts/release/e2e-dry-run.sh (RC 0) and --markdown (report regenerated, RC 0); npx vitest run scripts/release/e2e-dry-run.test.ts (4/4); npx tsc --noEmit -p scripts/release/tsconfig.json (clean); lint N/A (no lint config beyond root no-op); secret scan on owned paths clean",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T11:10:00Z",
+  "notes": "Independent verify green; fixed dead SharedMapAgnesStore/sharedMap/port/ports fixtures + reworded unexercised 'shared map' restart-boundary claim with vitest honesty regression; spec §30 stage list fully covered, live items honestly BLOCKED; scratch dirs cleaned.",
+  "blockers": []
+}
