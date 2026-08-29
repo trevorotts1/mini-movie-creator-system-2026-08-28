@@ -1,0 +1,13 @@
+{
+  "taskId": "REC-011",
+  "phase": "PASS",
+  "commit": "b49ee9d07de919e794eed6b08b4c4057d081b1d6",
+  "checksRun": "npx tsx scripts/orchestration/compact-sim.ts -> exit 0; npx vitest run --config scripts/orchestration/vitest.config.mts scripts/orchestration -> 111/111 (compact-sim 14/14 x3 runs, no flake); npx vitest run --config vitest.config.ts scripts/hooks packages/core/src/recovery -> 188/188; scripts/release clean-install+regression tests -> 33/33 after env repair; pnpm -r run typecheck -> clean; negative control: simulateCompact with unwritable scratchRoot -> ok=false exit!=0 (discriminating power proven)",
+  "defectsFound": 2,
+  "defectsFixed": 2,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T05:00:00Z",
+  "notes": "0 code defects in owned paths; 2 environment defects fixed in worktree only (node_modules symlinked to AGN-001 -> real pnpm install --frozen-lockfile; remotion/node_modules absent -> npm ci), acceptance fully verified (CLI exit 0, checkpoint update, inject+read, no data loss)",
+  "blockers": []
+}
