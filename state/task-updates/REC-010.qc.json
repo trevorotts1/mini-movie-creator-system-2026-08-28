@@ -1,14 +1,14 @@
 {
   "taskId": "REC-010",
   "phase": "PASS",
-  "commit": "3588299d1020ce41114079e06aa314ec4f68c827",
-  "checksRun": "npx vitest run --config scripts/orchestration/vitest.config.mts scripts/orchestration (14/14 passed, exit 0); npx tsx scripts/orchestration/restart-sim.ts (exit 0); npx tsc --noEmit -p tsconfig.base.json (exit 0)",
+  "commit": "8fd821724db48e0ed65d62614bba4e25d0182561",
+  "checksRun": "npx vitest run --config scripts/orchestration/vitest.config.mts scripts/orchestration (111/111 passed, exit 0); npx tsx scripts/orchestration/restart-sim.ts (all 3 scenarios PASS, exit code 0); npx tsc --noEmit in packages/core and packages/providers (both rc 0); regression: packages/core/src/recovery 18/18 pass; packages/providers via its own config 715 passed (2 pre-existing agnes module-resolution file-load failures identical on origin/integration, outside REC-010 scope)",
   "defectsFound": 1,
   "defectsFixed": 1,
   "finalTestResult": "PASS",
   "qcAgent": "qc-batch",
-  "queuedAt": "2026-08-28T18:20:00Z",
-  "notes": "Verified restart simulation scenarios against real subsystem code: task map recovery with no duplicates, worktree/branch reconciliation (relative path normalization defect fixed + regression tested), Kie polling resume with no duplicate submission; all tests pass and CLI exits 0.",
+  "queuedAt": "2026-08-29T04:46:00Z",
+  "notes": "Independent post-rebase re-verification: CLI exits 0; task-map recovery duplicate-free; worktree/branch reconciliation proven both directions (positive control + phantom/drift discrimination); kill-after-submit resumes by polling persisted providerTaskId with createCount=1 (no resubmit); security pass clean (execFile fixed-arg git, no shell interpolation, encodeURIComponent store keys, deadline-bounded poll loop). Defect fixed this pass: stale qc.json pointed at pre-rebase commit 3588299 (not an ancestor of HEAD); re-pointed at 8fd8217.",
   "blockers": [],
   "rebasedOnto": "38974b3d515b4992689fc28d54c428d728a350e5",
   "rebaseCommit": "01b5a422eccb7b95db9a48fa8251fc936006bb5b"
