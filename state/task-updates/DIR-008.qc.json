@@ -1,0 +1,13 @@
+{
+  "taskId": "DIR-008",
+  "phase": "PASS",
+  "commit": "60b816a46e6809149165b5bf25f01a3622aba068",
+  "checksRun": "npx vitest run packages/scene-intelligence/src/screenplay/approval -> 21/21 PASS (acceptance literal, exit 0); npx vitest run apps/cli/src/commands/write-script -> 14/14 PASS; npx vitest run packages/scene-intelligence -> 434/434 PASS (18 files); npx vitest run apps/cli -> 92/92 PASS (7 files); tsc --noEmit -p packages/scene-intelligence + -p apps/cli -> clean; full-repo vitest -> 3524 passed, 4 failing files proven non-DIR-008: 3x remotion-runtime react-import failures (react declared only by ENV-001 merged to integration AFTER this branch base 2e8f2ed; worktree node_modules lacks react; passes on integration tree) and 1x packages/database backup.test.ts 5s timeout under full-suite load (passes standalone 12/12 RC=0 in this worktree); lint N/A (no eslint config repo-wide); security grep on owned paths clean: no child_process/exec/spawn/fs/env/network, unknown CLI flags collected as inert data per spec 29, no retry loops, no paths",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-28T10:35Z",
+  "notes": "Gate-2 guard assertGate2Open enforces no-cast-work-until-APPROVED in one place; write-script/approve-script CLI contracts pure behind injected ports; merger note: add approval barrel export to packages/scene-intelligence/src/index.ts (verified collision-free vs screenplay/index.js star exports).",
+  "blockers": []
+}
