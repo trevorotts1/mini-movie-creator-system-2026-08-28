@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-003",
+  "phase": "BUILDER_DONE",
+  "commit": "50d1ff1c09f56a40f45452f06e2179e68db2301a",
+  "testsRun": "npx vitest run scripts/hooks/post-compact.test.ts -> 16/16 PASS (exit 0); npx vitest run packages/core/src/recovery scripts/orchestration/checkpoint.test.ts -> 43/43 PASS (no regression to REC-001); tsc --noEmit (strict, repo base flags) on scripts/hooks/post-compact.ts + test -> clean; tsx scripts/orchestration/checkpoint.ts --selftest -> CHECKPOINT SELFTEST PASS; simulated binary invocation: echo '{\"session_id\":\"sim-1\",\"trigger\":\"manual\"}' | .claude/hooks/post-compact.sh with MMCS_REPO_ROOT temp repo -> exit 0, state/checkpoint.json post-compact event written atomically, state/recovery.json marker updated with recovery_read_order + last_post_compact",
+  "notes": "PostCompact hook: .claude/hooks/post-compact.sh (executable sh wrapper, tsx via node_modules or npx cache, never blocks compaction) -> scripts/hooks/post-compact.ts (owned impl): reads untrusted stdin payload defensively (control chars stripped, non-JSON safe, nothing executed), records spec §28 post-compact cadence event via REC-001 CheckpointWiring.postCompact (cross-process lock + atomic write; nextActions NOT clobbered — PreCompact owns them), updates state/recovery.json recovery marker (atomic, additive — preserves items/updated_at, corrupt marker quarantined to recovery.json.corrupt-<ts> never silently reset), prints disk-truth recovery read order to stdout so the resumed session re-reads project state from disk — compact summary is context only, never sole project state; .claude/settings.json created with PostCompact wiring only (REC-001 owns other registrations). Worktree note: node_modules symlink -> root repo for vitest/tsc resolution, not committed.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T12:00Z"
+}
