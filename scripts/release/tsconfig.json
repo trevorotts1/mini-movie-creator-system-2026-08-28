@@ -1,0 +1,14 @@
+{
+  // REL-004: release-area TypeScript config. The other scripts in this dir
+  // (clean-install.ts, regression.ts) ship without a covering tsconfig — they
+  // run under tsx/vitest, which resolve the @mmcs/* aliases from
+  // vitest.config.ts. This config gives the area a real tsc typecheck that
+  // resolves the same aliases through tsconfig.base.json paths.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // scripts run under tsx / node ESM, not compiled: noEmit inherited.
+    "types": ["node"]
+  },
+  "include": ["*.ts"],
+  "exclude": ["*.test.ts"]
+}

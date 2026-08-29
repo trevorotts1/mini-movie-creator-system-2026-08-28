@@ -1,0 +1,9 @@
+{
+  "taskId": "REL-004",
+  "phase": "BUILDER_DONE",
+  "commit": "e18a2a2c948cce13d1c1bf321613eaf0bd6e9145",
+  "testsRun": "npm-equivalents run: (1) tsc --noEmit -p scripts/release/tsconfig.json = clean (0 errors); (2) npx tsx scripts/release/e2e-dry-run.ts + bash scripts/release/e2e-dry-run.sh = RC 0, 11/11 scenarios PASS; (3) npx vitest run scripts/release/e2e-dry-run.test.ts = 4/4 passed",
+  "notes": "Full S0-S23 dry run green: gates 1-6 in order, budget decline leaves no row, resume never resubmits (createVideo=1), emergency archival ARCHIVED+BLOCKED(EXPIRED_URL), real ffmpeg renders pass ffprobe, report generated from run; commits 15b31c9..e18a2a2c948cce13d1c1bf321613eaf0bd6e9145",
+  "blockers": [],
+  "updatedAt": "2026-08-29T10:55:00Z"
+}
