@@ -1,0 +1,9 @@
+{
+  "taskId": "REC-005",
+  "phase": "BUILDER_DONE",
+  "commit": "3dd6f64ba2fe039456348f4faf8b59a6c9a51a5f",
+  "testsRun": "npx vitest run scripts/hooks/session-end.test.ts → 24/24 PASS (incl. real sh-entry simulated invocation bash→tsx→flush + settings.json wiring check); npx vitest run scripts/orchestration/checkpoint.test.ts → 25/25 PASS (no regression); npx vitest run packages/core/src/recovery/ → 18/18 PASS; tsc --strict on session-end.ts + test → clean (rc 0); bash .claude/hooks/session-end.sh --selftest → SESSION-END SELFTEST PASS; real-payload probes: empty stdin exit 0, real hook JSON exit 0, git repo probe read main SHA into recovery.md, idempotent second flush (1 marker block, +1 ledger line)",
+  "notes": "SessionEnd hook: sh entry → tsx → runHook; checkpoint lock with in-lock service.update (wiring cadence methods would self-deadlock under our own lock — same shape as REC-002); atomic session-end checkpoint + idempotent recovery.md 'Last Session End' block with exact resume command/state (runbook §26) + fail-soft git SHA read + SESSION_END_CHECKPOINT ledger append; exit 0 flush / exit 2 fail-loud",
+  "blockers": [],
+  "updatedAt": "2026-08-28T12:00Z"
+}
