@@ -1,7 +1,7 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — MERGED: **136** — READY: **9** — BLOCKED: **3** — PASS: **1** (REC-010, deps REC-002..005). Batch-11: CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-007, QC-011, REL-001 merged (7 clean + QC-007 add/add state-record conflict resolved to branch); REL-002, REL-003 unblocked READY.
+Total tasks: **149** — MERGED: **143** — READY: **2** (REC-011, REL-003) — BLOCKED: **3** — PASS: **1** (REC-010, deps all MERGED now — needs re-cert: qc sha 3588299 not ancestor of rebased tip 8fd8217). Batch-12: REC-002, REC-003, REC-004, REC-005, REC-006, REC-007, REL-002 merged (.claude/settings.json add/add conflicts resolved by unioning all 6 hook events — every registration survives); REC-011 unblocked READY.
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
@@ -1510,7 +1510,7 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Acceptance: checkpoint cadence enforced (every material transition, before/after compaction, before/after batch merge, session end, every watchdog cycle — spec §28); atomic write verified under concurrent writers; `npx vitest run packages/core/src/recovery` + integration script exit 0.
   - Status: MERGED
 
-- [ ] TASK-REC-002 — PreCompact hook
+- [x]  TASK-REC-002 — PreCompact hook
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1519,9 +1519,9 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-002-precompact
   - Worktree: worktrees/TASK-REC-002/
   - Acceptance: save-first-compact-second: reads hook JSON from stdin; checkpoint lock; session.md + checkpoint.json updated; ledger PRECOMPACT_CHECKPOINT appended; exits 0 after flush; executable bit set; simulated hook invocation test passes.
-  - Status: READY
+  - Status: MERGED (batch-12, merge 36c9a62; QC PASS, certified sha d161bb16; settings.json hook unioned)
 
-- [ ] TASK-REC-003 — PostCompact hook
+- [x]  TASK-REC-003 — PostCompact hook
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1530,9 +1530,9 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-003-postcompact
   - Worktree: worktrees/TASK-REC-003/
   - Acceptance: records event; updates recovery marker; never treats compact summary as sole project state; simulated invocation test passes.
-  - Status: READY
+  - Status: MERGED (batch-12, merge f706e04; QC PASS, certified sha 1a666d5a; settings.json hook unioned)
 
-- [ ] TASK-REC-004 — SessionStart hook
+- [x]  TASK-REC-004 — SessionStart hook
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1541,9 +1541,9 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-004-session-start
   - Worktree: worktrees/TASK-REC-004/
   - Acceptance: injects recovery context (orchestrator-only reminder; recovery.md/checkpoint.json/todo.md/ledger-tail pointers); reconcile instruction vs duplicate prevention (never duplicate ACTIVE/PASS/MERGED); recreates the two /loop skills when absent; simulated invocation test passes.
-  - Status: READY
+  - Status: MERGED (batch-12, merge 3822ff5; QC PASS, certified sha 098d61e; settings.json hook unioned)
 
-- [ ] TASK-REC-005 — SessionEnd hook
+- [x]  TASK-REC-005 — SessionEnd hook
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1552,9 +1552,9 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-005-session-end
   - Worktree: worktrees/TASK-REC-005/
   - Acceptance: final checkpoint + exact resume command/state written to recovery.md; simulated invocation test passes.
-  - Status: READY
+  - Status: MERGED (batch-12, merge 42f5146; QC PASS, certified sha 3458611e; settings.json hook unioned)
 
-- [ ] TASK-REC-006 — TaskCompleted hook
+- [x]  TASK-REC-006 — TaskCompleted hook
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1563,9 +1563,9 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-006-task-completed
   - Worktree: worktrees/TASK-REC-006/
   - Acceptance: exit 2 blocks premature close when acceptance/QC evidence missing (task not in state/tasks.json; no test evidence; no QC PASS; ACTIVE→MERGED jump; branch/worktree unrecorded); feedback message names exactly what remains; gate test with missing evidence exits 2, with evidence exits 0.
-  - Status: READY
+  - Status: MERGED (batch-12, merge 7a5dde4; QC PASS, certified sha e7a7f0f; settings.json hook unioned)
 
-- [ ] TASK-REC-007 — TeammateIdle hook
+- [x]  TASK-REC-007 — TeammateIdle hook
   - Workflow: WF10
   - Builder: unassigned
   - QC/Fixer: unassigned
@@ -1574,7 +1574,7 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-007-teammate-idle
   - Worktree: worktrees/TASK-REC-007/
   - Acceptance: exit 2 + continue instruction when teammate owns ACTIVE/QC_FIXING task; directs to claim next compatible READY task in same workflow; allows idle when no useful work; both-branch tests pass.
-  - Status: READY
+  - Status: MERGED (batch-12, merge ec03405; QC PASS, certified sha 3b15bbf9; settings.json hook unioned)
 
 - [x]  TASK-REC-008 — Watchdog Skill/loop
   - Workflow: WF10
@@ -1607,7 +1607,7 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REC-010-restart-sim
   - Worktree: worktrees/TASK-REC-010/
   - Acceptance: simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission → resume polls existing task ID (no resubmit — spec §32 recovery acceptance); simulation script exits 0.
-  - Status: PASS (re-admission held: deps REC-002..005 READY, not merged — batch-11 again not admitted)
+  - Status: PASS (deps REC-002..005/008/009 ALL MERGED batch-12 — admission now requires re-certification: qc sha 3588299 is not an ancestor of rebased branch tip 8fd8217)
 
 - [ ] TASK-REC-011 — Auto-compact simulation
   - Workflow: WF10
@@ -1640,7 +1640,7 @@ REL-004 (needs REL-002+003) · REL-005 (needs REL-004) · REL-006 (needs REL-002
   - Branch: task/TASK-REL-002-full-regression
   - Worktree: worktrees/TASK-REL-002/
   - Acceptance: full vitest suite + `npm run gen` + `npx tsc --noEmit` + lint + Remotion render smoke (16:9 + 9:16) + ffprobe availability check all pass in one scripted run; script exits 0 with per-area summary.
-  - Status: READY (unblocked batch-11: REL-001 merged 00d4bca)
+  - Status: MERGED (batch-12, merge 2478ef6; QC PASS 0 defects, certified sha bc4bac56; acceptance 17/17 on integration after remotion npm ci)
 
 - [ ] TASK-REL-003 — Example project
   - Workflow: WF10

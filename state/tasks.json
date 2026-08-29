@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-29T02:20:00Z",
+  "updated_at": "2026-08-29T04:40:00Z",
   "items": [
     {
       "id": "CORE-001",
@@ -1968,7 +1968,7 @@
       "branch": "task/REC-002-precompact",
       "worktree": "worktrees/REC-002/",
       "acceptance": "save-first-compact-second: reads hook JSON from stdin; checkpoint lock; session.md + checkpoint.json updated; ledger PRECOMPACT_CHECKPOINT appended; exits 0 after flush; executable bit set; simulated hook invocation test passes.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REC-003",
@@ -1978,10 +1978,10 @@
         "REC-001"
       ],
       "owns": ".claude/hooks/post-compact.sh, .claude/settings.json (PostCompact wiring)",
-      "branch": "task/REC-003-postcompact",
+      "branch": "task/TASK-REC-003-postcompact",
       "worktree": "worktrees/REC-003/",
       "acceptance": "records event; updates recovery marker; never treats compact summary as sole project state; simulated invocation test passes.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REC-004",
@@ -1994,7 +1994,7 @@
       "branch": "task/REC-004-session-start",
       "worktree": "worktrees/REC-004/",
       "acceptance": "injects recovery context (orchestrator-only reminder; recovery.md/checkpoint.json/todo.md/ledger-tail pointers); reconcile instruction vs duplicate prevention (never duplicate ACTIVE/PASS/MERGED); recreates the two /loop skills when absent; simulated invocation test passes.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REC-005",
@@ -2007,7 +2007,7 @@
       "branch": "task/REC-005-session-end",
       "worktree": "worktrees/REC-005/",
       "acceptance": "final checkpoint + exact resume command/state written to recovery.md; simulated invocation test passes.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REC-006",
@@ -2020,7 +2020,7 @@
       "branch": "task/REC-006-task-completed",
       "worktree": "worktrees/REC-006/",
       "acceptance": "exit 2 blocks premature close when acceptance/QC evidence missing (task not in state/tasks.json; no test evidence; no QC PASS; ACTIVE\u2192MERGED jump; branch/worktree unrecorded); feedback message names exactly what remains; gate test with missing evidence exits 2, with evidence exits 0.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REC-007",
@@ -2033,7 +2033,7 @@
       "branch": "task/REC-007-teammate-idle",
       "worktree": "worktrees/REC-007/",
       "acceptance": "exit 2 + continue instruction when teammate owns ACTIVE/QC_FIXING task; directs to claim next compatible READY task in same workflow; allows idle when no useful work; both-branch tests pass.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REC-008",
@@ -2128,7 +2128,7 @@
       "branch": "task/REL-002-full-regression",
       "worktree": "worktrees/REL-002/",
       "acceptance": "full vitest suite + `npm run gen` + `npx tsc --noEmit` + lint + Remotion render smoke (16:9 + 9:16) + ffprobe availability check all pass in one scripted run; script exits 0 with per-area summary.",
-      "status": "READY"
+      "status": "MERGED"
     },
     {
       "id": "REL-003",

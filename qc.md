@@ -143,3 +143,11 @@ DETECT -> PATCH NOW -> ADD/UPDATE TEST -> RETEST -> VERIFY -> RECORD -> PASS or 
 | 2026-08-29T02:20:00Z | QC-011 | Human REVIEW state | merger | PASS | 3 | 3 | PASS — merged batch-11 (4006d69): human-review store/decide + qc CLI surface, 466-line suite |
 | 2026-08-29T02:20:00Z | REL-001 | Clean install | merger | PASS | 3 | 3 | PASS — merged batch-11 (00d4bca): clean-install.sh + docs/installation.md, 402-line test |
 | 2026-08-29T02:20:00Z | REC-010 | Restart simulation | merger | HOLD | 1 | 1 | NOT ADMITTED batch-11 — deps REC-002..REC-005 unmerged; remains PASS awaiting merge engine |
+| 2026-08-29T04:40:00Z | REC-002 | PreCompact hook | merger | PASS | 1 | 1 | PASS — merged batch-12 (36c9a62): certified sha d161bb16; add/add on .claude/settings.json resolved by hook union |
+| 2026-08-29T04:40:00Z | REC-003 | PostCompact hook | merger | PASS | 1 | 1 | PASS — merged batch-12 (f706e04): certified sha 1a666d5a; settings.json union keeps all hook events |
+| 2026-08-29T04:40:00Z | REC-004 | SessionStart hook | merger | PASS | 2 | 2 | PASS — merged batch-12 (3822ff5): certified sha 098d61e; settings.json union |
+| 2026-08-29T04:40:00Z | REC-005 | SessionEnd hook | merger | PASS | 2 | 2 | PASS — merged batch-12 (42f5146): certified sha 3458611e; settings.json union |
+| 2026-08-29T04:40:00Z | REC-006 | TaskCompleted hook | merger | PASS | 2 | 2 | PASS — merged batch-12 (7a5dde4): certified sha e7a7f0f; settings.json union |
+| 2026-08-29T04:40:00Z | REC-007 | TeammateIdle hook | merger | PASS | 3 | 3 | PASS — merged batch-12 (ec03405): certified sha 3b15bbf9; settings.json union completes 6/6 hook events |
+| 2026-08-29T04:40:00Z | REL-002 | Full regression | merger | PASS | 0 | 0 | PASS — merged batch-12 (2478ef6): certified sha bc4bac56, tip b0a4e45 sha-record follow-on; acceptance 17/17 on integration (requires remotion npm ci — standalone workspace) |
+| 2026-08-29T04:40:00Z | REC-010 | Restart simulation | merger | HOLD | 1 | 1 | NOT ADMITTED batch-12 — deps now all MERGED, but qc-certified sha 3588299 is not an ancestor of rebased tip 8fd8217; needs re-certification before admission |

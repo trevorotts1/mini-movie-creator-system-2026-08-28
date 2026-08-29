@@ -1,8 +1,8 @@
 # Build Status Dashboard (build-status.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-29T02:20:00Z
-**Current Stage:** Wave-1 Batch Merge 11 Pushed
+**Updated:** 2026-08-29T04:40:00Z
+**Current Stage:** Wave-1 Batch Merge 12 Pushed
 
 ---
 
@@ -11,14 +11,14 @@
 | Metric | Count |
 |---|---|
 | Total Tasks | 149 |
-| Ready Tasks | 9 |
+| Ready Tasks | 2 (REC-011, REL-003) |
 | Blocked Tasks | 3 |
 | Building Tasks | 0 |
 | QC Tasks | 0 |
 | QC-fixing Tasks | 0 |
 | Merge Queue Tasks | 0 |
-| Merged Tasks | 136 |
-| Verified (PASS, unmerged) Tasks | 1 (REC-010, deps-blocked) |
+| Merged Tasks | 143 |
+| Verified (PASS, unmerged) Tasks | 1 (REC-010 — deps all MERGED batch-12; admission held on re-cert: qc sha not ancestor of rebased tip) |
 
 ---
 
@@ -26,8 +26,8 @@
 
 | Metric | Value |
 |---|---|
-| Last Batch Merge Timestamp | 2026-08-29T02:20:00Z |
-| Current Integration Commit | `c5802ad` (pushed to origin/integration) |
+| Last Batch Merge Timestamp | 2026-08-29T04:40:00Z |
+| Current Integration Commit | `2478ef6` (pushed to origin/integration) |
 | Batch 6 Merged Count | 44 |
 | Batch 7 Merged Count | 14 (38974b3..6d8cce1; 5 rows over-stamped, corrected in batch-8) |
 | Batch 8 Merged Count | 4 (SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a; 0e9b00e..b43743a) |
@@ -40,6 +40,10 @@
 | Batch 11 Regression Status | PASS (pnpm -r test RC=0; full vitest 3795 passed / 1 skipped after backup.test.ts 5s-timeout flake proven non-deterministic; pnpm -r run typecheck RC=0, 17/17 Done; pnpm-lock unchanged) |
 | Batch 11 Not Admitted | REC-010 (deps REC-002..005 unmerged — 5th cycle) |
 | Batch 11 Unblocks | REL-002, REL-003 (BLOCKED->READY) |
+| Batch 12 Merged Count | 7 (REC-002 36c9a62, REC-003 f706e04, REC-004 3822ff5, REC-005 42f5146, REC-006 7a5dde4, REC-007 ec03405, REL-002 2478ef6; d92b62c..2478ef6; 6 add/add conflicts on .claude/settings.json resolved by deep hook union — all 6 events survive) |
+| Batch 12 Regression Status | PASS (pnpm -r test RC=0; pnpm -r run typecheck RC=0, 17/17 Done; full vitest 3982 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake recurrence proven non-deterministic again; REL-002 acceptance 17/17 after remotion npm ci; pnpm-lock unchanged) |
+| Batch 12 Not Admitted | REC-010 (certified sha 3588299 not ancestor of rebased tip 8fd8217 — re-cert required; deps all MERGED), REL-003 (builder active, not QC'd) |
+| Batch 12 Unblocks | REC-011 confirmed READY (deps REC-002/003 MERGED); REC-010 dependency hold cleared |
 | Batch 6 Conflict-Blocked | 13 (CAP-001..010, CHAR-003/010, CORE-007, DIR-002, FISH-001..007/009/010, GHL-001..007/011, KIE-001..006/009/010, QC-002/003/004/007/010, REC-010, SKL-002..005, VID-001/002/005/008/013 — no mergeable branch or conflict; see ledger) |
 | Batch 6 Regression Status | PASS after 2 selective reverts (pnpm -r test exit 0; pnpm -r typecheck exit 0, 17/17 Done) |
 | Batch 7 Regression Status | PASS (pnpm -r test exit 0; pnpm -r typecheck exit 0; repo-wide vitest 3188 passed / 1 skipped) |

@@ -229,3 +229,12 @@ Every state change, merge, QC verdict, workflow launch, and milestone must be ap
 | 2026-08-29T02:20:00Z | REL-001 | merger | MERGED | batch-11 merge 00d4bca (QC PASS 3/3, commit 9cbf6aa; QC record at worktrees/TASK-REL-001/) |
 | 2026-08-29T02:20:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..REC-005 still unmerged (admission rule 6) — 5th consecutive cycle; worktree qc/builder files identical to integration copies, nothing to fold |
 | 2026-08-29T02:20:00Z | BATCH-11 | merger | MERGED | 8 merged (7 clean, QC-007 state-record conflict resolved to branch), regression PASS (full vitest 3795/1 skipped after backup.test.ts 5s-timeout flake proven non-deterministic — isolated x2 pass, full re-run x2 pass; pnpm -r typecheck RC=0 17 Done), pushed f5e9fb8..00d4bca..c5802ad; unblocked REL-002, REL-003 -> READY |
+| 2026-08-29T04:40:00Z | REC-002 | merger | MERGED | batch-12 merge 36c9a62 (QC PASS 1/1, sha d161bb16; settings.json add/add resolved by hook union) |
+| 2026-08-29T04:40:00Z | REC-003 | merger | MERGED | batch-12 merge f706e04 (QC PASS 1/1, sha 1a666d5a; hook union) |
+| 2026-08-29T04:40:00Z | REC-004 | merger | MERGED | batch-12 merge 3822ff5 (QC PASS 2/2, sha 098d61e; hook union) |
+| 2026-08-29T04:40:00Z | REC-005 | merger | MERGED | batch-12 merge 42f5146 (QC PASS 2/2, sha 3458611e; hook union) |
+| 2026-08-29T04:40:00Z | REC-006 | merger | MERGED | batch-12 merge 7a5dde4 (QC PASS 2/2, sha e7a7f0f; hook union) |
+| 2026-08-29T04:40:00Z | REC-007 | merger | MERGED | batch-12 merge ec03405 (QC PASS 3/3, sha 3b15bbf9; hook union — 6/6 events in .claude/settings.json) |
+| 2026-08-29T04:40:00Z | REL-002 | merger | MERGED | batch-12 merge 2478ef6 (QC PASS 0/0, sha bc4bac56; branch tip b0a4e45 sha-record follows) |
+| 2026-08-29T04:40:00Z | REC-010 | merger | NOT_ADMITTED | deps REC-002..005 now MERGED, but certified sha 3588299 not ancestor of rebased tip 8fd8217 — re-certification required |
+| 2026-08-29T04:40:00Z | BATCH-12 | merger | MERGED | 7 merged (6 hook-branches with .claude/settings.json add/add deep-union conflict resolution — all 6 hook events survive, every command file present, JSON parses; REL-002 clean), regression PASS (pnpm -r test RC=0; typecheck 17/17 RC=0; full vitest 3982/1 skipped clean — one backup.test.ts 5s-timeout recurrence under parallel load, same proven flake as batch-11, isolated pass + clean rerun; REL-002 acceptance 17/17 after remotion npm ci), pushed d92b62c..2478ef6; REC-011 confirmed READY |

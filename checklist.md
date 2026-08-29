@@ -141,3 +141,14 @@
 - [x] Branch-field corrections: CHAR-005 task/CHAR-005-lock-canonical -> task/CHAR-005-character-locking; REL-001 -> task/TASK-REL-001-clean-install (QC record lives at worktrees/TASK-REL-001/state/task-updates/REL-001.qc.json)
 - [x] Folded active-worktree updates (step 11): QC-007 folded via its merge (c5802ad); REC-010 worktree qc/builder files byte-identical to integration copies — nothing to fold; worktrees retained for all active tasks
 - [x] pnpm-lock.yaml unchanged — no install needed
+
+## Batch 12 (2026-08-29T04:40:00Z)
+- [x] Lock acquired state/locks/merge.lock (mkdir guard), released after fold commit
+- [x] Admitted 7 QC-PASS tasks (phase=PASS, finalTestResult=PASS, defectsFixed >= defectsFound, certified sha ancestor of branch tip, branch+worktree verified): REC-002 d161bb16 1/1, REC-003 1a666d5a 1/1, REC-004 098d61e 2/2, REC-005 3458611e 2/2, REC-006 e7a7f0f 2/2, REC-007 3b15bbf9 3/3, REL-002 bc4bac56 0/0
+- [x] Merged deps-first (REC-001 already MERGED), then by ID — all --no-ff: REC-002 36c9a62, REC-003 f706e04, REC-004 3822ff5, REC-005 42f5146, REC-006 7a5dde4, REC-007 ec03405, REL-002 2478ef6; never force-pushed
+- [x] .claude/settings.json add/add conflicts (REC-003..007): resolved by DEEP UNION of the hooks object — final file has all 6 events (PreCompact, PostCompact, SessionStart, SessionEnd, TaskCompleted, TeammateIdle), JSON.parse verified, every .claude/hooks/*.sh exists with executable bit preserved
+- [x] Not admitted: REC-010 (deps now all MERGED, but certified sha 3588299 not ancestor of rebased tip 8fd8217 — re-cert needed); REL-003 (builder active, no qc.json); REL-004/005/006 deps-unmet
+- [x] Unblocked (tasks.json + todo.md): REC-011 confirmed READY (deps REC-002/003 MERGED); REC-010 annotation updated (admission pending re-cert)
+- [x] Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 3982 passed/1 skipped clean rerun (one 5s-timeout recurrence in packages/database backup.test.ts under first parallel load — batch-11-proven flake: passed isolated + second clean full run); REL-002 acceptance suite 17/17 after remotion npm ci (standalone workspace prerequisite, environment setup not code defect); pnpm-lock.yaml unchanged — no pnpm install needed
+- [x] Pushed origin/integration d92b62c..2478ef6
+- [x] Folded active-worktree updates (step 11): REC-010 builder/qc byte-identical to integration copies — nothing to fold; REL-003 has no own update files; REC-011 has no worktree yet; all active worktrees retained

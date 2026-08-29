@@ -1,17 +1,24 @@
 # Session State (session.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-29T02:20:00Z
-**Session Type:** Batch Merge Cycle 11 Pushed
+**Updated:** 2026-08-29T04:40:00Z
+**Session Type:** Batch Merge Cycle 12 Pushed
 
 ---
 
 ## Current Status
 
-- **Phase:** Batch Merge Cycle 11 complete. 8 tasks merged deps-first: CHAR-005 (2e1fb2a, lock/canonical transitions), CHAR-013 (dd9106a, canon approval gate 6), DIR-003 (88cc4dc, concept approval gate 1), DIR-008 (ff2ce06, script approval gate 2), DIR-015 (0c174e1, storyboard approval gate 4), QC-011 (4006d69, human REVIEW state), REL-001 (00d4bca, clean install), QC-007 (c5802ad, Agnes Flash route — first attempt aborted on add/add conflict in its own state record, re-merged resolving to the branch round-2 qc.json). Regression PASS. Pushed f5e9fb8..c5802ad.
-- **Integration HEAD:** c5802ad (== origin/integration)
-- **Regression Result:** PASS — `pnpm -r test` exit 0; full-repo vitest 3795 passed / 1 skipped (first parallel run showed a single 5s-timeout failure in packages/database/src/backup/backup.test.ts > exportBackup — proven non-deterministic: passed isolated x2 and in two clean full runs; CORE-015 code untouched by this batch); `pnpm -r run typecheck` exit 0 (17/17 packages Done); QC-007 flash route 28/28 on integration. pnpm-lock.yaml unchanged — no install needed.
-- **Next Action:** REC-010 still waits on REC-002..REC-005 (READY, need build+QC — 5th cycle deps-blocked). REC-011 needs REC-002/003 built. REL-002, REL-003 newly READY (dispatch next wave). REL-004..006 remain blocked behind REL-002/003 + REC items.
+- **Phase:** Batch Merge Cycle 12 complete. 7 tasks merged deps-first: REC-002 PreCompact hook (36c9a62), REC-003 PostCompact (f706e04), REC-004 SessionStart (3822ff5), REC-005 SessionEnd (42f5146), REC-006 TaskCompleted (7a5dde4), REC-007 TeammateIdle (ec03405), REL-002 full-regression (2478ef6). All six hook branches shipped their own single-event .claude/settings.json — five add/add conflicts resolved by deep-union merge of the hooks object; final file carries all 6 events, JSON verified, every hook script present. Regression PASS. Pushed d92b62c..2478ef6.
+- **Integration HEAD:** 2478ef6 (== origin/integration)
+- **Regression Result:** PASS — `pnpm -r test` exit 0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; remaining packages --passWithNoTests); `pnpm -r run typecheck` exit 0 (17/17 Done); full-repo vitest 3982 passed / 1 skipped on clean rerun (first two parallel runs showed the same 5s-timeout in packages/database/src/backup/backup.test.ts > exportBackup proven non-deterministic in batch-11 — passed isolated and in the clean rerun; file untouched by this batch); REL-002 acceptance suite scripts/release/regression.test.ts 17/17 on integration — its full regression.sh run initially failed only on remotion typecheck/render-smoke because the standalone npm workspace had no node_modules; `cd remotion && npm ci` (environment prerequisite, zero repo changes — remotion/node_modules is gitignored) fixed both areas. pnpm-lock.yaml unchanged — no install needed.
+- **Next Action:** REC-011 READY (dispatch: deps REC-002/003 now MERGED). REC-010 dependency hold CLEARED but admission needs re-certification: qc-certified sha 3588299 is not an ancestor of the rebased branch tip 8fd8217 — next QC cycle must re-run and re-stamp on current tip. REL-003 builder still active (no qc.json) — leave branch and worktree alone. REL-004/005/006 blocked behind REL-003.
+
+## Batch 12 — Notes
+- settings.json union: conflict resolution applied per-merge with a deep-union helper (state/locks/union-settings.py during the cycle) — base/ours/theirs stages merged recursively, hook matcher groups unioned by serialized identity, conflicting scalars would abort resolution (none did). Post-batch verification: node -e JSON.parse OK; hooks keys = PreCompact, PostCompact, SessionStart, SessionEnd, TaskCompleted, TeammateIdle; all 6 .claude/hooks/*.sh exist.
+- REL-002 certified sha bc4bac56; sha-recording follow-on b0a4e45 is the branch tip — merging the tip covered both.
+- REC-003 branch name carries the TASK- prefix: task/TASK-REC-003-postcompact (tasks.json branch field stale — corrected in ledger terms here).
+- Step 11 fold: REC-010 worktree builder/qc byte-identical to integration copies; REL-003 has no own update files; REC-011 worktree does not exist yet. Nothing to fold; all active worktrees retained.
+- regression.sh dependency note: REL-002's scripted full-regression gate requires remotion/node_modules; any CI/merge runner must `cd remotion && npm ci` first. Consider folding that prerequisite into scripts/release/regression.sh preflight in a future task.
 
 ## Batch 11 — Notes
 - QC-007 admission revisited: §11.1 artifact (worktree qc.json, 2 defects / 2 fixed, commit 94ce8b2) passes; batch-10's rejection (3>2) counted a repo-wide missing lint script outside owned paths — control commit 3f55d17 had already stamped QC-007 PASS 2/2. The add/add conflict existed only in state/task-updates/QC-007.qc.json; code files (packages/qc/src/routes/agnes-flash/) merged clean.

@@ -1,27 +1,21 @@
 {
   "schema_version": 1,
   "items": [],
-  "updated_at": "2026-08-29T02:20:00Z",
+  "updated_at": "2026-08-29T04:40:00Z",
   "last_batch": {
-    "batch": "batch-11",
+    "batch": "batch-12",
     "merged": [
-      "CHAR-005",
-      "CHAR-013",
-      "DIR-003",
-      "DIR-008",
-      "DIR-015",
-      "QC-007",
-      "QC-011",
-      "REL-001"
+      "REC-002",
+      "REC-003",
+      "REC-004",
+      "REC-005",
+      "REC-006",
+      "REC-007",
+      "REL-002"
     ],
-    "failed": [
-      {
-        "id": "REC-010",
-        "reason": "deps REC-002..REC-005 not yet merged \u2014 admission rule 6 (5th consecutive cycle)"
-      }
-    ],
-    "preBatchHead": "f5e9fb8ab96431992f476a1f3e0425791ee3b72b",
-    "postBatchHead": "c5802adf0ec50dc8b7763c1022dabb5a21fae13f",
-    "notes": "QC-007 add/add conflict on state/task-updates/QC-007.qc.json resolved to branch record (2/2 defects, verified 94ce8b2); integration's stale 3/2 fold counted repo-wide lint-script infra gap outside owned paths. Regression: full vitest 3795 pass / 1 skip (one 5s-timeout flake in backup.test.ts under parallel load, passed isolated x2 and in full re-run x2); pnpm -r run typecheck RC=0 (17 Done). Pushed f5e9fb8..00d4bca then 00d4bca..c5802ad."
+    "failed": [],
+    "preBatchHead": "d92b62c3d33f4d3cce8d655498632e4f420edaf5",
+    "postBatchHead": "2478ef6bb977f8a2b454dc0f8c0d879c570770b6",
+    "notes": "All 6 REC hook branches carried their own .claude/settings.json with a single hook event; add/add conflicts on that file resolved by deep union of the hooks object (PreCompact, PostCompact, SessionStart, SessionEnd, TaskCompleted, TeammateIdle all present; every command file exists; JSON parses). REL-002 merged clean. Regression: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; remaining packages --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 3982 passed/1 skipped (first two runs showed the known non-deterministic 5s timeout in packages/database backup.test.ts > exportBackup under parallel load \u2014 same flake proven in batch-11; passed isolated x2 and clean full run). REL-002 acceptance suite 17/17 after npm ci in standalone remotion workspace (regression.sh requires remotion/node_modules \u2014 environment setup, not a batch defect). pnpm-lock.yaml unchanged. Pushed d92b62c..2478ef6. Unblocked REC-011 (READY, was already), REC-010 deps fully MERGED -> next-cycle admission (branch rebased, qc-cert sha 3588299 NOT ancestor of tip 8fd8217 \u2014 needs re-certification or control ruling); REL-004/005/006 remain BLOCKED on REL-003."
   }
 }
