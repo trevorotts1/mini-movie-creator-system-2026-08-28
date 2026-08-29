@@ -1,0 +1,13 @@
+{
+  "taskId": "ENV-001",
+  "phase": "PASS",
+  "commit": "8ad233b",
+  "checksRun": "pnpm install --frozen-lockfile (worktree+clean clone); npx vitest run packages/remotion-runtime (worktree 479 pass, clean clone 479 pass); npx tsc --noEmit packages/remotion-runtime (worktree+clean clone, 0 errors); npx vitest run full suite (3250 passed, 1 skipped); pnpm -r run typecheck (12 packages, 0 errors); node require.resolve probes for react/react-dom/remotion from packages/remotion-runtime (clean clone: .pnpm/react@18.3.1 etc.); find -type l repo scan (no stray symlinks); stray node_modules/react + node_modules/react-dom -> worktrees/VID-005 symlinks removed from main checkout",
+  "defectsFound": 1,
+  "defectsFixed": 1,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T00:30:00Z",
+  "notes": "No builder branch/state existed for ENV-001 (builder produced nothing); QC fixed directly on task/ENV-react-dependency: remotion-runtime declared zero deps while importing react, react-dom/server, remotion (3 files) — only resolved via stray gitignored symlink to VID-005's node_modules; declared react ^18.3.1, react-dom ^18.3.1, remotion ^4.0.486 + @types/react, @types/react-dom, regenerated pnpm-lock.yaml (+104 lines), deleted stray symlinks; clean clone of task/ENV-react-dependency proves green.",
+  "blockers": []
+}
