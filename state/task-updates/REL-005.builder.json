@@ -1,0 +1,9 @@
+{
+  "taskId": "REL-005",
+  "phase": "BUILDER_DONE",
+  "commit": "0a0b97b817f1975d6537969c8ca5e5ae00fdf0a0",
+  "testsRun": "npx tsc -p scripts/release/tsconfig.json --noEmit (0 errors); npx vitest run scripts/release/provider-smoke.test.ts (10/10 pass); npx tsx --tsconfig scripts/release/tsconfig.json scripts/release/provider-smoke.ts --report-only (rc=0, zero spend); bash scripts/release/provider-smoke.sh --markdown (rc=0)",
+  "notes": "report-only zero-spend credential-gating smoke: 4/4 providers BLOCKED (env absent), projection+spend $0.0000 within $25 gate, exit 0, report from actual run output",
+  "blockers": [],
+  "updatedAt": "2026-08-29T11:34:00Z"
+}
