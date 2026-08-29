@@ -1,7 +1,7 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — MERGED: **149** — READY: **0** — BLOCKED: **0** — PASS: **0**. Batch-16: REL-006 merged clean (merge df308a7; QC PASS 0 defects, certified sha 96bedd9 ancestor of tip d43fc3e; docs-verify gate rc=0); regression PASS; pushed 6a39849..0b611d1. **ALL 149/149 TASKS MERGED — integration ready for main promotion + annotated release tag (REL-006 acceptance, merger applies).**
+Total tasks: **149** — MERGED: **149** — READY: **0** — BLOCKED: **1** (REL-006 — release docs + final merge; all 10 deps MERGED after batch-15) — PASS: **0**. Batch-15: REL-005 merged clean (merge 4edaf7c; QC PASS 3/3 defects fixed, certified sha da8d1c1 ancestor of tip badfd6c); regression PASS; pushed 7396092..5c9bef0. REL-006 unblocks — orchestrator to dispatch REL-006 build (last task, then main promotion).
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
@@ -1684,7 +1684,7 @@ REL-006 (needs REL-002..005 + REC-010/011 — ALL 10 MERGED after batch-15: REL-
   - Branch: task/TASK-REL-006-release-docs
   - Worktree: worktrees/TASK-REL-006/
   - Acceptance: spec §33 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.
-  - Status: MERGED (batch-16, merge df308a7; QC PASS 0 defects, finalTestResult PASS, certified sha 96bedd9 ancestor of tip d43fc3e; docs-verify gate rc=0 — 11 owned docs, 88 referenced paths verified; regression PASS on integration; pushed 6a39849..0b611d1)
+  - Status: READY (unblocked batch-15: REL-005 MERGED 4edaf7c; REL-002/003/004 + SKL-003/004/006/007 + REC-010/011 all MERGED batches 11-15)
 
 <!-- WF10-END -->
 
@@ -1712,6 +1712,6 @@ REL-006 (needs REL-002..005 + REC-010/011 — ALL 10 MERGED after batch-15: REL-
 - CORE-003 merge unblocks CORE-004/005/006/007 immediately; CORE-004 merge unblocks CORE-008; CORE-007 + CORE-008 unblock CORE-009; all five schema merges unblock CORE-015.
 - CORE-008 merge unblocks CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011 immediately.
 - All other dependencies are contract-first (interface per spec.md); builders build against the spec contract in wave 1 and bind to merged implementations as dependencies land. Unlock dependents the moment a dependency hits MERGED — never wait for a wave boundary (runbook §10).
+- REL-006 unblocked batch-15 (REL-005 MERGED 4edaf7c) — final task before main promotion. REL-* is wave-3 release state by design (runbook §10 wave 3).
 - Batch-14 (2026-08-29): REL-004 MERGED 7df92d2 -> REL-005 unblocked READY; PROBE-SONNET rebase-merge folded (KIE-004 content already MERGED; state record added).
 - Batch-15 (2026-08-29): REL-005 MERGED 4edaf7c -> REL-006 unblocked READY (all 10 deps MERGED); 148→149 MERGED, one task remaining.
-- Batch-16 (2026-08-29): REL-006 MERGED df308a7 — ALL 149/149 MERGED, BLOCKED 0, READY 0. Main promotion + annotated release tag = next (REL-006 acceptance, merger applies).

@@ -1,15 +1,15 @@
 {
  "schema_version": 1,
  "items": [],
- "updated_at": "2026-08-29T12:05:00Z",
+ "updated_at": "2026-08-29T12:20:00Z",
  "last_batch": {
-  "batch": "batch-15",
+  "batch": "batch-16",
   "merged": [
-   "REL-005"
+   "REL-006"
   ],
   "failed": [],
-  "preBatchHead": "e7a5dadf09983e5cade6e2697677ba3b3c4b72fd",
-  "postBatchHead": "5c9bef09a73e8f849ef7427261c82635b7b62a00",
-  "notes": "Single candidate: REL-005 (QC PASS 3/3 defects fixed, finalTestResult PASS, certified sha da8d1c1 verified ancestor of branch tip badfd6c). Merge --no-ff 4edaf7c, zero conflicts, 6 files +609. Control commits: e7a5dad (stray batch-14 ledger lines committed pre-batch for clean tree), 5c9bef0 (regression evidence: e2e-dry-run-report.md re-run 11/11 PASS + provider-smoke-report.md regenerated from actual run on integration). pnpm-lock.yaml unchanged \u2014 no pnpm install. Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests), pnpm -r run typecheck RC=0 (17/17 Done), full-repo vitest 4028 passed/1 skipped clean rerun (first run: known backup.test.ts exportBackup 5s-timeout flake \u2014 batch-11/12/13/14-proven non-deterministic; one disclosed retry; isolated rerun 12/12 green), scripts/release vitest 51/51, tsc -p scripts/release clean, provider-smoke --report-only RC 0 (4/4 BLOCKED, spend $0, $25 gate held), e2e-dry-run.sh RC 0 (11/11). Pushed 7396092..5c9bef0. Unblocked: REL-006 -> READY (all 10 deps MERGED; control fold only \u2014 orchestrator dispatches REL-006 release-docs build; 149/149 tasks then MERGED, main promotion next)."
+  "preBatchHead": "6a398492e4c6f35f363a186223c00fefb741a169",
+  "postBatchHead": "0b611d1afc7ee6f20e50c3bbb10d8966214d1aa4",
+  "notes": "Single candidate: REL-006 (QC PASS 0 defects, finalTestResult PASS, certified sha 96bedd9 verified ancestor of branch tip d43fc3e). Merge --no-ff df308a7, zero conflicts, 16 files +997/-131 (11 docs/ deliverables spec 33, README quickstart, session.md launch section, scripts/release/docs-verify.sh gate). pnpm-lock.yaml unchanged - no install. Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests), pnpm -r run typecheck RC=0 (17/17), full-repo vitest 4028 passed/1 skipped ZERO flakes, scripts/release vitest 51/51, tsc -p scripts/release clean, provider-smoke --report-only RC 0 (spend $0, $25 gate held), e2e-dry-run.sh RC 0 (11/11), docs-verify.sh rc=0 post-merge (11 owned docs, 88 referenced paths). Control commit 0b611d1 (regression evidence: e2e report re-run 11/11 + provider-smoke report regenerated from actual run). Pushed 6a39849..0b611d1. ALL 149/149 TASKS MERGED, BLOCKED 0, READY 0. Next: main promotion + annotated release tag (REL-006 acceptance, merger applies)."
  }
 }

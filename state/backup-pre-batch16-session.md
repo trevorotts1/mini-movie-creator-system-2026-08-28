@@ -156,13 +156,3 @@ Install, operate, and recover it without reading source code:
 
 ## Next action
 - Orchestrator: dispatch REL-006 build (task/REL-006-release-docs) — FINAL task; after REL-006 QC PASS + merge, full regression, then integration -> main promotion + annotated release tag
-
-## Batch 16 — MERGED, 149/149 COMPLETE (2026-08-29T12:20:00Z, integration 6a39849..0b611d1, pushed)
-- REL-006 (df308a7) — release docs task/REL-006-release-docs (tip d43fc3e): certified sha 96bedd9 verified ancestor; single candidate, zero conflicts, 16 files +997/-131 — 11 docs/ deliverables per spec §33 (approvals, character-library, provider-setup, ghl-setup, skill-installs, cost-controls, capability-registry, adding-a-provider, troubleshooting, recovery, standalone-path), README.md quickstart refresh, session.md 'How to launch MMCS' final section, scripts/release/docs-verify.sh release gate; QC PASS 0 defects (gate rc=0 bash+POSIX, negative control proven, independent 134-path deep scan 0 missing)
-- Control commit: 0b611d1 (regression evidence: e2e report re-run 11/11 + provider-smoke report regenerated from actual run on integration)
-- Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23); typecheck 17/17 RC=0; full vitest 4028 passed/1 skipped ZERO flakes; scripts/release vitest 51/51; tsc -p scripts/release clean; provider-smoke --report-only RC 0 (spend $0.0000, $25 gate held); e2e-dry-run.sh RC 0 (11/11); docs-verify.sh rc=0 post-merge (11 owned docs >200B, 88 referenced paths verified); pnpm-lock unchanged — no install
-- **ALL 149/149 TASKS MERGED — READY 0, BLOCKED 0. Queues empty.**
-
-## Next action
-- Merger (batch-16 closeout, REL-006 acceptance): promote integration -> main after final regression, push annotated release tag (git tag -a vX -m ... && git push origin vX), verify docs-verify.sh rc=0 on the tag
-- Operator: launch MMCS per README quickstart / session.md 'How to launch MMCS'

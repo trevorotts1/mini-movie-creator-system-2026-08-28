@@ -1,8 +1,8 @@
 # Build Status Dashboard (build-status.md)
 
 **Project:** mini-movie-creator-system (MMCS)
-**Updated:** 2026-08-29T12:20:00Z
-**Current Stage:** COMPLETE — Batch Merge 16 Pushed — 149/149 MERGED — main promotion next
+**Updated:** 2026-08-29T04:40:00Z
+**Current Stage:** Wave-1 Batch Merge 12 Pushed
 
 ---
 
@@ -11,14 +11,14 @@
 | Metric | Count |
 |---|---|
 | Total Tasks | 149 |
-| Ready Tasks | 0 |
-| Blocked Tasks | 0 |
+| Ready Tasks | 2 (REC-011, REL-003) |
+| Blocked Tasks | 3 |
 | Building Tasks | 0 |
 | QC Tasks | 0 |
 | QC-fixing Tasks | 0 |
 | Merge Queue Tasks | 0 |
-| Merged Tasks | 149 (ALL) |
-| Verified (PASS, unmerged) Tasks | 0 |
+| Merged Tasks | 143 |
+| Verified (PASS, unmerged) Tasks | 1 (REC-010 — deps all MERGED batch-12; admission held on re-cert: qc sha not ancestor of rebased tip) |
 
 ---
 
@@ -26,8 +26,8 @@
 
 | Metric | Value |
 |---|---|
-| Last Batch Merge Timestamp | 2026-08-29T12:20:00Z |
-| Current Integration Commit | `0b611d1` (pushed to origin/integration; merge df308a7 + control 0b611d1) |
+| Last Batch Merge Timestamp | 2026-08-29T04:40:00Z |
+| Current Integration Commit | `2478ef6` (pushed to origin/integration) |
 | Batch 6 Merged Count | 44 |
 | Batch 7 Merged Count | 14 (38974b3..6d8cce1; 5 rows over-stamped, corrected in batch-8) |
 | Batch 8 Merged Count | 4 (SKL-004 fef49fc, VID-002 a8fa4ea, QC-003 692b20f, QC-004 b43743a; 0e9b00e..b43743a) |
@@ -59,6 +59,3 @@
 | Batch 15 Merged Count | 1 (REL-005 4edaf7c — provider smoke; 7396092..5c9bef0; zero conflicts; certified sha da8d1c1 ancestor of tip badfd6c) |
 | Batch 15 Regression Status | PASS (pnpm -r test RC=0; typecheck 17/17 RC=0; full vitest 4028 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake first run, batch-11..14-proven non-deterministic, one disclosed retry; scripts/release 51/51; tsc clean; provider-smoke RC 0 spend $0; e2e-dry-run.sh RC 0 11/11; pnpm-lock unchanged) |
 | Batch 15 Unblocks | REL-006 (BLOCKED->READY — all 10 deps MERGED; 149/149 tasks MERGED after REL-006; main promotion next) |
-| Batch 16 Merged Count | 1 (REL-006 df308a7 — release docs + docs-verify gate; certified sha 96bedd9 ancestor of tip d43fc3e; 6a39849..0b611d1 incl. control; zero conflicts; 16 files +997/-131) |
-| Batch 16 Regression Status | PASS (pnpm -r test RC=0; typecheck 17/17 RC=0; full vitest 4028 passed / 1 skipped zero flakes; scripts/release 51/51; tsc clean; provider-smoke --report-only RC 0 spend $0 $25 gate held; e2e-dry-run.sh RC 0 11/11; docs-verify.sh rc=0; pnpm-lock unchanged) |
-| Batch 16 Unblocks | NOTHING — ALL 149/149 TASKS MERGED, BLOCKED 0, READY 0. Next: main promotion + annotated release tag (REL-006 acceptance, merger applies) |
