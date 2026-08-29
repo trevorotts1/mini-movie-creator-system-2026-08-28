@@ -1,0 +1,9 @@
+{
+  "taskId": "DIR-015",
+  "phase": "BUILDER_DONE",
+  "commit": "acd9be1",
+  "testsRun": "npx vitest run packages/scene-intelligence/src/storyboard/approval -> 21/21 green; vitest run packages/scene-intelligence apps/cli -> 25 files 535/535 green; tsc --noEmit scene-intelligence + cli clean",
+  "notes": "Gate-4 module (approve/reject/assertPaidGenerationAllowed fail-closed) + mmcs storyboard / approve-storyboard CLI wiring; fixed pre-existing duplicate GateRecordLike TS2300 in the resumed draft.",
+  "blockers": [],
+  "updatedAt": "2026-08-28T10:05Z"
+}
