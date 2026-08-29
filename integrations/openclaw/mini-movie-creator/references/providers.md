@@ -36,6 +36,23 @@ re-generation, Seedance fallback, Wan hero/complex fallback (spec §20). The
 engine picks; the agent surfaces the route and the reason. Never force a
 fallback the engine did not choose, and never re-roll a shot to dodge QC.
 
+## Provider identities — KIE, never fal.ai
+
+- **Generative video/images in MMCS = `KIE_API_KEY`** (Kie.ai; engine
+  capability registry, packages/providers). The engine's single source of
+  truth for every recognized key is `packages/core/src/config/schema.ts`
+  (`MMCS_ENV_KEYS`: `AGNES_API_KEY`, `KIE_API_KEY`, `FISH_API_KEY`,
+  `GHL_ACCESS_TOKEN`, `GHL_LOCATION_ID`, `OPENROUTER_API_KEY`,
+  `NINEROUTER_URL`, `NINEROUTER_KEY`, `AUTO_SPEND_LIMIT_USD`).
+- **`FAL_KEY`, `ELEVENLABS_API_KEY`, `GEMINI_API_KEY` are NOT engine
+  credentials.** They belong to the abandoned upstream Python `tools/` track
+  (fork preservation — `docs/upstream-audit/preservation-map.md`). They never
+  credential an MMCS provider (enforced by
+  `scripts/release/provider-smoke.test.ts`: `FAL_KEY` alone always stays
+  MOCKED/BLOCKED). If the agent encounters a fal/fal.ai/FAL_KEY instruction in
+  old `.claude/skills/*` (make-ai-short, make-vox — upstream tracks), it does
+  NOT apply to MMCS engine work. **Do not use fal.ai for MMCS generation.**
+
 ## Keys and secrets
 
 - Provider API keys come from the environment (repo `.env` / `.env.example`

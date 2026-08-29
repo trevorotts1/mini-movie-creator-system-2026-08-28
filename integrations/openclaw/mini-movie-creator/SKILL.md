@@ -32,6 +32,22 @@ node "$MMCS_ROOT/apps/cli/dist/index.js" <verb…>   # built CLI
 If the CLI is not built, run `npm run build` in `apps/cli` once (see the repo
 README) — do not reimplement verbs inside this skill.
 
+**Before any media work (first run and after a machine/container change), run
+the dependency preflight — it checks node, git, ffmpeg/ffprobe, remotion deps
+and the built CLI, and repairs what it safely can with `--fix`:**
+
+```bash
+bash {baseDir}/scripts/env-preflight.sh          # check-only
+bash {baseDir}/scripts/env-preflight.sh --fix    # auto-install missing deps (apt/brew/npm), then re-verify
+```
+
+Exit 0 = READY (proceed). Exit 2 = BLOCKED — the FAIL lines name the exact
+remedy (apt-get/brew/npm ci --include=dev/node LTS); surface them instead of
+guessing. Node floor is **>= 20** (engines); never install a specific "latest"
+— LTS is correct. Remotion's devDeps (incl. TypeScript 5.x) must be installed
+with `npm ci --include=dev` inside `remotion/` — a bare `npm ci` there skips
+devDeps and the render pipeline crashes with `typescript.sys` undefined.
+
 Every command below is shown as `mmcs <verb>`; substitute the `node …` form
 when `mmcs` is not on PATH. Engine failure output (`[mmcs] …` on stderr) is
 diagnostic truth — surface it, do not retry blindly around it.
@@ -105,6 +121,12 @@ Full detail: `references/workflow.md` (cast flow) — the non-negotiables:
 ## 5. Providers — capability-first, never assume
 
 Full detail: `references/providers.md`. Before calling a provider verb:
+
+- **Generative video/images = Kie.ai (`KIE_API_KEY`).** The engine never uses
+  fal.ai. `FAL_KEY` / `ELEVENLABS_API_KEY` / `GEMINI_API_KEY` belong to the
+  abandoned upstream Python `tools/` track — they do not credential any MMCS
+  provider (enforced by `provider-smoke.test.ts`). If an old `.claude` skill
+  or doc mentions fal.ai, it does not apply to MMCS engine work — ignore it.
 
 - Trust the engine's capability registry (documented limits, per-model
   reference-image counts, prompt caps). Do not estimate limits yourself.
