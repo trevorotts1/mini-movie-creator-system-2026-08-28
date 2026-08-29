@@ -1,17 +1,16 @@
 {
-  "schema_version": 1,
-  "items": [],
-  "updated_at": "2026-08-29T08:30:00Z",
-  "last_batch": {
-    "batch": "batch-13",
-    "merged": [
-      "REC-010",
-      "REC-011",
-      "REL-003"
-    ],
-    "failed": [],
-    "preBatchHead": "ddd57484824e9b3cc80416157f82537a022484b9",
-    "postBatchHead": "c365e8e668694f4a956d0f0aebfe87ccd5c369c9",
-    "notes": "Dep-order merges --no-ff: REC-010 ecf4722 (re-cert QC sha 8fd8217 verified ancestor of rebased tip 2c85766; one state/task-updates/REC-010.qc.json add/add resolved to the branch round per briefing rule), REC-011 550a6da clean, REL-003 c365e8e clean. Regression: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 4010 passed/1 skipped (first run showed the known non-deterministic 5s timeout in packages/database backup.test.ts > exportBackup \u2014 same flake proven in batches 11/12; retry run clean 4010/0, one disclosed retry). Examples acceptance 7/7 (REL-003), tsc --noEmit -p examples RC=0, restart/compact sim suites 28/28. Baseline carried (not batch-caused): 2 providers test files fail to load importing '@mmcs/core/idempotency' bare subpath under packages/providers local vitest include pattern (agnes/retry + agnes/video/submit) \u2014 identical on integration base; both suites pass 68/68 from repo root config. No active owner. pnpm-lock.yaml unchanged \u2014 no pnpm install needed. Pushed ddd5748..c365e8e. Unblocked: REL-004 -> READY (deps REL-002 MERGED + REL-003 merged this batch; CHAR-005/DIR-003/DIR-008/DIR-015/QC-011/VID-012/GHL-008 all MERGED). Control fold only \u2014 orchestrator dispatches REL-004 build. REL-005/006 remain BLOCKED."
-  }
+ "schema_version": 1,
+ "items": [],
+ "updated_at": "2026-08-29T11:30:00Z",
+ "last_batch": {
+  "batch": "batch-14",
+  "merged": [
+   "PROBE-SONNET",
+   "REL-004"
+  ],
+  "failed": [],
+  "preBatchHead": "6475dc3630698771579ae2192b649ebd921838c1",
+  "postBatchHead": "7df92d2191d93b7ca8e7f4ccbfc06d8d3ec8d7fe",
+  "notes": "Dep-order merges --no-ff, zero conflicts: PROBE-SONNET 4c21b10 (rebase fixer branch task/TASK-KIE-004-seedance-modes tip bbda06b; re-certified QC sha fb47e6d verified ancestor; KIE-004 task status already MERGED \u2014 branch merge folds the rebase content + state record), REL-004 7df92d2 (tip 3cb1165; certified sha 2ece632 verified ancestor). ENV-001 admitted by rules (PASS, 1/1 defects) but task/ENV-react-dependency tip be07460 verified ALREADY an ancestor of integration \u2014 skip merge, control fold only. Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23; others --passWithNoTests); pnpm -r run typecheck RC=0 (17 Done); full-repo vitest 4014 passed/1 skipped clean rerun (first run hit known backup.test.ts exportBackup 5s-timeout flake \u2014 batch-11/12/13-proven non-deterministic; one disclosed retry, then 4014/0). Post-merge acceptance re-verified on integration: scripts/release/e2e-dry-run.sh RC 0 (11/11), vitest scripts/release 4/4, tsc -p scripts/release clean. pnpm-lock.yaml unchanged \u2014 no pnpm install. Pushed 6475dc3..7df92d2. Unblocked: REL-005 -> READY (deps REL-004 MERGED this batch; AGN-004/KIE-002/FISH-003/GHL-005/CORE-009 all MERGED). Control fold only \u2014 orchestrator dispatches REL-005 build. REL-006 remains BLOCKED (on REL-005)."
+ }
 }

@@ -1,15 +1,15 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
-Total tasks: **149** — MERGED: **148** — READY: **1** (REL-005, all deps MERGED after batch-14) — BLOCKED: **1** — PASS: **0**. Batch-14: PROBE-SONNET (KIE-004 rebase-merge, QC PASS 0 defects; KIE-004 already MERGED — control fold only) and REL-004 merged clean (4c21b10, 7df92d2); regression PASS; pushed 6475dc3..7df92d2. REL-005 unblocked READY — orchestrator to dispatch build.
+Total tasks: **149** — MERGED: **146** — READY: **1** (REL-004, all deps MERGED after batch-13) — BLOCKED: **2** — PASS: **0**. Batch-13: REC-010 (re-cert 8fd8217 ancestor of tip 2c85766), REC-011, REL-003 merged clean (REC-010 state-record add/add resolved to branch round); regression PASS; pushed ddd5748..c365e8e. REL-004 unblocked READY — orchestrator to dispatch build.
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)
 
 WF01 CORE-001,002,003,010,011,012,013,014 · WF02 CHAR-001,002,003,004,006,007,008,009,010,011,012,014,015 · WF03 DIR-001,002,004,005,006,007,009,010,011,012,013,014 · WF09 CAP-001..010, QC-001..010,012 · WF04 AGN-001..010 · WF05 KIE-001..010 · WF06 FISH-001..010 · WF07 GHL-001..012 · WF08 VID-001..016 · WF10 SKL-001..007, REC-001..011.
 
-## BLOCKED set (1)
+## BLOCKED set (3)
 
-REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except REL-005, which is READY batch-14 and must merge first).
+REL-004 (needs REL-002+003 — now READY batch-13, all deps MERGED) · REL-005 (needs REL-004) · REL-006 (needs REL-002..005 + REC-010/011 — REC-010/011 now MERGED batch-13, REL-006 still blocked on REL-004/005).
 
 ## Status policy (binding)
 
@@ -1662,7 +1662,7 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
   - Branch: task/TASK-REL-004-e2e-dry-run
   - Worktree: worktrees/TASK-REL-004/
   - Acceptance: controlled short sample project exercises concept → script → character candidate selection → storyboard → (mocked paid generation where credentials absent) → GHL archival → Remotion assembly → QC → rough cut → final render → restart/resume simulation; every defect found fixed before PASS; report written; script exits 0.
-  - Status: MERGED (batch-14, merge 7df92d2; QC PASS 2/2 defects fixed, certified sha 2ece632 ancestor of tip 3cb1165; e2e 11/11 scenarios RC 0 + vitest 4/4 + tsc clean verified on integration)
+  - Status: READY (unblocked batch-13: REL-002 MERGED batch-12, REL-003 MERGED c365e8e; CHAR-005/DIR-003/DIR-008/DIR-015/QC-011/VID-012/GHL-008 all MERGED)
 
 - [ ] TASK-REL-005 — Minimal provider smoke run
   - Workflow: WF10
@@ -1673,7 +1673,7 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
   - Branch: task/TASK-REL-005-provider-smoke
   - Worktree: worktrees/TASK-REL-005/
   - Acceptance: minimal paid smoke (≥1 Agnes generation; ≥1 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED — never falsely passed (spec §30); report records spend + job IDs.
-  - Status: READY (unblocked batch-14: REL-004 MERGED 7df92d2; AGN-004/KIE-002/FISH-003/GHL-005/CORE-009 all MERGED)
+  - Status: BLOCKED (on REL-004, which is now READY batch-13)
 
 - [ ] TASK-REL-006 — Release docs + final merge
   - Workflow: WF10
@@ -1684,7 +1684,7 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
   - Branch: task/TASK-REL-006-release-docs
   - Worktree: worktrees/TASK-REL-006/
   - Acceptance: spec §33 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.
-  - Status: BLOCKED (on REL-005, READY batch-14; everything else MERGED)
+  - Status: BLOCKED (on REL-004 + REL-005; REC-010/011 side cleared batch-13)
 
 <!-- WF10-END -->
 
@@ -1704,13 +1704,12 @@ REL-006 (needs REL-002..005 + REC-010/011 — all MERGED batches 11-14 except RE
 | WF07 GHL | 12 | 12 | 0 |
 | WF08 VID | 16 | 16 | 0 |
 | WF09B QC | 12 | 11 | 1 |
-| WF10 SKL+REC+REL | 24 | 1 | 1 |
-| **Total** | **149** | **1** | **1** |
+| WF10 SKL+REC+REL | 24 | 18 | 6 |
+| **Total** | **149** | **130** | **19** |
 
 ## Dependency unlock notes
 
 - CORE-003 merge unblocks CORE-004/005/006/007 immediately; CORE-004 merge unblocks CORE-008; CORE-007 + CORE-008 unblock CORE-009; all five schema merges unblock CORE-015.
 - CORE-008 merge unblocks CHAR-005, CHAR-013, DIR-003, DIR-008, DIR-015, QC-011 immediately.
 - All other dependencies are contract-first (interface per spec.md); builders build against the spec contract in wave 1 and bind to merged implementations as dependencies land. Unlock dependents the moment a dependency hits MERGED — never wait for a wave boundary (runbook §10).
-- REL-006 unblocks on REL-005 merge (batch-15). REL-* is wave-3 release state by design (runbook §10 wave 3).
-- Batch-14 (2026-08-29): REL-004 MERGED 7df92d2 -> REL-005 unblocked READY; PROBE-SONNET rebase-merge folded (KIE-004 content already MERGED; state record added).
+- REL-* is wave-3 release state by design (runbook §10 wave 3).

@@ -98,13 +98,3 @@
 
 ## Next action
 - Orchestrator: dispatch REL-004 build (task/REL-004-e2e-dry-run), then REL-005 after REL-004 merges
-
-## Batch 14 — Merged (2026-08-29T11:30Z, integration 6475dc3..7df92d2, pushed)
-- PROBE-SONNET (4c21b10) — KIE-004 rebase-fixer branch task/TASK-KIE-004-seedance-modes (tip bbda06b): callback-URL validation + buildSeedanceTaskRequest; re-certified QC sha fb47e6d verified ancestor; kie 67/67 + seedance 52/52 + tsc clean per QC; KIE-004 status already MERGED — branch merge folds rebase content + state record
-- REL-004 (7df92d2) — e2e dry run task/REL-004-e2e-dry-run (tip 3cb1165): certified sha 2ece632 verified ancestor; both merges clean, zero conflicts
-- ENV-001 — admitted by rules (PASS 1/1 defects) but task/ENV-react-dependency tip be07460 verified ALREADY ancestor of integration (QC-fixed content landed earlier) — no merge, control fold only
-- Regression PASS: pnpm -r test RC=0 (apps/cli 152/152, integrations/claude 45/45, integrations/openclaw 23/23); typecheck 17/17 RC=0; full vitest 4014 passed/1 skipped (backup.test.ts 5s-timeout flake first run — batch-11/12/13-proven, one disclosed retry, clean rerun); post-merge acceptance re-verified: e2e-dry-run.sh RC 0 (11/11), vitest scripts/release 4/4, tsc -p scripts/release clean; pnpm-lock unchanged
-- Unblocked: REL-005 -> READY (REL-004 MERGED + all other deps MERGED; control fold only — orchestrator dispatches build); REL-006 remains BLOCKED (on REL-005)
-
-## Next action
-- Orchestrator: dispatch REL-005 build (task/TASK-REL-005-provider-smoke), then REL-006 (release docs + final merge) after REL-005 merges

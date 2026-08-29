@@ -52,7 +52,3 @@
 | Batch 13 Regression Status | PASS (pnpm -r test RC=0; pnpm -r run typecheck RC=0, 17/17 Done; full vitest 4010 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake on first run, batch-11/12-proven non-deterministic, one disclosed retry; examples acceptance 7/7; sim suites 28/28; pnpm-lock unchanged) |
 | Batch 13 Baseline Notes | 2 providers test files fail to load importing '@mmcs/core/idempotency' bare subpath under packages/providers local include (agnes/retry, agnes/video/submit) — identical on integration base, no active owner; suites pass 68/68 from repo root |
 | Batch 13 Unblocks | REL-004 (BLOCKED->READY — control fold only, orchestrator dispatches); REL-005/006 remain BLOCKED |
-| Batch 14 Merged Count | 2 merges (PROBE-SONNET 4c21b10 — KIE-004 rebase branch fold, REL-004 7df92d2 — e2e dry run; 6475dc3..7df92d2; zero conflicts; ENV-001 verified already-ancestor of integration, no merge) |
-| Batch 14 Regression Status | PASS (pnpm -r test RC=0; typecheck 17/17 RC=0; full vitest 4014 passed / 1 skipped clean rerun — backup.test.ts 5s-timeout flake first run, batch-11/12/13-proven non-deterministic, one disclosed retry; e2e-dry-run.sh RC 0 on integration; pnpm-lock unchanged) |
-| Batch 14 Baseline Notes | providers bare-subpath '@mmcs/core/idempotency' local-include load failure unchanged — pre-existing, no active owner (carried from batch-13); no new baseline items |
-| Batch 14 Unblocks | REL-005 (BLOCKED->READY — control fold only, orchestrator dispatches); REL-006 remains BLOCKED |

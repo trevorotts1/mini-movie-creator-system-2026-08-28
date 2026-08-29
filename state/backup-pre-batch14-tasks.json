@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-08-29T11:30:00Z",
+ "updated_at": "2026-08-29T04:40:00Z",
  "items": [
   {
    "id": "CORE-001",
@@ -2162,7 +2162,7 @@
    "branch": "task/REL-004-e2e-dry-run",
    "worktree": "worktrees/REL-004/",
    "acceptance": "controlled short sample project exercises concept \u2192 script \u2192 character candidate selection \u2192 storyboard \u2192 (mocked paid generation where credentials absent) \u2192 GHL archival \u2192 Remotion assembly \u2192 QC \u2192 rough cut \u2192 final render \u2192 restart/resume simulation; every defect found fixed before PASS; report written; script exits 0.",
-   "status": "MERGED"
+   "status": "READY"
   },
   {
    "id": "REL-005",
@@ -2180,7 +2180,7 @@
    "branch": "task/REL-005-provider-smoke",
    "worktree": "worktrees/REL-005/",
    "acceptance": "minimal paid smoke (\u22651 Agnes generation; \u22651 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED \u2014 never falsely passed (spec \u00a730); report records spend + job IDs.",
-   "status": "READY"
+   "status": "BLOCKED"
   },
   {
    "id": "REL-006",
