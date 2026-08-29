@@ -99,7 +99,13 @@ export function normalizeHumanReviewDocument(raw: unknown): HumanReviewDocument 
   const updatedAt = typeof doc.updatedAt === "string" ? doc.updatedAt : "";
   assertIsoTimestamp(updatedAt || "missing", "updatedAt");
 
-  const reviews: Record<string, HumanReviewRecord> = {};
+  // Null-prototype map: a shot literally named "toString"/"__proto__" must
+  // never resolve against the Object prototype (reads fabricate records) or
+  // be silently swallowed by a plain-object write (entries vanish on reload).
+  const reviews: Record<string, HumanReviewRecord> = Object.create(null) as Record<
+    string,
+    HumanReviewRecord
+  >;
   for (const [shotId, entry] of Object.entries(reviewsRaw as Record<string, unknown>)) {
     assertNonEmpty(shotId, "shotId");
     if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
@@ -202,9 +208,13 @@ export function normalizeHumanReviewDocument(raw: unknown): HumanReviewDocument 
   };
 }
 
-/** A fresh empty document. */
+/** A fresh empty document (null-prototype reviews — see normalize note). */
 export function emptyHumanReviewDocument(now: string): HumanReviewDocument {
-  return { schemaVersion: HUMAN_REVIEW_SCHEMA_VERSION, updatedAt: now, reviews: {} };
+  return {
+    schemaVersion: HUMAN_REVIEW_SCHEMA_VERSION,
+    updatedAt: now,
+    reviews: Object.create(null) as Record<string, HumanReviewRecord>,
+  };
 }
 
 export class HumanReviewStore {
@@ -387,9 +397,18 @@ export class HumanReviewStore {
 
   /** Persist the full document atomically and cache it. */
   private async persist(doc: HumanReviewDocument): Promise<void> {
-    const serialized = `${JSON.stringify(doc, null, 2)}\n`;
+    // Rebuild the reviews container with a null prototype before caching:
+    // callers mutate via spread into plain literals, and a cached
+    // Object.prototype-backed map would let `reviews["toString"]` fabricate
+    // a record from the inherited method (see normalizeHumanReviewDocument).
+    const cached: HumanReviewDocument = {
+      schemaVersion: doc.schemaVersion,
+      updatedAt: doc.updatedAt,
+      reviews: Object.assign(Object.create(null) as Record<string, HumanReviewRecord>, doc.reviews),
+    };
+    const serialized = `${JSON.stringify(cached, null, 2)}\n`;
     await atomicWriteFile(this.filePath, serialized);
-    this.cached = freezeDocument(doc);
+    this.cached = freezeDocument(cached);
   }
 }
 

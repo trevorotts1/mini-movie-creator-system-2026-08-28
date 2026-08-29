@@ -13,6 +13,7 @@ import type {
   HumanReviewEntryInput,
   HumanReviewTrigger,
 } from "./types.js";
+import { HUMAN_REVIEW_TRIGGERS } from "./types.js";
 
 /** Human-readable label per trigger, surfaced on records and `mmcs qc`. */
 export const HUMAN_REVIEW_TRIGGER_LABELS: Readonly<
@@ -107,6 +108,6 @@ export function decideHumanReview(
 export function isReviewTrigger(value: unknown): value is HumanReviewTrigger {
   return (
     typeof value === "string" &&
-    (["routes-exhausted", "qc-verdict-review", "review-unavailable"] as readonly string[]).includes(value)
+    (HUMAN_REVIEW_TRIGGERS as readonly string[]).includes(value)
   );
 }

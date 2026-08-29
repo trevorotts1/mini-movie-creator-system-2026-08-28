@@ -353,6 +353,50 @@ describe("HumanReviewStore — transitions and listing", () => {
   });
 });
 
+describe("HumanReviewStore — prototype-safe keys (QC regression)", () => {
+  // These ids resolve against Object.prototype on a plain-object map:
+  // `reviews["toString"]` fabricated an inherited method as a "record",
+  // and `reviews["__proto__"] = record` repointed the map's prototype,
+  // silently deleting the entry from listings on every reload.
+  for (const hostile of ["toString", "constructor", "__proto__", "hasOwnProperty"]) {
+    it(`shot "${hostile}" round-trips through disk as a real record`, async () => {
+      const store = new HumanReviewStore(dir);
+      await store.markReview(markInput({ shotId: hostile, now: tick() }));
+      expect(await store.openCount()).toBe(1);
+
+      // Restart: the record must survive normalize, not vanish or fabricate.
+      const second = new HumanReviewStore(dir);
+      const rec = await second.snapshot(hostile);
+      expect(rec).not.toBeNull();
+      expect(rec?.shotId).toBe(hostile);
+      expect(rec?.state).toBe("REVIEW");
+      expect(await second.openCount()).toBe(1);
+      const listed = await second.listReviews();
+      expect(listed.map((r) => r.shotId)).toEqual([hostile]);
+
+      // A human decision on it must work and persist like any other shot.
+      const decided = await second.approve(hostile, { decidedBy: "trevor", now: tick() });
+      expect(decided.state).toBe("APPROVED");
+      const third = new HumanReviewStore(dir);
+      expect((await third.snapshot(hostile))?.state).toBe("APPROVED");
+      expect(await third.openCount()).toBe(0);
+    });
+  }
+
+  it("prototype method names never fabricate records for unreviewed shots", async () => {
+    const store = new HumanReviewStore(dir);
+    await store.markReview(markInput({ shotId: "REAL", now: tick() }));
+    for (const probe of ["toString", "constructor", "valueOf", "hasOwnProperty"]) {
+      expect(await store.snapshot(probe)).toBeNull();
+    }
+    // A decision on a nonexistent proto-named shot is refused, not applied
+    // to an inherited prototype member.
+    await expect(store.approve("toString", { decidedBy: "trevor" })).rejects.toThrow(
+      /markReview first/,
+    );
+  });
+});
+
 describe("normalizeHumanReviewDocument — structural validation", () => {
   it("empty document round-trips", () => {
     const doc = emptyHumanReviewDocument("2026-08-29T00:00:00.000Z");
