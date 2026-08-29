@@ -6,6 +6,45 @@
 
 ---
 
+## How to launch MMCS
+
+MMCS is the production engine this build created (spec §33 deliverables, REL-006).
+Install, operate, and recover it without reading source code:
+
+1. **Install** — `bash scripts/release/clean-install.sh` from the repo root:
+   verifies prerequisites (Node 20+/git/ffmpeg+ffprobe; pnpm auto-provisioned),
+   installs the pnpm workspace, builds the `mmcs` CLI, runs `mmcs doctor`.
+   Exit 0 = verified install, no provider keys needed. Full steps + `.env`
+   tables: `docs/installation.md`.
+2. **Configure** — `cp .env.example .env` and fill provider names/keys
+   (`docs/provider-setup.md`; GHL archive keys: `docs/ghl-setup.md`). Absent
+   keys BLOCK their provider path by design — fail closed.
+3. **Operate** — open the repo in Claude Code / claude-nine and use
+   `/mini-movie-creator` (canonical skill `skills/mini-movie-creator/`, thin
+   control over the same `mmcs` CLI), or drive the CLI directly. Gate flow:
+   `create-series → create-episode → develop-concept [G1] → write-script [G2]
+   → cast → choose-character/approve-character [G3] → storyboard [G4] →
+   estimate → generate (auto < $25/episode; STOP at the ceiling) → qc →
+   rough-cut [G5] → final → canon review/approve [G6]`. Six persisted gates +
+   $25/episode auto spend gate: `docs/approvals.md`, `docs/cost-controls.md`.
+4. **Free rehearsal** — `npx vitest run examples/demo-series --config
+   examples/vitest.examples.config.ts` walks "Mona & the Brass Key" end to end
+   with zero provider calls: `docs/first-series.md`.
+5. **Zero-spend verification** — `bash scripts/release/e2e-dry-run.sh`
+   (full pipeline, real ffmpeg render), `bash scripts/release/provider-smoke.sh`
+   (credential gating, $0 spend), `bash scripts/release/regression.sh`
+   (six-area sweep), `bash scripts/release/docs-verify.sh` (§33 docs gate).
+6. **Operational docs** — recurring characters `docs/character-library.md`;
+   model limits/pricing `docs/capability-registry.md` +
+   `docs/provider-capabilities/`; adding a provider
+   `docs/adding-a-provider.md`; skill installs (Claude Code / claude-nine /
+   OpenClaw) `docs/skill-installs.md`; symptoms `docs/troubleshooting.md`;
+   restart/resume `docs/recovery.md` (+ `mmcs recover`); building an app on
+   the engine `docs/standalone-path.md`; package map `docs/ARCHITECTURE.md`.
+   Engine entry: `mmcs doctor` then `mmcs status` before any mutation.
+
+---
+
 ## Current Status
 
 - **Phase:** Batch Merge Cycle 12 complete. 7 tasks merged deps-first: REC-002 PreCompact hook (36c9a62), REC-003 PostCompact (f706e04), REC-004 SessionStart (3822ff5), REC-005 SessionEnd (42f5146), REC-006 TaskCompleted (7a5dde4), REC-007 TeammateIdle (ec03405), REL-002 full-regression (2478ef6). All six hook branches shipped their own single-event .claude/settings.json — five add/add conflicts resolved by deep-union merge of the hooks object; final file carries all 6 events, JSON verified, every hook script present. Regression PASS. Pushed d92b62c..2478ef6.

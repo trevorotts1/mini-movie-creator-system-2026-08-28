@@ -1,157 +1,128 @@
-# claude-faceless-shorts-creator
+# mini-movie-creator-system (MMCS)
 
-**A faceless YouTube-Shorts factory you drive with [Claude Code](https://claude.com/claude-code).**
-Three production tracks in one repo — you just describe the video, and the right pipeline runs:
+A persistent, resumable AI **mini-movie / serialized-TV production engine** —
+a recurring locked character developed across episodes and rendered as a
+vertical short. Engine-first: all production state lives in durable storage
+(SQLite + `state/`), all business logic lives in packages, and the Claude
+Code skill is a **thin control interface** — never the brain.
 
-| You say… | Track | The pixels |
-|---|---|---|
-| *"make a short about the ×11 trick"* | **TSX** (`/make-short`) | 100% code — a [Remotion](https://remotion.dev) composition, no footage, no stock |
-| *"make an AI video short with blue-man"* | **Generative** (`/make-ai-short`) | a fal video model animating a **locked recurring character** |
-| *"make a vox-style short about coffee"* | **Collage** (`/make-vox`) | Vox-documentary paper collage — AI-image layers, die-cuts, a traveling camera |
-
-Every track shares the same backbone: ElevenLabs voice with **word-exact synced captions**,
-frame-by-frame QA at phone scale, a reusable self-growing SFX/music library, seamless
-frame-0==last-frame loops, and no dated engagement-CTA outros.
-
-## 📖 Read the guide
-
-I wrote up the whole system on my site, including the six-beat grammar that decides whether a
-40-second short is worth finishing:
-**[Make Faceless YouTube Shorts With Claude Code](https://learnwithhasan.com/guide/how-to-make-faceless-youtube-shorts-with-claude-code/?utm_source=github&utm_medium=readme&utm_campaign=claude-faceless-shorts-creator&utm_content=body)**
-
-Free to read, no login. More build guides at
-**[learnwithhasan.com/guides](https://learnwithhasan.com/guides/?utm_source=github&utm_medium=readme&utm_campaign=claude-faceless-shorts-creator&utm_content=body)**.
-
-## The example videos (more coming)
-
-**TSX shorts** (`shorts/`) — 12 complete productions; each folder has the script, beats
-contract, and SFX cue sheet, and the committed composition renders the exact video:
-
-| # | Niche | Title / hook |
-|---|---|---|
-| 1 | Chess | The 4-Move Checkmate — Punished |
-| 2 | Math | The ×11 Trick |
-| 3 | Algorithms | Bubble vs Quick: The Race |
-| 4 | Dev tips | `git reflog` undoes any mistake |
-| 5 | Probability | Monty Hall, Finally Intuitive |
-| 6 | Excel | Excel Reads Your Mind (Flash Fill / Ctrl+E) |
-| 7 | Kids story | Little Pip (AI-image storybook, ages 4–6) |
-| 8 | Cybersecurity | The URL That Isn't PayPal |
-| 9 | Music theory | The 4 Chords In Every Hit |
-| 10 | Money math | The 1% Fee That Eats 24% Of Your Retirement |
-| 11 | Geography | The Map Lied To You |
-| 12 | Physics | Astronauts Aren't Weightless. They're Falling. |
-
-**Generative** (`ai-shorts/blue-man/`) — *The Door*: a clay-render character walking through
-doors across worlds, thesis "arrival is a myth". Includes the **locked character sheet**
-(`character.json` + reference PNG), the model bake-off records (Seedance vs Kling vs Veo, with
-derived per-second costs), and the six generated clips — committed, because video-model pixels
-are not reproducible.
-
-**Collage** (`vox-shorts/vox-1-coffee/`) — a Vox-style documentary short on coffee's journey:
-generated map/archival/cutout layers (committed), a camera choreographed across scenes, and
-`DESIGN.md` — the full visual-language spec of the collage engine.
-
-Rendered videos aren't committed (they're reproducible from the repo); links to published
-versions will be added here as they go live.
-
-## How a short gets made
-
-```
-topic ──▶ script.md + beats.json      the beat grammar: HOOK (frame 0 = the thumbnail)
-                │                      → SETUP → QUIZ → REVEAL → TWIST → seamless LOOP
-                ▼
-        the visuals                    TSX composition / video-model clips / collage layers
-                │                      (per track — but always ONE Remotion timeline)
-                ▼
-        frame-by-frame QA              Claude renders PNGs at phone scale and READS them
-                │
-                ▼
-        gen_voice.py                   ElevenLabs TTS per line → REAL per-word timestamps
-                │                      → captions highlight on the exact spoken word
-                ▼
-        sfx-plan.json + mix_sfx.py     library-first sound design, audition mix, your ear
-                │                      is the final gate (optional music bed: mix_music.py)
-                ▼
-        <track>/<project>/output/*-sfx.mp4
-```
-
-Five Claude Code **skills** encode the craft:
-
-- **`/make-short`** — the TSX pipeline: hook grammar, no-CTA outros, caption safe areas,
-  Sequence-local frame math, loop-into-intro endings.
-- **`/make-ai-short`** — the generative pipeline and its three iron rules: never regenerate a
-  locked character from text, state the cost before spending it, loop by end-frame constraint.
-- **`/make-vox`** — scene dissection into layers, cheapest-source layer production
-  (gen_image + rembg cutouts, HTML→PNG, SVG-in-TSX), CollageBoard camera choreography.
-- **`/vidtsx-2d-generator`** — the TSX authoring rules that keep Remotion renders from crashing.
-- **`/suggest-sfx`** — taste-encoded sound design: function-first cues, layered hero moments,
-  measured audibility (RMS-diff, not hope), a library that compounds across videos.
-
-`brand.md` is the style contract (palette, type, motion, SFX taste) — swap it for your own
-brand and every future short follows it.
+This repo began as a fork of
+[hassancs91/claude-faceless-shorts-creator](https://github.com/hassancs91/claude-faceless-shorts-creator)
+(MIT; upstream Remotion baseline and the legacy `/make-short`, `/make-ai-short`,
+`/make-vox` tracks are preserved and attributed forever — see
+`docs/upstream-audit/preservation-map.md`). MMCS adds the production engine on
+top; the upstream tracks still work.
 
 ## Quickstart
 
-Requirements: [Claude Code](https://claude.com/claude-code) · Node 18+ · Python 3.10+ ·
-`ffmpeg` on PATH · an [ElevenLabs](https://elevenlabs.io) key (voice/SFX/music). For the
-generative track add a [fal.ai](https://fal.ai) key; for collage layer production:
-`pip install pillow rembg playwright && playwright install chromium` (the only pip installs
-in the repo — everything else is stdlib).
+```bash
+bash scripts/release/clean-install.sh
+```
+
+One command: verifies prerequisites (Node 20+/git/ffmpeg+ffprobe, pnpm
+auto-provisioned via corepack), installs the pnpm workspace, builds the `mmcs`
+CLI, and runs `mmcs doctor`. Exits 0 on a verified install — **no provider
+keys needed first**; `mmcs doctor` requires no secrets. Full steps, `.env`
+tables, and install troubleshooting: `docs/installation.md`.
 
 ```bash
-git clone https://github.com/hassancs91/claude-faceless-shorts-creator
-cd claude-faceless-shorts-creator
-cp .env.example .env          # add your keys
-cd remotion && npm install && npm run gen && cd ..
-
-claude                        # open the repo in Claude Code, then:
+cp .env.example .env    # add provider keys when you are ready to generate
+mmcs doctor             # names only — shows which providers are wired
 ```
 
-> **make a short about &lt;your topic&gt;** · **make an AI video short about &lt;idea&gt;** ·
-> **make a vox-style short about &lt;story&gt;**
+## Drive it
 
-…or rebuild an example: *"re-render short-5 and regenerate its voice"*.
+Open the repo in Claude Code / claude-nine — `/mini-movie-creator` loads the
+operator skill (`skills/mini-movie-creator/`), a thin control interface that
+drives the same `mmcs` CLI the engine ships. Or drive the CLI directly
+(`node apps/cli/dist/index.js` if not on PATH):
 
-To just explore the compositions visually: `cd remotion && npm run studio`.
+```bash
+create-series → create-episode
+  → develop-concept      [GATE 1 concept]
+  → write-script         [GATE 2 script]
+  → cast → choose-character 1|2|3 → approve-character   [GATE 3 character lock]
+  → storyboard           [GATE 4 storyboard]
+  → estimate → generate  [auto below $25/episode; STOP at the ceiling]
+  → qc → rough-cut       [GATE 5 rough cut]
+  → final → canon review/approve   [GATE 6 canon]
+```
 
-## Repo layout
+Full walkthrough (free, zero provider calls): `docs/first-series.md` — the
+demo series "Mona & the Brass Key", executable as
+`npx vitest run examples/demo-series --config examples/vitest.examples.config.ts`.
+
+Six persisted approval gates + one automatic $25/episode spend gate
+(`docs/approvals.md`, `docs/cost-controls.md`). Every generated asset
+archives immediately to durable GoHighLevel Media Storage (`docs/ghl-setup.md`).
+
+## Verify without spending anything
+
+| Command | What it proves |
+|---|---|
+| `bash scripts/release/clean-install.sh` | pristine install: prereqs, workspace, CLI build, doctor (REL-001) |
+| `bash scripts/release/e2e-dry-run.sh` | full pipeline S0–S23 with mocked paid steps and a **real ffmpeg render** — zero credentials, zero spend (REL-004) |
+| `bash scripts/release/provider-smoke.sh` | credential gating per provider, $0 projection inside the $25 gate (REL-005) |
+| `bash scripts/release/regression.sh` | six-area release sweep: tools / vitest / gen / typecheck / lint / render-smoke (REL-002) |
+
+Committed evidence reports (script-generated, never hand-edited):
+`docs/e2e-dry-run-report.md`, `docs/provider-smoke-report.md`.
+
+## Engine layout (summary)
 
 ```
-.claude/skills/   the five skills (this is where the "editor" lives)
-tools/            Python: gen_voice, gen_sfx, gen_music, mix_sfx, mix_music, gen_image,
-                  gen_clip, bakeoff_clip, cutout, capture_web, gen_chords
-remotion/         the Remotion project — shared kits in src/lib/ (incl. collage.tsx),
-                  one folder per video in src/shots/
-media/library/    reusable assets: SFX clips + music beds (catalogued, loudness-normalized)
-media/projects/   media for one specific video — incl. committed AI clips & collage layers
-shorts/           the 12 TSX example productions
-ai-shorts/        the generative track: blue-man/ (locked character) + IDEAS.md (cost tables)
-vox-shorts/       the collage track: vox-1-coffee/ + DESIGN.md (the visual language)
-brand.md          the style contract — make it yours
-IDEAS.md          the TSX-shorts niche/idea bank
+packages/                the engine (13 subsystem packages)
+  core                   approvals + gates, config, recovery/checkpoint, state machine
+  scene-intelligence     intake → concept → screenplay → shots → keyframes → storyboards
+  character-library      candidates, cast, locking, identity assets, series bible
+  capability-registry    per-model limits/pricing data + validators (`mmcs models`)
+  providers/             agnes, kie (seedance/wan), fish-audio adapters
+  media-storage          MediaStore + GoHighLevelMediaStore (durable archive)
+  cost-engine            atomic shared reservation ledger ($25 gate)
+  qc/                    QC evaluators + repair routing
+  remotion-runtime       composition/render bridge (rough cut, final render, ffprobe)
+  database  domain  prompt-compilers
+apps/
+  cli/                   the `mmcs` CLI (spec §24 verb surface)
+  api/                   thin HTTP service boundary (standalone readiness)
+  web/                   reserved — no V1 dashboard
+integrations/
+  claude/                Claude Code / claude-nine skill install wrappers
+  openclaw/              OpenClaw skill packaging + workspace install
+skills/mini-movie-creator/   canonical skill (one skill, three install targets)
+remotion/                upstream Remotion project, evolved
+examples/demo-series/    the free end-to-end walkthrough as tests
+scripts/release/         release gates (clean-install, e2e-dry-run, provider-smoke, regression)
+state/                   orchestration state (checkpoint.json, schema, README)
 ```
+
+Package map and the binding dependency direction:
+`docs/ARCHITECTURE.md`.
+
+## Where the docs live
+
+| Start here | For |
+|---|---|
+| `docs/installation.md` | install, prerequisites, `.env` reference, skill hosts |
+| `docs/first-series.md` | your first series, end to end (free) |
+| `docs/approvals.md` · `docs/cost-controls.md` | the six gates + the $25 gate |
+| `docs/character-library.md` | recurring characters, candidates, locking |
+| `docs/provider-setup.md` · `docs/ghl-setup.md` | provider keys, GHL archive |
+| `docs/capability-registry.md` · `docs/adding-a-provider.md` · `docs/provider-capabilities/` | model limits/pricing, new providers |
+| `docs/skill-installs.md` | Claude Code / claude-nine / OpenClaw installs |
+| `docs/troubleshooting.md` · `docs/recovery.md` | symptoms, resume, drills |
+| `docs/standalone-path.md` | building an app on the engine |
+
+## Branch model
+
+`main` (integration-tested, usable) · `integration` (10-minute QC-approved
+batch merges) · task branches/worktrees. No direct-to-main agent commits
+(spec §2). Release gates run from `scripts/release/`; the merge/promotion
+flow is documented in `scripts/orchestration/` (batch merge, watchdog,
+checkpoint).
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Bundled SFX/music clips and example AI media were generated by
-the repo author (ElevenLabs / fal / Gemini) and are redistributed here; per-clip provenance is
-recorded in `media/library/*/catalog.json` and the per-shot `.json` sidecars.
-
-<!-- lwh-footer -->
-
----
-
-## 📘 The free book
-
-This repo is one thing I built with AI. The book is the system underneath it.
-
-**[Vibe Engineering Blocks](https://learnwithhasan.com/blocks/?utm_source=github&utm_medium=readme&utm_campaign=claude-faceless-shorts-creator&utm_content=footer)** is my free 74-page book.
-47 building blocks for shipping real apps with AI. One block per page, each with the exact
-prompt to hand your AI.
-
-Built by **[Hasan Aboul Hasan](https://learnwithhasan.com/?utm_source=github&utm_medium=readme&utm_campaign=claude-faceless-shorts-creator&utm_content=footer)**. I build real products with AI and
-write down exactly how.
-[Guides](https://learnwithhasan.com/guides/?utm_source=github&utm_medium=readme&utm_campaign=claude-faceless-shorts-creator&utm_content=footer) &nbsp;·&nbsp;
-[YouTube](https://www.youtube.com/@HasanAboulHasan) &nbsp;·&nbsp;
-[Community](https://learnwithhasan.com/community/?utm_source=github&utm_medium=readme&utm_campaign=claude-faceless-shorts-creator&utm_content=footer)
+MIT — see [LICENSE](LICENSE). Fork attribution to the upstream
+faceless-shorts-creator project is preserved permanently
+(`docs/upstream-audit/preservation-map.md`).

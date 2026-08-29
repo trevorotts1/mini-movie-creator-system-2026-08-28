@@ -1,0 +1,9 @@
+{
+  "taskId": "REL-006",
+  "phase": "BUILDER_DONE",
+  "commit": "25961fb327cd4b5c4bd27068d8100b0a62bfc957",
+  "testsRun": "bash scripts/release/docs-verify.sh -> PASS rc=0 (11 owned docs >200B, 88 referenced paths verified, 15 indexed docs present); sh scripts/release/docs-verify.sh -> rc=0 (POSIX); negative control: sed-replaced referenced path in staged doc copy -> FAIL rc=1 (verifier catches missing paths); bash -n scripts/release/docs-verify.sh clean; pre-fix run on real tree FAILED rc=1 on two genuinely-missing referenced paths (packages/capability-registry/src/data/<provider>.ts, apps/cli/dist/index.js) then docs fixed and gate re-run PASS",
+  "notes": "11 new docs/ deliverables (approvals, character-library, provider-setup, ghl-setup, skill-installs, cost-controls, capability-registry, adding-a-provider, troubleshooting, recovery, standalone-path) all grounded in verified repo paths; README.md refreshed (quickstart, gate flow, release gates table, engine layout, docs index, fork attribution); session.md 'How to launch MMCS' final section added, prior content intact; commits 0ade8ce (docs) 9edab4c (README) ab80b7b (docs-verify) + session/builder commit; promotion+tag deferred to merger",
+  "blockers": [],
+  "updatedAt": "2026-08-29T11:53:00Z"
+}
