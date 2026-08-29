@@ -1,0 +1,13 @@
+{
+  "taskId": "REL-005",
+  "phase": "PASS",
+  "commit": "da8d1c1",
+  "checksRun": "npx tsc -p scripts/release/tsconfig.json --noEmit; npx vitest run scripts/release/provider-smoke.test.ts (14/14); npx tsx --tsconfig scripts/release/tsconfig.json scripts/release/provider-smoke.ts --report-only (rc 0, spend $0); bash scripts/release/provider-smoke.sh --markdown (rc 0); bash --help (rc 2 usage); --bogus-flag (rc 2); --live without MMCS_SMOKE_COST_ACK (no LIVE, spend $0); secret scan of 4 builder commits + QC diff (clean); npx vitest run scripts/release/ (51/51 after npm ci in remotion/); remotion tsc control pre-existing env gap",
+  "defectsFound": 3,
+  "defectsFixed": 3,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T11:40:00Z",
+  "notes": "Fixed: (1) PROVIDER_ENV_VARS gated on inherited Python-tools vars FAL_KEY/FISH_AUDIO_API_KEY — now matches engine MMCS_ENV_KEYS (AGNES_API_KEY/KIE_API_KEY/FISH_API_KEY/GHL_ACCESS_TOKEN+LOCATION_ID); (2) --live lacked explicit-consent cost ack — now requires non-empty MMCS_SMOKE_COST_ACK on top of MMCS_SMOKE_LIVE=1, ack value never echoed; (3) liveStatus PASS was reachable with no live executor — now NOT_RUN, never false PASS (spec 30). 4/4 providers BLOCKED, spend $0.0000, report regenerated from actual run, wrapper help/usage/unknown-flag paths verified. Pre-existing regression-test env gap (remotion node_modules in worktree) closed with npm ci — not a code defect, release sweep 51/51 green.",
+  "blockers": []
+}
