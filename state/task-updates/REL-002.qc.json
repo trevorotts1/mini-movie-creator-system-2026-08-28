@@ -1,0 +1,13 @@
+{
+  "taskId": "REL-002",
+  "phase": "PASS",
+  "commit": "bc4bac567741baf87cdfb06d2f57a8d2dd165ee5",
+  "checksRun": "bash -n scripts/release/regression.sh -> clean; npx vitest run scripts/release/regression.test.ts -> 17/17 passed (16 sandbox units incl. lint control, flake-retry disclosure, recursion-guard asserts + real-toolchain acceptance); bash scripts/release/regression.sh --json -> exit 0, all six areas PASS (vitest 3795 passed | 1 skipped; gen idempotent 14 shots 1 episode; 18 project tsconfigs clean, 1 base skipped; lint runner+control; render-smoke 9:16 + 16:9); spawn probe with vitest-worker env (VITEST/TEST/NODE_ENV/npm_config_*) -> exit 0 identical per-area evidence in 18s; nested 'npx vitest run --exclude ...' under same env -> 3796 tests in 7s (proves speed is warm-cache, not short-circuit); standalone warm rerun -> 17s same full evidence; direct smoke-helper run -> ffprobe h264 540x960 + 960x540 verified; secret scan on scripts/release/ -> clean; git status -> tree clean after runs (smoke hygiene holds)",
+  "defectsFound": 0,
+  "defectsFixed": 0,
+  "finalTestResult": "PASS",
+  "qcAgent": "qc-batch",
+  "queuedAt": "2026-08-29T03:35:13Z",
+  "notes": "No defects. Investigated the 17s acceptance-vs-10min-first-run gap: reproduced with vitest-worker env and standalone warm run — both give exit 0 with the FULL per-area evidence (3796 tests, 18 tscs, both renders); timing difference is cold vs warm toolchain cache, not vacuous green. Recursion guards (--exclude + MMCS_REGRESSION_CHILD) proven by controlled probe; gen drift pathspec covers all three tracked generated files; lint negative-control prevents silent-green runner.",
+  "blockers": []
+}
