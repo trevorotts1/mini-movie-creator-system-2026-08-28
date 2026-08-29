@@ -212,8 +212,10 @@ describe("post-compact hook (REC-003)", () => {
         f.startsWith(`${RECOVERY_MARKER_FILE}.corrupt-`),
       );
       expect(litter).toHaveLength(1);
+      const backup = litter[0];
+      expect(backup).toBeDefined();
       expect(
-        readFileSync(join(dir, "state", litter[0]), "utf8"),
+        readFileSync(join(dir, "state", backup ?? "missing"), "utf8"),
       ).toContain("{not valid json");
       expect((await readMarker()).last_post_compact).toBeTruthy();
       expect(err.join("")).toContain("corrupt");
@@ -284,9 +286,12 @@ describe("post-compact hook (REC-003)", () => {
         };
       };
       const entry = settings.hooks.PostCompact[0];
-      expect(entry.matcher).toBe("*");
-      expect(entry.hooks[0].type).toBe("command");
-      expect(entry.hooks[0].command).toContain(".claude/hooks/post-compact.sh");
+      expect(entry).toBeDefined();
+      expect(entry?.matcher).toBe("*");
+      const cmd = entry?.hooks[0];
+      expect(cmd).toBeDefined();
+      expect(cmd?.type).toBe("command");
+      expect(cmd?.command).toContain(".claude/hooks/post-compact.sh");
       expect(existsSync(sh)).toBe(true);
     });
 
