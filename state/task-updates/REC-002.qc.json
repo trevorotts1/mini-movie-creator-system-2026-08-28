@@ -1,0 +1,15 @@
+{
+ "taskId": "REC-002",
+ "phase": "PASS",
+ "commit": "d161bb169359bed7f059dbded41f4e9b36632791",
+ "checksRun": "vitest run scripts/hooks/pre-compact.test.ts (23/23 PASS); vitest run scripts/orchestration/checkpoint.test.ts (25/25 PASS, REC-001 unaffected); tsc --noEmit --strict --noUncheckedIndexedAccess scripts/hooks/pre-compact.ts scripts/hooks/pre-compact.test.ts (clean); real-doc E2E: copy of committed state/checkpoint.json piped through .claude/hooks/pre-compact.sh with hook JSON on stdin -> exit 0, schemaVersion+schema_version==1, resume hint stamped, preexisting next_recommended_actions preserved, ready_task_ids/last_batch_merge intact, one session.md marker block, PRECOMPACT_CHECKPOINT ledger line appended; settings.json PreCompact wiring assertion (matcher manual|auto, command pre-compact.sh); exec-bit check 100755",
+ "defectsFound": 1,
+ "defectsFixed": 1,
+ "finalTestResult": "PASS",
+ "qcAgent": "qc-batch",
+ "queuedAt": "2026-08-28T12:00Z",
+ "notes": "Builder suite was green but only tested temp repo roots; the registered hook fail-closed (exit 2) on the real snake_case control doc, which would block every compaction. Fixed in owned paths via legacy snake->camel bridge + dual-style mirror write (watchdog.ts precedent), 4 regression tests added. Security pass: no secrets, no shell injection (stdin text only flows into written artifacts), lock has bounded 10s timeout, atomic temp+rename writes. tsx is not on PATH nor in the workspace tree; the shim's last-resort npx tsx resolved offline from the npx cache here, but compaction should not depend on that at compact time (informational, not a REC-002 defect).",
+ "blockers": [
+  "REC-001: scripts/orchestration/checkpoint.ts CLI has the identical latent fault — `npx tsx scripts/orchestration/checkpoint.ts` exits 2 on the committed snake_case state/checkpoint.json for the same schema_version reason. Out of REC-002 owned paths, not edited. Owning task: REC-001."
+ ]
+}
