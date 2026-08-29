@@ -20,8 +20,9 @@ code change (spec §15: "provider adapters, never hard-coded branches").
    official* docs before coding: auth, endpoints, request/response shapes,
    rate limits, error semantics, async job model. Record source URLs +
    `lastVerifiedAt` in the new capability doc.
-2. **Write the capability profile.** Add
-   `packages/capability-registry/src/data/<provider>.ts` following the
+2. **Write the capability profile.** Add a sibling of
+   `packages/capability-registry/src/data/agnes.ts` (one `data` module per
+   provider) following the
    existing schema/validators. Values actually attested by the provider are
    VERIFIED; router-catalog values are PROVISIONAL; gaps stay `null` /
    UNKNOWN with a notes entry — never invented. Include pricing as

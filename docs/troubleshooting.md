@@ -13,7 +13,7 @@ mmcs status     # project/series/episode state, open approval gate, cumulative s
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `mmcs` not found on PATH | CLI not built after clone/pull | `pnpm --filter @mmcs/cli build`, then `node apps/cli/dist/index.js` (identical verb surface) |
+| `mmcs` not found on PATH | CLI not built after clone/pull | `pnpm --filter @mmcs/cli build`, then run the built entry (`apps/cli/dist/index.js` — produced by that build) with `node` (identical verb surface) |
 | doctor lists a provider as missing that you set | `.env` not at repo root, name mismatch vs `.env.example`, blank value, or a shell env override | fix name/value/placement; rerun `mmcs doctor` (config-loading rules: `docs/installation.md`) |
 | `GateOrderError` when approving a gate | an earlier gate is not APPROVED | approve gates strictly in order (`docs/approvals.md`); the demo failure map in `docs/first-series.md` § 5 shows each variant |
 | Paid generation refused before gate 4 | storyboard gate not APPROVED (`assertPaidGenerationAllowed` fails closed) | run the gate verbs; never force the paid path (`docs/approvals.md`) |
