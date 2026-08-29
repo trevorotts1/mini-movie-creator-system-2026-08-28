@@ -18,18 +18,42 @@ const ALL_PROVIDERS = Object.keys(PROVIDER_ENV_VARS) as ProviderName[];
 describe("env-gating decisions (presence on NAMES only, never values)", () => {
   afterEach(() => {
     delete process.env["MMCS_SMOKE_LIVE"];
+    delete process.env["MMCS_SMOKE_COST_ACK"];
   });
 
   it("all four providers are gated by env-var presence", () => {
     expect(ALL_PROVIDERS.sort()).toEqual(["agnes", "fish", "ghl", "kie"]);
   });
 
+  it("credential vars mirror the engine's MMCS_ENV_KEYS (no inherited Python-tools keys)", () => {
+    // Engine single source of truth — a provider must not gate on FAL_KEY /
+    // FISH_AUDIO_API_KEY, which belong to the inherited tools, not MMCS.
+    expect(PROVIDER_ENV_VARS.agnes).toEqual(["AGNES_API_KEY"]);
+    expect(PROVIDER_ENV_VARS.kie).toEqual(["KIE_API_KEY"]);
+    expect(PROVIDER_ENV_VARS.fish).toEqual(["FISH_API_KEY"]);
+    expect(PROVIDER_ENV_VARS.ghl).toEqual(["GHL_ACCESS_TOKEN", "GHL_LOCATION_ID"]);
+    const flattened = Object.values(PROVIDER_ENV_VARS).flat();
+    expect(flattened).not.toContain("FAL_KEY");
+    expect(flattened).not.toContain("FISH_AUDIO_API_KEY");
+    expect(flattened).not.toContain("ELEVENLABS_API_KEY");
+    expect(flattened).not.toContain("GEMINI_API_KEY");
+  });
+
   it("agnes is CREDENTIALED when any of its vars is non-blank", () => {
-    const env = { FAL_KEY: "  x  " };
+    const env = { AGNES_API_KEY: "  x  " };
     expect(credentialsPresent(env, PROVIDER_ENV_VARS.agnes)).toBe(true);
     const result = runProviderSmoke({ env, forceMock: true, reportOnly: false });
     const agnes = result.providers.find((p) => p.provider === "agnes")!;
     expect(agnes.credentialsPresent).toBe(true);
+  });
+
+  it("inherited-tools key FAL_KEY alone never credentials a provider (spec §30)", () => {
+    const env: Record<string, string | undefined> = { FAL_KEY: "fal-inherited-tools-key" };
+    const result = runProviderSmoke({ env });
+    for (const p of result.providers) {
+      expect(p.credentialsPresent).toBe(false);
+      expect(p.mode).toBe("BLOCKED");
+    }
   });
 
   it("blank-only credentials count as absent", () => {
@@ -53,6 +77,44 @@ describe("env-gating decisions (presence on NAMES only, never values)", () => {
     const env: Record<string, string | undefined> = {};
     for (const vars of Object.values(PROVIDER_ENV_VARS)) env[vars[0]!] = "x";
     const result = runProviderSmoke({ env, reportOnly: false });
+    for (const p of result.providers) {
+      expect(p.mode).toBe("MOCKED");
+      expect(p.liveStatus).toBe("BLOCKED");
+    }
+  });
+
+  it("MMCS_SMOKE_LIVE=1 WITHOUT a non-empty MMCS_SMOKE_COST_ACK never goes LIVE", () => {
+    const env: Record<string, string | undefined> = { MMCS_SMOKE_LIVE: "1" };
+    for (const vars of Object.values(PROVIDER_ENV_VARS)) env[vars[0]!] = "x";
+    const noAck = runProviderSmoke({ env, reportOnly: false });
+    for (const p of noAck.providers) {
+      expect(p.mode).not.toBe("LIVE");
+      expect(p.liveStatus).not.toBe("PASS");
+    }
+    // Blank ack is not consent.
+    const envBlank = { ...env, MMCS_SMOKE_COST_ACK: "   " };
+    const blankAck = runProviderSmoke({ env: envBlank, reportOnly: false });
+    for (const p of blankAck.providers) {
+      expect(p.mode).not.toBe("LIVE");
+    }
+    // Non-empty ack + opt-in + creds + not-report-only satisfies the gate
+    // arithmetic, but no live executor exists here → NOT_RUN, never PASS.
+    const envAck = { ...env, MMCS_SMOKE_COST_ACK: "spend approved for smoke" };
+    const full = runProviderSmoke({ env: envAck, reportOnly: false });
+    for (const p of full.providers) {
+      expect(p.mode).toBe("LIVE");
+      expect(p.liveStatus).toBe("NOT_RUN");
+      expect(p.liveStatus).not.toBe("PASS");
+    }
+  });
+
+  it("report-only mode can never emit LIVE or liveStatus PASS even with full opt-in", () => {
+    const env: Record<string, string | undefined> = {
+      MMCS_SMOKE_LIVE: "1",
+      MMCS_SMOKE_COST_ACK: "ack",
+    };
+    for (const vars of Object.values(PROVIDER_ENV_VARS)) env[vars[0]!] = "x";
+    const result = runProviderSmoke({ env, reportOnly: true });
     for (const p of result.providers) {
       expect(p.mode).toBe("MOCKED");
       expect(p.liveStatus).toBe("BLOCKED");

@@ -11,8 +11,10 @@
 # Options:
 #   --markdown       also write docs/provider-smoke-report.md from this run
 #                    (the committed report is the script's own output)
-#   --live           require MMCS_SMOKE_LIVE=1 for live calls (NOT used in
-#                    the build — every absent credential is mocked + BLOCKED)
+#   --live           live-gated mode: requires BOTH MMCS_SMOKE_LIVE=1 AND a
+#                    non-empty MMCS_SMOKE_COST_ACK (explicit spend consent);
+#                    without either, providers stay MOCKED/BLOCKED. NOT used
+#                    in the build — every absent credential is mocked + BLOCKED.
 #   --help | -h      print this help
 #
 # Exit codes: 0 smoke PASS · 1 smoke FAIL · 2 usage.

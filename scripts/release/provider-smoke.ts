@@ -20,23 +20,37 @@
 export const SMOKE_HARD_CAP_USD = 25;
 export const SMOKE_DEFAULT_LIMIT_USD = 25;
 
-/** Per-provider credential env vars (NAMES only — values never read into output). */
+/**
+ * Per-provider credential env vars (NAMES only — values never read into output).
+ * Mirrors the engine's single source of truth `MMCS_ENV_KEYS`
+ * (packages/core/src/config/schema.ts): agnes→AGNES_API_KEY, kie→KIE_API_KEY,
+ * fish→FISH_API_KEY, ghl→GHL_ACCESS_TOKEN+GHL_LOCATION_ID. Inherited Python-tools
+ * vars (FAL_KEY, ELEVENLABS_API_KEY, GEMINI_API_KEY) are NOT engine credentials —
+ * their presence alone must never gate a provider.
+ */
 export const PROVIDER_ENV_VARS: Record<ProviderName, readonly string[]> = {
-  agnes: ["FAL_KEY", "AGNES_API_KEY"],
+  agnes: ["AGNES_API_KEY"],
   kie: ["KIE_API_KEY"],
-  fish: ["FISH_AUDIO_API_KEY", "FISH_API_KEY"],
+  fish: ["FISH_API_KEY"],
   ghl: ["GHL_ACCESS_TOKEN", "GHL_LOCATION_ID"],
 };
 
 export type ProviderName = "agnes" | "kie" | "fish" | "ghl";
 export type ProviderMode = "LIVE" | "MOCKED" | "BLOCKED";
+/**
+ * Live-item outcome. "PASS" is reachable only when the provider actually
+ * completed a live call with recorded job IDs — this script (report-only)
+ * can never emit it, so a credential-absent or not-executed live item is
+ * never falsely passed (spec §30).
+ */
+export type LiveStatus = "PASS" | "BLOCKED" | "FAILED" | "NOT_RUN";
 
 export interface ProviderOutcome {
   provider: ProviderName;
   credentialEnvVars: readonly string[];
   credentialsPresent: boolean;
   mode: ProviderMode;
-  liveStatus: "PASS" | "BLOCKED" | "FAILED";
+  liveStatus: LiveStatus;
   /** Fixture projection if this provider ran live (USD, list pricing). */
   projectedUsd: number;
   /** Spend this run — always $0 in report-only mode. */
@@ -146,7 +160,14 @@ export function runProviderSmoke(
   const reportOnly = options.reportOnly ?? true;
   const env = options.env ?? process.env;
   const forceMock = options.forceMock ?? false;
-  const liveOptIn = !forceMock && env["MMCS_SMOKE_LIVE"] === "1";
+  // Live requires BOTH the opt-in flag AND an explicit non-empty cost
+  // acknowledgment — the consent path for real spend (spec §33). The ack value
+  // is never echoed anywhere in output.
+  const liveOptIn =
+    !forceMock &&
+    env["MMCS_SMOKE_LIVE"] === "1" &&
+    typeof env["MMCS_SMOKE_COST_ACK"] === "string" &&
+    env["MMCS_SMOKE_COST_ACK"].trim() !== "";
   const limitUsd = resolveLimitUsd(env);
 
   // Gate arithmetic: the whole-run projection must sit inside the envelope.
@@ -167,8 +188,10 @@ export function runProviderSmoke(
         credentialEnvVars: vars,
         credentialsPresent: present,
         mode,
-        // spec §30 honesty: report-only NEVER marks a live item passed.
-        liveStatus: live ? "PASS" : "BLOCKED",
+        // spec §30 honesty: no live executor exists in this script, so a live
+        // item is NEVER "PASS" here — at most NOT_RUN, and absent credentials
+        // are BLOCKED.
+        liveStatus: live ? "NOT_RUN" : "BLOCKED",
         projectedUsd: reportOnly ? 0 : FIXTURE_PROJECTIONS_USD[provider],
         spendUsd: 0,
         jobIds: {},
@@ -206,7 +229,9 @@ export function renderSmokeMarkdown(result: SmokeResult): string {
   lines.push(`- spend envelope: $${result.limitUsd.toFixed(2)} (hard §4 cap $25.00)`);
   lines.push(`- projection this run: $${result.projectedFullRunUsd.toFixed(4)}`);
   lines.push(`- spend recorded this run: $${result.totalSpendUsd.toFixed(4)}`);
-  lines.push(`- live opt-in (MMCS_SMOKE_LIVE=1): ${result.liveOptIn ? "yes" : "no"}`);
+  lines.push(
+    `- live opt-in (MMCS_SMOKE_LIVE=1 + MMCS_SMOKE_COST_ACK): ${result.liveOptIn ? "yes" : "no"}`,
+  );
   lines.push("");
   lines.push("## Per-provider outcomes");
   lines.push("");
@@ -236,7 +261,7 @@ export function renderSmokeMarkdown(result: SmokeResult): string {
         `- **${p.provider}**: credential(s) present-by-name but run is report-only — marked MOCKED/BLOCKED for the live smoke item; no live call was made.`,
       );
     } else {
-      lines.push(`- **${p.provider}**: would run LIVE (credentials name-present + opt-in) — but this report-only run made no call.`);
+      lines.push(`- **${p.provider}**: LIVE gate satisfied (credentials name-present + opt-in + cost ack) — but this script executes no live calls; live item NOT_RUN until a live executor records real job IDs.`);
     }
   }
   lines.push("");

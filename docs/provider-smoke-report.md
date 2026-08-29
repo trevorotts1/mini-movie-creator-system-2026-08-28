@@ -9,22 +9,22 @@
 - spend envelope: $25.00 (hard §4 cap $25.00)
 - projection this run: $0.0000
 - spend recorded this run: $0.0000
-- live opt-in (MMCS_SMOKE_LIVE=1): no
+- live opt-in (MMCS_SMOKE_LIVE=1 + MMCS_SMOKE_COST_ACK): no
 
 ## Per-provider outcomes
 
 | Provider | Credential env vars | Credentials | Mode | Live item | Spend | Job IDs |
 |---|---|---|---|---|---|---|
-| agnes | FAL_KEY, AGNES_API_KEY | absent | BLOCKED | BLOCKED | $0.0000 | none (mocked) |
+| agnes | AGNES_API_KEY | absent | BLOCKED | BLOCKED | $0.0000 | none (mocked) |
 | kie | KIE_API_KEY | absent | BLOCKED | BLOCKED | $0.0000 | none (mocked) |
-| fish | FISH_AUDIO_API_KEY, FISH_API_KEY | absent | BLOCKED | BLOCKED | $0.0000 | none (mocked) |
+| fish | FISH_API_KEY | absent | BLOCKED | BLOCKED | $0.0000 | none (mocked) |
 | ghl | GHL_ACCESS_TOKEN, GHL_LOCATION_ID | absent | BLOCKED | BLOCKED | $0.0000 | none (mocked) |
 
 ## Honesty notes (spec §30)
 
-- **agnes**: BLOCKED — credential env vars absent (FAL_KEY, AGNES_API_KEY). Mocked; live API behavior is NOT covered and is NOT reported as covered.
+- **agnes**: BLOCKED — credential env vars absent (AGNES_API_KEY). Mocked; live API behavior is NOT covered and is NOT reported as covered.
 - **kie**: BLOCKED — credential env vars absent (KIE_API_KEY). Mocked; live API behavior is NOT covered and is NOT reported as covered.
-- **fish**: BLOCKED — credential env vars absent (FISH_AUDIO_API_KEY, FISH_API_KEY). Mocked; live API behavior is NOT covered and is NOT reported as covered.
+- **fish**: BLOCKED — credential env vars absent (FISH_API_KEY). Mocked; live API behavior is NOT covered and is NOT reported as covered.
 - **ghl**: BLOCKED — credential env vars absent (GHL_ACCESS_TOKEN, GHL_LOCATION_ID). Mocked; live API behavior is NOT covered and is NOT reported as covered.
 
 Cost control: projection in report-only mode is always $0; the envelope is MIN(MMCS_SMOKE_LIMIT_USD ?? 25, 25) — the override can only lower the §4 $25 cap. Every provider without credentials is marked BLOCKED, never falsely passed.
