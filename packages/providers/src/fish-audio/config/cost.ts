@@ -21,10 +21,10 @@
  * cost-engine sees identical semantics across providers.
  */
 
-import { decideSpend } from "../../../../capability-registry/src/pricing/pricing.js";
-import type { SpendEstimate } from "../../../../capability-registry/src/pricing/pricing.js";
-import type { VoiceModelCapabilitySeed } from "../../../../capability-registry/src/data/types.js";
-import type { CapabilityConfidence } from "../../../../capability-registry/src/data/types.js";
+import { decideSpend } from "@mmcs/capability-registry/pricing/pricing.js";
+import type { SpendEstimate } from "@mmcs/capability-registry/pricing/pricing.js";
+import type { VoiceModelCapabilitySeed } from "@mmcs/capability-registry/data/types.js";
+import type { CapabilityConfidence } from "@mmcs/capability-registry/data/types.js";
 import { resolveFishModelConfig, FishConfigError } from "./model-config.js";
 import type {
   FishModelConfigInput,

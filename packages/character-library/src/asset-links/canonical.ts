@@ -2,7 +2,7 @@ import {
   AssetLinkError,
   type AssetLinkRecord,
   type CanonicalAssetLink,
-} from "./types";
+} from "./types.js";
 
 /**
  * Verbatim canonical triplet extraction — spec §9: "Canonical GHL file ID + URL +

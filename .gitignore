@@ -39,3 +39,10 @@ coverage/
 .env.*
 !.env.example
 *.bak-batch*
+
+# engine runtime state (durable stores; per-checkout, never committed)
+state/
+
+# composite emit output + per-pkg dist links
+packages/dist/
+packages/*/dist

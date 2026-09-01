@@ -1,5 +1,5 @@
-import { AssetLinkError, type CanonicalAssetLink, type GhlMediaStore } from "./types";
-import { validateRefreshedLink } from "./canonical";
+import { AssetLinkError, type CanonicalAssetLink, type GhlMediaStore } from "./types.js";
+import { validateRefreshedLink } from "./canonical.js";
 
 /**
  * Asset manifest — the durable DB/manifest side of asset-link storage

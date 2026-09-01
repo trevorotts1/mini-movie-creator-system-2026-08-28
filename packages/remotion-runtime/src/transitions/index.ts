@@ -7,10 +7,10 @@ export type {
   TransitionSpec,
   TransitionTimeline,
   WipeDirection,
-} from "./types";
+} from "./types.js";
 
-export { TRANSITION_CATALOG, TRANSITION_KINDS, WIPE_DIRECTIONS, defaultDurationFramesFor, isTransitionKind, isWipeDirection } from "./catalog";
-export type { TransitionDefinition } from "./catalog";
+export { TRANSITION_CATALOG, TRANSITION_KINDS, WIPE_DIRECTIONS, defaultDurationFramesFor, isTransitionKind, isWipeDirection } from "./catalog.js";
+export type { TransitionDefinition } from "./catalog.js";
 
 export {
   CROSSFADE_DEFAULT_DURATION_FRAMES,
@@ -20,7 +20,7 @@ export {
   clampOverlap,
   planShotPlacements,
   resolveOverlapFrames,
-} from "./overlap";
+} from "./overlap.js";
 
-export { validateTransitionPlan } from "./validate";
-export type { TransitionPlanValidation } from "./validate";
+export { validateTransitionPlan } from "./validate.js";
+export type { TransitionPlanValidation } from "./validate.js";

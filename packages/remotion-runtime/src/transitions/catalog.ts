@@ -1,9 +1,9 @@
-import type { TransitionKind, WipeDirection } from "./types";
+import type { TransitionKind, WipeDirection } from "./types.js";
 import {
   CROSSFADE_DEFAULT_DURATION_FRAMES,
   CUT_OVERLAP_FRAMES,
   WIPE_DEFAULT_DURATION_FRAMES,
-} from "./overlap";
+} from "./overlap.js";
 
 /**
  * Transition catalog for VID-009 (runbook §24, spec §21).

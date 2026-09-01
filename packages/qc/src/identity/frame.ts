@@ -13,7 +13,7 @@
  */
 
 import type { AssetDimensions } from "@mmcs/character-library/identity-asset/types";
-import type { ExtractedFrame, VisionImage } from "./identity";
+import type { ExtractedFrame, VisionImage } from "./identity.js";
 
 /** Minimal FFmpeg frame-extraction result as VID-016 produces it. */
 export interface FrameExtraction {

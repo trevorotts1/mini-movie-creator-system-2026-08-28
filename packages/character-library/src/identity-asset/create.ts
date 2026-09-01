@@ -3,7 +3,7 @@ import {
   type AssetApprovalState,
   type IdentityAsset,
   type IdentityAssetInput,
-} from "./types";
+} from "./types.js";
 
 /**
  * Create a canonical identity asset record (spec §9).

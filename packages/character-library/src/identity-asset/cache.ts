@@ -1,4 +1,4 @@
-import type { AssetDimensions } from "./types";
+import type { AssetDimensions } from "./types.js";
 
 /**
  * Local cache registration for a canonical identity asset (spec §9: "local cache

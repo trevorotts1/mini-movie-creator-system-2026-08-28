@@ -13,7 +13,7 @@ import type {
   VisionComparison,
   VisionImage,
   VisionModel,
-} from "./identity";
+} from "./identity.js";
 
 /** One scripted response in the mock's replay queue. */
 export interface MockVisionResponse {

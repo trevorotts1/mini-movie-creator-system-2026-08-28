@@ -12,7 +12,7 @@ import type {
   ExtractedFrame,
   VisionImage,
   VisionModelSelection,
-} from "./identity";
+} from "./identity.js";
 
 /** Spec §9 example shape: Monica Bennett, identity v1, canonical + archived. */
 export function monicaCanonicalAsset(): IdentityAsset {

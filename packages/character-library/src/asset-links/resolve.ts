@@ -2,10 +2,10 @@ import type {
   AssetLinkRecord,
   AssetLinkResolution,
   GhlMediaStore,
-} from "./types";
-import { AssetLinkError } from "./types";
-import { requireCanonicalLink, validateRefreshedLink } from "./canonical";
-import { refreshStaleLink, type AssetManifestStore } from "./manifest";
+} from "./types.js";
+import { AssetLinkError } from "./types.js";
+import { requireCanonicalLink, validateRefreshedLink } from "./canonical.js";
+import { refreshStaleLink, type AssetManifestStore } from "./manifest.js";
 
 /**
  * Asset-link resolution — spec §9 / acceptance gate 13: "resolve the canonical
