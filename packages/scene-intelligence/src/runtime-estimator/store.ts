@@ -1,4 +1,4 @@
-import type { SqliteDatabase } from "../../../database/src/connection/index.js";
+import type { SqliteDatabase } from "@mmcs/database/connection/index.js";
 
 import { roundSeconds } from "./count-words.js";
 import {

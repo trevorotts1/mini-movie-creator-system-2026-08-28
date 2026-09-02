@@ -14,7 +14,7 @@
  * implementation. Tests inject an in-memory mock.
  */
 
-import type { AssetApprovalState, AssetDimensions } from "../identity-asset/types";
+import type { AssetApprovalState, AssetDimensions } from "../identity-asset/types.js";
 
 /**
  * Read-only view of GHL media storage used to resolve and refresh asset links.

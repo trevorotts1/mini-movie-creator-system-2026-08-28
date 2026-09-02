@@ -30,7 +30,7 @@
  * packages/providers/package.json when package-graph wiring happens.
  */
 
-import { KIE_MEDIA_PROFILES } from "../../../../capability-registry/src/data/kie.js";
+import { KIE_MEDIA_PROFILES } from "@mmcs/capability-registry/data/kie.js";
 import type { MediaModelCapabilitySeed } from "../../../../capability-registry/src/data/types.js";
 import { decideSpend, estimateSpend, roundCents } from "../../../../capability-registry/src/pricing/pricing.js";
 import type { ModelPricingProfile, SpendEstimate } from "../../../../capability-registry/src/pricing/pricing.js";

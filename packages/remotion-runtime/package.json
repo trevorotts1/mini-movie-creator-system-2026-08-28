@@ -2,19 +2,35 @@
   "name": "@mmcs/remotion-runtime",
   "version": "0.1.0",
   "private": true,
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p ../tsconfig.pkg.json"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remotion": "^4.0.486"
+    "remotion": "^4.0.486",
+    "@mmcs/core": "workspace:*",
+    "@mmcs/database": "workspace:*",
+    "@mmcs/capability-registry": "workspace:*",
+    "@mmcs/scene-intelligence": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7"
-  }
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./src/*",
+      "default": "./dist/*"
+    }
+  },
+  "type": "module"
 }

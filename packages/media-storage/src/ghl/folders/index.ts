@@ -5,7 +5,7 @@
  * Storage API (`POST /medias/folder`, `GET /medias/files`). Auth headers are
  * injected from GHL-001 via {@link GhlFolderConfig}; nothing here logs a token.
  */
-export * from "./types";
+export * from "./types.js";
 export {
   GhlFetchTransport,
   GhlFolderApiError,
@@ -14,4 +14,4 @@ export {
   listFolders,
   findFolderByName,
   ensureFolder,
-} from "./folders";
+} from "./folders.js";

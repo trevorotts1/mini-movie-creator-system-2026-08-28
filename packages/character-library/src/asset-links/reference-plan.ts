@@ -2,10 +2,10 @@ import type {
   AssetLinkRecord,
   AssetLinkResolution,
   CanonicalAssetLink,
-} from "./types";
-import { requireCanonicalLink } from "./canonical";
-import type { AssetManifestStore } from "./manifest";
-import { resolveAssetLink, type ResolveAssetLinkOptions } from "./resolve";
+} from "./types.js";
+import { requireCanonicalLink } from "./canonical.js";
+import type { AssetManifestStore } from "./manifest.js";
+import { resolveAssetLink, type ResolveAssetLinkOptions } from "./resolve.js";
 
 /**
  * Downstream reference-plan handoff — spec §9: "Canonical GHL file ID + URL +

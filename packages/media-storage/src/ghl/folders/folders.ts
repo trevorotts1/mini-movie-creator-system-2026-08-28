@@ -8,7 +8,7 @@ import {
   type GhlTransport,
   type GhlTransportRequest,
   type GhlTransportResponse,
-} from "./types";
+} from "./types.js";
 
 export type {
   CreateFolderInput,
@@ -18,12 +18,12 @@ export type {
   GhlTransport,
   GhlTransportRequest,
   GhlTransportResponse,
-} from "./types";
+} from "./types.js";
 
 export {
   GHL_ALT_TYPE_LOCATION,
   GHL_API_BASE_URL,
-} from "./types";
+} from "./types.js";
 
 /** Thrown when the transport returns a non-2xx status. */
 export class GhlFolderApiError extends Error {

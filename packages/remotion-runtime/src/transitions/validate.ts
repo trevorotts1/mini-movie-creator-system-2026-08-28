@@ -1,5 +1,5 @@
-import type { TransitionPlan } from "./types";
-import { isTransitionKind, isWipeDirection } from "./catalog";
+import type { TransitionPlan } from "./types.js";
+import { isTransitionKind, isWipeDirection } from "./catalog.js";
 
 /**
  * Plan validation for VID-009. Validation is separate from assembly:

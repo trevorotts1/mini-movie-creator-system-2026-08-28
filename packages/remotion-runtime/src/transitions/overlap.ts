@@ -4,7 +4,7 @@ import type {
   TransitionShot,
   TransitionTimeline,
   WipeDirection,
-} from "./types";
+} from "./types.js";
 
 /**
  * Frame-exact overlap math for VID-009 (runbook §24, spec §21).

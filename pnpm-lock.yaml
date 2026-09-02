@@ -22,6 +22,27 @@ importers:
 
   apps/cli:
     dependencies:
+      '@mmcs/capability-registry':
+        specifier: workspace:*
+        version: link:../../packages/capability-registry
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@mmcs/cost-engine':
+        specifier: workspace:*
+        version: link:../../packages/cost-engine
+      '@mmcs/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@mmcs/qc':
+        specifier: workspace:*
+        version: link:../../packages/qc
+      '@mmcs/remotion-runtime':
+        specifier: workspace:*
+        version: link:../../packages/remotion-runtime
+      '@mmcs/scene-intelligence':
+        specifier: workspace:*
+        version: link:../../packages/scene-intelligence
       commander:
         specifier: ^14.0.0
         version: 14.0.3
@@ -38,7 +59,11 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
-  packages/character-library: {}
+  packages/character-library:
+    dependencies:
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/core:
     dependencies:
@@ -46,26 +71,68 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
-  packages/cost-engine: {}
+  packages/cost-engine:
+    dependencies:
+      '@mmcs/database':
+        specifier: workspace:*
+        version: link:../database
 
   packages/database: {}
 
   packages/domain: {}
 
-  packages/media-storage: {}
+  packages/media-storage:
+    dependencies:
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/prompt-compilers: {}
 
-  packages/providers: {}
+  packages/providers:
+    dependencies:
+      '@mmcs/capability-registry':
+        specifier: workspace:*
+        version: link:../capability-registry
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mmcs/cost-engine':
+        specifier: workspace:*
+        version: link:../cost-engine
+      '@mmcs/database':
+        specifier: workspace:*
+        version: link:../database
+      '@mmcs/media-storage':
+        specifier: workspace:*
+        version: link:../media-storage
+      '@mmcs/qc':
+        specifier: workspace:*
+        version: link:../qc
 
   packages/qc:
     dependencies:
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../core
       zod:
         specifier: ^4.4.3
         version: 4.4.3
 
   packages/remotion-runtime:
     dependencies:
+      '@mmcs/capability-registry':
+        specifier: workspace:*
+        version: link:../capability-registry
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mmcs/database':
+        specifier: workspace:*
+        version: link:../database
+      '@mmcs/scene-intelligence':
+        specifier: workspace:*
+        version: link:../scene-intelligence
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -83,7 +150,17 @@ importers:
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.31)
 
-  packages/scene-intelligence: {}
+  packages/scene-intelligence:
+    dependencies:
+      '@mmcs/capability-registry':
+        specifier: workspace:*
+        version: link:../capability-registry
+      '@mmcs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mmcs/database':
+        specifier: workspace:*
+        version: link:../database
 
 packages:
 

@@ -28,9 +28,9 @@
  */
 
 import { FISH_TTS_MODELS } from "../client/config.js";
-import { FISH_VOICE_PROFILES } from "../../../../capability-registry/src/data/fish.js";
-import type { VoiceModelCapabilitySeed } from "../../../../capability-registry/src/data/types.js";
-import type { CapabilityConfidence } from "../../../../capability-registry/src/data/types.js";
+import { FISH_VOICE_PROFILES } from "@mmcs/capability-registry/data/fish.js";
+import type { VoiceModelCapabilitySeed } from "@mmcs/capability-registry/data/types.js";
+import type { CapabilityConfidence } from "@mmcs/capability-registry/data/types.js";
 import { AUTO_SPEND_LIMIT_USD } from "../../../../capability-registry/src/pricing/pricing.js";
 
 /** Fish TTS models the client `model` header accepts (FISH-001, verified 2026-08-28). */
