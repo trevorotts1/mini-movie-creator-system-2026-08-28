@@ -64,6 +64,14 @@ export function buildProgram(
 
   const wire = (spec: CommandSpec, cmd: Command, path: string[]): void => {
     for (const arg of spec.args ?? []) cmd.argument(arg);
+    // Register the verb's documented flags. Without this commander rejects them
+    // as unknown options and no documented flag is reachable at all.
+    for (const opt of spec.options ?? []) {
+      cmd.option(
+        opt.value ? `--${opt.flag} <${opt.value}>` : `--${opt.flag}`,
+        opt.description,
+      );
+    }
     const handler = overrides[spec.name] ?? stubHandler(spec);
     cmd.action(async (...positional: unknown[]) => {
       const args: Record<string, string> = {};
@@ -72,12 +80,24 @@ export function buildProgram(
         const val = positional[i];
         if (typeof val === "string") args[key] = val;
       });
+      // Handlers read flags two different ways: as plain properties
+      // (options.episode) and through the documented Command-like seam
+      // (options.getOptionValue("episode")). Some handlers also rebuild argv
+      // tokens with Object.entries(options), so the helper is attached as a
+      // NON-ENUMERABLE property — otherwise it leaks into that enumeration and
+      // is rejected as an unknown option called "--getOptionValue".
+      const parsed = cmd.opts();
+      const options: Record<string, unknown> = { ...parsed };
+      Object.defineProperty(options, "getOptionValue", {
+        value: (key: string): unknown => parsed[key],
+        enumerable: false,
+      });
       // Handlers return void and signal failure by assigning process.exitCode.
       // Await them: a detached handler can still be running when the process
       // exits, so its assigned code would never be observed. Awaiting also
       // routes a throwing handler into dispatch()'s catch instead of leaving
       // it as an unhandled rejection that still reports success.
-      await handler(args, {});
+      await handler(args, options);
     });
   };
 

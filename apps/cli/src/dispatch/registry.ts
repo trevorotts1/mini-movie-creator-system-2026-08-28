@@ -12,12 +12,30 @@
 // - Stub handlers exit 0. Unknown command exits 1. Missing required argument
 //   exits 1 (commander defaults).
 
+export interface CommandOptionSpec {
+  /** Long flag without leading dashes — "episode" registers `--episode`. */
+  flag: string;
+  /**
+   * Placeholder for a value-taking flag, e.g. "code" for `--episode <code>`.
+   * Omit entirely for a boolean flag.
+   */
+  value?: string;
+  description: string;
+}
+
 export interface CommandSpec {
   /** Full verb path, e.g. "approve concept" (spec §24 names, space = nesting). */
   name: string;
   description: string;
   /** Required positional argument placeholders, e.g. ["<candidate>"]. */
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler. Keep in step with what the handler
+   * actually reads.
+   */
+  options?: CommandOptionSpec[];
   /** Logical group (help organization + ownership hints). */
   group: string;
 }

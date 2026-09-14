@@ -25,6 +25,12 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 
@@ -39,6 +45,13 @@ export const DEVELOP_CONCEPT_SPEC: CommandSpec = {
 export const APPROVE_CONCEPT_SPEC: CommandSpec = {
   name: "approve concept",
   description: "Approve the developed concept (gate 1, spec §3)",
+  options: [
+    { flag: "reject", description: "Reject the concept" },
+    { flag: "reopen", description: "Reopen a decided concept" },
+    { flag: "option", value: "n", description: "Select a concept option" },
+    { flag: "by", value: "name", description: "Approver identity" },
+    { flag: "note", value: "text", description: "Decision note" },
+  ],
   group: CONCEPT_GROUP,
 };
 

@@ -40,6 +40,12 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 
@@ -49,12 +55,24 @@ export const STORYBOARD_SPEC: CommandSpec = {
   name: "storyboard",
   description:
     "Generate the storyboard/keyframe plan and STOP for storyboard approval (gate 4, spec §3)",
+  options: [
+    { flag: "episode", value: "code", description: "Episode code, e.g. S01E01" },
+    { flag: "aspect", value: "ratio", description: "Aspect ratio override" },
+    { flag: "reject", description: "Reject instead of approve" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: STORYBOARD_GROUP,
 };
 
 export const APPROVE_STORYBOARD_SPEC: CommandSpec = {
   name: "approve-storyboard",
   description: "Approve the storyboard (gate 4) — unlocks paid generation",
+  options: [
+    { flag: "episode", value: "code", description: "Episode code, e.g. S01E01" },
+    { flag: "aspect", value: "ratio", description: "Aspect ratio override" },
+    { flag: "reject", description: "Reject instead of approve" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: STORYBOARD_GROUP,
 };
 

@@ -22,18 +22,34 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 
 export const WRITE_SCRIPT_SPEC: CommandSpec = {
   name: "write-script",
   description: "Write the script for the episode (STOP at script gate)",
+  options: [
+    { flag: "by", value: "name", description: "Author identity" },
+    { flag: "decided-by", value: "name", description: "Approver identity" },
+    { flag: "note", value: "text", description: "Decision note" },
+  ],
   group: "approvals",
 };
 
 export const APPROVE_SCRIPT_SPEC: CommandSpec = {
   name: "approve script",
   description: "Approve the written script (gate 2, spec §3)",
+  options: [
+    { flag: "by", value: "name", description: "Author identity" },
+    { flag: "decided-by", value: "name", description: "Approver identity" },
+    { flag: "note", value: "text", description: "Decision note" },
+  ],
   group: "approvals",
 };
 

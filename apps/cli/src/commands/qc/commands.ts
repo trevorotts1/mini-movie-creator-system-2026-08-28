@@ -30,6 +30,12 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 
@@ -37,6 +43,13 @@ export const QC_SPEC: CommandSpec = {
   name: "qc",
   description:
     "Run/inspect QC: lists human REVIEW items; approve/reject resolve them (spec §20)",
+  options: [
+    { flag: "episode", value: "code", description: "Episode code, e.g. S01E01" },
+    { flag: "by", value: "name", description: "Reviewer identity" },
+    { flag: "note", value: "text", description: "Review note" },
+    { flag: "all", description: "Include resolved items" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: "generation",
 };
 

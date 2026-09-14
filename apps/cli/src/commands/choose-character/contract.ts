@@ -21,6 +21,12 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 

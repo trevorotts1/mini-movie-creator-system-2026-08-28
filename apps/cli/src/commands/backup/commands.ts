@@ -24,6 +24,12 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 
@@ -33,6 +39,13 @@ export const BACKUP_EXPORT_SPEC: CommandSpec = {
   name: "backup export",
   description:
     "Export the MMCS database to a restorable .mmcsbak archive (spec §25)",
+  options: [
+    { flag: "db", value: "path", description: "Database path (default state/mmcs.db)" },
+    { flag: "out", value: "path", description: "Output archive path" },
+    { flag: "archive", value: "path", description: "Archive path to restore" },
+    { flag: "force", description: "Overwrite an existing target" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: BACKUP_GROUP,
 };
 
@@ -40,6 +53,13 @@ export const BACKUP_RESTORE_SPEC: CommandSpec = {
   name: "backup restore",
   description:
     "Restore a .mmcsbak archive into an empty database and verify counts+checksums",
+  options: [
+    { flag: "db", value: "path", description: "Database path (default state/mmcs.db)" },
+    { flag: "out", value: "path", description: "Output archive path" },
+    { flag: "archive", value: "path", description: "Archive path to restore" },
+    { flag: "force", description: "Overwrite an existing target" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: BACKUP_GROUP,
 };
 

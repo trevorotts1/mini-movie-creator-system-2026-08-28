@@ -30,6 +30,12 @@ export interface CommandSpec {
   name: string;
   description: string;
   args?: string[];
+  /**
+   * Long flags this verb accepts. Registered on the commander subcommand so
+   * documented flags parse instead of being rejected as unknown options, and
+   * so their values reach the handler.
+   */
+  options?: { flag: string; value?: string; description: string }[];
   group: string;
 }
 
@@ -38,6 +44,15 @@ export const RETRY_SHOT_SPEC: CommandSpec = {
   description:
     "Retry one failed shot: new asset/trim, only that shot regenerates (spec §20)",
   args: ["<id>"],
+  options: [
+    { flag: "asset", value: "path", description: "Replacement asset path" },
+    { flag: "attempt", value: "n", description: "Attempt number" },
+    { flag: "duration-in-frames", value: "n", description: "New duration in frames" },
+    { flag: "trim-in-frames", value: "n", description: "Trim in point, in frames" },
+    { flag: "trim-out-frames", value: "n", description: "Trim out point, in frames" },
+    { flag: "reason", value: "text", description: "Reason for the retry" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: "generation",
 };
 
