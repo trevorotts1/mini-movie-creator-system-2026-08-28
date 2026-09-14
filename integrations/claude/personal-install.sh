@@ -19,6 +19,12 @@
 #     writes a full backup to <target>.backup-<timestamp>/ in the same directory.
 #     Spec §27: "Never overwrite an existing personal skill without
 #     backup/confirmation."
+#   - The env record $HOME/.mmcs/mmcs.env is SHARED with every other MMCS
+#     checkout on the box: it is written only when its content actually changes,
+#     and a differing file is never replaced without the same BOTH --force and
+#     --confirm gate, after a <env>.backup-<timestamp> copy. A plain
+#     `> "$ENV_FILE"` would silently truncate another install's
+#     MMCS_REPO_ROOT/MMCS_CLI — including on the no-op "already installed" path.
 #   - A wrong SYMLINK is repointed without backup (a link holds no skill content;
 #     nothing is destroyed).
 #   - --dry-run prints every action and mutates nothing.
@@ -42,9 +48,11 @@
 #   bash integrations/claude/personal-install.sh --check           # verify install only
 #   bash integrations/claude/personal-install.sh --dry-run         # show what would happen
 #   bash integrations/claude/personal-install.sh --force --confirm # replace an existing
-#                                                                 # personal skill (full
-#                                                                 # backup first; --confirm
-#                                                                 # is the typed confirmation)
+#                                                                 # personal skill AND a
+#                                                                 # differing ~/.mmcs/mmcs.env
+#                                                                 # (full backups first;
+#                                                                 # --confirm is the typed
+#                                                                 # confirmation)
 set -euo pipefail
 
 MODE="install"   # install | check
@@ -100,6 +108,12 @@ if [ -n "$SOURCE" ]; then
 else
   CANONICAL="$REPO_ROOT/skills/mini-movie-creator"
 fi
+# MMCS_SKILL_SOURCE must be a DURABLE path. $CANONICAL may come from --source,
+# which in practice is regularly a git worktree (or any throwaway checkout) that
+# is pruned later — recording it verbatim leaves a dangling value in the shared
+# env file. The durable record is the canonical skill location under the
+# recorded repo root, exactly like MMCS_REPO_ROOT / MMCS_CLI below.
+DURABLE_SKILL_SOURCE="$REPO_ROOT/skills/mini-movie-creator"
 
 log()  { echo "$*"; }
 warn() { echo "WARN: $*" >&2; }
@@ -147,24 +161,75 @@ check() {
 # the same engine: `source ~/.mmcs/mmcs.env && bash
 # ~/.claude/skills/mini-movie-creator/scripts/mmcs-status.sh`. No secret
 # values ever: env NAMES only, plus the repo root path.
+#
+# The env file is a SHARED record — another checkout on the same box may have
+# written it — so it gets the same protection as the skill directory above:
+# identical content is a no-op (never a rewrite, not even on the "already
+# installed" path), differing content is refused unless BOTH --force and
+# --confirm are given, and the replaced file is backed up first.
+
+# The exact bytes recorded in the env file. Also the comparison baseline: the
+# content is deterministic (no timestamps), so "same repo root" is byte-equal.
+env_content() {
+  cat <<EOF
+# MMCS personal-scope engine location (written by integrations/claude/personal-install.sh, SKL-003).
+# Source this in a session started OUTSIDE the repo:  source "\$HOME/.mmcs/mmcs.env"
+# No secret values here — paths and env variable names only.
+export MMCS_REPO_ROOT="$REPO_ROOT"
+export MMCS_CLI="$REPO_ROOT/apps/cli/dist/index.js"
+export MMCS_SKILL_SOURCE="$DURABLE_SKILL_SOURCE"
+EOF
+}
+
+env_is_current() {
+  [ -f "$ENV_FILE" ] && [ "$(cat "$ENV_FILE" 2>/dev/null)" = "$(env_content)" ]
+}
 
 write_env() {
+  local stamp backup i
+  if env_is_current; then
+    log "OK: $ENV_FILE already records this repo root. Nothing to do."
+    return 0
+  fi
+  if [ -e "$ENV_FILE" ] || [ -L "$ENV_FILE" ]; then
+    # Different content = another install's record (or a hand edit). Refuse
+    # before writing a single byte — the operator must opt in, and the refusal
+    # is predicted under --dry-run too (dry-run must not promise a write that
+    # the real run would reject).
+    if [ "$FORCE" != 1 ] || [ "$CONFIRM" != 1 ]; then
+      warn "$ENV_FILE already exists with different content."
+      warn "Refusing to overwrite it. Re-run with --force --confirm to back it up to"
+      warn "$ENV_FILE.backup-<timestamp> and record this repo root instead."
+      exit 1
+    fi
+  fi
   if [ "$DRY" = "1" ]; then
+    if [ -e "$ENV_FILE" ] || [ -L "$ENV_FILE" ]; then
+      log "DRY-RUN: would back up $ENV_FILE -> $ENV_FILE.backup-<timestamp>"
+    fi
     log "DRY-RUN: would write $ENV_FILE (MMCS_REPO_ROOT=$REPO_ROOT MMCS_CLI=$REPO_ROOT/apps/cli/dist/index.js)"
     return 0
   fi
+  if [ -e "$ENV_FILE" ] || [ -L "$ENV_FILE" ]; then
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    backup="$ENV_FILE.backup-$stamp"
+    i=1
+    # Same-second collision guard as backup_existing(): a second forced run in
+    # the same second must not copy onto (and thereby lose) the first backup.
+    while [ -e "$backup" ] || [ -L "$backup" ]; do
+      i=$((i + 1))
+      backup="$ENV_FILE.backup-$stamp-$i"
+    done
+    cp -p "$ENV_FILE" "$backup"
+    log "OK: backed up previous $ENV_FILE -> $backup"
+  fi
   run mkdir -p "$ENV_DIR"
-  {
-    echo "# MMCS personal-scope engine location (written by integrations/claude/personal-install.sh, SKL-003)."
-    echo "# Source this in a session started OUTSIDE the repo:  source \"\$HOME/.mmcs/mmcs.env\""
-    echo "# No secret values here — paths and env variable names only."
-    echo "export MMCS_REPO_ROOT=\"$REPO_ROOT\""
-    echo "export MMCS_CLI=\"$REPO_ROOT/apps/cli/dist/index.js\""
-    echo "export MMCS_SKILL_SOURCE=\"$CANONICAL\""
-  } > "$ENV_FILE"
+  env_content > "$ENV_FILE"
   log "OK: wrote $ENV_FILE"
   # The installed skill reached the operator's $HOME; the engine root recorded
-  # is the durable checkout (--repo-root) even when --source was a worktree.
+  # is the durable checkout (--repo-root) even when --source was a worktree, and
+  # MMCS_SKILL_SOURCE is the durable canonical skill location for the same
+  # reason (never the transient $CANONICAL).
 }
 
 # ---- backup -----------------------------------------------------------------

@@ -409,6 +409,33 @@ describe("archiveHostedUrl — failure paths (GHL-006 fallback signals)", () => 
     expect(http.calls).toHaveLength(0);
   });
 
+  it("INVALID_FILE_URL for SSRF-shaped sources: plain http, private hosts, embedded credentials (SKR-025)", async () => {
+    const http = makeHttp(() => ({}));
+    for (const fileUrl of [
+      "http://cdn.provider.com/tmp/clip.mp4", // https-only baseline
+      "https://127.0.0.1/clip.mp4",
+      "https://169.254.169.254/latest/meta-data/",
+      "https://metadata.google.internal/computeMetadata/v1/",
+      "https://10.1.2.3/internal.mp4",
+      "https://user:secret@cdn.provider.com/clip.mp4",
+      "https://cdn.provider.com:8080/clip.mp4",
+    ]) {
+      await expect(
+        archiveHostedUrl(http, baseRequest({ fileUrl }), { probe: okProbe().probe }),
+      ).rejects.toMatchObject({ code: "INVALID_FILE_URL" });
+    }
+    // Every rejection happens before the multipart POST reaches GHL.
+    expect(http.calls).toHaveLength(0);
+  });
+
+  it("INVALID_NAME when the source name cannot be sanitized for storage (SKR-025)", async () => {
+    const http = makeHttp(() => ({ fileId: "F", url: "https://files.ghl.com/a.mp4" }));
+    await expect(
+      archiveHostedUrl(http, baseRequest({ name: "   " }), { probe: okProbe().probe }),
+    ).rejects.toMatchObject({ code: "INVALID_NAME" });
+    expect(http.calls).toHaveLength(0);
+  });
+
   it("MISSING_URL when response carries fileId but no storage URL (fallback signal)", async () => {
     const http = makeHttp(() => ({ fileId: "F77" }));
     const { probe, urls } = okProbe();

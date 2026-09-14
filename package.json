@@ -12,7 +12,7 @@
     "node": ">=22.5.0"
   },
   "scripts": {
-    "build": "pnpm -r run build",
+    "build": "npx --no-install tsc -p packages/tsconfig.pkg.json && bash scripts/link-dist-deps.sh && pnpm --filter @mmcs/cli build",
     "test": "pnpm -r run test",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm -r run lint"

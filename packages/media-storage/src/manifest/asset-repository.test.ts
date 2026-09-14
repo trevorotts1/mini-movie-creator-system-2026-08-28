@@ -291,3 +291,122 @@ describe("mapAssetRow", () => {
     ).toThrow(AssetManifestError);
   });
 });
+
+describe("ghl_location_id tenant column (SKR-011)", () => {
+  it("adds the column to the schema band's legacy assets table", () => {
+    // The table was created by this test with the pre-SKR-011 DDL; the
+    // repository must have added the tenant column additively at first use.
+    const columns = db.all("PRAGMA table_info(assets)").map((column) => column["name"]);
+    expect(columns).toContain("ghl_location_id");
+  });
+
+  it("is idempotent when constructed repeatedly", () => {
+    expect(() => new AssetRepository(db)).not.toThrow();
+    const columns = db
+      .all("PRAGMA table_info(assets)")
+      .filter((column) => column["name"] === "ghl_location_id");
+    expect(columns).toHaveLength(1);
+  });
+
+  it("round-trips the location that owns the durable linkage", () => {
+    const created = repo.create(
+      baseRecord({
+        assetId: "mmcs_loc_row",
+        ghlFileId: "file_loc",
+        ghlUrl: "https://storage.gohighlevel.example/loc",
+        ghlFolderId: "folder_loc",
+        ghlLocationId: "loc_ABC",
+      }),
+    );
+    expect(created.ghlLocationId).toBe("loc_ABC");
+    expect(repo.getById("mmcs_loc_row")?.ghlLocationId).toBe("loc_ABC");
+    // Patchable, like the other linkage columns.
+    expect(repo.update("mmcs_loc_row", { ghlLocationId: "loc_DEF" })?.ghlLocationId).toBe("loc_DEF");
+  });
+
+  it("leaves the column null for records that carry no location", () => {
+    repo.create(baseRecord({ assetId: "mmcs_loc_absent" }));
+    expect(repo.getById("mmcs_loc_absent")?.ghlLocationId).toBeUndefined();
+    expect(
+      db.get("SELECT ghl_location_id FROM assets WHERE asset_id = ?", "mmcs_loc_absent")?.[
+        "ghl_location_id"
+      ],
+    ).toBeNull();
+  });
+});
+
+describe("findArchivedByChecksum — pre-POST dedupe lookup (SKR-013)", () => {
+  const checksum = "9".repeat(64);
+
+  it("finds an archived record with the same checksum in the same folder", () => {
+    repo.create(
+      baseRecord({
+        assetId: "mmcs_dedupe_src",
+        checksum,
+        ghlFileId: "file_src",
+        ghlUrl: "https://storage.gohighlevel.example/src",
+        ghlFolderId: "folder_dedupe",
+        ghlLocationId: "loc_DEDUPE",
+        archivedAt: "2026-08-28T12:05:00.000Z",
+      }),
+    );
+    const found = repo.findArchivedByChecksum(checksum, {
+      ghlFolderId: "folder_dedupe",
+      ghlLocationId: "loc_DEDUPE",
+    });
+    expect(found?.assetId).toBe("mmcs_dedupe_src");
+    expect(found?.ghlFileId).toBe("file_src");
+  });
+
+  it("ignores unarchived rows, other folders and other locations", () => {
+    const unlinkedChecksum = "7".repeat(64);
+    repo.create(
+      baseRecord({
+        assetId: "mmcs_dedupe_unlinked",
+        checksum: unlinkedChecksum,
+        ghlFolderId: "folder_unlinked_only",
+      }),
+    );
+    const otherFolderChecksum = "a".repeat(64);
+    repo.create(
+      baseRecord({
+        assetId: "mmcs_dedupe_otherfolder",
+        checksum: otherFolderChecksum,
+        ghlFileId: "f",
+        ghlUrl: "u",
+        ghlFolderId: "folder_elsewhere",
+      }),
+    );
+    const otherLocationChecksum = "b".repeat(64);
+    repo.create(
+      baseRecord({
+        assetId: "mmcs_dedupe_otherloc",
+        checksum: otherLocationChecksum,
+        ghlFileId: "f2",
+        ghlUrl: "u2",
+        ghlFolderId: "folder_dedupe",
+        ghlLocationId: "loc_OTHER",
+      }),
+    );
+    // Unlinked row → proves nothing about what is in GHL.
+    expect(
+      repo.findArchivedByChecksum(unlinkedChecksum, { ghlFolderId: "folder_unlinked_only" }),
+    ).toBeUndefined();
+    // Same bytes, different destination folder.
+    expect(
+      repo.findArchivedByChecksum(otherFolderChecksum, { ghlFolderId: "folder_dedupe" }),
+    ).toBeUndefined();
+    // Same folder id, different sub-account.
+    expect(
+      repo.findArchivedByChecksum(otherLocationChecksum, {
+        ghlFolderId: "folder_dedupe",
+        ghlLocationId: "loc_DEDUPE",
+      }),
+    ).toBeUndefined();
+  });
+
+  it("returns undefined without a checksum or folder to match on", () => {
+    expect(repo.findArchivedByChecksum("", { ghlFolderId: "folder_dedupe" })).toBeUndefined();
+    expect(repo.findArchivedByChecksum("c".repeat(64), {})).toBeUndefined();
+  });
+});

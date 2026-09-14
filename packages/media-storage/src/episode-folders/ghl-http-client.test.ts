@@ -62,6 +62,56 @@ describe("GhlHttpEpisodeFoldersClient", () => {
     expect(found).toEqual([]);
   });
 
+  it("pages past a full first page to find the folder (SKR-014)", async () => {
+    // A parent with more children than one page holds: the existing folder sits
+    // on page 2, so a single unpaginated fetch used to report "absent" and the
+    // caller created a duplicate.
+    const firstPage = Array.from({ length: 100 }, (_, i) => ({
+      id: `f_${i}`,
+      name: `Filler ${i}`,
+      parentId: "season9",
+      type: "folder",
+    }));
+    const http = makeHttp((call) =>
+      call.query["offset"] === "100"
+        ? { files: [{ id: "f_target", name: "Harbor Lights", parentId: "season9", type: "folder" }], total: 101 }
+        : { files: firstPage, total: 101 },
+    );
+    const client = new GhlHttpEpisodeFoldersClient(http);
+
+    const found = await client.findFolders({
+      altId: "loc_1",
+      altType: "location",
+      name: "Harbor Lights",
+      parentId: "season9",
+    });
+
+    expect(found).toEqual([{ id: "f_target", name: "Harbor Lights", parentId: "season9" }]);
+    expect(http.calls.map((c) => c.query["offset"])).toEqual([undefined, "100"]);
+  });
+
+  it("refuses to claim 'absent' when the paging cap is hit (truncation guard)", async () => {
+    // Every page is full and claims more: the listing is never exhausted, so a
+    // null answer would be a lie that produces a duplicate folder.
+    const fullPage = Array.from({ length: 100 }, (_, i) => ({
+      id: `f_${i}`,
+      name: `Filler ${i}`,
+      parentId: "season9",
+      type: "folder",
+    }));
+    const http = makeHttp(() => ({ files: fullPage, hasMore: true }));
+    const client = new GhlHttpEpisodeFoldersClient(http);
+
+    await expect(
+      client.findFolders({
+        altId: "loc_1",
+        altType: "location",
+        name: "Harbor Lights",
+        parentId: "season9",
+      }),
+    ).rejects.toThrow(/cap before the listing was exhausted/);
+  });
+
   it("creates via POST /medias/folder with the spec §17 body and returns the persisted ID", async () => {
     const http = makeHttp(() => ({ id: "fld_new", name: "S01E01 - Pilot", parentId: "season9" }));
     const client = new GhlHttpEpisodeFoldersClient(http);

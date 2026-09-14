@@ -2,3 +2,10 @@ packages:
   - "packages/*"
   - "apps/*"
   - "integrations/*"
+
+# esbuild's install script is REQUIRED: without it `require("esbuild")` throws,
+# and vite/vitest cannot transform TypeScript. pnpm blocks build scripts by
+# default, so approve this one explicitly rather than leaving pnpm's
+# interactive prompt placeholder ("set this to true or false") in the file.
+allowBuilds:
+  esbuild: true

@@ -28,6 +28,10 @@ const COLUMNS = [
   "archived_at",
   "approval_state",
   "qc_state",
+  // SKR-011: ownership record for the ghl_* linkage columns above. Not a spec
+  // §19 field — it is the tenant column without which a stored GHL id cannot
+  // be attributed to a sub-account.
+  "ghl_location_id",
 ] as const;
 
 type ColumnName = (typeof COLUMNS)[number];
@@ -115,8 +119,24 @@ export function mapAssetRow(row: Record<string, SqlOutputValue> | undefined): As
     archivedAt: asString(row["archived_at"]),
     approvalState: requireString(row, "approval_state", assetId) as ApprovalState,
     qcState: requireString(row, "qc_state", assetId) as QcState,
+    ghlLocationId: asString(row["ghl_location_id"]),
   };
   return record;
+}
+
+/**
+ * The `assets` table is owned by the schema band (CORE-007, `004-jobs-assets`)
+ * which predates the SKR-011 tenant column. Add `ghl_location_id` additively
+ * at first use so this package works both before and after the band ships the
+ * column, and never rewrites or drops anything. Idempotent: a table that
+ * already has the column (or does not exist yet) is left untouched.
+ */
+function ensureGhlLocationColumn(db: SqliteDatabase): void {
+  const columns = db.all("PRAGMA table_info(assets)");
+  if (columns.length === 0) return; // table not migrated yet — nothing to alter
+  const hasColumn = columns.some((column) => column["name"] === "ghl_location_id");
+  if (hasColumn) return;
+  db.exec("ALTER TABLE assets ADD COLUMN ghl_location_id TEXT");
 }
 
 /** Durable asset-manifest persistence (spec §19 + §25). */
@@ -126,6 +146,7 @@ export class AssetRepository {
 
   constructor(db: SqliteDatabase) {
     this.db = db;
+    ensureGhlLocationColumn(db);
   }
 
   /** Insert one manifest record. `assetId` must not already exist. */
@@ -177,6 +198,49 @@ export class AssetRepository {
     return this.db
       .all("SELECT * FROM assets WHERE provider_task_id = ?", providerTaskId)
       .map((row) => mapAssetRow(row) as AssetRecord);
+  }
+
+  /**
+   * Find an already-archived record holding exactly these bytes in the same
+   * destination folder — the pre-POST dedupe for SKR-013. Without it, two
+   * manifest assets that share a checksum (the same provider output archived
+   * twice) each POST their own copy into GHL.
+   *
+   * Only records carrying durable linkage (`ghl_file_id` + `ghl_url`) qualify:
+   * an unarchived row proves nothing about what is in GHL. A record whose
+   * `ghl_location_id` is unknown (pre-SKR-011 rows) still qualifies when the
+   * folder matches, because a GHL folder id is itself unique per sub-account.
+   */
+  findArchivedByChecksum(
+    checksum: string,
+    options: { ghlFolderId?: string; ghlLocationId?: string } = {},
+  ): AssetRecord | undefined {
+    if (typeof checksum !== "string" || checksum.length === 0) return undefined;
+    const folderId = options.ghlFolderId;
+    if (typeof folderId !== "string" || folderId.length === 0) return undefined;
+    const rows = this.db.all(
+      `SELECT * FROM assets
+        WHERE checksum = ?
+          AND ghl_folder_id = ?
+          AND ghl_file_id IS NOT NULL
+          AND ghl_url IS NOT NULL
+        ORDER BY created_at, asset_id`,
+      checksum,
+      folderId,
+    );
+    for (const row of rows) {
+      const record = mapAssetRow(row) as AssetRecord;
+      // Tenant guard: never dedupe across sub-accounts. An unknown stored
+      // location is accepted (legacy row) because the folder already matched.
+      if (
+        options.ghlLocationId === undefined ||
+        record.ghlLocationId === undefined ||
+        record.ghlLocationId === options.ghlLocationId
+      ) {
+        return record;
+      }
+    }
+    return undefined;
   }
 
   /** Find assets by character + optional version (Character Library links). */
@@ -322,6 +386,8 @@ function fieldToSql(entity: AssetRecord, column: ColumnName): string | number | 
       return entity.approvalState;
     case "qc_state":
       return entity.qcState;
+    case "ghl_location_id":
+      return entity.ghlLocationId ?? null;
   }
 }
 
@@ -386,5 +452,7 @@ function patchFieldValue(patch: AssetRecordPatch, column: ColumnName): string | 
       return patch.approvalState;
     case "qc_state":
       return patch.qcState;
+    case "ghl_location_id":
+      return patch.ghlLocationId;
   }
 }

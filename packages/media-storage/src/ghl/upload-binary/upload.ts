@@ -2,11 +2,14 @@
  * Binary fallback upload orchestrator — spec §17.4 step 4.
  *
  * Runs ONLY when hosted ingestion (GHL-005) fails. Sequence, in order:
+ *   0. validate the provider URL (SKR-025: https-only, no private/metadata
+ *      host, no embedded credentials) before any fetch;
  *   1. download immediately from the provider temporary URL (never regenerate);
- *   2. checksum (SHA-256) the downloaded bytes;
- *   3. ffprobe/decode verify locally;
- *   4. enforce size limits — 25 MB general / 500 MB video — BEFORE upload;
- *   5. binary upload to POST /medias/upload-file;
+ *   2. enforce MIME + size limits — 25 MB general / 500 MB video — BEFORE any
+ *      further work, via the shared `validate.ts` guard;
+ *   3. checksum (SHA-256) the downloaded bytes;
+ *   4. ffprobe/decode verify locally;
+ *   5. binary upload to POST /medias/upload-file with the sanitized name;
  *   6. verify the returned fileId AND storage URL (reachable);
  *   7. integrity-compare (re-download from GHL, checksum equality) and only
  *      then report ARCHIVED.
@@ -27,6 +30,16 @@ import {
 import { contentTypeForName, type MediaKind } from "./media-kind.js";
 import { limitForKind } from "./limits.js";
 import { FfprobeVerifier, type MediaVerifier } from "./verify.js";
+import {
+  MEDIA_CATEGORIES,
+  ValidationError,
+  checkFilename,
+  normalizeMimeType,
+  mimeCategory,
+  validateMediaFile,
+  validateRemoteUrl,
+  type MediaCategory,
+} from "../validation/index.js";
 
 export type {
   DownloadedFile,
@@ -92,6 +105,20 @@ export class BinaryFallbackUploader {
   async archive(input: BinaryFallbackInput): Promise<BinaryFallbackResult> {
     const limit = limitForKind(input.kind);
 
+    // 0. Guard the provider URL before touching the network (SKR-025): a
+    //    scheme/host guard that is never called is not a guard. Refuse
+    //    non-HTTPS and private/metadata/link-local hosts (SSRF).
+    try {
+      validateRemoteUrl(input.providerUrl);
+    } catch (cause) {
+      throw new GhlUploadError("disallowed-url", describeValidationFailure(cause));
+    }
+
+    // The stored name is the spec §19 canonical filename; sanitize it before it
+    // reaches the multipart form (flat, traversal-free) — the same guard the
+    // validation module claims uploaders call.
+    const name = sanitizedName(input.name);
+
     // 1. Download immediately — the provider URL can expire at any moment.
     let downloaded;
     try {
@@ -105,26 +132,20 @@ export class BinaryFallbackUploader {
         `Failed to download ${input.providerUrl}: ${cause instanceof Error ? cause.message : String(cause)}`,
       );
     }
-    if (downloaded.data.byteLength === 0) {
-      // Expired/unusable provider URLs can return an empty body; archiving
-      // that would destroy the only copy of a paid asset.
-      throw new GhlUploadError("download-failed", "Downloaded 0 bytes (empty body)");
-    }
-    if (downloaded.data.byteLength > limit) {
-      throw new GhlUploadError(
-        "size-limit",
-        `File is ${downloaded.data.byteLength} bytes; limit for ${input.kind} is ${limit}`,
-      );
-    }
 
-    // 2. Checksum the source bytes.
+    // 2. MIME + size gate BEFORE checksum/decode/upload. An expired provider
+    //    URL can answer with an empty body, and archiving that would destroy
+    //    the only copy of a paid asset.
+    validateDownloadedMedia(downloaded, name, input.kind, limit);
+
+    // 3. Checksum the source bytes.
     const sourceChecksum = sha256Hex(downloaded.data);
 
-    // 3. ffprobe/decode verify locally (temp file, argv-only commands).
+    // 4. ffprobe/decode verify locally (temp file, argv-only commands).
     const verifier = input.verifier ?? this.verifier;
     const dir = await mkdtemp(join(tmpdir(), "mmcs-ghl-upload-"));
     try {
-      const filePath = join(dir, safeTempName(input.name));
+      const filePath = join(dir, safeTempName(name));
       await writeFile(filePath, downloaded.data);
       try {
         await verifier.verify(filePath, input.kind);
@@ -139,15 +160,15 @@ export class BinaryFallbackUploader {
       await rm(dir, { recursive: true, force: true });
     }
 
-    // 4. Binary upload.
+    // 5. Binary upload.
     let uploaded: { fileId: string; url: string };
     try {
       uploaded = await this.client.uploadBinary({
-        name: input.name,
+        name,
         parentId: input.parentId,
         locationId: input.locationId,
         data: downloaded.data,
-        contentType: contentTypeForName(input.name),
+        contentType: contentTypeForName(name),
       });
     } catch (cause) {
       if (cause instanceof GhlUploadError) throw cause;
@@ -163,7 +184,7 @@ export class BinaryFallbackUploader {
       );
     }
 
-    // 5. Verify the returned storage URL is reachable.
+    // 6. Verify the returned storage URL is reachable.
     let verification: VerifyUrlResult;
     try {
       verification = await this.client.verifyUrl(uploaded.url);
@@ -180,7 +201,7 @@ export class BinaryFallbackUploader {
       );
     }
 
-    // 6. Integrity compare: bytes GHL serves back must hash identical.
+    // 7. Integrity compare: bytes GHL serves back must hash identical.
     let roundTrip: Uint8Array;
     try {
       roundTrip = await this.client.downloadFile({
@@ -229,4 +250,88 @@ function safeTempName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "asset.bin";
   if (base.length === 0 || base === "." || base === "..") return "asset.bin";
   return base;
+}
+
+/**
+ * Sanitize the canonical filename before it is used as a stored name or as a
+ * local temp-file stem (SKR-025): `checkFilename` strips path components,
+ * traversal, control characters and reserved device names. Refusing is better
+ * than uploading an unsanitizable name.
+ */
+function sanitizedName(raw: string): string {
+  try {
+    return checkFilename(raw, "asset.bin").filename;
+  } catch (cause) {
+    throw new GhlUploadError(
+      "invalid-name",
+      `file name cannot be sanitized for upload: ${cause instanceof Error ? cause.message : String(cause)}`,
+    );
+  }
+}
+
+/** Human-readable form of a `validate.ts` failure (never includes a token). */
+function describeValidationFailure(cause: unknown): string {
+  if (cause instanceof ValidationError) {
+    return cause.detail === undefined ? cause.message : `${cause.message} (${cause.detail})`;
+  }
+  return cause instanceof Error ? cause.message : String(cause);
+}
+
+/**
+ * Content types servers use when they do not know (or do not care about) the
+ * real type. These fall back to the filename extension; any OTHER non-media
+ * declared type is refused.
+ */
+const GENERIC_CONTENT_TYPES: ReadonlySet<string> = new Set([
+  "application/octet-stream",
+  "binary/octet-stream",
+  "application/binary",
+  "application/x-unknown",
+]);
+
+/**
+ * The MIME + size gate for downloaded bytes (spec §17.4 step 4), wired to the
+ * shared validators that previously had no production caller (SKR-025).
+ *
+ * MIME resolution order: a declared media type is validated as-is; a declared
+ * GENERIC type (or none at all) falls back to the canonical filename
+ * extension, because providers commonly answer `application/octet-stream` for
+ * a perfectly good MP4; a declared type that is neither media nor generic
+ * (e.g. `application/pdf`) is refused.
+ */
+function validateDownloadedMedia(
+  downloaded: { data: Uint8Array; contentType?: string },
+  name: string,
+  kind: MediaKind,
+  limit: number,
+): void {
+  const declared = normalizeMimeType(downloaded.contentType);
+  const isGeneric = declared.length === 0 || GENERIC_CONTENT_TYPES.has(declared);
+  const usableMime = isGeneric && mimeCategory(declared) === null ? undefined : declared;
+  const allowedCategories: readonly MediaCategory[] =
+    kind === "generic" ? MEDIA_CATEGORIES : [kind];
+  try {
+    validateMediaFile(usableMime, downloaded.data.byteLength, {
+      filename: name,
+      allowedCategories,
+      maxBytes: limit,
+    });
+  } catch (cause) {
+    const code = cause instanceof ValidationError ? cause.code : undefined;
+    if (code === "FILE_EMPTY") {
+      // Preserved reason: callers branch on "download-failed" for the
+      // expired-provider-URL empty-body case.
+      throw new GhlUploadError("download-failed", "Downloaded 0 bytes (empty body)");
+    }
+    if (code === "FILE_TOO_LARGE") {
+      throw new GhlUploadError(
+        "size-limit",
+        `File is ${downloaded.data.byteLength} bytes; limit for ${kind} is ${limit}`,
+      );
+    }
+    throw new GhlUploadError(
+      "mime-type",
+      `file is not an accepted ${kind} media file: ${describeValidationFailure(cause)}`,
+    );
+  }
 }

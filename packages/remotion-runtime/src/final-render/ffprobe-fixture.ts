@@ -78,10 +78,13 @@ export async function ffprobeValidate(output: string): Promise<ProbeReport> {
 }
 
 /**
- * Fixture render adapter: produces a small deterministic mp4 with the system
- * ffmpeg (lavfi testsrc), writes it to `request.output` (a temp path), and
- * reports composition-real metadata. Duration/fps/resolution honor the
- * request so the ffprobe readback proves the render path end-to-end.
+ * TEST FIXTURE adapter (NOT the render path): produces a small deterministic
+ * mp4 with the system ffmpeg (lavfi testsrc), writes it to `request.output`
+ * (a temp path), and reports composition-real metadata. Duration/fps/
+ * resolution honor the request so the ffprobe readback proves the render path
+ * end-to-end — but it mounts no Remotion composition and draws no episode
+ * frame. Production renders call `makeRemotionRenderAdapter()`
+ * (./remotion-renderer.ts).
  */
 export function makeFfmpegFixtureAdapter(): RenderAdapter {
   return async (request: RenderRequest): Promise<RenderResult> => {

@@ -9,6 +9,7 @@ export {
   parseMediaListResponse,
 } from "./list.js";
 export type {
+  FindFolderOptions,
   GhlHttp,
   GhlListAllOptions,
   GhlListAllResult,

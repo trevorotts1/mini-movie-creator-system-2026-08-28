@@ -21,8 +21,14 @@ The wrapper also writes `$HOME/.mmcs/mmcs.env` (paths + env NAMES only, no
 secrets) recording the engine location:
 
 ```bash
-source "$HOME/.mmcs/mmcs.env"        # exports MMCS_REPO_ROOT and MMCS_CLI
+source "$HOME/.mmcs/mmcs.env"        # exports MMCS_REPO_ROOT, MMCS_CLI, MMCS_SKILL_SOURCE
 ```
+
+`MMCS_SKILL_SOURCE` records the **durable** canonical skill location
+(`<repo root>/skills/mini-movie-creator`), never the `--source` path verbatim:
+`--source` is regularly a git worktree that is pruned later, and a recorded
+worktree path then dangles. `MMCS_REPO_ROOT`/`MMCS_CLI` were always durable —
+this one now is too.
 
 This is the escape hatch for a personal-scope session started OUTSIDE the
 repo. `skills/mini-movie-creator/scripts/mmcs-status.sh` (SKL-001) resolves
@@ -60,10 +66,20 @@ environment, so this is the strictest of the three install targets:
   `--force` and `--confirm`. `--force` alone still refuses.
 - When replacement proceeds, the installer writes a **full backup** to
   `<target>.backup-<timestamp>/` in the same directory **before** removing
-  anything. Restoring is one `mv` command.
+  anything. Restoring is one `mv` command. Two forced replaces inside the same
+  second get distinct backup names (`-2`, `-3`, …), so the second run can never
+  nest its copy inside the first backup.
+- **`~/.mmcs/mmcs.env` gets the same gate.** The env record is shared with
+  every other MMCS checkout on the box, so it is written only when its content
+  actually changes (the no-op "already installed" run leaves it byte-identical
+  and does not rewrite it), and a **differing** file is refused — exit 1,
+  nothing written — unless BOTH `--force` and `--confirm` are given, in which
+  case it is copied to `<env>.backup-<timestamp>` first. A bare `> "$ENV_FILE"`
+  used to truncate another install's `MMCS_REPO_ROOT`/`MMCS_CLI` silently.
 - `--dry-run` prints every action and mutates nothing (checked in a fixture
   — the real `$HOME` is never touched by tests, which spawn with `HOME`
-  pointed at a temp dir).
+  pointed at a temp dir). It also predicts the env refusal instead of promising
+  a write the real run would reject.
 
 ### Dependency-honesty (same lifecycle as SKL-002)
 
@@ -94,7 +110,7 @@ cd integrations/claude && npm test
 npx vitest run --config integrations/claude/vitest.config.mts
 ```
 
-27 tests drive the REAL script end-to-end inside temp fixture islands
+32 tests drive the REAL script end-to-end inside temp fixture islands
 (canonical source + a fake `$HOME`), covering: symlink creation with an
 absolute target, resolution through the symlink, idempotency, wrong-symlink
 repoint, refusal without `--force`, refusal of `--force` without `--confirm`,
@@ -102,7 +118,11 @@ full-backup-then-replace with `--force --confirm` (nested file preserved in
 the backup), canonical-missing error, `--source` alternate checkout,
 `--repo-root` env recording, `--dry-run` no-mutation (incl. no env file),
 `--check` outcomes (installed / pending canonical / missing / dangling / real
-directory), and usage errors.
+directory), usage errors, and the `~/.mmcs/mmcs.env` guard (refusal without
+`--force --confirm`, backup-then-rewrite, byte-identical no-op run against a
+read-only file, dry-run predicting the refusal, and `MMCS_SKILL_SOURCE`
+recording the durable canonical path rather than a transient `--source`
+worktree).
 
 ## Verification evidence (live, 2026-08-28, this box)
 

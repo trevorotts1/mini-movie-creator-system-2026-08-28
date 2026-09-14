@@ -17,7 +17,19 @@ for pkg_dir in packages/dist/*/; do
   # third-party deps
   for name in $(python3 -c "import json,sys; print(' '.join(json.load(open(sys.argv[1])).get('dependencies', {}).keys()))" "$pj"); do
     if [[ "$name" == @mmcs/* ]]; then continue; fi
-    [ -e "$nm/$name" ] || ln -s "../../../$pkg/node_modules/$name" "$nm/$name"
+    [ -e "$nm/$name" ] && continue
+    if [ ! -e "packages/$pkg/node_modules/$name" ]; then
+      # A declared-but-uninstalled dependency must not abort the whole build;
+      # the runtime will surface it as ERR_MODULE_NOT_FOUND at import time.
+      echo "link-dist-deps: WARN $pkg declares $name but it is not installed; skipped" >&2
+      continue
+    fi
+    case "$name" in
+      # Scoped packages live under a scope directory that may not exist yet, and
+      # sit one level deeper, so the relative prefix gains a level.
+      @*) mkdir -p "$nm/${name%%/*}"; ln -s "../../../../$pkg/node_modules/$name" "$nm/$name" ;;
+      *)  ln -s "../../../$pkg/node_modules/$name" "$nm/$name" ;;
+    esac
   done
   # engine workspace deps (link to the source package; exports maps make the
   # source package resolve to the same dist slice)

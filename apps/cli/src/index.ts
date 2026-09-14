@@ -704,6 +704,20 @@ async function doctorReport(): Promise<string[]> {
 /* named-variable fail-closed where a provider call would be required. */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Fail closed for a verb this CLI cannot actually perform (spec §4/§33): name
+ * the missing piece on stderr and mark the process failed. A handler that
+ * prints guidance and returns leaves the caller's `$?` reading 0 —
+ * indistinguishable from work that really happened, which is the "fabricated
+ * success" the file header forbids.
+ */
+function failClosed(verb: string, reason: string, guidance: readonly string[] = []): void {
+  process.stderr.write(
+    [`[mmcs] ${verb} — FAILED: ${reason}`, ...guidance].join("\n") + "\n",
+  );
+  process.exitCode = 1;
+}
+
 function registerRemainingHandlers(map: Record<string, Handler>): void {
   map["approve rough-cut"] = (async () => {
     const store = approvals();
@@ -743,112 +757,150 @@ function registerRemainingHandlers(map: Record<string, Handler>): void {
   }) as unknown as Handler;
 
   map["estimate"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "estimate",
+      "no estimate was produced — the estimator is unreachable from this CLI; no shot-plan reader is wired for --episode",
       [
         "Usage: mmcs estimate --episode <code>",
         "",
         "Estimates runtime + cost from the episode's shot plan (spec §4: derive",
-        "cost/state BEFORE spending). The estimator engine is wired; this CLI",
-        "expects --episode. No estimate without an episode in the durable store.",
-      ].join("\n") + "\n",
+        "cost/state BEFORE spending). The estimator engine exists in",
+        "@mmcs/scene-intelligence, but nothing here calls it — run the estimate",
+        "through the skill integration before spending.",
+      ],
     );
   }) as unknown as Handler;
 
   map["generate"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "generate",
+      "no generation runner is wired into this CLI — nothing was submitted, so no provider spend occurred",
       [
-        "[mmcs] generate — paid generation orchestrator (spec §15/§33).",
-        "",
-        "Generation submits PAID provider jobs (Kie/Agnes video, Agnes image) and",
-        "is gated on the $25 cumulative spend wall. This CLI wires the durable",
-        "gates and stores; the generation runner runs through the skill's model",
-        "call integration. Run `mmcs estimate --episode <code>` first, then",
-        "generate from the skill; approval gates remain enforce here.",
-      ].join("\n") + "\n",
+        "Generation submits PAID provider jobs (video via KIE_API_KEY, image via",
+        "AGNES_API_KEY) and is gated on the $25 cumulative spend wall (spec §15/§33).",
+        "Run `mmcs estimate --episode <code>` first, then generate through the",
+        "skill's model-call integration; the durable gates and stores are wired here",
+        "and stay enforced.",
+      ],
     );
   }) as unknown as Handler;
 
   map["generate-shot"] = (async () => {
-    process.stdout.write(
-      "[mmcs] generate-shot — see `mmcs generate` (paid orchestration runs through the skill integration).\n",
+    failClosed(
+      "generate-shot",
+      "no per-shot generation runner is wired into this CLI — nothing was submitted, so no provider spend occurred",
+      [
+        "Same paid path as `mmcs generate` (KIE_API_KEY / AGNES_API_KEY, $25 spend",
+        "wall, spec §15/§33); run the shot through the skill integration.",
+      ],
     );
   }) as unknown as Handler;
 
   map["cast"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "cast",
+      "no character candidates were generated — candidate generation needs a configured image provider (AGNES_API_KEY) and is not wired into this CLI",
       [
-        "[mmcs] cast — generates character candidates (gate 3, spec §9).",
-        "Requires a configured image provider; run through the skill integration.",
-        "Selection + lock live here: `mmcs choose-character <n>`, `mmcs approve-character <id>`.",
-      ].join("\n") + "\n",
+        "Gate 3 (spec §9). Selection + lock do run here once candidates exist:",
+        "`mmcs choose-character <n>` and `mmcs approve-character <id>`.",
+      ],
     );
   }) as unknown as Handler;
 
   map["character list"] = (async () => {
-    process.stdout.write(
-      "[mmcs] character list — no characters yet (the durable library fills as casting runs; spec §9).\n",
+    failClosed(
+      "character list",
+      "the character library was not read — its store is not wired into this CLI, so the library cannot be reported as empty",
+      [
+        "Spec §9. Casting fills the durable character library; list it through the",
+        "skill integration.",
+      ],
     );
   }) as unknown as Handler;
 
   map["character show"] = (async () => {
-    process.stdout.write(
-      "Usage: mmcs character show <id>\n",
+    failClosed(
+      "character show",
+      "no character was loaded — the character library store is not wired into this CLI",
+      [
+        "Usage: mmcs character show <id>",
+        "",
+        "Shows the character and its versions (spec §9) once the durable library",
+        "store is wired.",
+      ],
     );
   }) as unknown as Handler;
 
   map["character"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "character",
+      "no character-library reader is wired into this CLI — nothing was listed",
       [
         "Usage: mmcs character <list|show>",
         "",
-        "Lists characters from the durable character library (spec §9).",
-        "The character library store is wired at engine level; this CLI reads",
-        "the canonical store when the skill initializes it.",
-      ].join("\n") + "\n",
+        "Both subcommands read the durable character library (spec §9); until that",
+        "store is wired here they fail closed rather than report an empty library.",
+      ],
     );
   }) as unknown as Handler;
 
   map["canon review"] = (async () => {
-    process.stdout.write(
-      "[mmcs] canon review — no proposed canon changes (end-of-episode proposals appear after generation; spec §3 gate 6).\n",
+    failClosed(
+      "canon review",
+      "no canon proposals were read — the canon store is not wired into this CLI, so \"no proposed canon changes\" cannot be asserted",
+      [
+        "End-of-episode proposals (CHAR-013, spec §3 gate 6) are created by the",
+        "pipeline; review them through the skill integration.",
+      ],
     );
   }) as unknown as Handler;
 
   map["canon approve"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "canon approve",
+      "canon gate 6 is not implemented in this CLI — no decision was recorded",
       [
         "Usage: mmcs canon <review|approve>",
         "",
-        "End-of-episode canon proposals (CHAR-013, spec §3 gate 6). Proposals are",
-        "created by the pipeline; approval through this gate never auto-runs.",
-      ].join("\n") + "\n",
+        "End-of-episode canon proposals (CHAR-013, spec §3 gate 6) are created by",
+        "the pipeline; approval through this gate never auto-runs.",
+      ],
     );
   }) as unknown as Handler;
 
   map["storage status"] = (async () => {
-    process.stdout.write(
-      "[mmcs] storage status — local state OK; GHL archival reports through the skill integration (spec §17).\n",
+    failClosed(
+      "storage status",
+      "no storage check was performed — no local-state or GHL archival backend is reachable from this CLI",
+      [
+        "Spec §17. GHL Media Storage archival reports through the skill integration;",
+        "`mmcs backup export` works locally with zero credentials.",
+      ],
     );
   }) as unknown as Handler;
 
   map["storage"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "storage",
+      "GHL Media Storage archival (spec §17) is not wired into this CLI — nothing was archived or checked",
       [
-        "[mmcs] storage — GHL Media Storage archival (spec §17).",
-        "Archival runs automatically after generation (durable asset records);",
+        "Usage: mmcs storage <status>",
+        "",
+        "Archival runs after generation through the skill integration;",
         "`mmcs backup export` works locally without GHL credentials.",
-      ].join("\n") + "\n",
+      ],
     );
   }) as unknown as Handler;
 
   map["recover"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "recover",
+      "no interrupted work was inspected or resumed — checkpoint resume is not wired into this CLI",
       [
-        "[mmcs] recover — resume interrupted pipeline work (REC-010 checkpoint).",
-        "Checkpoint state lives in state/checkpoint/ (CheckpointService); the",
-        "skill integration drives resume. Every gate verb here is idempotent and",
-        "crash-safe by design.",
-      ].join("\n") + "\n",
+        "REC-010 checkpoints live in state/checkpoint/ (CheckpointService in",
+        "@mmcs/core); the skill integration drives resume. Every gate verb here is",
+        "idempotent and crash-safe by design.",
+      ],
     );
   }) as unknown as Handler;
 }
@@ -884,28 +936,32 @@ function registerDirectHandlers(map: Record<string, Handler>): void {
   }) as Handler;
 
   map["create-series"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "create-series",
+      "no series was created — series creation is not implemented in this CLI",
       [
         "Usage: mmcs create-series",
         "",
         "Creates the series with persistent defaults (spec §24): title, output",
         "format, runtime range, style, models, routing, storage root, spend",
-        "threshold. This bootstrap wires the durable stores; series creation is",
-        "driven from the skill interview (one-time setup), which calls the same",
-        "repositories (SqliteProjectRepository → SqliteSeriesRepository).",
-      ].join("\n") + "\n",
+        "threshold. The durable stores are wired; creation is driven from the skill",
+        "interview, which calls the same repositories (SqliteProjectRepository →",
+        "SqliteSeriesRepository).",
+      ],
     );
   }) as Handler;
 
   map["create-episode"] = (async () => {
-    process.stdout.write(
+    failClosed(
+      "create-episode",
+      "no episode was created — episode creation is not implemented in this CLI",
       [
         "Usage: mmcs create-episode",
         "",
-        "Creates one episode inside a series (season/number/title, spec §24).",
-        "Series creation is driven from the skill interview; the durable episode",
-        "store is wired here — every other verb reads it.",
-      ].join("\n") + "\n",
+        "Creates one episode inside a series (season/number/title, spec §24) from",
+        "the skill interview; the durable episode store is wired here and every",
+        "other verb reads it.",
+      ],
     );
   }) as Handler;
 }
@@ -1000,7 +1056,12 @@ const invokedDirectly =
 if (invokedDirectly) {
   main()
     .then((code) => {
-      process.exitCode = code;
+      // main() returns the PARSE-level code; a fail-closed handler reports by
+      // assigning process.exitCode (the dispatcher's documented seam). Writing
+      // that 0 unconditionally would clobber the handler's failure and report
+      // success for a verb that refused — the same reason-preserving rule the
+      // dist/index.js bin shim already applies.
+      process.exitCode = code !== 0 ? code : (process.exitCode ?? 0);
     })
     .catch((err: unknown) => {
       process.stderr.write(

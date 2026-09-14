@@ -8,8 +8,14 @@
  * Verified request shapes (spec.md §17, corroborating the GHL-002 module doc):
  *  - Search: GET /medias/files with altType=location, altId, parentId, type=folder.
  *  - Create: POST /medias/folder body {altId, altType: "location", name, parentId?}.
+ *
+ * SKR-014: the search delegates to the GHL-002 `findFolderByName`, which pages
+ * the whole listing and refuses to answer "absent" when its page cap is hit.
+ * Fetching a single `limit: 100` page here made an existing folder look absent
+ * under a parent with more children than one page, so the caller created a
+ * duplicate folder.
  */
-import { listMediaPage, type GhlHttp } from "../ghl/list/index.js";
+import { findFolderByName, type GhlHttp } from "../ghl/list/index.js";
 import type {
   CreateFolderInput,
   EpisodeFoldersClient,
@@ -47,33 +53,29 @@ export class GhlHttpEpisodeFoldersClient implements EpisodeFoldersClient {
   constructor(private readonly http: EpisodeFoldersHttp) {}
 
   async findFolders(query: FindFoldersQuery): Promise<GhlFolder[]> {
-    const page = await listMediaPage(this.http, {
+    // Exact-name search over the WHOLE folder listing (all pages; a cap hit
+    // throws GhlMediaListTruncatedError rather than claiming "absent").
+    const match = await findFolderByName(this.http, query.name, {
       altId: query.altId,
       altType: query.altType,
       parentId: query.parentId,
-      type: "folder",
-      // One exact-name page is the spec's search; server-side `query` search is
-      // NOT exact on every deployment, so filter client-side on exact name.
-      limit: 100,
+      // Defense-in-depth: the server should honor parentId, but a stale or
+      // loosely-scoped deployment must not adopt a same-named folder under a
+      // different parent (duplicate-tree hazard).
+      match:
+        query.parentId === undefined
+          ? undefined
+          : (entry) => entry.parentId === query.parentId,
     });
-    return page.entries
-      .filter((entry) => entry.type === "folder" && entry.name === query.name)
-      .filter((entry) =>
-        // Defense-in-depth: the server should honor parentId, but a stale or
-        // loosely-scoped deployment must not adopt a same-named folder under a
-        // different parent (duplicate-tree hazard).
-        query.parentId === undefined || entry.parentId === query.parentId,
-      )
-      .map((entry) => {
-        if (entry.id.length === 0) {
-          throw new Error(`GHL folder search "${query.name}": entry missing id`);
-        }
-        const folder: GhlFolder = { id: entry.id, name: entry.name as string };
-        if (entry.parentId !== undefined && entry.parentId !== null) {
-          folder.parentId = entry.parentId;
-        }
-        return folder;
-      });
+    if (match === null) return [];
+    if (match.id.length === 0) {
+      throw new Error(`GHL folder search "${query.name}": entry missing id`);
+    }
+    const folder: GhlFolder = { id: match.id, name: match.name as string };
+    if (match.parentId !== undefined && match.parentId !== null) {
+      folder.parentId = match.parentId;
+    }
+    return [folder];
   }
 
   async createFolder(input: CreateFolderInput): Promise<GhlFolder> {

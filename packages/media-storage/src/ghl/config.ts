@@ -11,6 +11,8 @@ export {
   GHL_VERSION_HEADER,
   GHL_TOKEN_ENV_VAR,
   GHL_LOCATION_ID_ENV_VAR,
+  GHL_TOKEN_KIND_ENV_VAR,
+  GHL_TOKEN_EXPIRES_AT_ENV_VAR,
   createGhlAuthConfig,
   ghlAuthConfigFromEnv,
   redactGhlToken,
@@ -19,6 +21,16 @@ export {
   InvalidGhlTokenError,
 } from "./auth.js";
 export type { GhlAuthConfig, GhlAuthConfigInput, GhlTokenKind } from "./auth.js";
+export {
+  GhlTokenCache,
+  GhlTokenRefreshError,
+  GhlTokenRefreshUnsupportedError,
+} from "./token.js";
+export type {
+  GhlTokenCacheOptions,
+  GhlTokenRefreshResult,
+  GhlTokenRefresher,
+} from "./token.js";
 
 /** Official endpoint paths (v3 docs, 2026-08-28). Owned by their task modules. */
 export const GHL_ENDPOINTS = {

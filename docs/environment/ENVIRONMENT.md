@@ -3,6 +3,11 @@
 Source of discovery: live CLI probes + on-disk inspection on this box. Nothing re-verified
 from the pre-verified list; facts marked pre-verified are used as given.
 
+Rows below are a **point-in-time snapshot** (2026-08-28 unless a row says otherwise) — a
+tool that is uninstalled, upgraded or newly added since then will not appear here correctly.
+The pnpm row is the known example and carries its own correction date. Re-probe with the
+row's own check command before relying on any single value.
+
 ## Host
 
 | Item | Value |
@@ -26,7 +31,7 @@ subagent output compounds the risk.
 | node | v26.7.0 | /opt/homebrew/bin/node |
 | npm | 11.8.0 | `ignore-scripts=true` in ~/.npmrc (npm hardening) |
 | bun | 1.3.14 | |
-| pnpm | MISSING | not installed |
+| pnpm | 11.24.0 | `/Users/blackceomacmini/.npm-global/bin/pnpm` — matches `packageManager` in the root `package.json` (corrected 2026-09-14: the 2026-08-28 pass recorded MISSING) |
 | ffmpeg / ffprobe | 8.1.1 | |
 | python3 | 3.14.5 | |
 | claude | 2.1.227 | real Anthropic CLI, `~/bin/claude` wrapper → native binary |
@@ -152,8 +157,12 @@ Key subcommands verified: `openclaw skills list/info/install/check/workshop`,
 2. **npm `ignore-scripts=true`** — any `npm install` of claude-code (or packages
    needing postinstall) silently skips scripts; the `~/bin/claude` wrapper
    self-heals the CLI, other packages do not self-heal.
-3. **pnpm missing** — remotion/next projects that assume pnpm need corepack or
-   npm fallback.
+3. **pnpm — no longer missing.** pnpm 11.24.0 is on PATH at
+   `/Users/blackceomacmini/.npm-global/bin/pnpm`, the version the root
+   `packageManager` field pins, so `pnpm install --frozen-lockfile` runs
+   directly; corepack remains the fallback for hosts without it. (The
+   2026-08-28 pass recorded it MISSING — re-check with `pnpm --version` before
+   trusting this row on another box.)
 4. **9Router guards are load-bearing** — a 9Router update silently reverts the
    dupfix/codex-terminal/next-server patches; `claude-nine` re-applies them every
    launch. Never launch the native binary directly for router work.

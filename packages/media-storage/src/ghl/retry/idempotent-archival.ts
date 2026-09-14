@@ -7,6 +7,7 @@ import {
   type ArchivalLedgerRecord,
 } from "./ledger.js";
 import { boundedRetry, RetryBudgetExhaustedError, type BoundedRetryOptions } from "./bounded-retry.js";
+import { isProviderRefusal } from "./errors.js";
 
 /**
  * Idempotent GHL archival orchestration (MMCS task GHL-011).
@@ -30,6 +31,14 @@ import { boundedRetry, RetryBudgetExhaustedError, type BoundedRetryOptions } fro
  *    generated asset in its ARCHIVING/GENERATED_TEMPORARY state (spec §38)
  *    so archival can resume later. Generation is not this module's concern
  *    and it never requests one.
+ * 4. The RESERVE result is acted on (SKR-013). A pre-existing, unresolved
+ *    reservation means an earlier attempt's outcome is unknown (it may have
+ *    landed at GHL), so the attempt is not re-run blindly: the caller's
+ *    provider-side detector must find the file (reuse) or prove it absent
+ *    (proceed), and without a detector the call is refused with
+ *    `ArchivalReservationHeldError`. A deterministic refusal releases the key
+ *    so it can never be reserved forever; an unknown-outcome failure keeps it
+ *    and stamps attempts/reason on it.
  *
  * The key is derived from the canonical request: location, destination
  * folder, canonical filename, and content checksum where known. Deterministic
@@ -68,6 +77,46 @@ export interface ArchivalOutcome<T> {
   attempts: number;
   /** The ledger key for this archival request. */
   key: string;
+  /**
+   * True when the value came from resolving a PRE-EXISTING reservation (an
+   * earlier attempt whose outcome was unknown). No upload ran this call.
+   */
+  resumedFromHeldReservation: boolean;
+}
+
+/**
+ * Thrown when the key is already reserved by an earlier attempt whose outcome
+ * is unknown (crash or connection loss mid-upload) and no provider-side
+ * detector is wired to prove whether the file landed (SKR-013).
+ *
+ * Failing here is the point: re-running the upload on that signal is exactly
+ * how one archive run becomes two GHL files. Recovery paths: wire
+ * `detectExisting` (a GHL-002 name lookup / manifest checksum lookup), or
+ * release the key deliberately once the file is confirmed absent at GHL.
+ */
+export class ArchivalReservationHeldError extends ArchivalLedgerError {
+  readonly key: string;
+  readonly heldSince?: string;
+  readonly attempts?: number;
+  readonly lastFailure?: string;
+
+  constructor(
+    key: string,
+    context: { heldSince?: string; attempts?: number; lastFailure?: string } = {},
+  ) {
+    super(
+      `archival key ${key} is held by an earlier unresolved attempt` +
+        (context.heldSince !== undefined ? ` (reserved ${context.heldSince})` : "") +
+        (context.attempts !== undefined ? ` after ${context.attempts} attempt(s)` : "") +
+        (context.lastFailure !== undefined ? `: ${context.lastFailure}` : "") +
+        "; refusing to upload again without provider-side detection — wire detectExisting, or release the key once the file is confirmed absent at GHL",
+    );
+    this.name = "ArchivalReservationHeldError";
+    this.key = key;
+    this.heldSince = context.heldSince;
+    this.attempts = context.attempts;
+    this.lastFailure = context.lastFailure;
+  }
 }
 
 /** Thrown when archival could not be completed inside the retry budget. */
@@ -91,9 +140,20 @@ export class ArchivalFailedError extends Error {
   }
 }
 
-export interface ArchivalIdempotencyOptions extends BoundedRetryOptions {
+export interface ArchivalIdempotencyOptions<T = unknown> extends BoundedRetryOptions {
   /** Scope segment of the ledger key. Default "ghl-archival". */
   scope?: string;
+  /**
+   * Provider-side dedupe lookup, used when the key is already reserved by an
+   * earlier attempt whose outcome is unknown (SKR-013).
+   *
+   * Return the existing durable result when the file IS at GHL (it is then
+   * recorded and reused — no second upload); return null when the lookup
+   * proves the file ABSENT (the attempt may proceed). Omit the hook entirely
+   * and a held reservation is refused with
+   * {@link ArchivalReservationHeldError} instead of silently re-uploading.
+   */
+  detectExisting?: () => Promise<T | null>;
 }
 
 const DEFAULT_SCOPE = "ghl-archival";
@@ -135,7 +195,7 @@ export async function withArchivalIdempotency<T>(
   ledger: ArchivalLedger,
   request: ArchivalAttemptRequest,
   attempt: (request: ArchivalAttemptRequest) => Promise<T>,
-  options: ArchivalIdempotencyOptions = {},
+  options: ArchivalIdempotencyOptions<T> = {},
 ): Promise<ArchivalOutcome<T>> {
   validateRequest(request);
   const scope = options.scope ?? DEFAULT_SCOPE;
@@ -152,18 +212,22 @@ export async function withArchivalIdempotency<T>(
         `recorded archival result for key ${key} is not serializable: ${existing.serializationError}`,
       );
     }
-    return { value: existing.result as T, reused: true, attempts: 1, key };
+    return {
+      value: existing.result as T,
+      reused: true,
+      attempts: 1,
+      key,
+      resumedFromHeldReservation: false,
+    };
   }
 
   let attemptsMade = 0;
   let reusedUnderLock = false;
+  let reusedFromReservation = false;
   let recorded: T | null = null;
   try {
     // Reserve before the first network attempt: a crash mid-upload leaves a
-    // reservation on disk, and a restart re-derives the same key. A reserved
-    // (non-completed) record is treated as "attempt may be in flight at GHL";
-    // the caller's attempt fn remains responsible for provider-side
-    // detectability via the deterministic canonical filename.
+    // reservation on disk, and a restart re-derives the same key.
     await ledger.runLocked(key, async () => {
       // Re-check under the lock: a same-key caller that queued behind an
       // in-flight archival must observe the fresh completed record instead of
@@ -174,7 +238,37 @@ export async function withArchivalIdempotency<T>(
         recorded = underLock.result as T;
         return;
       }
-      await ledger.reserve<T>(key, scope, requestHash);
+
+      // The reserve RESULT is load-bearing (SKR-013): `created: false` means an
+      // earlier attempt for this exact canonical request already ran and its
+      // outcome is UNKNOWN — the upload may have landed at GHL even though the
+      // call failed. Blindly re-running the attempt on that signal is how one
+      // archival run becomes two GHL files, so the caller's provider-side
+      // detector must resolve it first.
+      const reservation = await ledger.reserve<T>(key, scope, requestHash);
+      if (!reservation.created) {
+        const detected = options.detectExisting;
+        if (detected === undefined) {
+          throw new ArchivalReservationHeldError(key, {
+            heldSince: reservation.record.createdAt,
+            ...(reservation.record.attempts !== undefined
+              ? { attempts: reservation.record.attempts }
+              : {}),
+            ...(reservation.record.lastFailure !== undefined
+              ? { lastFailure: reservation.record.lastFailure }
+              : {}),
+          });
+        }
+        const found = await detected();
+        if (found !== null && found !== undefined) {
+          await ledger.complete(key, found);
+          reusedFromReservation = true;
+          recorded = found;
+          return;
+        }
+        // Detection proved the file absent — the attempt below may run.
+      }
+
       const outcome = await boundedRetry(
         (ctx) => {
           attemptsMade = ctx.attemptNumber;
@@ -187,6 +281,8 @@ export async function withArchivalIdempotency<T>(
     });
   } catch (err) {
     if (err instanceof ArchivalLedgerError) throw err;
+    const cause = err instanceof RetryBudgetExhaustedError ? err.lastError : err;
+    await recordFailure(ledger, key, cause, attemptsMade);
     throw new ArchivalFailedError(key, request.providerTaskId, err);
   }
 
@@ -201,10 +297,39 @@ export async function withArchivalIdempotency<T>(
   }
   return {
     value: recorded ?? (completed.result as T),
-    reused: reusedUnderLock,
-    attempts: reusedUnderLock ? 1 : attemptsMade,
+    reused: reusedUnderLock || reusedFromReservation,
+    attempts: reusedUnderLock || reusedFromReservation ? 1 : attemptsMade,
     key,
+    resumedFromHeldReservation: reusedFromReservation,
   };
+}
+
+/**
+ * Book-keep a failed attempt so the key is never a silent dead end (SKR-013).
+ *
+ * - A deterministic provider REFUSAL (auth/validation) created nothing, so the
+ *   reservation is released and the key is reusable — this is the missing
+ *   `release()` caller.
+ * - Anything else (transport fault, 5xx, unclassified error) leaves the
+ *   provider-side outcome unknown: the reservation is KEPT and stamped with the
+ *   attempt count and reason, which is what the held-reservation guard reads on
+ *   the next call.
+ */
+async function recordFailure(
+  ledger: ArchivalLedger,
+  key: string,
+  cause: unknown,
+  attempts: number,
+): Promise<void> {
+  try {
+    if (isProviderRefusal(cause)) {
+      await ledger.release(key);
+      return;
+    }
+    await ledger.fail(key, cause instanceof Error ? cause.message : String(cause), attempts);
+  } catch {
+    // Ledger bookkeeping must never mask the archival failure itself.
+  }
 }
 
 export { RetryBudgetExhaustedError, ArchivalLedgerError };

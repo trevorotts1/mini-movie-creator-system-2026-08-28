@@ -19,7 +19,8 @@ top; the upstream tracks still work.
 bash scripts/release/clean-install.sh
 ```
 
-One command: verifies prerequisites (Node 20+/git/ffmpeg+ffprobe, pnpm
+One command: verifies prerequisites (Node 22.5+, git, ffmpeg+ffprobe — the
+`node:sqlite` persistence floor is declared in root `package.json`; pnpm is
 auto-provisioned via corepack), installs the pnpm workspace, builds the `mmcs`
 CLI, and runs `mmcs doctor`. Exits 0 on a verified install — **no provider
 keys needed first**; `mmcs doctor` requires no secrets. Full steps, `.env`
@@ -61,12 +62,13 @@ archives immediately to durable GoHighLevel Media Storage (`docs/ghl-setup.md`).
 | Command | What it proves |
 |---|---|
 | `bash scripts/release/clean-install.sh` | pristine install: prereqs, workspace, CLI build, doctor (REL-001) |
-| `bash scripts/release/e2e-dry-run.sh` | full pipeline S0–S23 with mocked paid steps and a **real ffmpeg render** — zero credentials, zero spend (REL-004) |
-| `bash scripts/release/provider-smoke.sh` | credential gating per provider, $0 projection inside the $25 gate (REL-005) |
+| `bash scripts/release/e2e-dry-run.sh` | full pipeline S0–S23 with mocked paid steps and a **real ffmpeg render — a `testsrc2` test pattern, not a Remotion composition** — zero credentials, zero spend (REL-004) |
+| `bash scripts/release/provider-smoke.sh` | credential gating per provider and $0 projection inside the $25 gate — the committed run made **no live call** (all four providers BLOCKED, credentials absent); see `docs/provider-smoke-report.md` (REL-005) |
 | `bash scripts/release/regression.sh` | six-area release sweep: tools / vitest / gen / typecheck / lint / render-smoke (REL-002) |
 
 Committed evidence reports (script-generated, never hand-edited):
-`docs/e2e-dry-run-report.md`, `docs/provider-smoke-report.md`.
+`docs/e2e-dry-run-report.md`, `docs/provider-smoke-report.md`. What those gates
+did and did not prove, and what is still unverified: `docs/RELEASE-TRUTH.md`.
 
 ## Engine layout (summary)
 
@@ -80,7 +82,7 @@ packages/                the engine (13 subsystem packages)
   media-storage          MediaStore + GoHighLevelMediaStore (durable archive)
   cost-engine            atomic shared reservation ledger ($25 gate)
   qc/                    QC evaluators + repair routing
-  remotion-runtime       composition/render bridge (rough cut, final render, ffprobe)
+  remotion-runtime       render seam: composition, timeline, rough cut/final CLI, ffprobe gate (no Remotion renderer wired yet)
   database  domain  prompt-compilers
 apps/
   cli/                   the `mmcs` CLI (spec §24 verb surface)
@@ -112,6 +114,7 @@ Package map and the binding dependency direction:
 | `docs/skill-installs.md` | Claude Code / claude-nine / OpenClaw installs |
 | `docs/troubleshooting.md` · `docs/recovery.md` | symptoms, resume, drills |
 | `docs/standalone-path.md` | building an app on the engine |
+| `docs/RELEASE-TRUTH.md` | which release gates were actually met, which passed with zero coverage, what is still unverified |
 
 ## Branch model
 

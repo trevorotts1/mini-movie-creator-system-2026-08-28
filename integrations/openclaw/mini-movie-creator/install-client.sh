@@ -10,11 +10,15 @@
 # step is marker/slug-checked (no dupes, no drift). Backups written next to each
 # file before mutation.
 #
+# FAIL-FAST: the script runs with `set -e`. A step that fails (missing python3,
+# unwritable map, unreadable AGENTS.md, BLOCKED preflight) aborts the pass with
+# that step's exit code instead of logging progress it did not make.
+#
 # Usage (run inside the client container as the node user):
 #   bash install-client.sh [--skills-dir DIR] [--skill-slot NN] [--map PATH] [--agents PATH]
 #   bash install-client.sh --dry-run        # print plan, write nothing
 #   bash install-client.sh --fix            # also attempt dependency auto-install (env-preflight --fix)
-set -uo pipefail
+set -euo pipefail
 
 DRY=0; FIX=0
 SKILLS_DIR="${MMCS_SKILLS_DIR:-/home/node/.openclaw/skills}"
@@ -30,7 +34,7 @@ for a in "$@"; do
   case "$a" in
     --dry-run) DRY=1 ;;
     --fix) FIX=1 ;;
-    -h|--help) sed -n '1,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '1,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     --skills-dir|--skill-slot|--map|--agents)
       nxt="${@:$((i+1)):1}"
       if [ -z "$nxt" ] || [ "${nxt#--}" != "$nxt" ]; then
@@ -64,7 +68,12 @@ if [ -d "$DEST" ]; then
   log "skill present: $DEST (in place)"
 else
   if [ "$DRY" -eq 1 ]; then log "DRY: would cp -r $SRC_SKILL -> $DEST"; else
-    mkdir -p "$SKILLS_DIR" && cp -r "$SRC_SKILL" "$DEST" && chmod +x "$DEST/scripts/"*.sh 2>/dev/null || true
+    # The chmod tolerates a `scripts/*.sh` glob that matches nothing; the copy
+    # must NOT be tolerated — a swallowed `cp` failure let the pass continue and
+    # mutate the client's routing map / AGENTS.md for a skill that is not there.
+    mkdir -p "$SKILLS_DIR"
+    cp -r "$SRC_SKILL" "$DEST"
+    chmod +x "$DEST/scripts/"*.sh 2>/dev/null || true
     log "skill installed -> $DEST"
   fi
 fi
@@ -72,13 +81,19 @@ fi
 # 2. Register in routing map (Gap A) — slug-checked, idempotent.
 if ! command -v python3 >/dev/null 2>&1; then log "BLOCKED: python3 missing (map insert needs it)"; exit 2; fi
 MAP_PY="$(cat <<'PYEOF'
-import json, sys, shutil
+import json, sys, shutil, os
 path, slug, slot, dest = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 try:
     d = json.load(open(path))
 except FileNotFoundError:
+    # A box that has no routing map yet is a normal first install: start empty.
     d = {"skills": []}
-shutil.copy2(path, path + ".bak-mmcs75")
+if os.path.exists(path):
+    # Back up only what exists. copy2 on the missing-file path raises, and the
+    # FileNotFoundError above was deliberately swallowed into a default, so an
+    # unconditional copy would kill the first install on exactly the box this
+    # script exists for.
+    shutil.copy2(path, path + ".bak-mmcs75")
 skills = d.get("skills", [])
 if any(s.get("slug") == slug for s in skills):
     print("map: already registered")
@@ -98,6 +113,11 @@ else:
 PYEOF
 )"
 if [ "$DRY" -eq 1 ]; then log "DRY: would register $SLUG in $MAP"; else
+  # The map's parent directory is not guaranteed to exist (a fresh box has no
+  # skills tree yet); python's open(path, "w") does not create it, and the
+  # resulting ENOENT used to arrive after "skill installed" had already been
+  # logged as progress.
+  mkdir -p "$(dirname "$MAP")"
   python3 -c "$MAP_PY" "$MAP" "$SLUG" "$SKILL_SLOT" "$DEST"
 fi
 
@@ -119,6 +139,8 @@ else
 fi
 
 # 4. Preflight (prove READY; --fix attempts dependency repair).
+# Under `set -e` a BLOCKED preflight ends the pass with exit 2: "prove READY"
+# cannot be reported as success when the gate itself says otherwise.
 if [ "$DRY" -eq 1 ]; then log "DRY: preflight would run"; exit 0; fi
 PF="$DEST/scripts/env-preflight.sh"
 if [ -f "$PF" ]; then

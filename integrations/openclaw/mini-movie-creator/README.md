@@ -22,6 +22,12 @@ client OpenClaw box, in one pass:
 Backups (`*.bak-mmcs75`) are written next to each mutated file before change.
 After install it runs `env-preflight.sh` to prove READY.
 
+The installer runs with `set -e`: a step that fails (missing `python3`, an
+unwritable routing map, a `BLOCKED` preflight) aborts the pass with that step's
+exit code instead of logging progress it did not make. The routing map's parent
+directory is created on demand, so a first install on a box with no skills tree
+registers cleanly instead of raising mid-run.
+
 Installers never touch credentials, models, or client sovereignty.
 
 ```bash
@@ -55,9 +61,12 @@ bash scripts/env-preflight.sh --fix    # auto-install missing deps, then re-veri
 bash scripts/env-preflight.sh --json   # {"ready":true|false,"pass":N,"fail":N}
 ```
 
-Checks: node >= 20, git, ffmpeg + ffprobe, remotion deps (incl. TypeScript 5.x —
-installed with `npm ci --include=dev`; a bare `npm ci` skips devDeps and the
-render pipeline crashes with `typescript.sys` undefined), built mmcs CLI.
+Checks: node >= 20, git, ffmpeg + ffprobe, python3 (engine `tools/*.py` + the
+installer's routing-map insert), tsx (the committed `.claude` hooks), chromium
+(the Remotion renderer — system browser or Remotion's project-local Chrome
+Headless Shell), remotion deps (incl. TypeScript 5.x — installed with
+`npm ci --include=dev`; a bare `npm ci` skips devDeps and the render pipeline
+crashes with `typescript.sys` undefined), built mmcs CLI.
 Exit 0 = READY, exit 2 = BLOCKED with named remedies. Never reads secret
 values.
 

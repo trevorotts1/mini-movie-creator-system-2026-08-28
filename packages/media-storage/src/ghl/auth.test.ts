@@ -3,11 +3,14 @@ import {
   GHL_API_BASE_URL,
   GHL_API_VERSION,
   GHL_AUTH_HEADER,
+  GHL_TOKEN_KIND_ENV_VAR,
+  GHL_TOKEN_EXPIRES_AT_ENV_VAR,
   GHL_VERSION_HEADER,
   createGhlAuthConfig,
   ghlAuthConfigFromEnv,
   redactGhlToken,
   isGhlTokenPresent,
+  InvalidGhlTokenError,
   MissingGhlConfigError,
 } from "./auth.js";
 import { GHL_ENDPOINTS } from "./config.js";
@@ -93,6 +96,84 @@ describe("GHL auth config", () => {
     expect(() => ghlAuthConfigFromEnv({})).toThrow(MissingGhlConfigError);
     expect(() => ghlAuthConfigFromEnv({ GHL_ACCESS_TOKEN: TOKEN })).toThrow(/GHL_LOCATION_ID/);
     expect(() => ghlAuthConfigFromEnv({ GHL_LOCATION_ID: LOCATION })).toThrow(/GHL_ACCESS_TOKEN/);
+  });
+
+  it("reads the token kind and expiry from the environment (SKR-026)", () => {
+    const config = ghlAuthConfigFromEnv({
+      GHL_ACCESS_TOKEN: TOKEN,
+      GHL_LOCATION_ID: LOCATION,
+      [GHL_TOKEN_KIND_ENV_VAR]: "sub-account-access-token",
+      [GHL_TOKEN_EXPIRES_AT_ENV_VAR]: "2026-08-29T00:00:00.000Z",
+    });
+    expect(config.tokenKind).toBe("sub-account-access-token");
+    expect(config.tokenExpiresAt()).toBe("2026-08-29T00:00:00.000Z");
+    // Default stays the static Private Integration Token MMCS ships with.
+    expect(ghlAuthConfigFromEnv({ GHL_ACCESS_TOKEN: TOKEN, GHL_LOCATION_ID: LOCATION }).tokenKind).toBe(
+      "private-integration-token",
+    );
+  });
+
+  it("rejects an undocumented GHL_TOKEN_KIND instead of guessing", () => {
+    expect(() =>
+      ghlAuthConfigFromEnv({
+        GHL_ACCESS_TOKEN: TOKEN,
+        GHL_LOCATION_ID: LOCATION,
+        [GHL_TOKEN_KIND_ENV_VAR]: "oauth-ish",
+      }),
+    ).toThrow(InvalidGhlTokenError);
+  });
+});
+
+describe("GHL token lifecycle wiring (SKR-026)", () => {
+  it("renews an expiring OAuth token through authorizedHeaders()", async () => {
+    let refreshes = 0;
+    const config = createGhlAuthConfig({
+      token: TOKEN,
+      locationId: LOCATION,
+      tokenKind: "sub-account-access-token",
+      expiresAt: "2026-08-28T11:59:00.000Z", // already expired
+      refresh: async () => {
+        refreshes += 1;
+        return { token: "oauth-token-after-refresh" };
+      },
+    });
+    const headers = await config.authorizedHeaders();
+    expect(refreshes).toBe(1);
+    expect(headers[GHL_AUTH_HEADER]).toBe("Bearer oauth-token-after-refresh");
+    expect(headers[GHL_VERSION_HEADER]).toBe("v3");
+    // The refreshed token is what later synchronous snapshots carry.
+    expect(config.buildHeaders()[GHL_AUTH_HEADER]).toBe("Bearer oauth-token-after-refresh");
+  });
+
+  it("keeps buildHeaders() a synchronous snapshot for callers that cannot await", () => {
+    const config = createGhlAuthConfig({ token: TOKEN, locationId: LOCATION });
+    expect(config.buildHeaders()[GHL_AUTH_HEADER]).toBe(`Bearer ${TOKEN}`);
+  });
+
+  it("recovers from a 401 for a sub-account token and refuses for a static PIT", async () => {
+    const oauth = createGhlAuthConfig({
+      token: TOKEN,
+      locationId: LOCATION,
+      tokenKind: "sub-account-access-token",
+      refresh: async () => ({ token: "token-after-401" }),
+    });
+    const recovered = await oauth.recoverFromUnauthorized();
+    expect(recovered[GHL_AUTH_HEADER]).toBe("Bearer token-after-401");
+
+    const pit = createGhlAuthConfig({ token: TOKEN, locationId: LOCATION });
+    await expect(pit.recoverFromUnauthorized()).rejects.toThrow(/rotate GHL_ACCESS_TOKEN/);
+  });
+
+  it("never leaks a refreshed token through stringification", async () => {
+    const config = createGhlAuthConfig({
+      token: TOKEN,
+      locationId: LOCATION,
+      tokenKind: "sub-account-access-token",
+      refresh: async () => ({ token: "rotated-secret-value-9876" }),
+    });
+    await config.recoverFromUnauthorized();
+    expect(String(config)).not.toContain("rotated-secret-value-9876");
+    expect(JSON.stringify(config)).not.toContain("rotated-secret-value-9876");
   });
 });
 

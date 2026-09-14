@@ -18,25 +18,45 @@ at the repo root; full tables and config-loading rules live in
 
 ## Capability registry — the source of truth
 
-Per-provider limits (prompt character ceilings, reference counts, aspect
+Per-model limits (prompt character ceilings, reference counts, aspect
 ratios, durations, pricing) are mirrored in the machine-readable registry at
-`packages/capability-registry/src/data/` (`agnes.ts`, `kie.ts`, `fish.ts`,
-`reasoning.ts`) and double-documented in
-`docs/provider-capabilities/` — one file per provider family, each value
+`packages/capability-registry/src/data/` — `agnes.ts`, `kie.ts`, `fish.ts`,
+`reasoning.ts` and nothing else — and double-documented in
+`docs/provider-capabilities/` (one file per provider family), each value
 carrying `lastVerifiedAt` + `sourceUrls` + `confidence` (VERIFIED /
 PROVISIONAL / UNKNOWN). **UNKNOWN IS VALID** — never invent a value to fill a
 null (e.g. the Agnes prompt character ceiling).
 
+**GHL is not a capability profile.** The registry seeds media, voice and
+reasoning models only; its record kinds are `image | video | reasoning | voice`
+(`packages/capability-registry/src/data/types.ts`) and there is no `ghl.ts`.
+GoHighLevel is the media **archive**, not a model, so its limited, documented
+surface (auth shape, folder/file endpoints, size caps) lives in the adapter
+(`packages/media-storage/src/ghl/`), the env contract
+(`packages/core/src/config/schema.ts`) and the human-readable note
+`docs/provider-capabilities/ghl.md`. Expect `mmcs models` to list no GHL row —
+that is correct, not a missing seed.
+
 Check what the engine sees:
 
 ```bash
-mmcs doctor            # which env names are set/missing (names only)
-mmcs providers verify  # configured vs documented vs observed capability; never a paid call
-mmcs models            # registry view used by planning/validation
+mmcs doctor            # which env names are set/missing (names only) — real env-presence check
+mmcs providers         # configured vs not, per provider, from env presence — real
+mmcs models            # real: lists the seeded `MEDIA_PROFILES` from the registry
+mmcs providers verify  # RUNS BUT CHECKS NOTHING TODAY: the CLI injects an empty registry
+                       # loader and registers zero probes, so it prints "0 model(s) checked"
+                       # and never consults @mmcs/capability-registry. Exit 0.
 ```
 
+`mmcs providers verify` is the intended configured-vs-documented-vs-observed
+report, but until the CLI wires a real registry loader and at least one safe
+probe it is a no-op that can only say "0 model(s) checked". Read the registry
+directly rather than trusting that line: the seeded profiles are the registry
+data modules listed above.
+
 `mmcs providers verify` never silently rewrites a VERIFIED capability because
-of one transient probe failure (spec §24).
+of one transient probe failure (spec §24) — a rule it currently satisfies
+vacuously, since no probe is registered.
 
 ## Zero-spend verification before wiring keys
 

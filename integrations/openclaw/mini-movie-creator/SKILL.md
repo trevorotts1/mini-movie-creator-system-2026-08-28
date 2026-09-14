@@ -33,8 +33,9 @@ If the CLI is not built, run `npm run build` in `apps/cli` once (see the repo
 README) — do not reimplement verbs inside this skill.
 
 **Before any media work (first run and after a machine/container change), run
-the dependency preflight — it checks node, git, ffmpeg/ffprobe, remotion deps
-and the built CLI, and repairs what it safely can with `--fix`:**
+the dependency preflight — it checks node, git, ffmpeg/ffprobe, python3, tsx,
+chromium (the Remotion renderer), remotion deps and the built CLI, and repairs
+what it safely can with `--fix`:**
 
 ```bash
 bash {baseDir}/scripts/env-preflight.sh          # check-only

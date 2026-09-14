@@ -267,6 +267,81 @@ describe("SKL-003 personal-install.sh", () => {
     });
   });
 
+  describe("$HOME/.mmcs/mmcs.env is a shared record (SKR-029 / SKR-038)", () => {
+    const envPath = (home: string) => path.join(home, ".mmcs", "mmcs.env");
+    const OTHER = 'export MMCS_REPO_ROOT="/another/checkout"\n';
+
+    it("refuses to overwrite a differing env file without --force --confirm", () => {
+      const { root, home } = makeFixture();
+      fs.mkdirSync(path.dirname(envPath(home)), { recursive: true });
+      fs.writeFileSync(envPath(home), OTHER);
+      const r = run(root, home);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toMatch(/Refusing to overwrite/);
+      // the other install's record is byte-identical after the refusal
+      expect(fs.readFileSync(envPath(home), "utf8")).toBe(OTHER);
+      // nothing was replaced, so no backup was made either
+      expect(
+        fs.readdirSync(path.join(home, ".mmcs")).filter((n) => n.includes(".backup-")).length,
+      ).toBe(0);
+    });
+
+    it("--force --confirm backs the previous env file up before rewriting it", () => {
+      const { root, home } = makeFixture();
+      fs.mkdirSync(path.dirname(envPath(home)), { recursive: true });
+      fs.writeFileSync(envPath(home), OTHER);
+      const r = run(root, home, ["--force", "--confirm"]);
+      expect(r.status).toBe(0);
+      const backups = fs
+        .readdirSync(path.join(home, ".mmcs"))
+        .filter((n) => n.includes(".backup-"));
+      expect(backups.length).toBe(1);
+      expect(fs.readFileSync(path.join(home, ".mmcs", backups[0]!), "utf8")).toBe(OTHER);
+      expect(fs.readFileSync(envPath(home), "utf8")).toMatch(`export MMCS_REPO_ROOT="${root}"`);
+    });
+
+    it("never rewrites an identical env file, including on the no-op 'already installed' path", () => {
+      const { root, home } = makeFixture();
+      expect(run(root, home).status).toBe(0);
+      const before = fs.readFileSync(envPath(home), "utf8");
+      // read-only: a `> "$ENV_FILE"` truncation-in-place would now fail loudly,
+      // so exit 0 here proves the no-op path does not touch the file at all.
+      fs.chmodSync(envPath(home), 0o444);
+      const r = run(root, home);
+      expect(r.status).toBe(0);
+      expect(r.stdout).toMatch(/already installed|already records this repo root/);
+      expect(fs.readFileSync(envPath(home), "utf8")).toBe(before);
+      fs.chmodSync(envPath(home), 0o644);
+    });
+
+    it("--dry-run predicts the env refusal and still mutates nothing", () => {
+      const { root, home } = makeFixture();
+      fs.mkdirSync(path.dirname(envPath(home)), { recursive: true });
+      fs.writeFileSync(envPath(home), OTHER);
+      const r = run(root, home, ["--dry-run"]);
+      expect(r.status).toBe(1);
+      expect(fs.readFileSync(envPath(home), "utf8")).toBe(OTHER);
+      expect(fs.existsSync(TARGET(home))).toBe(false);
+    });
+
+    it("records the durable canonical skill location, never a transient --source worktree", () => {
+      const { root, home } = makeFixture({ withCanonical: false });
+      // a worktree-shaped checkout that is pruned later: recording THIS path
+      // would leave a dangling MMCS_SKILL_SOURCE in the shared env file.
+      const worktree = path.join(root, "worktrees", "SKL-003");
+      writeCanonicalSkill(worktree, "worktree fixture");
+      const src = path.join(worktree, "skills", "mini-movie-creator");
+      const r = run(root, home, ["--source", src]);
+      expect(r.status).toBe(0);
+      // the installed symlink still points at the source it was asked for ...
+      expect(fs.readlinkSync(TARGET(home))).toBe(src);
+      // ... but the recorded skill source is the durable canonical location
+      const env = fs.readFileSync(envPath(home), "utf8");
+      expect(env).toMatch(`export MMCS_SKILL_SOURCE="${CANON(root)}"`);
+      expect(env).not.toContain(worktree);
+    });
+  });
+
   describe("--check", () => {
     it("exits 0 on a correct symlink install with canonical present", () => {
       const { root, home } = makeFixture();

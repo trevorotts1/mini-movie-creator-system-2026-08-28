@@ -9,62 +9,40 @@
  *
  * `cost_quota_usage` tracks included subscription/free allowance SEPARATELY
  * (spec §4: never counted as paid spend) — no reservation gate touches it.
+ *
+ * Ownership (SKR-010): the authoritative definition lives in
+ * `@mmcs/database`'s migration band `050_`, which is what creates and owns
+ * these tables in a production database. This module re-exports that same
+ * text — there is deliberately no second copy of the DDL here, because two
+ * hand-maintained definitions of one table is exactly how `provider_jobs`
+ * drifted into two incompatible shapes (SKR-006).
  */
-export const CREATE_COST_RESERVATIONS_SQL = `
-CREATE TABLE IF NOT EXISTS cost_reservations (
-  id TEXT PRIMARY KEY,
-  job_id TEXT,
-  episode_id TEXT,
-  provider TEXT NOT NULL,
-  provider_model TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('paid', 'included')),
-  status TEXT NOT NULL CHECK (status IN ('reserved', 'committed', 'released')),
-  estimated_cents INTEGER NOT NULL CHECK (estimated_cents >= 0),
-  actual_cents INTEGER CHECK (actual_cents IS NULL OR actual_cents >= 0),
-  requested_seconds REAL,
-  generated_seconds REAL,
-  accepted_seconds REAL,
-  rejected_seconds REAL,
-  retries INTEGER,
-  approved_at TEXT,
-  approval_note TEXT,
-  release_reason TEXT,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
-) STRICT;
-`.trim();
+import {
+  CREATE_COST_QUOTA_USAGE_INDEXES_SQL,
+  CREATE_COST_QUOTA_USAGE_SQL,
+  CREATE_COST_RESERVATIONS_INDEXES_SQL,
+  CREATE_COST_RESERVATIONS_SQL,
+} from "@mmcs/database";
 
-export const CREATE_COST_RESERVATIONS_INDEXES_SQL = `
-CREATE INDEX IF NOT EXISTS idx_cost_reservations_status ON cost_reservations (status);
-CREATE INDEX IF NOT EXISTS idx_cost_reservations_kind ON cost_reservations (kind);
-CREATE INDEX IF NOT EXISTS idx_cost_reservations_episode ON cost_reservations (episode_id) WHERE episode_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_cost_reservations_job ON cost_reservations (job_id) WHERE job_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_cost_reservations_provider ON cost_reservations (provider, provider_model);
-CREATE INDEX IF NOT EXISTS idx_cost_reservations_day ON cost_reservations (created_at);
-`.trim();
+export {
+  CREATE_COST_QUOTA_USAGE_INDEXES_SQL,
+  CREATE_COST_QUOTA_USAGE_SQL,
+  CREATE_COST_RESERVATIONS_INDEXES_SQL,
+  CREATE_COST_RESERVATIONS_SQL,
+};
 
-export const CREATE_COST_QUOTA_USAGE_SQL = `
-CREATE TABLE IF NOT EXISTS cost_quota_usage (
-  id TEXT PRIMARY KEY,
-  reservation_id TEXT,
-  provider TEXT NOT NULL,
-  provider_model TEXT NOT NULL,
-  period TEXT NOT NULL,
-  units_kind TEXT NOT NULL,
-  units REAL NOT NULL CHECK (units >= 0),
-  note TEXT,
-  created_at TEXT NOT NULL
-) STRICT;
-`.trim();
-
-export const CREATE_COST_QUOTA_USAGE_INDEXES_SQL = `
-CREATE INDEX IF NOT EXISTS idx_cost_quota_usage_lookup
-  ON cost_quota_usage (provider, provider_model, period, units_kind);
-CREATE INDEX IF NOT EXISTS idx_cost_quota_usage_reservation
-  ON cost_quota_usage (reservation_id) WHERE reservation_id IS NOT NULL;
-`.trim();
-
-/** Convenience for callers that create the schema themselves (tests, CLI init). */
+/**
+ * Create the ledger tables in a database that has not been migrated — a
+ * scratch/test database, or a caller that must have the tables before a
+ * migration run.
+ *
+ * This is NOT how production databases get the ledger: `migrate(db,
+ * MIGRATIONS)` applies band `050_`, which verifies this same shape and
+ * records it in the migration ledger. Calling this helper on a production
+ * database creates the tables outside the migration history — the condition
+ * SKR-010 removed — so it stays idempotent and leaves any existing
+ * (canonical) table untouched rather than adding a second owner.
+ */
 export function createCostEngineSchema(db: {
   exec(sql: string): void;
 }): void {

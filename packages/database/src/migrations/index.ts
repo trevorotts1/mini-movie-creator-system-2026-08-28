@@ -17,3 +17,12 @@ export { baselineMigrations } from "./000-init/index.js";
 export { jobsAssetsMigrations } from "./004-jobs-assets/index.js";
 export { projectSchemaMigrations } from "./010-project-series-episode/index.js";
 export { scenesMigrations } from "./030-scenes-shots/index.js";
+export {
+  COST_QUOTA_USAGE_TABLE,
+  COST_RESERVATIONS_TABLE,
+  CREATE_COST_QUOTA_USAGE_INDEXES_SQL,
+  CREATE_COST_QUOTA_USAGE_SQL,
+  CREATE_COST_RESERVATIONS_INDEXES_SQL,
+  CREATE_COST_RESERVATIONS_SQL,
+  costLedgerMigrations,
+} from "./050-cost-ledger/index.js";

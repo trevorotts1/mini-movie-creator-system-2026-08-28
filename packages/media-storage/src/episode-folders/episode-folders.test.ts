@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { connectSqlite, migrate, MIGRATIONS } from "@mmcs/database";
+import { GhlLocationMismatchError } from "../ghl/tenant.js";
 import {
   EPISODE_SUBFOLDERS,
   EPISODE_SUBFOLDER_KEYS,
@@ -316,6 +317,20 @@ describe("GHL-010 — episode folder creation + persistence", () => {
     await expect(ensurer.ensure({ ...baseRequest, locationId: "loc_OTHER" })).rejects.toThrow(
       /refusing re-ensure/,
     );
+  });
+
+  it("refuses a store write that would re-tenant an existing episode record (SKR-011)", async () => {
+    const { ensurer, store } = makeEnsurer();
+    const ensured = await ensurer.ensure(baseRequest);
+    const persisted = store.findByEpisodeId("ep_1");
+    expect(persisted?.locationId).toBe("loc_1");
+    expect(persisted).toBeDefined();
+    expect(() =>
+      store.save({ ...(persisted as EpisodeFolderRecord), locationId: "loc_OTHER" }),
+    ).toThrow(GhlLocationMismatchError);
+    // The persisted row still belongs to the original sub-account.
+    expect(store.findByEpisodeId("ep_1")?.locationId).toBe("loc_1");
+    expect(ensured.ids.episode).toBe(store.findByEpisodeId("ep_1")?.episode);
   });
 
   it("adopts a pre-seeded spine via rootFolderId and creates only missing levels", async () => {

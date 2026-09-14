@@ -12,8 +12,16 @@
  * - path-traversal-safe filenames: canonical, flat, sanitized names safe to
  *   pass to any filesystem or storage layer.
  *
- * Pure functions only: no I/O here. Downloaders (GHL-006) call these before
- * fetching; uploaders (GHL-005/GHL-006) call size/MIME checks before POST.
+ * Pure functions only: no I/O here. Call sites on the real paths (SKR-025 —
+ * before this wiring the guard existed but nothing called it):
+ * - `validateRemoteUrl`   → `ghl/upload-binary/upload.ts` (provider URL, before
+ *                           any fetch) and `ghl/upload-hosted/upload-hosted.ts`
+ *                           (the URL handed to GHL to fetch server-side).
+ * - `validateMediaFile`   → `ghl/upload-binary/upload.ts`, which composes
+ *                           `validateMimeType` + `validateFileSize` for the
+ *                           downloaded bytes before POST.
+ * - `checkFilename` (→ `sanitizeFilename`)
+ *                         → both upload modules, before a name is stored.
  */
 
 /** Media categories MMCS archives to GHL, with canonical MIME types. */

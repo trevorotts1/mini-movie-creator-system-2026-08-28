@@ -8,7 +8,10 @@ an adapter, never a number invented at call time.
 
 - Machine-readable data: `packages/capability-registry/src/data/`
   (`agnes.ts`, `kie.ts`, `fish.ts`, `reasoning.ts`) with a schema in
-  `../schema` and validators in `../validators`.
+  `../schema` and validators in `../validators`. Those four files are the whole
+  set — there is no `ghl.ts`, because GHL is the media archive rather than a
+  model and its contract lives in `packages/media-storage/src/ghl/` plus
+  `docs/provider-capabilities/ghl.md`.
 - Registry package surface: `packages/capability-registry/src/index.ts`
   (LLM registry, pricing, max-reasoning, observed-override layers).
 - Human-readable twin: `docs/provider-capabilities/` — one file per provider
@@ -38,14 +41,19 @@ never guessed.
 ## Inspecting it
 
 ```bash
-mmcs models            # registry view used by planning/validation
-mmcs providers verify  # configured vs documented vs observed + last verified + warnings
+mmcs models            # 6 seeded MEDIA profiles (agnes x3, kie x3) — the voice
+                       # (fish x4) and reasoning (x4) seeds are not printed
+mmcs providers verify  # NO-OP TODAY: empty registry loader + zero probes, prints
+                       # "0 model(s) checked" and exits 0 — see docs/provider-setup.md
 ```
 
-`mmcs providers verify` reports the runbook §61 triple (configured,
-documented, runtime-observed where safely testable) and **never silently
-rewrites a VERIFIED capability** because of one transient probe failure.
-Observed divergences land in the observed-override layer
+`mmcs providers verify` is the verb intended to report the runbook §61 triple
+(configured, documented, runtime-observed where safely testable) and **never
+silently rewrite a VERIFIED capability** because of one transient probe
+failure. Until the CLI injects a real registry loader and at least one safe
+probe it performs none of that: it reads zero documented models and runs zero
+observations, so its "0 discrepancies" line carries no information. Observed
+divergences, once a probe exists, land in the observed-override layer
 (`packages/capability-registry/src/observed-overrides/`) with provenance, not
 into the documented values.
 

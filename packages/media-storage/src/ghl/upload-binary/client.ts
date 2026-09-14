@@ -60,7 +60,13 @@ export class GhlUploadError extends Error {
     | "decode-failed"
     | "upload-failed"
     | "url-unreachable"
-    | "missing-id-or-url";
+    | "missing-id-or-url"
+    /** Provider URL rejected by the SSRF/mime guard before any fetch (SKR-025). */
+    | "disallowed-url"
+    /** Bytes are not an accepted media type for the declared kind (SKR-025). */
+    | "mime-type"
+    /** Filename could not be sanitized for storage (SKR-025). */
+    | "invalid-name";
 
   constructor(reason: GhlUploadError["reason"], message: string) {
     super(message);

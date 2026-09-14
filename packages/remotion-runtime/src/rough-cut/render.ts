@@ -3,23 +3,29 @@
  * Rough-cut preview render (VID-012) — timeline → preview MP4 (spec §21/§32).
  *
  * Spec §21 puts the rough cut in Remotion's ownership ("rough-cut and final
- * render compositions"). The production render is upstream Remotion
- * (`bundle()` → `selectComposition()` → `renderMedia()` over the episodic
- * composition the registry generates); those collaborators are NOT
- * importable from integration yet, so the adapter is injected — the same
- * port posture VID-013 and VID-014 shipped ahead of their upstreams. The
- * adapter shape mirrors `renderMedia` inputs so the integration wrapper is
- * a thin, structural match.
+ * render compositions"). The production render drives the upstream Remotion
+ * sequence (`bundle()` → `selectComposition()` → `renderMedia()`) through
+ * `makeRemotionRenderAdapter()`; the adapter is still injected as a port (the
+ * caller owns which entry point/composition to bundle), and its request shape
+ * mirrors `renderMedia` inputs so a hand-written adapter stays a thin
+ * structural match.
  *
  * Two render paths, one pipeline:
- *   1. PRODUCTION: the injected `RoughCutRenderAdapter` (Remotion at
- *      integration) renders the assembled timeline.
- *   2. FIXTURE: `makeFfmpegFixtureAdapter()` synthesizes a REAL preview MP4
- *      from the assembled timeline with the system ffmpeg (lavfi sources +
- *      the dialogue/music inputs as real audio tracks where provided) —
- *      no network, no provider spend, no committed media. This proves the
- *      whole path (assemble → render → ffprobe) against real binaries, and
- *      doubles as the offline smoke for `mmcs rough-cut`.
+ *   1. PRODUCTION: `makeRemotionRenderAdapter()`
+ *      (../final-render/remotion-renderer.ts) bundles the composition and
+ *      renders it through `@remotion/renderer` — the real upstream
+ *      `bundle() → selectComposition() → renderMedia()` sequence.
+ *   2. TEST FIXTURE ONLY: `makeFfmpegFixtureAdapter()` synthesizes a preview
+ *      MP4 with the system ffmpeg (lavfi test pattern) — no network, no
+ *      provider spend, no committed media. It proves the whole path
+ *      (assemble → render → ffprobe) against real binaries, and doubles as the
+ *      offline smoke for `mmcs rough-cut`. It is NOT the render path: it never
+ *      mounts a composition or draws a frame of the episode.
+ *
+ * The request no longer carries a fabricated `serveUrl`: a bundle that does
+ * not exist cannot have a URL, and passing a fake one made every adapter look
+ * wired while nothing was ever bundled. The genuine adapter resolves its entry
+ * point from `entryPoint` (request or adapter option) and bundles it.
  *
  * Every render is validated with the ffprobe gate before the pipeline
  * reports success (spec §21: ffprobe owns integrity checks; §32: the rough
@@ -39,13 +45,20 @@ import type { RoughCutPlan, RoughCutTimeline } from "./types.js";
 
 /**
  * Production render request — mirrors upstream `renderMedia` inputs
- * (bundle/serveUrl, composition id, fps, resolution, duration, codec).
+ * (composition id, fps, resolution, duration, codec).
  */
 export interface RoughCutRenderRequest {
   /** Composition id the registry generated (e.g. "S01E01"). */
   compositionId: string;
-  /** Bundled Remotion entry (serveUrl) or fixture bundle id. */
-  serveUrl: string;
+  /**
+   * Remotion bundle entry point — the file that calls `registerRoot()` and
+   * registers this composition (upstream: `remotion/src/index.ts`), or a
+   * pre-built serve URL. Optional: the adapter may own it
+   * (`makeRemotionRenderAdapter({ entryPoint })`, or `MMCS_REMOTION_ENTRY`).
+   * When NO adapter knows an entry point the render fails with
+   * `REMOTION_ENTRY_POINT_MISSING` — it never falls back to a test pattern.
+   */
+  entryPoint?: string;
   fps: number;
   width: number;
   height: number;
@@ -151,11 +164,16 @@ export async function ffprobeValidateRoughCut(
 }
 
 /**
- * Fixture render adapter: builds ONE deterministic preview MP4 from the
- * assembled timeline using the system ffmpeg lavfi sources at the timeline's
- * resolution/fps/duration (h264 + yuv420p, universally probeable). Silent by
- * design (anullsrc-free: no audio track unless dialogue/music audio files
- * exist at integration; the §32 acceptance is a valid preview MP4, and the
+ * TEST FIXTURE adapter (NOT the render path): builds ONE deterministic preview
+ * MP4 from a lavfi test pattern using the system ffmpeg at the timeline's
+ * resolution/fps/duration (h264 + yuv420p, universally probeable). It mounts no
+ * composition and renders none of the episode's frames — it exists so the
+ * assemble → render → ffprobe plumbing can be exercised against real binaries
+ * offline. Production renders use `makeRemotionRenderAdapter()`
+ * (../final-render/remotion-renderer.ts).
+ *
+ * Silent by design (no audio track unless dialogue/music audio files exist at
+ * integration; the §32 acceptance is a valid preview MP4, and the
  * dialogue/music placement the fixture carries in its metadata sidecar).
  *
  * Duration honors the timeline exactly (`totalFrames / fps`), so the
@@ -243,6 +261,9 @@ export function planRoughCutRender(
 /**
  * Assemble + render + ffprobe-validate a rough cut.
  *
+ * `options.entryPoint` names the Remotion bundle entry for adapters that need
+ * one (`makeRemotionRenderAdapter` accepts it here or in its own options).
+ *
  * Throws `RoughCutError("OUTPUT_INVALID")` when the produced file fails the
  * ffprobe gate — a bad preview never reports success.
  */
@@ -253,12 +274,11 @@ export async function renderRoughCut(
     /** Validate the output (default: the real-ffmpeg ffprobe gate). */
     validate?: (output: string) => Promise<RoughCutProbeReport>;
   },
-  options: { outputDir?: string; version?: number } = {},
+  options: { outputDir?: string; version?: number; entryPoint?: string } = {},
 ): Promise<RoughCutResult> {
   const assembled = planRoughCutRender(plan, options);
   const request: RoughCutRenderRequest = {
     compositionId: assembled.compositionId,
-    serveUrl: "rough-cut://fixture",
     fps: assembled.timeline.fps,
     width: assembled.timeline.resolution.width,
     height: assembled.timeline.resolution.height,
@@ -266,6 +286,7 @@ export async function renderRoughCut(
     output: assembled.outputPath,
     codec: "h264",
     timeline: assembled.timeline,
+    ...(options.entryPoint ? { entryPoint: options.entryPoint } : {}),
   };
   const rendered = await ports.render(request);
   const validate = ports.validate ?? ffprobeValidateRoughCut;

@@ -47,6 +47,16 @@ export interface ArchivalLedgerRecord<T = unknown> {
   state: "reserved" | "completed";
   result: T | null;
   serializationError?: string;
+  /**
+   * Attempts made under this reservation so far. A reservation that carries
+   * attempts + `failedAt` is a KNOWN unresolved attempt (its provider-side
+   * outcome is unknown), not a silent "reserved forever" (SKR-013).
+   */
+  attempts?: number;
+  /** Message of the last failure that left the reservation unresolved. */
+  lastFailure?: string;
+  /** ISO timestamp of that last failure. */
+  failedAt?: string;
 }
 
 export class ArchivalLedgerError extends Error {
@@ -188,6 +198,33 @@ export class ArchivalLedger {
   /** Release a reservation after a definitively failed attempt (testing/admin). */
   async release(key: string): Promise<void> {
     await rm(this.recordPath(key), { force: true });
+  }
+
+  /**
+   * Stamp an unresolved reservation with the failure that left it unresolved
+   * (SKR-013).
+   *
+   * The record is deliberately KEPT rather than released: a transport failure
+   * (or any failure whose provider-side outcome is unknown) may have landed at
+   * GHL, so deleting the reservation would re-open the exact lost-success
+   * duplicate window the ledger exists to close. Stamping it is what turns
+   * "reserved forever, silently" into an inspectable state — attempts,
+   * failure, timestamp — that `withArchivalIdempotency` refuses to re-POST
+   * over until provider-side detection proves the file absent.
+   *
+   * Returns the updated record, or null when no reservation exists.
+   */
+  async fail(key: string, reason: string, attempts?: number): Promise<ArchivalLedgerRecord | null> {
+    const existing = await this.get(key);
+    if (existing === null) return null;
+    const record: ArchivalLedgerRecord = {
+      ...existing,
+      ...(attempts !== undefined ? { attempts } : {}),
+      lastFailure: reason,
+      failedAt: new Date().toISOString(),
+    };
+    await this.put(record);
+    return record;
   }
 
   /**

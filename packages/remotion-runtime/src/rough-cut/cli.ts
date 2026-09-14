@@ -130,13 +130,19 @@ export function formatRoughCutLines(result: {
 /**
  * Execute the `rough-cut` command. `planFactory` resolves the episode's
  * RoughCutPlan from durable state (DB/repos at integration); `render` is the
- * render adapter (fixture now, Remotion at integration).
+ * render adapter — production passes `makeRemotionRenderAdapter()`
+ * (../final-render/remotion-renderer.ts), tests pass the ffmpeg fixture.
  */
 export async function executeRoughCut(
   argv: readonly string[],
   planFactory: (episodeId: string) => RoughCutPlan | undefined,
   render: RoughCutRenderAdapter,
-  options: { outputDir?: string; validate?: (output: string) => Promise<{ ok: boolean; error?: string }> } = {},
+  options: {
+    outputDir?: string;
+    validate?: (output: string) => Promise<{ ok: boolean; error?: string }>;
+    /** Bundle entry point for Remotion adapters (see renderRoughCut). */
+    entryPoint?: string;
+  } = {},
 ): Promise<RoughCutCliResult> {
   const opts = parseRoughCutArgs(argv);
   if (!opts.episodeId) {

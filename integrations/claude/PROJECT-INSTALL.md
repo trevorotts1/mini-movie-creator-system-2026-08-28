@@ -55,10 +55,11 @@ cd integrations/claude && npm test
 npx vitest run --config integrations/claude/vitest.config.mts
 ```
 
-18 tests drive the REAL script end-to-end inside temp fixture repos (canonical
+19 tests drive the REAL script end-to-end inside temp fixture repos (canonical
 source + `.claude/skills`), covering: symlink creation, resolution through the
 symlink, idempotency (both modes), wrong-symlink repoint, refusal + `--force`
-backup, canonical-missing error, `--dry-run` no-mutation, `--check` outcomes
+backup (two forced replaces in one second get distinct backup dirs instead of
+nesting), canonical-missing error, `--dry-run` no-mutation, `--check` outcomes
 (installed / not installed / dangling symlink / copy-mode drift / real checkout),
 copy-mode mirror + resync on canonical change + stale-file removal, foreign-dir
 refusal, and usage errors.

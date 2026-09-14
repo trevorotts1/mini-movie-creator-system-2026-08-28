@@ -13,6 +13,7 @@
  */
 import type { SqliteDatabase } from "@mmcs/database";
 import type { EpisodeFolderRecord } from "./types.js";
+import { assertStoredLocationMatches } from "../ghl/tenant.js";
 
 const CREATE_TABLE_SQL = `
 CREATE TABLE IF NOT EXISTS episode_folders (
@@ -79,6 +80,19 @@ export class EpisodeFolderStore {
 
   /** Persist (insert-or-replace) the full ID set for one episode. */
   save(record: EpisodeFolderRecord): void {
+    // Tenant guard on the WRITE path (SKR-011), not just on the ensurer's
+    // fast path: this table's upsert rewrites location_id verbatim, so without
+    // the check a re-save under a re-pointed GHL_LOCATION_ID would silently
+    // re-tenant an episode's whole folder tree.
+    const existing = this.findByEpisodeId(record.episodeId);
+    if (existing !== undefined) {
+      assertStoredLocationMatches({
+        storedLocationId: existing.locationId,
+        requestedLocationId: record.locationId,
+        subject: `episode "${record.episodeId}"`,
+        action: "overwrite the persisted folder record",
+      });
+    }
     this.db
       .prepare(INSERT_SQL)
       .run(

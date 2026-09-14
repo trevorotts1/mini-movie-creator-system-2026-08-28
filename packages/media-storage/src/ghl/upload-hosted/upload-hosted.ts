@@ -29,14 +29,24 @@
  *   falls back to binary upload (GHL-006); the error carries the fileId so
  *   the fallback can reference the partial record. Media Storage
  *   read/write permissions and Location access scope required.
+ *
+ * SKR-025: the source `fileUrl` is validated with the shared SSRF guard
+ * (`validate.ts` → `validateRemoteUrl`: HTTPS-only, public host, no embedded
+ * credentials, port 443) before the multipart POST, and the canonical name is
+ * sanitized with the shared filename guard.
  */
+import {
+  ValidationError,
+  checkFilename,
+  validateRemoteUrl,
+} from "../validation/index.js";
 
 /** Multipart POST transport. Implementations attach auth headers. */
 export type GhlUploadHttp = (path: string, body: FormData) => Promise<unknown>;
 
 /** Destination + source for one hosted ingest. */
 export interface HostedIngestRequest {
-  /** Temporary provider URL GHL will fetch server-side. http/https only. */
+  /** Temporary provider URL GHL will fetch server-side. HTTPS + public host only. */
   fileUrl: string;
   /**
    * Human/source name to canonicalize. Sanitized into a deterministic
@@ -64,6 +74,7 @@ export interface HostedArchiveResult {
 
 export type GhlIngestErrorCode =
   | "INVALID_FILE_URL"
+  | "INVALID_NAME"
   | "MISSING_URL"
   | "UNREACHABLE";
 
@@ -309,17 +320,53 @@ export async function verifyUrlReachable(
   return (await probeUrl(url, options)).reachable;
 }
 
-function assertHttpUrl(fileUrl: string): void {
-  let parsed: URL;
+/**
+ * SSRF guard for the hosted ingest source URL (SKR-025).
+ *
+ * The URL is handed to GHL to fetch server-side, so an unguarded value is a
+ * request-forgery primitive: HTTPS-only, no embedded credentials, port 443,
+ * and no private/loopback/link-local/metadata host. This is the shared
+ * `validateRemoteUrl` baseline — before SKR-025 the hosted flow only checked
+ * that the scheme was http(s), and nothing called the SSRF guard at all.
+ */
+function assertSafeRemoteUrl(fileUrl: string): void {
   try {
-    parsed = new URL(fileUrl);
-  } catch {
-    throw new GhlIngestError("INVALID_FILE_URL", `fileUrl is not a URL: unparseable input`);
+    validateRemoteUrl(fileUrl);
+  } catch (cause) {
+    const detail =
+      cause instanceof ValidationError
+        ? cause.detail === undefined
+          ? cause.message
+          : `${cause.message} (${cause.detail})`
+        : cause instanceof Error
+          ? cause.message
+          : String(cause);
+    throw new GhlIngestError("INVALID_FILE_URL", `fileUrl rejected by SSRF guard: ${detail}`);
   }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+}
+
+/**
+ * Canonical, path-traversal-safe storage name (spec §48) for one hosted
+ * ingest, routed through the shared filename guard (SKR-025) so the upload
+ * path uses the same sanitizer the validation module documents. A name that
+ * cannot be made safe is refused rather than stored.
+ */
+function canonicalNameFor(raw: string, maxLength?: number): string {
+  let sanitized: string;
+  try {
+    sanitized = checkFilename(raw, "asset").filename;
+  } catch (cause) {
     throw new GhlIngestError(
-      "INVALID_FILE_URL",
-      `fileUrl scheme must be http/https, got ${parsed.protocol}`,
+      "INVALID_NAME",
+      `name is unusable for a stored file: ${cause instanceof Error ? cause.message : String(cause)}`,
+    );
+  }
+  try {
+    return buildCanonicalName([sanitized], { maxLength });
+  } catch (cause) {
+    throw new GhlIngestError(
+      "INVALID_NAME",
+      `name cannot be canonicalized: ${cause instanceof Error ? cause.message : String(cause)}`,
     );
   }
 }
@@ -347,10 +394,8 @@ export async function archiveHostedUrl(
   request: HostedIngestRequest,
   options: ArchiveHostedOptions = {},
 ): Promise<HostedArchiveResult> {
-  assertHttpUrl(request.fileUrl);
-  const canonicalName = buildCanonicalName([request.name], {
-    maxLength: options.maxNameLength,
-  });
+  assertSafeRemoteUrl(request.fileUrl);
+  const canonicalName = canonicalNameFor(request.name, options.maxNameLength);
   const form = buildMultipartBody(request, canonicalName);
   const raw = await http("/medias/upload-file", form);
   const parsed = parseUploadResponse(raw);

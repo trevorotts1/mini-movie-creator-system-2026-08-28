@@ -56,18 +56,41 @@ Archive sequence per generated asset (spec §17):
    compare → ARCHIVED only after success.
 5. If archival fails, the engine **never regenerates expensive media** — the
    original provider task/job ID stays persisted and the archive sequence can
-   be retried. Emergency archival (temporary URL about to expire) is tested
-   end-to-end in `scripts/release/e2e-dry-run.sh` (scenario S11–S14:
-   `ARCHIVED` + `BLOCKED(EXPIRED_URL)` states) — see
-   `docs/e2e-dry-run-report.md`.
+   be retried. Emergency archival (temporary URL about to expire) is exercised
+   in `scripts/release/e2e-dry-run.sh` (scenario S14, inside the S11–S14
+   budget/submit/resume/archival group: `ARCHIVED` + `BLOCKED(EXPIRED_URL)`
+   states) — see `docs/e2e-dry-run-report.md`. It runs against the runner's
+   scripted GHL fake, not a live transport, exactly as that report's
+   "Mocked vs live" section states.
 
 ## Verify without spending
 
 ```bash
-mmcs doctor                    # shows whether the two GHL names resolve
-mmcs storage status            # archive/storage posture
-mmcs providers verify          # configured vs documented capability, no paid call
+mmcs doctor                    # REAL: reports whether each provider env name (incl. the two GHL
+                              # names) resolves, and whether the approval store is reachable
+mmcs storage status            # static posture line only — does NOT query GHL or archive state
+mmcs providers verify          # runs, but reads an EMPTY registry loader and has ZERO probes
+                              # registered: it reports "0 model(s) checked", never consults
+                              # @mmcs/capability-registry, and never makes a call
 ```
+
+Honesty note: of these three verbs only `mmcs doctor` does real work (it reads
+env-var presence and opens the durable approval store). `mmcs storage status`
+prints a fixed sentence and `mmcs providers verify` completes with an empty
+registry, so **none of the three proves the GHL archive path**. All three exit 0
+today; unknown verbs now exit 1, but that fix does not make these verbs do work.
+The zero-spend proofs that actually exercise the archive logic are
+`bash scripts/release/e2e-dry-run.sh` (S14/S15/S16, scripted GHL fakes) and
+`npx vitest run packages/media-storage/src/manifest` (38 tests, green:
+`MediaStore` + durable asset manifest).
+
+Known defect in the same package, unrelated to this doc: the full
+`npx vitest run packages/media-storage/src` sweep currently reports
+**1 failed / 326 passed** — `packages/media-storage/src/ghl/retry/retry.test.ts`
+(line 90) asserts `classifyFailure(AbortError)` is `"retry"`, while
+`packages/media-storage/src/ghl/retry/errors.ts` (line 186) deliberately
+returns `"stop"` for caller cancellation. The test encodes the old behaviour;
+the implementation is the intended one.
 
 Missing `GHL_ACCESS_TOKEN`/`GHL_LOCATION_ID` blocks the archive path
 deliberately (fail closed); generation planning still runs, but nothing is

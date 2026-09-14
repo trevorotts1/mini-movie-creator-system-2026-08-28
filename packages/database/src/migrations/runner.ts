@@ -44,9 +44,9 @@ export function sortMigrations(migrations: readonly Migration[]): Migration[] {
  * Apply (or roll back) migrations idempotently.
  *
  * Forward: the ledger table is created first; every migration not yet
- * recorded runs inside a single transaction (its SQL plus its ledger
- * insert commit or abort together), in ascending id order. Running twice
- * is a no-op the second time.
+ * recorded runs inside a single transaction (its optional `beforeUp`
+ * preamble, its SQL, and its ledger insert commit or abort together), in
+ * ascending id order. Running twice is a no-op the second time.
  *
  * Rollback: already-applied migrations missing from `migrations` (or
  * matched by `rollbackTo`) are reversed in descending id order, each in
@@ -68,6 +68,7 @@ export function migrate(db: SqliteDatabase, migrations: readonly Migration[], op
       continue;
     }
     db.transaction(() => {
+      migration.beforeUp?.(db);
       db.exec(migration.up);
       db.prepare(`INSERT INTO ${MIGRATIONS_TABLE} (id, name, applied_at) VALUES (?, ?, ?)`).run(
         migration.id,

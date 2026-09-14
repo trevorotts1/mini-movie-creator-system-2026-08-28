@@ -160,6 +160,14 @@ export interface FinalRenderSpec {
   composition: RoughCutComposition;
   /** Render mode: timeline resolution (default) or scale=1 native. */
   mode?: RenderMode;
+  /**
+   * Remotion bundle entry point for this episode's composition (the file that
+   * calls `registerRoot()`, upstream `remotion/src/index.ts`). Omitted → the
+   * render adapter's own configuration applies; if neither supplies one the
+   * render fails RENDER_FAILED naming the missing entry point rather than
+   * producing a fixture file.
+   */
+  remotionEntryPoint?: string;
   /** Composition version — bumped on re-render; v01 default. */
   version?: number;
   /** Directory the final file renders into. Default: process cwd. */

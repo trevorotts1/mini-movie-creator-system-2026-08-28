@@ -310,6 +310,49 @@ describe("findFolderByName — exact-name folder resolution", () => {
     // 1 page per iteration, capped at 100.
     expect(http.calls).toHaveLength(100);
   });
+
+  it("adopts a typeless folder entry instead of calling it absent (SKR-014)", async () => {
+    // Some deployments omit `type`; the normalizer maps that to "unknown", and
+    // skipping it would make an existing folder look absent → duplicate folder.
+    const http = makeHttp(() => ({
+      files: [{ id: "typeless-folder", name: "Convert and Flow", parentId: null }],
+    }));
+    const hit = await findFolderByName(http, "Convert and Flow", { altId: "L" });
+    expect(hit?.id).toBe("typeless-folder");
+    expect(hit?.type).toBe("unknown");
+  });
+
+  it("never mistakes a typeless FILE for a folder", async () => {
+    // A file-shaped entry (url/path) is not adoptable as a folder even when
+    // the name matches; creating a folder beside it is the correct answer.
+    const http = makeHttp(() => ({
+      files: [
+        {
+          id: "typeless-file",
+          name: "Convert and Flow",
+          parentId: null,
+          url: "https://files.example/x",
+          path: "/x",
+        },
+      ],
+    }));
+    expect(await findFolderByName(http, "Convert and Flow", { altId: "L" })).toBeNull();
+  });
+
+  it("honours an extra match predicate (parent scoping)", async () => {
+    const http = makeHttp(() => ({
+      files: [
+        folder("other-parent", "Season 01", "root-2"),
+        folder("right-parent", "Season 01", "root-1"),
+      ],
+    }));
+    const hit = await findFolderByName(http, "Season 01", {
+      altId: "L",
+      parentId: "root-1",
+      match: (entry) => entry.parentId === "root-1",
+    });
+    expect(hit?.id).toBe("right-parent");
+  });
 });
 
 describe("findFolderPath — nested resolution", () => {

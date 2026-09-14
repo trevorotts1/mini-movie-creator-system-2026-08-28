@@ -7,6 +7,11 @@ import { join } from "node:path";
 import { connectSqlite, type SqliteDatabase } from "@mmcs/database";
 import { AssetRepository } from "./asset-repository.js";
 import { BaseMediaStore } from "./media-store.js";
+import { GhlLocationMismatchError, MissingGhlLocationError } from "../ghl/tenant.js";
+import {
+  ArchivalLedger,
+  archivalKey,
+} from "../ghl/retry/index.js";
 import {
   GHL_MEDIA_STORE_KIND,
   GhlMediaStoreConfigurationError,
@@ -537,5 +542,246 @@ describe("ArchiveAssetRequest validation", () => {
         parentId: "f",
       }),
     ).rejects.toThrow(/assetId/);
+  });
+});
+
+describe("GHL tenant isolation (SKR-011)", () => {
+  it("records the location the durable linkage was written under", async () => {
+    const { ingest } = okIngest();
+    const archived = await storeFor().archiveAsset({
+      record: record({ assetId: "mmcs_loc_1" }),
+      ingest,
+      parentId: "ghl_folder_episode",
+      altId: "loc_A",
+    });
+    expect(archived.record.ghlLocationId).toBe("loc_A");
+    // Persisted, not just returned: the stored GHL ids now name their owner.
+    expect(assets.getById("mmcs_loc_1")?.ghlLocationId).toBe("loc_A");
+  });
+
+  it("refuses to re-archive a record persisted for another location", async () => {
+    assets.create(record({ assetId: "mmcs_loc_2", ghlLocationId: "loc_A" }));
+    const { ingest, calls } = okIngest();
+    await expect(
+      storeFor().archiveAsset({
+        record: record({ assetId: "mmcs_loc_2" }),
+        ingest,
+        parentId: "ghl_folder_episode",
+        altId: "loc_B",
+      }),
+    ).rejects.toBeInstanceOf(GhlLocationMismatchError);
+    expect(calls).toHaveLength(0); // nothing was uploaded to the wrong tenant
+  });
+
+  it("accepts the same location as the persisted record", async () => {
+    assets.create(record({ assetId: "mmcs_loc_3", ghlLocationId: "loc_A" }));
+    const { ingest } = okIngest();
+    const archived = await storeFor().archiveAsset({
+      record: record({ assetId: "mmcs_loc_3" }),
+      ingest,
+      parentId: "ghl_folder_episode",
+      altId: "loc_A",
+    });
+    expect(archived.uploaded).toBe(true);
+    expect(archived.record.ghlLocationId).toBe("loc_A");
+  });
+
+  it("rejects a supplied-but-blank location instead of treating it as absent", async () => {
+    const { ingest, calls } = okIngest();
+    await expect(
+      storeFor().archiveAsset({
+        record: record({ assetId: "mmcs_loc_4" }),
+        ingest,
+        parentId: "ghl_folder_episode",
+        altId: "   ",
+      }),
+    ).rejects.toBeInstanceOf(MissingGhlLocationError);
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe("pre-POST duplicate suppression by checksum (SKR-013)", () => {
+  it("adopts an already-archived copy with the same checksum instead of uploading", async () => {
+    const checksum = "f".repeat(64);
+    const first = okIngest({ checksum });
+    await storeFor().archiveAsset({
+      record: record({ assetId: "mmcs_dedupe_a", checksum }),
+      ingest: first.ingest,
+      parentId: "ghl_folder_episode",
+    });
+    expect(first.calls).toHaveLength(1);
+
+    const second = okIngest({ checksum });
+    const archived = await storeFor().archiveAsset({
+      record: record({ assetId: "mmcs_dedupe_b", checksum }),
+      ingest: second.ingest,
+      parentId: "ghl_folder_episode",
+    });
+
+    expect(second.calls).toHaveLength(0); // no second POST of identical bytes
+    expect(archived.uploaded).toBe(false);
+    expect(archived.record.ghlFileId).toBe("ghl_file_verified");
+    expect(archived.record.ghlUrl).toContain("https://");
+    expect(archived.record.checksum).toBe(checksum);
+  });
+
+  it("still uploads when the checksum matches but the destination folder differs", async () => {
+    const checksum = "a".repeat(64);
+    const first = okIngest({ checksum });
+    await storeFor().archiveAsset({
+      record: record({ assetId: "mmcs_dedupe_c", checksum }),
+      ingest: first.ingest,
+      parentId: "folder_one",
+    });
+    const second = okIngest({ checksum });
+    const archived = await storeFor().archiveAsset({
+      record: record({ assetId: "mmcs_dedupe_d", checksum }),
+      ingest: second.ingest,
+      parentId: "folder_two",
+    });
+    expect(second.calls).toHaveLength(1);
+    expect(archived.uploaded).toBe(true);
+  });
+});
+
+describe("GoHighLevelMediaStore tenant + ledger wiring (SKR-011/SKR-013)", () => {
+  it("refuses a caller-supplied location that is not the store's sub-account", async () => {
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      hostedIngest: async () => verifiedUpload(),
+      deps: { assets },
+    });
+    await expect(
+      store.archiveAsset({
+        record: record({ assetId: "mmcs_tenant_x" }),
+        ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+        parentId: "ghl_folder_episode",
+        altId: "loc_OTHER",
+      }),
+    ).rejects.toBeInstanceOf(GhlLocationMismatchError);
+    expect(assets.getById("mmcs_tenant_x")).toBeUndefined();
+  });
+
+  it("records the bound location on every archived asset", async () => {
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      hostedIngest: async () => verifiedUpload(),
+      deps: { assets },
+    });
+    const archived = await store.archiveAsset({
+      record: record({ assetId: "mmcs_tenant_ok" }),
+      ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+      parentId: "ghl_folder_episode",
+    });
+    expect(archived.record.ghlLocationId).toBe("loc_123");
+    expect(store.getAsset("mmcs_tenant_ok")?.ghlLocationId).toBe("loc_123");
+  });
+
+  it("reuses the ledger's recorded result when the manifest row never landed", async () => {
+    const ledgerDir = mkdtempSync(join(tmpdir(), "mmcs-ledger-"));
+    try {
+      const ledger = new ArchivalLedger(ledgerDir);
+      // A manifest repository that reports no row for this asset — the
+      // lost-success window: GHL accepted the file but the manifest write did
+      // not survive. Only the ledger can stop the second POST.
+      const forgetful = {
+        getById: () => undefined,
+        create: (entity: AssetRecord) => entity,
+        update: () => undefined,
+        findArchivedByChecksum: () => undefined,
+      } as unknown as AssetRepository;
+      let uploads = 0;
+      const store = new GoHighLevelMediaStore({
+        locationId: "loc_123",
+        hostedIngest: async () => {
+          uploads += 1;
+          return verifiedUpload();
+        },
+        ledger,
+        deps: { assets: forgetful },
+      });
+      const request = () => ({
+        record: record({ assetId: "mmcs_ledger_1" }),
+        ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+        parentId: "ghl_folder_episode",
+      });
+      const first = await store.archiveAsset(request());
+      expect(first.uploaded).toBe(true);
+      const second = await store.archiveAsset(request());
+      expect(uploads).toBe(1); // the ledger returned the recorded GHL file
+      expect(second.uploaded).toBe(false);
+      expect(second.record.ghlFileId).toBe("ghl_file_verified");
+    } finally {
+      rmSync(ledgerDir, { recursive: true, force: true });
+    }
+  });
+
+  it("adopts an existing GHL file by canonical name before POSTing", async () => {
+    const found: string[] = [];
+    let uploads = 0;
+    const store = new GoHighLevelMediaStore({
+      locationId: "loc_123",
+      hostedIngest: async () => {
+        uploads += 1;
+        return verifiedUpload();
+      },
+      findExistingFile: async (query) => {
+        found.push(query.name);
+        return { fileId: "ghl_existing", url: "https://storage.gohighlevel.example/existing" };
+      },
+      deps: { assets },
+    });
+    const archived = await store.archiveAsset({
+      record: record({ assetId: "mmcs_by_name" }),
+      ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+      parentId: "ghl_folder_episode",
+    });
+    expect(found).toEqual(["mmcs_by_name"]);
+    expect(uploads).toBe(0); // dedupe by name happened before the POST
+    expect(archived.record.ghlFileId).toBe("ghl_existing");
+  });
+
+  it("resolves a held reservation through the name lookup instead of re-uploading", async () => {
+    const ledgerDir = mkdtempSync(join(tmpdir(), "mmcs-ledger-held-"));
+    try {
+      const ledger = new ArchivalLedger(ledgerDir);
+      const scope = "ghl-archival";
+      // An earlier attempt crashed with the upload in flight: the reservation
+      // exists and its outcome is unknown.
+      await ledger.reserve(
+        archivalKey(scope, {
+          altId: "loc_123",
+          parentId: "ghl_folder_episode",
+          name: "mmcs_held_1",
+          fileUrl: "https://tmp.provider.example/clip.mp4",
+          providerTaskId: "job_store_1",
+        }),
+        scope,
+        "hash",
+      );
+      let uploads = 0;
+      const store = new GoHighLevelMediaStore({
+        locationId: "loc_123",
+        hostedIngest: async () => {
+          uploads += 1;
+          return verifiedUpload();
+        },
+        ledger,
+        findExistingFile: async () => ({
+          fileId: "ghl_from_reservation",
+          url: "https://storage.gohighlevel.example/reserved",
+        }),
+        deps: { assets },
+      });
+      const archived = await store.archiveAsset({
+        record: record({ assetId: "mmcs_held_1" }),
+        ingest: store.ingestFor({ originalProviderUrl: "https://tmp.provider.example/clip.mp4" }),
+        parentId: "ghl_folder_episode",
+      });
+      expect(uploads).toBe(0);
+      expect(archived.record.ghlFileId).toBe("ghl_from_reservation");
+    } finally {
+      rmSync(ledgerDir, { recursive: true, force: true });
+    }
   });
 });

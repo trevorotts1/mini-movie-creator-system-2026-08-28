@@ -41,3 +41,13 @@ export {
   type GhlHostedIngest,
   type GhlBinaryIngest,
 } from "./gohighlevel-media-store.js";
+
+// Tenant guard (SKR-011): thrown when a write would move persisted GHL
+// linkage into a sub-account other than the one that owns it.
+export {
+  GHL_LOCATION_MISMATCH_CODE,
+  GhlLocationMismatchError,
+  MissingGhlLocationError,
+  assertStoredLocationMatches,
+  requireLocationId,
+} from "../ghl/tenant.js";

@@ -10,6 +10,7 @@ import {
   ArchivalFailedError,
   ArchivalLedger,
   ArchivalLedgerError,
+  ArchivalReservationHeldError,
   GhlNonRetryableError,
   GhlRetryableHttpError,
   RetryBudgetExhaustedError,
@@ -17,7 +18,11 @@ import {
   boundedRetry,
   classifyFailure,
   computeBackoffDelayMs,
+  computeRetryDelayMs,
+  parseRateLimitHeaders,
+  parseRetryAfter,
   retryableHttpStatus,
+  serverRequestedDelayMs,
   totalBoundedDelayMs,
   withArchivalIdempotency,
   type ArchivalAttemptRequest,
@@ -87,10 +92,32 @@ describe("failure classification", () => {
     expect(classifyFailure(new GhlRetryableHttpError(502, "bad gateway"))).toBe("retry");
     const reset = Object.assign(new Error("socket hang up"), { code: "ECONNRESET" });
     expect(classifyFailure(reset)).toBe("retry");
-    expect(classifyFailure(Object.assign(new Error("t"), { name: "AbortError" }))).toBe("retry");
+    // A timeout abortion is not a cancellation — the call timed out on its own.
+    expect(classifyFailure(Object.assign(new Error("t"), { name: "TimeoutError" }))).toBe("retry");
     expect(classifyFailure(new TypeError("fetch failed"))).toBe("retry");
     const timeout = Object.assign(new Error("timeout"), { code: "ETIMEDOUT" });
     expect(classifyFailure(timeout)).toBe("retry");
+  });
+
+  it("never retries a caller cancellation (AbortError)", () => {
+    // SKR-026: retrying an AbortError keeps the process working after the
+    // caller asked it to stop.
+    expect(classifyFailure(Object.assign(new Error("t"), { name: "AbortError" }))).toBe("stop");
+    const domAbort = Object.assign(new Error("This operation was aborted"), {
+      name: "AbortError",
+    });
+    expect(classifyFailure(domAbort)).toBe("stop");
+  });
+
+  it("stops when the daily quota is spent (X-RateLimit-Daily-Remaining: 0)", () => {
+    const quotaSpent = new GhlRetryableHttpError(429, "daily limit", {
+      rateLimit: { dailyRemaining: 0, limitDaily: 200_000 },
+    });
+    expect(classifyFailure(quotaSpent)).toBe("stop");
+    const burstSpent = new GhlRetryableHttpError(429, "burst limit", {
+      rateLimit: { remaining: 0, intervalMilliseconds: 10_000, max: 100 },
+    });
+    expect(classifyFailure(burstSpent)).toBe("retry");
   });
 
   it("stops on deterministic failures", () => {
@@ -110,6 +137,80 @@ describe("failure classification", () => {
     expect(retryableHttpStatus(404, "missing")).toBeNull();
     expect(retryableHttpStatus(422, "validation")).toBeNull();
     expect(retryableHttpStatus(200, "")).toBeNull();
+  });
+});
+
+describe("rate-limit response headers (docs/provider-capabilities/ghl.md)", () => {
+  it("parses Retry-After as delta-seconds or an HTTP-date", () => {
+    const now = Date.parse("2026-08-28T12:00:00.000Z");
+    expect(parseRetryAfter("2", now)).toBe(2000);
+    expect(parseRetryAfter(" 10 ", now)).toBe(10_000);
+    expect(parseRetryAfter("0", now)).toBe(0);
+    expect(parseRetryAfter("-5", now)).toBe(0);
+    expect(parseRetryAfter("Wed, 28 Aug 2026 12:00:03 GMT", now)).toBe(3000);
+    // A date already in the past cannot mean "wait a negative time".
+    expect(parseRetryAfter("Wed, 28 Aug 2026 11:59:00 GMT", now)).toBe(0);
+    expect(parseRetryAfter(undefined, now)).toBeUndefined();
+    expect(parseRetryAfter("not-a-delay", now)).toBeUndefined();
+  });
+
+  it("parses the five documented X-RateLimit headers, case-insensitively", () => {
+    const headers = new Headers({
+      "X-RateLimit-Limit-Daily": "200000",
+      "X-RateLimit-Daily-Remaining": "199999",
+      "X-RateLimit-Interval-Milliseconds": "10000",
+      "X-RateLimit-Max": "100",
+      "X-RateLimit-Remaining": "42",
+    });
+    expect(parseRateLimitHeaders(headers)).toEqual({
+      limitDaily: 200_000,
+      dailyRemaining: 199_999,
+      intervalMilliseconds: 10_000,
+      max: 100,
+      remaining: 42,
+    });
+    expect(parseRateLimitHeaders({ "x-ratelimit-remaining": "0" })).toEqual({ remaining: 0 });
+    expect(parseRateLimitHeaders({})).toBeUndefined();
+    expect(parseRateLimitHeaders(undefined)).toBeUndefined();
+  });
+
+  it("attaches Retry-After + X-RateLimit hints to the retryable 429", () => {
+    const now = Date.parse("2026-08-28T12:00:00.000Z");
+    const err = retryableHttpStatus(
+      429,
+      "slow down",
+      {
+        "Retry-After": "10",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Interval-Milliseconds": "10000",
+      },
+      now,
+    );
+    expect(err).toBeInstanceOf(GhlRetryableHttpError);
+    expect(err?.retryAfterMs).toBe(10_000);
+    expect(err?.rateLimit).toEqual({ remaining: 0, intervalMilliseconds: 10_000 });
+    // The server hint wins over the deterministic backoff.
+    expect(computeRetryDelayMs(0, err, { baseDelayMs: 250, maxDelayMs: 8000 })).toBe(10_000);
+    // And it is still hard-capped: no unbounded wait.
+    expect(computeRetryDelayMs(0, err, { maxRetryAfterMs: 5000 })).toBe(5000);
+  });
+
+  it("uses the burst window when only X-RateLimit says the budget is spent", () => {
+    const err = new GhlRetryableHttpError(429, "burst", {
+      rateLimit: { remaining: 0, intervalMilliseconds: 10_000 },
+    });
+    expect(serverRequestedDelayMs(err)).toBe(10_000);
+    expect(computeRetryDelayMs(1, err, { baseDelayMs: 100, maxDelayMs: 8000 })).toBe(10_000);
+    // No hint at all → plain backoff.
+    expect(computeRetryDelayMs(1, new GhlRetryableHttpError(503, "down"), { baseDelayMs: 100 })).toBe(200);
+  });
+
+  it("unwraps the budget-exhausted error to find the server hint", () => {
+    const exhausted = new RetryBudgetExhaustedError(
+      3,
+      new GhlRetryableHttpError(429, "slow", { retryAfterMs: 7000 }),
+    );
+    expect(serverRequestedDelayMs(exhausted)).toBe(7000);
   });
 });
 
@@ -235,6 +336,20 @@ describe("ArchivalLedger — durable, atomic, crash-safe", () => {
     await ledger.reserve(key, "s", "h");
     await ledger.release(key);
     expect(await ledger.get(key)).toBeNull();
+  });
+
+  it("stamps an unresolved reservation with the failure that left it open", async () => {
+    const ledger = new ArchivalLedger(dir);
+    const key = archivalKey("s", { a: 1 });
+    await ledger.reserve(key, "s", "h");
+    const stamped = await ledger.fail(key, "socket hang up", 3);
+    expect(stamped?.state).toBe("reserved");
+    expect(stamped?.attempts).toBe(3);
+    expect(stamped?.lastFailure).toBe("socket hang up");
+    expect(stamped?.failedAt).toBeDefined();
+    expect((await ledger.get(key))?.lastFailure).toBe("socket hang up");
+    // No reservation to stamp → null, not a phantom record.
+    expect(await ledger.fail("absent-key", "x")).toBeNull();
   });
 
   it("leaves no temp litter after a normal write", async () => {
@@ -431,7 +546,7 @@ describe("withArchivalIdempotency — bounded retry with backoff", () => {
     expect(uploads).toBe(3); // bounded, not unbounded
   });
 
-  it("failed attempts leave the key reservable for a later resume", async () => {
+  it("failed attempts stamp the reservation instead of leaving it silent", async () => {
     const ledger = new ArchivalLedger(dir);
     await expect(
       withArchivalIdempotency(
@@ -443,15 +558,115 @@ describe("withArchivalIdempotency — bounded retry with backoff", () => {
         { maxAttempts: 2, sleep: immediateSleep },
       ),
     ).rejects.toBeInstanceOf(ArchivalFailedError);
-    // The failed run released nothing; the reservation exists but is not
-    // completed, so a later resume with a working attempt succeeds.
+    // The reservation is KEPT (a 500 may have landed at GHL) and now carries
+    // why + how many attempts, so it is inspectable rather than "reserved
+    // forever, silently" (SKR-013).
+    const record = await ledger.get(archivalKey("ghl-archival", request()));
+    expect(record?.state).toBe("reserved");
+    expect(record?.attempts).toBe(2);
+    expect(record?.lastFailure).toContain("500");
+    expect(record?.failedAt).toBeDefined();
+  });
+
+  it("refuses to re-upload over a held reservation without provider-side detection", async () => {
+    const ledger = new ArchivalLedger(dir);
+    let uploads = 0;
+    await expect(
+      withArchivalIdempotency(
+        ledger,
+        request(),
+        async () => {
+          uploads += 1;
+          throw new GhlRetryableHttpError(500, "no");
+        },
+        { maxAttempts: 1, sleep: immediateSleep },
+      ),
+    ).rejects.toBeInstanceOf(ArchivalFailedError);
+
+    // The next call would be the duplicate: the first attempt's outcome is
+    // unknown (lost success), so it must NOT silently POST again.
+    await expect(
+      withArchivalIdempotency(ledger, request(), async () => {
+        uploads += 1;
+        return { fileId: "SHOULD-NOT-UPLOAD", url: "u" };
+      }),
+    ).rejects.toBeInstanceOf(ArchivalReservationHeldError);
+    expect(uploads).toBe(1);
+
+    // With a provider-side detector that proves the file is absent, the retry
+    // proceeds — that is the resume path.
     const resumed = await withArchivalIdempotency(
       ledger,
       request(),
-      async () => ({ fileId: "file-5", url: "u5" }),
-      { sleep: immediateSleep },
+      async () => {
+        uploads += 1;
+        return { fileId: "file-5", url: "u5" };
+      },
+      { detectExisting: async () => null },
     );
     expect(resumed.value.fileId).toBe("file-5");
+    expect(uploads).toBe(2);
+  });
+
+  it("adopts the file the detector found instead of uploading a second copy", async () => {
+    const ledger = new ArchivalLedger(dir);
+    const providerSide = { fileId: "file-already-there", url: "https://files.example/one" };
+    await expect(
+      withArchivalIdempotency(
+        ledger,
+        request(),
+        async () => {
+          throw new GhlRetryableHttpError(503, "lost response");
+        },
+        { maxAttempts: 1, sleep: immediateSleep },
+      ),
+    ).rejects.toBeInstanceOf(ArchivalFailedError);
+
+    let uploads = 0;
+    const recovered = await withArchivalIdempotency(
+      ledger,
+      request(),
+      async () => {
+        uploads += 1;
+        return { fileId: "duplicate", url: "u" };
+      },
+      { detectExisting: async () => providerSide },
+    );
+    expect(uploads).toBe(0);
+    expect(recovered.reused).toBe(true);
+    expect(recovered.resumedFromHeldReservation).toBe(true);
+    expect(recovered.value).toEqual(providerSide);
+  });
+
+  it("releases the key after a deterministic refusal so it is not stuck forever", async () => {
+    const ledger = new ArchivalLedger(dir);
+    let uploads = 0;
+    await expect(
+      withArchivalIdempotency(
+        ledger,
+        request(),
+        async () => {
+          uploads += 1;
+          throw new GhlNonRetryableError("GHL rejected the folder id");
+        },
+        { maxAttempts: 3, sleep: immediateSleep },
+      ),
+    ).rejects.toBeInstanceOf(ArchivalFailedError);
+    // A deterministic refusal created nothing, so release() runs (its first
+    // production caller) and the next attempt is free to proceed.
+    expect(await ledger.get(archivalKey("ghl-archival", request()))).toBeNull();
+
+    const retried = await withArchivalIdempotency(
+      ledger,
+      request(),
+      async () => {
+        uploads += 1;
+        return { fileId: "file-after-refusal", url: "u" };
+      },
+      { sleep: immediateSleep },
+    );
+    expect(retried.value.fileId).toBe("file-after-refusal");
+    expect(uploads).toBe(2);
   });
 });
 
@@ -498,7 +713,12 @@ describe("archival never triggers regeneration (spec §35.3)", () => {
     // explicitly regenerates; archival itself offers no such path.
     expect(generations).toBe(0);
 
-    const second = await withArchivalIdempotency(ledger, request(), archiveOnce, { sleep: immediateSleep });
+    // Resume requires proving the file is not at GHL (the 502 was a lost
+    // success as far as this process can tell), then the attempt may run.
+    const second = await withArchivalIdempotency(ledger, request(), archiveOnce, {
+      sleep: immediateSleep,
+      detectExisting: async () => null,
+    });
     expect(second.value.fileId).toBe("file-6");
     expect(uploads).toBe(2);
     expect(generations).toBe(0);

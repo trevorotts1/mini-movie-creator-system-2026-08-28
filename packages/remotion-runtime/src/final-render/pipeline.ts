@@ -42,14 +42,25 @@ import { join } from "node:path";
 
 /**
  * Render adapter — the VID-012/upstream-Remotion boundary. Mirrors
- * `renderMedia` inputs (serveUrl/bundled composition, scale, codec) so the
- * integration adapter is a thin wrapper over `@remotion/renderer`, while
- * tests inject a fixture adapter (or the real ffmpeg fixture renderer).
+ * `renderMedia` inputs (composition id, resolution, scale, codec) so the
+ * production adapter is a thin wrapper over `@remotion/renderer`
+ * (`makeRemotionRenderAdapter`), while tests inject a fixture adapter (or the
+ * real ffmpeg fixture renderer).
+ *
+ * There is deliberately NO `serveUrl` here: a serve URL only exists once a
+ * bundle has been built, so a pipeline that fabricates one (the previous
+ * `serveUrl: spec.composition.episodeId`) proves nothing was ever bundled and
+ * silently renders a fixture. The entry point an adapter needs to build a real
+ * bundle is declared explicitly by the caller.
  */
 export interface RenderRequest {
   compositionId: string;
-  /** Composition entry as bundled (Remotion serveUrl or a fixture id). */
-  serveUrl: string;
+  /**
+   * Remotion bundle entry point (the file calling `registerRoot()`) or a
+   * pre-built serve URL. Optional: `makeRemotionRenderAdapter` also accepts it
+   * as an adapter option or via `MMCS_REMOTION_ENTRY`.
+   */
+  entryPoint?: string;
   /** Render scale (upstream: scale=2 for 4K masters; 1 = native). */
   scale: number;
   resolution: Resolution;
@@ -58,6 +69,8 @@ export interface RenderRequest {
   /** Deterministic absolute output path. */
   output: string;
   codec: "h264";
+  /** `staticFile()` public root for the bundle (upstream `media/`). */
+  publicDir?: string;
 }
 
 export interface RenderResult {
@@ -170,6 +183,8 @@ export interface FinalRenderPorts {
   render: RenderAdapter;
   validate: MediaValidator;
   archive?: ArchivePort;
+  /** `staticFile()` public root handed to the render adapter (upstream `media/`). */
+  publicDir?: string;
   /** Now-source for report timestamps; injectable for tests. */
   now?: () => Date;
 }
@@ -280,18 +295,21 @@ export async function runFinalRender(
 
   // 1. render (spec §21: final render). Scale: 1 for native (ownership.md
   // `--scale=1`); timeline compositions are authored at master resolution so
-  // the pass-through scale is 1 there as well.
+  // the pass-through scale is 1 there as well. The bundle entry point comes
+  // from the caller (spec) or the adapter's own configuration — never a
+  // fabricated serveUrl.
   let rendered: RenderResult;
   try {
     rendered = await ports.render({
       compositionId: compositionIdFor(spec),
-      serveUrl: spec.composition.episodeId,
       scale: 1,
       resolution,
       fps: spec.composition.fps,
       durationSeconds: spec.composition.durationSeconds,
       output: outputPath,
       codec: "h264",
+      ...(spec.remotionEntryPoint ? { entryPoint: spec.remotionEntryPoint } : {}),
+      ...(ports.publicDir ? { publicDir: ports.publicDir } : {}),
     });
   } catch (err) {
     throw new FinalRenderError(

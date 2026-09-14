@@ -21,6 +21,7 @@ import {
   type AssetRecord,
   type AssetRecordPatch,
 } from "./types.js";
+import { assertStoredLocationMatches, requireLocationId } from "../ghl/tenant.js";
 
 /**
  * Result of one durable-store upload. The MediaStore translates this into
@@ -159,6 +160,51 @@ export abstract class BaseMediaStore implements MediaStore {
       });
     }
 
+    // SKR-011 tenant isolation. The persisted row's location is authoritative:
+    // re-pointing GHL_LOCATION_ID (or passing a different altId) must fail
+    // loudly here instead of quietly moving a client's media into another
+    // client's sub-account. This is the EpisodeFolderEnsurer guard, generalised
+    // to every persisted GHL record. A supplied-but-blank location is a caller
+    // bug, not "no constraint" — treating it as absent is how a record ends up
+    // with no tenant at all.
+    const requestedLocationId =
+      request.altId === undefined ? record.ghlLocationId : requireLocationId(request.altId, "altId");
+    const locationId = assertStoredLocationMatches({
+      storedLocationId: existing?.ghlLocationId,
+      requestedLocationId,
+      subject: `asset "${record.assetId}"`,
+      action: "re-archive",
+    });
+
+    // SKR-013 dedupe: the same bytes already archived into this destination
+    // must not be POSTed again. Adopt the existing durable copy and record the
+    // linkage on this asset instead.
+    const checksum = record.checksum;
+    if (typeof checksum === "string" && checksum.length > 0) {
+      const duplicate = this.assets.findArchivedByChecksum(checksum, {
+        ghlFolderId: folderId,
+        ...(locationId !== undefined ? { ghlLocationId: locationId } : {}),
+      });
+      if (
+        duplicate !== undefined &&
+        duplicate.assetId !== record.assetId &&
+        duplicate.ghlFileId !== undefined &&
+        duplicate.ghlUrl !== undefined
+      ) {
+        return {
+          record: this.writeLinkage(existing, record, {
+            fileId: duplicate.ghlFileId,
+            url: duplicate.ghlUrl,
+            folderId: duplicate.ghlFolderId ?? folderId,
+            checksum,
+            locationId: duplicate.ghlLocationId ?? locationId,
+            archivedAt: duplicate.archivedAt ?? this.now(),
+          }),
+          uploaded: false,
+        };
+      }
+    }
+
     // 1. Upload through the injected ingest (hosted flow / binary / fake) and
     //    only trust a result that carries both a file ID and a URL.
     const ingest = request.ingest;
@@ -171,7 +217,7 @@ export abstract class BaseMediaStore implements MediaStore {
       name: record.assetId,
       parentId: folderId,
       ...(record.originalProviderUrl !== undefined ? { fileUrl: record.originalProviderUrl } : {}),
-      ...(request.altId !== undefined ? { altId: request.altId } : {}),
+      ...(locationId !== undefined ? { altId: locationId } : {}),
       ...(request.altType !== undefined ? { altType: request.altType } : {}),
     });
     if (
@@ -189,28 +235,58 @@ export abstract class BaseMediaStore implements MediaStore {
       );
     }
 
-    // 2. Write the full manifest record with the durable linkage. An existing
-    //    (linkage-less) row is patched; otherwise the record inserts fresh.
-    const archivedAt = upload.verifiedAt ?? this.now();
+    // 2. Write the full manifest record with the durable linkage and the tenant
+    //    it was written under. An existing (linkage-less) row is patched;
+    //    otherwise the record inserts fresh.
+    const persisted = this.writeLinkage(existing, record, {
+      fileId: upload.fileId,
+      url: upload.url,
+      folderId,
+      checksum: upload.checksum ?? record.checksum,
+      locationId,
+      archivedAt: upload.verifiedAt ?? this.now(),
+    });
+    return { record: persisted, uploaded: true };
+  }
+
+  /**
+   * Persist one verified durable linkage onto the manifest record — the single
+   * write path for an ingest result and for a dedupe adoption, so the tenant
+   * column can never be written by one path and forgotten by the other.
+   */
+  private writeLinkage(
+    existing: AssetRecord | undefined,
+    record: ArchiveAssetRequest["record"],
+    linkage: {
+      fileId: string;
+      url: string;
+      folderId: string;
+      checksum?: string | undefined;
+      locationId?: string | undefined;
+      archivedAt: string;
+    },
+  ): AssetRecord {
+    const patch: AssetRecordPatch = {
+      ghlFileId: linkage.fileId,
+      ghlFolderId: linkage.folderId,
+      ghlUrl: linkage.url,
+      ...(linkage.checksum !== undefined ? { checksum: linkage.checksum } : {}),
+      ...(linkage.locationId !== undefined ? { ghlLocationId: linkage.locationId } : {}),
+      archivedAt: linkage.archivedAt,
+    };
+    if (existing !== undefined) {
+      return this.assets.update(record.assetId, patch) as AssetRecord;
+    }
     const manifest: AssetRecord = {
       ...record,
-      ghlFileId: upload.fileId,
-      ghlFolderId: folderId,
-      ghlUrl: upload.url,
-      checksum: upload.checksum ?? record.checksum,
-      archivedAt,
+      ghlFileId: linkage.fileId,
+      ghlFolderId: linkage.folderId,
+      ghlUrl: linkage.url,
+      ...(linkage.checksum !== undefined ? { checksum: linkage.checksum } : {}),
+      ...(linkage.locationId !== undefined ? { ghlLocationId: linkage.locationId } : {}),
+      archivedAt: linkage.archivedAt,
     };
-    const persisted =
-      existing !== undefined
-        ? (this.assets.update(record.assetId, {
-            ghlFileId: upload.fileId,
-            ghlFolderId: folderId,
-            ghlUrl: upload.url,
-            ...(upload.checksum !== undefined ? { checksum: upload.checksum } : {}),
-            archivedAt,
-          }) as AssetRecord)
-        : this.assets.create(manifest);
-    return { record: persisted, uploaded: true };
+    return this.assets.create(manifest);
   }
 
   resolveAsset(assetId: string): ResolvedAsset {

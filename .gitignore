@@ -30,7 +30,6 @@ ai-shorts/*/bakeoff/*.mp4
 dist/
 logs/
 worktrees/
-state/locks/
 coverage/
 *.tsbuildinfo
 
@@ -40,8 +39,37 @@ coverage/
 !.env.example
 *.bak-batch*
 
-# engine runtime state (durable stores; per-checkout, never committed)
+# --- engine RUNTIME state — never committed (SKR-023) ---
+# NOTE: .gitignore cannot untrack. 341 files under state/ are ALREADY TRACKED
+# at HEAD (checkpoint.json, tasks.json, merge-queue.json, costs.json and 300
+# task-updates/*.json), so the rules below do NOT stop those being committed
+# again, and state/README.md's claim that checkpoint.json "is generated at
+# runtime and not committed" is false today. Untracking them is a deliberate
+# history decision (SPEC.md SKR-023 / BLK-4) and is deliberately NOT taken
+# here — these rules keep the runtime paths ignored either way.
 state/
+
+# RUNTIME paths, repeated explicitly AFTER the blanket rule above. Git
+# currently attributes these paths to the blanket state/ rule (an excluded
+# directory short-circuits everything under it), so today they are belt and
+# braces — but the blanket state/ entry is exactly what an untracking decision
+# will narrow, and these are the paths that must stay ignored when it does.
+#
+# Written on every run: apps/cli/src/index.ts resolves the state root
+# (MMCS_STATE_DIR, else repo-root state/) and opens MMCS_DB, the approval
+# store and the human-review store there; scripts/orchestration/*.ts and
+# scripts/hooks/*.ts take watchdog/merge/checkpoint locks under state/locks/.
+# A lock or checkpoint that ships with a clone is not "no lock yet" — it is a
+# lock owned by a process that does not exist in this container, so every
+# waiter blocks for the whole stale window (15 min watchdog/merge, 60 s
+# checkpoint) before anything can proceed. The SQLite sidecars are named
+# individually: dropping -wal/-shm at the wrong instant corrupts a WAL db.
+state/mmcs.db
+state/mmcs.db-wal
+state/mmcs.db-shm
+state/locks/
+state/approvals/
+state/human-review/
 
 # composite emit output + per-pkg dist links
 packages/dist/

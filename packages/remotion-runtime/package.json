@@ -5,14 +5,16 @@
   "main": "./dist/index.js",
   "types": "./src/index.ts",
   "scripts": {
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p ../tsconfig.pkg.json"
   },
   "dependencies": {
+    "@remotion/bundler": "4.0.518",
+    "@remotion/renderer": "4.0.518",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remotion": "^4.0.486",
+    "remotion": "4.0.518",
     "@mmcs/core": "workspace:*",
     "@mmcs/database": "workspace:*",
     "@mmcs/capability-registry": "workspace:*",

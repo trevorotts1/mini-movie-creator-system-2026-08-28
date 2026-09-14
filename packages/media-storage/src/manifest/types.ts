@@ -102,6 +102,16 @@ export interface AssetRecord {
   readonly archivedAt?: string;
   readonly approvalState: ApprovalState;
   readonly qcState: QcState;
+  /**
+   * GHL sub-account (location) the durable linkage was written under — SKR-011.
+   *
+   * Not one of the 26 spec §19 fields, exactly like `archivedAt`: it is the
+   * ownership record for `ghlFileId`/`ghlFolderId`/`ghlUrl`. Without it a
+   * stored GHL id carries no tenant, so re-pointing `GHL_LOCATION_ID`
+   * silently redirects a client's media into another sub-account. Persisted
+   * as `ghl_location_id`; writes under a different location are refused.
+   */
+  readonly ghlLocationId?: string;
 }
 
 /** Mutable subset for `update` — identity and creation time are immutable. */

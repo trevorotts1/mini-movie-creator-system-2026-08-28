@@ -38,6 +38,7 @@ import {
   type FindFoldersQuery,
 } from "./types.js";
 import { EpisodeFolderStore } from "./store.js";
+import { assertStoredLocationMatches } from "../ghl/tenant.js";
 
 export interface EpisodeFolderEnsurerOptions {
   client: EpisodeFoldersClient;
@@ -79,11 +80,15 @@ export class EpisodeFolderEnsurer {
     // at first-ensure time); a later title change must not rewrite history.
     const existing = this.options.store.findByEpisodeId(episodeId);
     if (existing !== undefined) {
-      if (existing.locationId !== locationId) {
-        throw new Error(
-          `episode "${episodeId}" already persisted for location "${existing.locationId}", refusing re-ensure under "${locationId}"`,
-        );
-      }
+      // Tenant guard (SKR-011), now the shared one every persisted GHL record
+      // uses: the persisted location is authoritative, so re-pointing
+      // GHL_LOCATION_ID cannot silently re-ensure this episode's subtree into
+      // another client's sub-account.
+      assertStoredLocationMatches({
+        storedLocationId: existing.locationId,
+        requestedLocationId: locationId,
+        subject: `episode "${episodeId}"`,
+      });
       return { ids: toIds(existing), createdCount: 0, reused: true };
     }
 

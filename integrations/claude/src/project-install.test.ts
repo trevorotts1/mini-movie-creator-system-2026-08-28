@@ -126,6 +126,32 @@ describe("SKL-002 project-install.sh", () => {
       expect(fs.readlinkSync(TARGET(root))).toBe(REL);
     });
 
+    it("two forced replaces in the same second get distinct backups and the first stays intact", () => {
+      const root = makeFixture();
+      fs.mkdirSync(TARGET(root));
+      fs.writeFileSync(path.join(TARGET(root), "SKILL.md"), "first skill\n");
+      expect(run(root, ["--force"]).status).toBe(0);
+      // second replace immediately after: the same wall-clock second is likely,
+      // and even when it is not, the assertion still holds — two runs, two
+      // backups, and the first backup's content untouched by the second run.
+      fs.rmSync(TARGET(root));
+      fs.mkdirSync(TARGET(root));
+      fs.writeFileSync(path.join(TARGET(root), "SKILL.md"), "second skill\n");
+      expect(run(root, ["--force"]).status).toBe(0);
+      const backups = fs
+        .readdirSync(path.join(root, ".claude", "skills"))
+        .filter((n) => n.startsWith("mini-movie-creator.backup-"))
+        .sort();
+      expect(backups.length).toBe(2);
+      expect(new Set(backups).size).toBe(2); // distinct names — no nesting
+      expect(
+        fs.readFileSync(path.join(root, ".claude", "skills", backups[0]!, "SKILL.md"), "utf8"),
+      ).toBe("first skill\n");
+      expect(
+        fs.readFileSync(path.join(root, ".claude", "skills", backups[1]!, "SKILL.md"), "utf8"),
+      ).toBe("second skill\n");
+    });
+
     it("fails with a clear error when the canonical source is absent", () => {
       const root = makeFixture({ withCanonical: false });
       const r = run(root);

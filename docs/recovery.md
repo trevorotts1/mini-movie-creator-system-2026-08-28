@@ -66,7 +66,9 @@ Resume rules that protect both money and media:
   (remote ingest, then binary fallback).
 - **Emergency archival** (temporary URL about to expire) and
   `BLOCKED(EXPIRED_URL)` handling are drilled in
-  `scripts/release/e2e-dry-run.sh` scenarios S11–S14 — evidence:
+  `scripts/release/e2e-dry-run.sh` — emergency archival is scenario **S14**
+  (one of the S11–S14 budget/submit/resume/archival group), driven through a
+  scripted GHL fake rather than a live transport — evidence:
   `docs/e2e-dry-run-report.md`.
 
 ## Recovery drills (machine-verified)

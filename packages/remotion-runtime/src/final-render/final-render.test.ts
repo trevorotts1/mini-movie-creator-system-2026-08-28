@@ -460,7 +460,7 @@ describe("fixture final render passes real ffprobe (VID-015 contract)", () => {
     const render = makeFfmpegFixtureAdapter();
     const rendered = await render({
       compositionId: "fixture",
-      serveUrl: "fixture",
+      entryPoint: "/fixture/bundle-entry.tsx",
       scale: 1,
       resolution: FIXTURE_RESOLUTION,
       fps: 24,
@@ -482,7 +482,7 @@ describe("fixture final render passes real ffprobe (VID-015 contract)", () => {
     const render = makeFfmpegFixtureAdapter();
     await render({
       compositionId: "fixture",
-      serveUrl: "fixture",
+      entryPoint: "/fixture/bundle-entry.tsx",
       scale: 1,
       resolution: FIXTURE_RESOLUTION,
       fps: 24,

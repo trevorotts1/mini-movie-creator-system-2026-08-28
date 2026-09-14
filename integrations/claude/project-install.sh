@@ -223,9 +223,18 @@ install_symlink() {
 }
 
 backup_existing() {
-  local stamp backup
+  local stamp backup i
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
   backup="$TARGET.backup-$stamp"
+  i=1
+  # Two forced replaces within the same second must never share a backup dir
+  # name: cp into an existing dir would nest the second copy INSIDE the first
+  # backup and overwrite its files, silently losing the older copy. Suffix
+  # -2, -3, ... instead (the guard personal-install.sh already carries).
+  while [ -e "$backup" ] || [ -L "$backup" ]; do
+    i=$((i + 1))
+    backup="$TARGET.backup-$stamp-$i"
+  done
   if [ "$DRY" = "1" ]; then
     log "DRY-RUN: would back up $TARGET -> $backup"
   else

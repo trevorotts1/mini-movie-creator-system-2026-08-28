@@ -159,8 +159,9 @@ describe("BinaryFallbackUploader — spec §17.4 full fallback sequence", () => 
     // Verifier received a temp path whose basename is x.mp4, never .. escaped.
     expect(verifier.verified[0]!.path.endsWith("x.mp4")).toBe(true);
     expect(verifier.verified[0]!.path.includes("..")).toBe(false);
-    // The canonical name is preserved on the upload itself (spec §19).
-    expect(client.uploadCalls[0]!.input.name).toBe("../x.mp4");
+    // SKR-025: the stored name is sanitized too — the shared filename guard
+    // strips the path component instead of storing "../x.mp4" at GHL.
+    expect(client.uploadCalls[0]!.input.name).toBe("x.mp4");
   });
 
   it("uploads the exact downloaded bytes with correct multipart fields", async () => {
@@ -355,6 +356,93 @@ describe("BinaryFallbackUploader — size limits (25 MB general / 500 MB video)"
     expect(limitForKind("generic")).toBe(GENERAL_LIMIT_BYTES);
     expect(VIDEO_LIMIT_BYTES).toBe(500 * 1024 * 1024);
     expect(GENERAL_LIMIT_BYTES).toBe(25 * 1024 * 1024);
+  });
+});
+
+describe("BinaryFallbackUploader — SSRF + MIME guard (SKR-025)", () => {
+  let client: RecordingUploadClient;
+  let verifier: FakeVerifier;
+  const data = bytes(64);
+
+  beforeEach(() => {
+    client = new RecordingUploadClient();
+    verifier = new FakeVerifier();
+  });
+
+  it("refuses a non-HTTPS provider URL before any download", async () => {
+    const url = "http://temp.provider.test/asset/abc.mp4";
+    client.providerAssets.set(url, data);
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    await expect(uploader.archive(makeInput(url, data))).rejects.toMatchObject({
+      name: "GhlUploadError",
+      reason: "disallowed-url",
+    });
+    expect(client.calls).toHaveLength(0);
+  });
+
+  it("refuses private / metadata / link-local hosts (SSRF guard)", async () => {
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+    for (const url of [
+      "https://127.0.0.1/asset.mp4",
+      "https://169.254.169.254/latest/meta-data/",
+      "https://10.0.0.5/internal.mp4",
+      "https://localhost/asset.mp4",
+      "https://user:pass@temp.provider.test/asset.mp4",
+      "https://temp.provider.test:8443/asset.mp4",
+    ]) {
+      await expect(uploader.archive(makeInput(url, data))).rejects.toMatchObject({
+        reason: "disallowed-url",
+      });
+    }
+    expect(client.calls).toHaveLength(0);
+  });
+
+  it("refuses bytes whose declared MIME type is not media", async () => {
+    const url = "https://temp.provider.test/asset/notes.mp4";
+    client.providerAssets.set(url, data);
+    client.downloadFile = async () => ({ data, contentType: "application/pdf" });
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    await expect(uploader.archive(makeInput(url, data))).rejects.toMatchObject({
+      reason: "mime-type",
+    });
+    expect(client.uploadCalls).toHaveLength(0);
+    expect(verifier.verified).toHaveLength(0);
+  });
+
+  it("accepts the generic application/octet-stream and falls back to the extension", async () => {
+    const url = "https://temp.provider.test/asset/generic.mp4";
+    client.providerAssets.set(url, data);
+    client.downloadFile = async () => ({ data, contentType: "application/octet-stream" });
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    const result = await uploader.archive(makeInput(url, data));
+    expect(result.state).toBe("ARCHIVED");
+    expect(client.uploadCalls).toHaveLength(1);
+  });
+
+  it("refuses a file whose kind contradicts its extension", async () => {
+    const url = "https://temp.provider.test/asset/picture.png";
+    client.providerAssets.set(url, data);
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    // kind "video" but a .png name and no media MIME from the server.
+    await expect(
+      uploader.archive(makeInput(url, data, { kind: "video", name: "picture.png" })),
+    ).rejects.toMatchObject({ reason: "mime-type" });
+    expect(client.uploadCalls).toHaveLength(0);
+  });
+
+  it("refuses a file whose type cannot be established at all", async () => {
+    const url = "https://temp.provider.test/asset/no-extension";
+    client.providerAssets.set(url, data);
+    const uploader = new BinaryFallbackUploader({ client, verifier });
+
+    await expect(
+      uploader.archive(makeInput(url, data, { name: "no-extension", kind: "generic" })),
+    ).rejects.toMatchObject({ reason: "mime-type" });
+    expect(client.uploadCalls).toHaveLength(0);
   });
 });
 

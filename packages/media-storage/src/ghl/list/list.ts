@@ -249,11 +249,40 @@ export async function listMedia(
   return { entries: all, total, truncated };
 }
 
+export interface FindFolderOptions extends Omit<GhlListPageOptions, "type" | "query"> {
+  /**
+   * Extra client-side predicate an entry must satisfy to match (e.g. an exact
+   * `parentId` check for deployments that ignore the `parentId` query filter).
+   * Applied IN ADDITION to the exact-name/folder-type test.
+   */
+  match?: (entry: GhlMediaEntry) => boolean;
+}
+
+/**
+ * True when an entry can be adopted as a folder by a folder-scoped search.
+ *
+ * `normalizeMediaEntry` maps a missing/odd `type` to "unknown", and treating
+ * those as "not a folder" makes an existing folder look absent — callers then
+ * create a duplicate (SKR-014). Since this search already asks the API for
+ * `type=folder`, a name-matching typeless entry without file-shaped evidence
+ * (`url`/`path`, which folder payloads do not carry) is a folder.
+ */
+function isFolderCandidate(entry: GhlMediaEntry): boolean {
+  if (entry.type === "folder") return true;
+  if (entry.type !== "unknown") return false;
+  if (typeof entry.name !== "string" || entry.name.length === 0) return false;
+  return entry.url === undefined && entry.path === undefined;
+}
+
 /**
  * Resolve a folder by EXACT name (case-sensitive, no normalization) within
- * the location, optionally scoped to a parent folder. Returns the matching
- * folder entry or null when absent — callers (GHL-003/GHL-004) use this for
- * search-before-create.
+ * the location, optionally scoped to a parent folder and an extra predicate.
+ * Returns the matching folder entry or null when absent — callers
+ * (GHL-003/GHL-004) use this for search-before-create.
+ *
+ * Paging is complete, not one page: a parent with more children than one page
+ * holds otherwise makes an existing folder look absent and callers create a
+ * duplicate (SKR-014).
  *
  * A null is a claim "this folder does not exist", so a paging cap hit is NOT
  * null (that would cause callers to create a duplicate root). It throws
@@ -262,19 +291,22 @@ export async function listMedia(
 export async function findFolderByName(
   http: GhlHttp,
   name: string,
-  options: Omit<GhlListPageOptions, "type" | "query"> = { altId: "" },
+  options: FindFolderOptions = { altId: "" },
 ): Promise<GhlMediaEntry | null> {
   const maxPages = 100;
+  const { match, ...pageOptions } = options;
   let offset: number | undefined;
   for (let pagesFetched = 0; pagesFetched < maxPages; pagesFetched++) {
     const page = await listMediaPage(http, {
-      ...options,
+      ...pageOptions,
       type: "folder",
-      limit: options.limit ?? 100,
+      limit: pageOptions.limit ?? 100,
       ...(offset !== undefined ? { offset } : {}),
     });
     for (const entry of page.entries) {
-      if (entry.type === "folder" && entry.name === name) return entry;
+      if (!isFolderCandidate(entry) || entry.name !== name) continue;
+      if (match !== undefined && !match(entry)) continue;
+      return entry;
     }
     offset = page.nextOffset;
     if (offset === undefined) return null;

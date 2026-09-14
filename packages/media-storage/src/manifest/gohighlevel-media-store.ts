@@ -19,7 +19,20 @@
  * and the binary uploader's `archive`), so this package compiles and tests
  * green whether or not those sibling tasks have merged yet.
  */
-import { BaseMediaStore, type MediaStoreDeps, type MediaStoreUploadResult } from "./media-store.js";
+import {
+  BaseMediaStore,
+  type ArchiveAssetRequest,
+  type ArchivedAsset,
+  type MediaStoreDeps,
+  type MediaStoreIngestRequest,
+  type MediaStoreUploadResult,
+} from "./media-store.js";
+import { GhlLocationMismatchError, requireLocationId } from "../ghl/tenant.js";
+import {
+  withArchivalIdempotency,
+  type ArchivalIdempotencyOptions,
+} from "../ghl/retry/idempotent-archival.js";
+import type { ArchivalLedger } from "../ghl/retry/ledger.js";
 
 /** Stable store kind for this implementation. */
 export const GHL_MEDIA_STORE_KIND = "gohighlevel";
@@ -65,6 +78,27 @@ export interface GoHighLevelMediaStoreOptions {
    * configuration over accidental paths.
    */
   readonly preferHosted?: boolean;
+  /**
+   * Durable GHL-011 idempotency ledger (SKR-013). When wired, every ingest in
+   * this store runs under `withArchivalIdempotency`, so a retry after a lost
+   * success response reuses the recorded GHL file instead of POSTing a second
+   * copy. This is the manifest store actually using the ledger that already
+   * existed beside it.
+   */
+  readonly ledger?: ArchivalLedger;
+  /**
+   * Provider-side "does this canonical name already exist in this folder?"
+   * lookup — the GHL-002 list call scoped to one parent folder. Optional, but
+   * it is what makes dedupe-by-name possible before POST and what lets a held
+   * (crash-window) archival reservation be resolved instead of refused.
+   * Returning null means "verified absent at GHL", so it must be backed by a
+   * real listing call, never a guess.
+   */
+  readonly findExistingFile?: (query: {
+    altId: string;
+    parentId: string;
+    name: string;
+  }) => Promise<{ fileId: string; url: string } | null>;
 }
 
 /** Backwards-compatible alias for earlier typo. */
@@ -81,7 +115,8 @@ export class GhlMediaStoreConfigurationError extends Error {
 
 /**
  * GHL-backed MediaStore. Manifest records always land in the DB with
- * ghl_file_id / ghl_folder_id / ghl_url and (binary path) the checksum.
+ * ghl_file_id / ghl_folder_id / ghl_url / ghl_location_id and (binary path)
+ * the checksum.
  */
 export class GoHighLevelMediaStore extends BaseMediaStore {
   readonly kind = GHL_MEDIA_STORE_KIND;
@@ -90,16 +125,120 @@ export class GoHighLevelMediaStore extends BaseMediaStore {
   private readonly hostedIngest?: GhlHostedIngest;
   private readonly binaryIngest?: GhlBinaryIngest;
   private readonly preferHosted: boolean;
+  private readonly ledger?: ArchivalLedger;
+  private readonly findExistingFile?: GoHighLevelMediaStoreOptions["findExistingFile"];
 
   constructor(options: GoHighLevelMediaStoreOptions) {
     super(options.deps);
-    if (typeof options.locationId !== "string" || options.locationId.length === 0) {
+    // A blank location is a misconfiguration, not a default: this store writes
+    // every record's tenant column from this value (SKR-011).
+    if (typeof options.locationId !== "string" || options.locationId.trim().length === 0) {
       throw new GhlMediaStoreConfigurationError("locationId");
     }
-    this.locationId = options.locationId;
+    this.locationId = options.locationId.trim();
     this.hostedIngest = options.hostedIngest;
     this.binaryIngest = options.binaryIngest;
     this.preferHosted = options.preferHosted ?? true;
+    this.ledger = options.ledger;
+    this.findExistingFile = options.findExistingFile;
+  }
+
+  /**
+   * Archive one asset with tenant isolation (SKR-011), pre-POST dedupe
+   * (SKR-013) and — when a ledger is wired — lost-success protection.
+   *
+   * The store is bound to exactly one GHL location, because the credential it
+   * uses is: accepting a caller-supplied location that differs is the tenant
+   * leak this override exists to refuse.
+   */
+  override async archiveAsset(request: ArchiveAssetRequest): Promise<ArchivedAsset> {
+    const requestedLocation =
+      request.altId === undefined
+        ? request.record.ghlLocationId
+        : requireLocationId(request.altId, "altId");
+    if (requestedLocation !== undefined && requestedLocation !== this.locationId) {
+      throw new GhlLocationMismatchError(
+        `GHL media store (bound to location "${this.locationId}")`,
+        this.locationId,
+        requestedLocation,
+        "ingest media",
+      );
+    }
+    const tenantScoped: ArchiveAssetRequest = {
+      ...request,
+      record: { ...request.record, ghlLocationId: this.locationId },
+      altId: this.locationId,
+    };
+
+    let reusedFromLedger = false;
+    const ledger = this.ledger;
+    const dedupeByName = this.findExistingFile;
+    const ingest = async (ingestRequest: MediaStoreIngestRequest): Promise<MediaStoreUploadResult> => {
+      const byName = async (): Promise<{ fileId: string; url: string } | null> =>
+        dedupeByName === undefined
+          ? null
+          : dedupeByName({
+              altId: this.locationId,
+              parentId: ingestRequest.parentId,
+              name: ingestRequest.name,
+            });
+      // Dedupe by canonical name BEFORE the POST: the deterministic filename
+      // (spec §35.3/§48) makes an already-archived asset findable, so a re-run
+      // adopts it instead of creating a duplicate GHL file. This runs whether
+      // or not a ledger is wired.
+      const attempt = async (): Promise<MediaStoreUploadResult> => {
+        const existing = await byName();
+        if (existing !== null) {
+          return {
+            fileId: existing.fileId,
+            url: existing.url,
+            folderId: ingestRequest.parentId,
+            ...(request.record.checksum !== undefined
+              ? { checksum: request.record.checksum }
+              : {}),
+          };
+        }
+        return request.ingest(ingestRequest);
+      };
+      if (ledger === undefined) return attempt();
+
+      const idempotencyOptions: ArchivalIdempotencyOptions<MediaStoreUploadResult> =
+        dedupeByName === undefined
+          ? {}
+          : {
+              // A held reservation means an earlier attempt's outcome is
+              // unknown (it may have landed at GHL). Resolve it provider-side
+              // by name; without that lookup the module refuses to re-POST
+              // rather than risk a duplicate.
+              detectExisting: async (): Promise<MediaStoreUploadResult | null> => {
+                const found = await byName();
+                if (found === null) return null;
+                return { fileId: found.fileId, url: found.url, folderId: ingestRequest.parentId };
+              },
+            };
+      const outcome = await withArchivalIdempotency<MediaStoreUploadResult>(
+        ledger,
+        {
+          altId: this.locationId,
+          parentId: ingestRequest.parentId,
+          name: ingestRequest.name,
+          ...(request.record.checksum !== undefined
+            ? { checksum: request.record.checksum }
+            : {}),
+          ...(ingestRequest.fileUrl !== undefined ? { fileUrl: ingestRequest.fileUrl } : {}),
+          ...(request.record.providerTaskId !== undefined
+            ? { providerTaskId: request.record.providerTaskId }
+            : {}),
+        },
+        attempt,
+        idempotencyOptions,
+      );
+      if (outcome.reused) reusedFromLedger = true;
+      return outcome.value;
+    };
+
+    const archived = await super.archiveAsset({ ...tenantScoped, ingest });
+    return reusedFromLedger ? { ...archived, uploaded: false } : archived;
   }
 
   /**
