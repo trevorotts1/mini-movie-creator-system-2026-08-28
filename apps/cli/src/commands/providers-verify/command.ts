@@ -78,9 +78,16 @@ export {
 export const PROVIDER_ENV_KEYS: Readonly<Record<string, readonly string[]>> = {
   agnes: ["AGNES_API_KEY"],
   kie: ["KIE_API_KEY"],
-  fish: ["FISH_API_KEY", "ELEVENLABS_API_KEY"],
+  // Fish Audio is the engine's TTS provider. ELEVENLABS_API_KEY belongs to the
+  // legacy Python tooling, is never read by the engine, and — because the
+  // presence check below is any-of — used to mark Fish Audio "configured" on
+  // the strength of a key the engine cannot use.
+  fish: ["FISH_API_KEY"],
   openrouter: ["OPENROUTER_API_KEY"],
-  ghl: ["GHL_API_KEY", "GHL_LOCATION_ID"],
+  // GHL_ACCESS_TOKEN is the documented contract (@mmcs/core config schema,
+  // @mmcs/media-storage auth). GHL_API_KEY exists nowhere in the tree, so this
+  // list previously made GHL look unconfigured no matter what was set.
+  ghl: ["GHL_ACCESS_TOKEN", "GHL_LOCATION_ID"],
 };
 
 /**

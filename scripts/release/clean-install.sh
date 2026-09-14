@@ -117,18 +117,19 @@ pnpm_version_from_package_manager() {
     "$1" | head -1
 }
 
-# Node major version, empty when node is missing/unparseable.
-node_major() {
+# The engine's only persistence driver is the built-in `node:sqlite`, which
+# requires Node >= 22.5. A major-only check passes Node 20 and then fails at
+# first database use, so test the actual version tuple.
+node_ok() {
   command -v node >/dev/null 2>&1 || return 1
-  node -p 'process.versions.node.split(".")[0]' 2>/dev/null
+  node -e 'const [maj,min]=process.versions.node.split(".").map(Number);process.exit(maj>22||(maj===22&&min>=5)?0:1)' 2>/dev/null
 }
 
 step "1/5 prerequisites"
-NODE_MAJOR="$(node_major || true)"
-if [ -n "${NODE_MAJOR:-}" ] && [ "$NODE_MAJOR" -ge 20 ] 2>/dev/null; then
-  ok "node $(node --version) (>= 20 required by engines)"
+if node_ok; then
+  ok "node $(node --version) (>= 22.5 required by node:sqlite)"
 else
-  bad "node >= 20 required (root package.json engines) — install from https://nodejs.org or your package manager"
+  bad "node >= 22.5 required (node:sqlite persistence, root package.json engines) — install from https://nodejs.org or your package manager"
 fi
 
 if command -v git >/dev/null 2>&1; then
