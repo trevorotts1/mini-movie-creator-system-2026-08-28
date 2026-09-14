@@ -36,6 +36,16 @@ if [ -z "$REPO_ROOT" ] && [ -d "$PWD/apps/cli" ]; then
   REPO_ROOT="$PWD"
 fi
 
+# Helpers MUST be defined before their first use. When `say` was called before
+# this definition, bash fell back to a PATH lookup and, on macOS, found
+# /usr/bin/say: the diagnostic was SPOKEN aloud instead of printed, and the
+# script hung until the speech finished. Keep this block above every call site.
+fail=0
+say() { printf '[mmcs-status] %s\n' "$1"; }
+ok()  { say "OK   $1"; }
+warn() { say "WARN $1"; }
+bad() { say "FAIL $1"; fail=1; }
+
 # Hard stop when the root is still unknown: every check below is anchored to
 # REPO_ROOT, and guessing would produce false FAILs against the CWD.
 if [ -z "$REPO_ROOT" ]; then
@@ -43,12 +53,6 @@ if [ -z "$REPO_ROOT" ]; then
   say "engine surface INCOMPLETE — exit 1 (no mutation performed)"
   exit 1
 fi
-
-fail=0
-say() { printf '[mmcs-status] %s\n' "$1"; }
-ok()  { say "OK   $1"; }
-warn() { say "WARN $1"; }
-bad() { say "FAIL $1"; fail=1; }
 
 say "repo root: $REPO_ROOT"
 

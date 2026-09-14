@@ -33,4 +33,21 @@ for pkg_dir in packages/dist/*/; do
     fi
   done
 done
+
+# Bridge each package's package.json `exports` map onto the composite emit layout.
+# The exports map declares "./dist/*", but tsconfig.pkg.json emits to
+# packages/dist/<pkg>/src/*. Without this bridge, Node resolves the exports map to a
+# non-existent packages/<pkg>/dist/... and the CLI dies with ERR_MODULE_NOT_FOUND
+# before it can run a single verb. Idempotent; never clobbers a real directory.
+for pkg_dir in packages/dist/*/; do
+  pkg=$(basename "$pkg_dir")
+  [ -f "packages/$pkg/package.json" ] || continue
+  target="../dist/$pkg/src"
+  if [ -L "packages/$pkg/dist" ]; then
+    [ "$(readlink "packages/$pkg/dist")" = "$target" ] || { rm "packages/$pkg/dist"; ln -s "$target" "packages/$pkg/dist"; }
+  elif [ ! -e "packages/$pkg/dist" ]; then
+    ln -s "$target" "packages/$pkg/dist"
+  fi
+done
+echo "package dist bridges OK"
 echo "dist dep links OK"

@@ -15,7 +15,11 @@
 #      missing, pinned to the repo's packageManager version). `--frozen-lockfile`
 #      so a clean install is reproducible; set MMCS_CLEAN_INSTALL_UNSAFE_LOCKFILE=1
 #      to allow a fresh resolution when you intentionally changed package.json.
-#   4. Builds the CLI: `pnpm --filter @mmcs/cli build` → apps/cli/dist/.
+#   4. Builds the engine: composite package emit (tsc -p packages/tsconfig.pkg.json),
+#      then scripts/link-dist-deps.sh (dependency links + package dist bridges), then
+#      the CLI itself. Building the CLI alone yields a bin that dies at import time
+#      with ERR_MODULE_NOT_FOUND because @mmcs/* resolve through exports maps that
+#      point at the composite emit.
 #   5. Runs `mmcs doctor` through the built artifact and reports its exit code.
 #      doctor needs NO secrets (CORE-010 tryLoadConfig reports missing provider
 #      keys without refusing to run) — a pristine clone with an empty .env still
@@ -206,10 +210,17 @@ fi
 
 step "4/5 CLI build"
 if [ "$INSTALL_OK" -eq 1 ] && command -v pnpm >/dev/null 2>&1; then
-  if (cd "$REPO_ROOT" && pnpm --filter @mmcs/cli build >/dev/null 2>&1) && [ -f "$REPO_ROOT/apps/cli/dist/index.js" ]; then
-    ok "apps/cli built → apps/cli/dist/index.js (bin: mmcs)"
+  # Full chain, in order. The composite emit lands in packages/dist/<pkg>/src, while
+  # each package's exports map declares ./dist/*; link-dist-deps.sh links runtime
+  # dependencies AND bridges that layout gap. Skipping any step produces a bin that
+  # starts and immediately throws ERR_MODULE_NOT_FOUND on the first @mmcs/* import.
+  if (cd "$REPO_ROOT" && npx --no-install tsc -p packages/tsconfig.pkg.json >/dev/null 2>&1) \
+     && (cd "$REPO_ROOT" && bash scripts/link-dist-deps.sh >/dev/null 2>&1) \
+     && (cd "$REPO_ROOT" && pnpm --filter @mmcs/cli build >/dev/null 2>&1) \
+     && [ -f "$REPO_ROOT/apps/cli/dist/index.js" ]; then
+    ok "engine + CLI built → apps/cli/dist/index.js (bin: mmcs)"
   else
-    bad "CLI build failed — rerun 'pnpm --filter @mmcs/cli build' to see the error"
+    bad "build failed — run 'npx tsc -p packages/tsconfig.pkg.json && bash scripts/link-dist-deps.sh && pnpm --filter @mmcs/cli build' to see the error"
   fi
 else
   bad "skipping CLI build — install did not complete"
