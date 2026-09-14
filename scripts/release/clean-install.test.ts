@@ -55,6 +55,12 @@ function makeSandboxRepo(): string {
   mkdirSync(path.join(root, "packages/core"), { recursive: true });
   mkdirSync(path.join(root, "scripts/release"), { recursive: true });
   copyFileSync(SCRIPT, path.join(root, "scripts/release/clean-install.sh"));
+  // Step 4 runs the linker as part of the build chain; the sandbox needs it at
+  // the same relative path. It tolerates an empty packages/dist and exits 0.
+  copyFileSync(
+    path.join(REPO_ROOT, "scripts/link-dist-deps.sh"),
+    path.join(root, "scripts/link-dist-deps.sh"),
+  );
   writeFileSync(
     path.join(root, "package.json"),
     JSON.stringify({
@@ -90,9 +96,25 @@ function withSandbox(
   }
 }
 
-/** Fake pnpm shim: simulates install + CLI build side effects, logs args. */
+/** Fake pnpm shim: simulates install + CLI build side effects, logs args.
+ *
+ * Also installs a fake `npx`, because step 4 of the script runs the composite
+ * package emit via `npx --no-install tsc ...` before the CLI build. Any test
+ * that stages a fake pnpm is exercising that chain, so the two travel together.
+ */
 function makeFakePnpm(binDir: string): void {
   writeFileSync(path.join(binDir, "pnpm"), fakePnpmBody(), { mode: 0o755 });
+  makeFakeNpx(binDir);
+}
+
+/** Fake npx shim: step 4 runs the composite package emit via
+ * `npx --no-install tsc -p packages/tsconfig.pkg.json` before the CLI build.
+ * Any test that stages a pnpm (or a corepack that provisions one) needs this
+ * too, or the build chain fails before reaching the step under test. */
+function makeFakeNpx(binDir: string): void {
+  writeFileSync(path.join(binDir, "npx"), "#!/usr/bin/env bash\nexit 0\n", {
+    mode: 0o755,
+  });
 }
 
 /** Fake pnpm shim body — shared by makeFakePnpm and the fake-corepack shim. */
@@ -139,6 +161,7 @@ if [ "$1" = "prepare" ]; then exit 0; fi
 exit 0
 `;
   writeFileSync(path.join(binDir, "corepack"), corepack, { mode: 0o755 });
+  makeFakeNpx(binDir);
 }
 
 /** Fake node shim reporting a controllable version for the node-floor check. */
@@ -174,16 +197,43 @@ describe("clean-install.sh — usage", () => {
 describe("clean-install.sh — prerequisites gate", () => {
   it("fails before mutating when node is below the engines floor", () => {
     withSandbox((root, binDir, run) => {
-      makeFakeNode(binDir, "18"); // below engines floor
+      makeFakeNode(binDir, "18.20.0"); // below engines floor
       makeFakePnpm(binDir); // pnpm WOULD succeed — the gate must abort anyway
       const r = run();
       expect(r.status).toBe(1);
-      expect(r.stdout).toContain("node >= 20");
+      expect(r.stdout).toContain("node >= 22.5");
       // Regression: the script must NOT proceed to install after a failed
       // hard gate (docs: "aborts with a fix hint BEFORE any mutation").
       expect(existsSync(path.join(root, "fake-pnpm.log"))).toBe(false);
       expect(existsSync(path.join(root, "node_modules"))).toBe(false);
       expect(existsSync(path.join(root, ".env"))).toBe(false);
+    });
+  });
+
+  it("rejects Node 20, which the old major-only gate accepted", () => {
+    // The declared floor said ">=20" while node:sqlite (the engine's only
+    // persistence driver) requires >=22.5. A Node 20 host got a green
+    // "install verified" and then failed at first database use.
+    withSandbox((root, binDir, run) => {
+      makeFakeNode(binDir, "20.11.0");
+      makeFakePnpm(binDir);
+      const r = run();
+      expect(r.status).toBe(1);
+      expect(r.stdout).toContain("node >= 22.5");
+      expect(existsSync(path.join(root, "node_modules"))).toBe(false);
+    });
+  });
+
+  it("accepts Node 22.4.1 as below the floor and 22.5.0 as exactly at it", () => {
+    withSandbox((_root, binDir, run) => {
+      makeFakeNode(binDir, "22.4.1");
+      makeFakePnpm(binDir);
+      expect(run().status).toBe(1);
+    });
+    withSandbox((_root, binDir, run) => {
+      makeFakeNode(binDir, "22.5.0");
+      makeFakePnpm(binDir);
+      expect(run().status).toBe(0);
     });
   });
 
@@ -360,7 +410,7 @@ exit 0
       writeFileSync(path.join(binDir, "pnpm"), pnpm, { mode: 0o755 });
       const r = run();
       expect(r.status).toBe(1);
-      expect(r.stdout).toContain("CLI build failed");
+      expect(r.stdout).toContain("build failed");
       expect(existsSync(path.join(root, ".env"))).toBe(false);
     });
   });
@@ -375,6 +425,7 @@ if [ "$1" = "--filter" ]; then mkdir -p apps/cli/dist; printf '#!/usr/bin/env ba
 exit 0
 `;
       writeFileSync(path.join(binDir, "pnpm"), pnpm, { mode: 0o755 });
+      makeFakeNpx(binDir);
       const r = run();
       expect(r.status).toBe(1);
       expect(r.stdout).toContain("doctor exited non-zero");

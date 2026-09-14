@@ -117,12 +117,26 @@ pnpm_version_from_package_manager() {
     "$1" | head -1
 }
 
+# Full Node version string, empty when node is missing/unparseable. Uses -p (a
+# plain version read) so the check stays exercisable by the fake-node double in
+# clean-install.test.ts, which only intercepts -p.
+node_version() {
+  command -v node >/dev/null 2>&1 || return 1
+  node -p 'process.versions.node' 2>/dev/null
+}
+
 # The engine's only persistence driver is the built-in `node:sqlite`, which
 # requires Node >= 22.5. A major-only check passes Node 20 and then fails at
-# first database use, so test the actual version tuple.
+# first database use, so compare the actual version tuple.
 node_ok() {
-  command -v node >/dev/null 2>&1 || return 1
-  node -e 'const [maj,min]=process.versions.node.split(".").map(Number);process.exit(maj>22||(maj===22&&min>=5)?0:1)' 2>/dev/null
+  local v maj min
+  v="$(node_version)" || return 1
+  [ -n "$v" ] || return 1
+  maj="${v%%.*}"
+  min="${v#*.}"; min="${min%%.*}"
+  [ "$maj" -gt 22 ] 2>/dev/null && return 0
+  [ "$maj" -eq 22 ] 2>/dev/null && [ "$min" -ge 5 ] 2>/dev/null && return 0
+  return 1
 }
 
 step "1/5 prerequisites"
