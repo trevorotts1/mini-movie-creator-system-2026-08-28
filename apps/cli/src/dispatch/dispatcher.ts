@@ -65,14 +65,19 @@ export function buildProgram(
   const wire = (spec: CommandSpec, cmd: Command, path: string[]): void => {
     for (const arg of spec.args ?? []) cmd.argument(arg);
     const handler = overrides[spec.name] ?? stubHandler(spec);
-    cmd.action((...positional: unknown[]) => {
+    cmd.action(async (...positional: unknown[]) => {
       const args: Record<string, string> = {};
       (spec.args ?? []).forEach((ph, i) => {
         const key = ph.replace(/^<|>$/g, "");
         const val = positional[i];
         if (typeof val === "string") args[key] = val;
       });
-      void handler(args, {});
+      // Handlers return void and signal failure by assigning process.exitCode.
+      // Await them: a detached handler can still be running when the process
+      // exits, so its assigned code would never be observed. Awaiting also
+      // routes a throwing handler into dispatch()'s catch instead of leaving
+      // it as an unhandled rejection that still reports success.
+      await handler(args, {});
     });
   };
 
