@@ -230,7 +230,7 @@ if [ "$INSTALL_OK" -eq 1 ] && command -v pnpm >/dev/null 2>&1; then
   # dependencies AND bridges that layout gap. Skipping any step produces a bin that
   # starts and immediately throws ERR_MODULE_NOT_FOUND on the first @mmcs/* import.
   if (cd "$REPO_ROOT" && npx --no-install tsc -p packages/tsconfig.pkg.json >/dev/null 2>&1) \
-     && (cd "$REPO_ROOT" && bash scripts/link-dist-deps.sh >/dev/null 2>&1) \
+     && (cd "$REPO_ROOT" && bash scripts/link-dist-deps.sh >/dev/null) \
      && (cd "$REPO_ROOT" && pnpm --filter @mmcs/cli build >/dev/null 2>&1) \
      && [ -f "$REPO_ROOT/apps/cli/dist/index.js" ]; then
     ok "engine + CLI built → apps/cli/dist/index.js (bin: mmcs)"

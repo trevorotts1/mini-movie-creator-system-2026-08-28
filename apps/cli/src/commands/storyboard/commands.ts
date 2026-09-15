@@ -58,7 +58,11 @@ export const STORYBOARD_SPEC: CommandSpec = {
   options: [
     { flag: "episode", value: "code", description: "Episode code, e.g. S01E01" },
     { flag: "aspect", value: "ratio", description: "Aspect ratio override" },
-    { flag: "reject", description: "Reject instead of approve" },
+    // reject takes the rejection NOTE as its value: parseStoryboardOptions lists
+    // it in knownWithValue and reads it into rejectNote. Declaring it boolean
+    // made readOptions emit a bare "--reject", which the parser rejected with
+    // "option --reject requires a value" — the flag was dead in both spellings.
+    { flag: "reject", value: "note", description: "Reject with a reason" },
     { flag: "json", description: "Emit machine-readable JSON" },
   ],
   group: STORYBOARD_GROUP,
@@ -70,7 +74,11 @@ export const APPROVE_STORYBOARD_SPEC: CommandSpec = {
   options: [
     { flag: "episode", value: "code", description: "Episode code, e.g. S01E01" },
     { flag: "aspect", value: "ratio", description: "Aspect ratio override" },
-    { flag: "reject", description: "Reject instead of approve" },
+    // reject takes the rejection NOTE as its value: parseStoryboardOptions lists
+    // it in knownWithValue and reads it into rejectNote. Declaring it boolean
+    // made readOptions emit a bare "--reject", which the parser rejected with
+    // "option --reject requires a value" — the flag was dead in both spellings.
+    { flag: "reject", value: "note", description: "Reject with a reason" },
     { flag: "json", description: "Emit machine-readable JSON" },
   ],
   group: STORYBOARD_GROUP,

@@ -36,5 +36,14 @@ export default defineConfig({
   test: {
     include: ["src/**/*.{test,spec}.ts", "src/**/*.{test,spec}.tsx"],
     environment: "node",
+    // These suites do real SQLite work: migrate, write a row per schema band,
+    // export a .mmcsbak, fingerprint the source, restore, and compare
+    // checksums. That is ~ms of CPU each in isolation (migrate() measures
+    // 2.7-4.3ms across 14 migrations) but the default 5s budget is exceeded
+    // when the full 208-file suite runs in parallel — backup.test.ts passes
+    // 12/12 in 830ms alone yet two of its cases timed out inside the full run.
+    // The assertions here are about correctness, not latency, so the budget is
+    // raised rather than the assertions relaxed. Measured, not guessed.
+    testTimeout: 20_000,
   },
 });

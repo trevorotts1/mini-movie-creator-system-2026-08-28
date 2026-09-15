@@ -45,11 +45,16 @@ export const RETRY_SHOT_SPEC: CommandSpec = {
     "Retry one failed shot: new asset/trim, only that shot regenerates (spec §20)",
   args: ["<id>"],
   options: [
+    // These MUST match OPTION_NAMES in this file — the handler rebuilds argv
+    // tokens and the parser rejects anything it does not know. Declaring
+    // "--duration-in-frames" here made every spelling unreachable: the parser
+    // wanted "--duration", while commander camelCased the declared name to
+    // durationInFrames and the rebuild re-emitted "--durationInFrames".
     { flag: "asset", value: "path", description: "Replacement asset path" },
     { flag: "attempt", value: "n", description: "Attempt number" },
-    { flag: "duration-in-frames", value: "n", description: "New duration in frames" },
-    { flag: "trim-in-frames", value: "n", description: "Trim in point, in frames" },
-    { flag: "trim-out-frames", value: "n", description: "Trim out point, in frames" },
+    { flag: "duration", value: "n", description: "New duration in frames" },
+    { flag: "trim-in", value: "n", description: "Trim in point, in frames" },
+    { flag: "trim-out", value: "n", description: "Trim out point, in frames" },
     { flag: "reason", value: "text", description: "Reason for the retry" },
     { flag: "json", description: "Emit machine-readable JSON" },
   ],
@@ -326,9 +331,14 @@ export function runRetryShot(
 /** Wire the real handler for the CORE-011 dispatcher (mergeSpecs). */
 export function makeRetryShotHandler(ports: RetryShotPorts) {
   return (args: Record<string, string>, options: Record<string, unknown>): void => {
-    const rawOptions = Object.entries(options).flatMap(([k, v]) =>
-      v === true ? [`--${k}`] : [`--${k}`, String(v)],
-    );
+    // commander stores long flags camelCased (--trim-in becomes trimIn), but
+    // this handler rebuilds argv tokens for a parser whose OPTION_NAMES are
+    // kebab-case. Without this conversion every multi-word flag was rejected as
+    // "unknown option: --trimIn".
+    const rawOptions = Object.entries(options).flatMap(([k, v]) => {
+      const flag = k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+      return v === true ? [`--${flag}`] : [`--${flag}`, String(v)];
+    });
     const result = runRetryShot(args.id, rawOptions, ports);
     const stream = result.exitCode === 0 ? process.stdout : process.stderr;
     stream.write(result.lines.join("\n") + "\n");
