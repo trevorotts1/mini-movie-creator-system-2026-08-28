@@ -304,9 +304,22 @@ describe("final render pipeline — deterministic naming and archive plan (spec 
     expect(sidecarFolderSegments("S01E01")).toEqual(["S01E01", "09 QC Metadata"]);
   });
 
-  it("composition id is deterministic and filesystem-safe", async () => {
-    expect(compositionIdFor(makeSpec())).toBe("final-s01e01");
-    expect(compositionIdFor(makeSpec({ episodeCode: "S02E10" }))).toBe("final-s02e10");
+  it("composition id matches what the registry registers", async () => {
+    // This used to assert `final-s01e01`, which is the value that BROKE rendering: Root.tsx
+    // registers the episodic composition under the id the registry generator produced
+    // (`S01E01`), and Remotion's selectComposition looks ids up by that. The old assertion
+    // tested the pipeline's internal derivation and never checked it against the registry,
+    // which is why the mismatch survived until an episode was actually rendered.
+    expect(compositionIdFor(makeSpec())).toBe("S01E01");
+    expect(compositionIdFor(makeSpec({ episodeCode: "S02E10" }))).toBe("S02E10");
+  });
+
+  it("an explicit compositionId wins, for plans that set a compositionIdPrefix", async () => {
+    // The registry id is `compositionIdPrefix + episodeCode`, which this package cannot read
+    // from the plan, so the caller supplies it.
+    expect(compositionIdFor(makeSpec({ compositionId: "MMCS_S01E01" }))).toBe("MMCS_S01E01");
+    // Blank/whitespace is treated as absent rather than selected literally.
+    expect(compositionIdFor(makeSpec({ compositionId: "   " }))).toBe("S01E01");
   });
 
   it("isSafeEpisodeCode rejects traversal and unsafe tokens, accepts spec codes", async () => {
@@ -374,7 +387,7 @@ describe("pipeline steps — render → ffprobe → report → archive", () => {
       validate: okProbe,
       archive,
     });
-    expect(renderRequests).toEqual(["final-s01e01"]);
+    expect(renderRequests).toEqual(["S01E01"]);
     expect(report.archived).toBe(true);
     expect(report.ghlFileId).toBe("file-123");
     expect(report.durableFinalUrl).toBe("https://files.example/final.mp4");

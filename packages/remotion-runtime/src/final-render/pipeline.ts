@@ -276,9 +276,23 @@ function planResolution(
   return renderResolutionFor(mode, effective, spec.format.custom);
 }
 
-/** Composition id Remotion selects in the bundle (deterministic naming). */
+/**
+ * Composition id Remotion selects in the bundle.
+ *
+ * This used to return `final-${episodeCode.toLowerCase()}` unconditionally — e.g.
+ * `final-s01e01` — while `Root.tsx` registers the episodic composition under the id the
+ * registry generator produced (`S01E01` for the unprefixed plan). Remotion's
+ * `selectComposition(serveUrl, id)` looks compositions up BY THAT ID, so the derived name
+ * never matched anything and NO episode could render, regardless of approvals or data.
+ *
+ * The registry id is data-driven (`compositionIdPrefix + episodeCode`), so the spec can
+ * carry it explicitly; without one, the episode code is used, which is what the registry
+ * registers for the unprefixed plan.
+ */
 export function compositionIdFor(spec: FinalRenderSpec): string {
-  return `final-${spec.episodeCode.toLowerCase().replace(/[^a-z0-9]/gi, "-")}`;
+  const explicit = spec.compositionId?.trim();
+  if (explicit) return explicit;
+  return spec.episodeCode;
 }
 
 /**

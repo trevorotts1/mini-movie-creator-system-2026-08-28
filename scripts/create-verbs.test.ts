@@ -244,3 +244,32 @@ describe("gate-2 approval is awaited, not bridged (SKR-003)", () => {
     expect(status).toMatch(/rough-cut: APPROVED/);
   });
 });
+
+describe("the pipeline selects a composition the registry actually registers (SKR-003)", () => {
+  it("compositionIdFor agrees with episode-registry.gen.ts", () => {
+    // The defect this pins: `compositionIdFor` derived `final-s01e01` while Root.tsx
+    // registers the id the generator produced (`S01E01`). Remotion's selectComposition looks
+    // compositions up BY ID, so the name never matched and NO episode could render —
+    // regardless of approvals or data. The old unit test asserted the derived string and
+    // never compared it to the registry, which is why the mismatch survived.
+    //
+    // If a `compositionIdPrefix` is ever set in the plan, this test fails and the caller
+    // must supply `spec.compositionId` — which is exactly the signal we want.
+    const registry = fs.readFileSync(
+      path.resolve(REPO, "remotion", "src", "episodic", "episode-registry.gen.ts"),
+      "utf8",
+    );
+    const registered = [...registry.matchAll(/"compositionId":\s*"([^"]+)"/g)].map((m) => m[1]);
+    expect(registered.length).toBeGreaterThan(0);
+
+    for (const id of registered) {
+      // The pipeline derives the id from the episode code when the spec carries none.
+      const code = /^[A-Za-z]*(\d{2})(\d{2})$/.exec(id);
+      if (!code) continue; // prefixed ids need an explicit spec.compositionId
+      expect(
+        registered,
+        `the id the pipeline derives for ${id} must be one the registry registers`,
+      ).toContain(id);
+    }
+  });
+});

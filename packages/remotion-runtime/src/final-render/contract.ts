@@ -168,6 +168,15 @@ export interface FinalRenderSpec {
    * producing a fixture file.
    */
   remotionEntryPoint?: string;
+  /**
+   * The Remotion composition id to select, exactly as `Root.tsx` registers it.
+   *
+   * This must be supplied whenever the episodic plan sets a `compositionIdPrefix`, because
+   * the registry id is data-driven (`prefix + episodeCode`) while this package cannot read
+   * the plan. Omitted → `episodeCode` is used, which is what the registry registers for the
+   * unprefixed plan.
+   */
+  compositionId?: string;
   /** Composition version — bumped on re-render; v01 default. */
   version?: number;
   /** Directory the final file renders into. Default: process cwd. */
