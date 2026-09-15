@@ -573,6 +573,47 @@ describe("GHL tenant isolation (SKR-011)", () => {
     expect(calls).toHaveLength(0); // nothing was uploaded to the wrong tenant
   });
 
+  it("refuses a FIRST write whose altId contradicts the record's own location", async () => {
+    // No persisted row exists yet. The guard only fired when BOTH sides were
+    // defined, so a new asset the caller had already bound to loc_A was written
+    // into loc_B with no error — altId silently outranked the record.
+    const { ingest, calls } = okIngest();
+    await expect(
+      storeFor().archiveAsset({
+        record: record({ assetId: "mmcs_retarget_1", ghlLocationId: "loc_A" }),
+        ingest,
+        parentId: "ghl_folder_episode",
+        altId: "loc_B",
+      }),
+    ).rejects.toBeInstanceOf(GhlLocationMismatchError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("refuses a different location when the existing row is ALREADY linked", async () => {
+    // The tenant check used to sit after the idempotent-reuse early return, so
+    // re-archiving an already-linked asset under another location returned the
+    // old record as a SUCCESS having checked nothing. The test above uses an
+    // unlinked row, which never reached that early return.
+    assets.create(
+      record({
+        assetId: "mmcs_linked_1",
+        ghlLocationId: "loc_A",
+        ghlFileId: "ghl_file_linked",
+        ghlUrl: "https://storage.gohighlevel.example/ghl_file_linked",
+      }),
+    );
+    const { ingest, calls } = okIngest();
+    await expect(
+      storeFor().archiveAsset({
+        record: record({ assetId: "mmcs_linked_1" }),
+        ingest,
+        parentId: "ghl_folder_episode",
+        altId: "loc_B",
+      }),
+    ).rejects.toBeInstanceOf(GhlLocationMismatchError);
+    expect(calls).toHaveLength(0);
+  });
+
   it("accepts the same location as the persisted record", async () => {
     assets.create(record({ assetId: "mmcs_loc_3", ghlLocationId: "loc_A" }));
     const { ingest } = okIngest();

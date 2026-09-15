@@ -142,16 +142,7 @@ export abstract class BaseMediaStore implements MediaStore {
       throw new AssetManifestError("MISSING_FIELD", "record.assetId is required");
     }
 
-    // Idempotent reuse: a record that already carries verified durable linkage
-    // is not re-uploaded — re-archival must never duplicate the durable copy.
     const existing = this.assets.getById(record.assetId);
-    if (
-      existing !== undefined &&
-      existing.ghlFileId !== undefined &&
-      existing.ghlUrl !== undefined
-    ) {
-      return { record: existing, uploaded: false };
-    }
 
     const folderId = request.parentId ?? record.ghlFolderId;
     if (typeof folderId !== "string" || folderId.length === 0) {
@@ -160,21 +151,34 @@ export abstract class BaseMediaStore implements MediaStore {
       });
     }
 
-    // SKR-011 tenant isolation. The persisted row's location is authoritative:
-    // re-pointing GHL_LOCATION_ID (or passing a different altId) must fail
-    // loudly here instead of quietly moving a client's media into another
-    // client's sub-account. This is the EpisodeFolderEnsurer guard, generalised
-    // to every persisted GHL record. A supplied-but-blank location is a caller
-    // bug, not "no constraint" — treating it as absent is how a record ends up
-    // with no tenant at all.
+    // SKR-011 tenant isolation — evaluated on EVERY path, including the
+    // idempotent reuse below. It used to sit after that early return, so
+    // re-archiving an already-linked asset under a different location returned
+    // the OLD record as a success without checking anything.
+    //
+    // The record's own declaration counts as a stored location: a caller
+    // supplying both record.ghlLocationId = loc_A and altId = loc_B used to
+    // have altId silently win, writing a new asset into a different
+    // sub-account than the record declared. They must agree when both are
+    // present, and a persisted row always outranks the record.
     const requestedLocationId =
-      request.altId === undefined ? record.ghlLocationId : requireLocationId(request.altId, "altId");
+      request.altId === undefined ? undefined : requireLocationId(request.altId, "altId");
     const locationId = assertStoredLocationMatches({
-      storedLocationId: existing?.ghlLocationId,
-      requestedLocationId,
+      storedLocationId: existing?.ghlLocationId ?? record.ghlLocationId,
+      requestedLocationId: requestedLocationId ?? record.ghlLocationId,
       subject: `asset "${record.assetId}"`,
       action: "re-archive",
     });
+
+    // Idempotent reuse: a record that already carries verified durable linkage
+    // is not re-uploaded — re-archival must never duplicate the durable copy.
+    if (
+      existing !== undefined &&
+      existing.ghlFileId !== undefined &&
+      existing.ghlUrl !== undefined
+    ) {
+      return { record: existing, uploaded: false };
+    }
 
     // SKR-013 dedupe: the same bytes already archived into this destination
     // must not be POSTed again. Adopt the existing durable copy and record the
