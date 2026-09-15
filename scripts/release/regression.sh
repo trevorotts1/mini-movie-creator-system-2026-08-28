@@ -269,11 +269,25 @@ elif [ ! -d "$REMOTION_DIR/node_modules" ]; then
 else
   SMOKE_RC=0
   (cd "$REMOTION_DIR" && node "$SCRIPT_DIR/regression-render-smoke.mjs" "$SMOKE_OUT" "$LOG") || SMOKE_RC=$?
+  # Second, separate check: render through the PRODUCTION ADAPTER rather than
+  # through @remotion/* directly. The smoke above proves the remotion/ project
+  # can render; it says nothing about
+  # packages/remotion-runtime/src/final-render/remotion-renderer.ts, which is
+  # what the pipeline is supposed to use. Before this existed the adapter had
+  # only ever run against injected fakes. Runs from the repo root because the
+  # adapter resolves @remotion/* from the pnpm tree.
+  ADAPTER_RC=0
   if [ "$SMOKE_RC" -eq 0 ]; then
-    area_pass "render-smoke" "9:16 Short1Chess + 16:9 S01E01 rendered (30 frames @ scale 0.5), ffprobe-validated"
-  else
+    node "$SCRIPT_DIR/regression-adapter-smoke.mjs" "$SMOKE_OUT" "$LOG.adapter" || ADAPTER_RC=$?
+  fi
+  if [ "$SMOKE_RC" -eq 0 ] && [ "$ADAPTER_RC" -eq 0 ]; then
+    area_pass "render-smoke" "9:16 Short1Chess + 16:9 S01E01 rendered (30 frames @ scale 0.5) AND S01E01 rendered through the production adapter — all ffprobe-validated"
+  elif [ "$SMOKE_RC" -ne 0 ]; then
     dump_log_tail render-smoke
     area_fail "render-smoke" "smoke render failed (rc=$SMOKE_RC) — run 'cd remotion && node ../scripts/release/regression-render-smoke.mjs' for details"
+  else
+    dump_log_tail render-smoke
+    area_fail "render-smoke" "direct @remotion render passed but the ADAPTER render failed (rc=$ADAPTER_RC) — run 'node scripts/release/regression-adapter-smoke.mjs <outDir>' for details"
   fi
   # The smoke helper must clean up its generated bundle entry + runner; if it
   # leaves them behind the repo tree is dirty and the gate failed its own
