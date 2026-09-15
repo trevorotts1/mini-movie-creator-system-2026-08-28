@@ -23,6 +23,11 @@ import {
   type KieClientConfig,
   type ResolvedKieClientConfig,
 } from "./config.js";
+import {
+  KieBudgetRefusedError,
+  type KieBudgetGate,
+  type KieBudgetReservation,
+} from "../budget/index.js";
 
 /**
  * The Kie JSON envelope (verified 2026-08-28). Every /api/v1 response uses it;
@@ -76,6 +81,14 @@ export type KieResult<T> = KieSuccess<T> | KieFailure;
 /** Injectable HTTP transport — the seam tests mock. Signature mirrors `fetch`. */
 export type KieFetch = (url: string, init: RequestInit) => Promise<Response>;
 
+/** Gate context for a paid submit (SKR-007). Required when a gate is configured. */
+export interface KieCreateTaskBudget {
+  /** Stable reference for this job, used for the reservation and idempotency. */
+  ref: string;
+  /** Estimated paid spend, USD. The gate decides; this only states the ask. */
+  estimatedCostUsd: number;
+}
+
 /** A single Kie HTTP request. */
 export interface KieRequest {
   /** Method. Default "POST". */
@@ -109,6 +122,12 @@ export class KieClient {
     config: KieClientConfig,
     options?: {
       fetch?: KieFetch;
+      /**
+       * Budget gate (SKR-007). When supplied, `createTask` MUST reserve before issuing the
+       * request and release the hold if submission fails, so an exhausted ceiling is refused
+       * before any money can be committed.
+       */
+      budgetGate?: KieBudgetGate;
       onRetry?: (info: {
         path: string;
         method: string;
@@ -120,8 +139,11 @@ export class KieClient {
   ) {
     this.cfg = resolveKieClientConfig(config);
     this.fetchImpl = options?.fetch ?? globalThis.fetch;
+    this.budgetGate = options?.budgetGate;
     this.onRetry = options?.onRetry;
   }
+
+  private readonly budgetGate?: KieBudgetGate;
 
   private readonly fetchImpl: KieFetch;
 
@@ -194,13 +216,67 @@ export class KieClient {
     };
   }
 
-  /** Convenience: POST /api/v1/jobs/createTask. */
-  async createTask(body: {
-    model: string;
-    input: Record<string, unknown>;
-    callBackUrl?: string;
-  }): Promise<KieResult<KieCreateTaskData>> {
-    return this.request<KieCreateTaskData>({ path: "/api/v1/jobs/createTask", body });
+  /**
+   * Convenience: POST /api/v1/jobs/createTask — the paid submit.
+   *
+   * With a budget gate configured, the order is fixed and matters:
+   *   1. reserve   — if the gate refuses, `KieBudgetRefusedError` is thrown and NO request
+   *                  is issued, so a refusal can never cost money;
+   *   2. request   — the actual POST;
+   *   3. release   — on any failure, so the hold is not stranded; on success the hold stands
+   *                  and the caller commits it once the task is known to have landed.
+   *
+   * Without a gate the call behaves exactly as before, so existing callers are unaffected.
+   */
+  async createTask(
+    body: {
+      model: string;
+      input: Record<string, unknown>;
+      callBackUrl?: string;
+    },
+    budget?: KieCreateTaskBudget,
+  ): Promise<KieResult<KieCreateTaskData>> {
+    const gate = this.budgetGate;
+    if (gate === undefined) {
+      return this.request<KieCreateTaskData>({ path: "/api/v1/jobs/createTask", body });
+    }
+    if (budget === undefined) {
+      // Fail closed: a configured gate with no budget context would otherwise submit
+      // unguarded, which is the exact hole this port exists to close.
+      throw new KieBudgetRefusedError(body.model, 0, "a budget gate is configured but no budget context was supplied");
+    }
+
+    let reservation: KieBudgetReservation;
+    try {
+      reservation = await gate.reserve({
+        ref: budget.ref,
+        provider: "kie",
+        model: body.model,
+        estimatedCostUsd: budget.estimatedCostUsd,
+        currency: "USD",
+      });
+    } catch (err) {
+      if (err instanceof KieBudgetRefusedError) throw err;
+      // A gate that throws has not authorised anything. Refuse rather than submit.
+      throw new KieBudgetRefusedError(
+        budget.ref,
+        budget.estimatedCostUsd,
+        `the gate could not authorise this submit: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    let result: KieResult<KieCreateTaskData>;
+    try {
+      result = await this.request<KieCreateTaskData>({ path: "/api/v1/jobs/createTask", body });
+    } catch (err) {
+      // Transport threw after the hold was taken — release it before propagating.
+      await reservation.release("failed");
+      throw err;
+    }
+    if (!result.ok) {
+      await reservation.release("failed");
+    }
+    return result;
   }
 
   /** Convenience: GET /api/v1/jobs/recordInfo?taskId=… */

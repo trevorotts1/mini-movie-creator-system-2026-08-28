@@ -31,6 +31,7 @@ export * as FishAudioPronunciation from "./fish-audio/pronunciation/index.js";
 export * as FishAudioTts from "./fish-audio/tts/index.js";
 export * as FishAudioVoiceProfiles from "./fish-audio/voice-profiles/index.js";
 export * as KieClient from "./kie/client/index.js";
+export * as KieBudget from "./kie/budget/index.js";
 export * as KieCost from "./kie/cost/index.js";
 export * as KieErrors from "./kie/errors/index.js";
 export * as KieSeedance from "./kie/seedance/index.js";

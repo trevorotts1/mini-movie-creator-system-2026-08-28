@@ -188,7 +188,9 @@ describe("mmcs create-scene / create-shot (SKR-003)", () => {
 describe("approval gate verbs (SKR-003)", () => {
   const chain = ["concept", "script", "character", "storyboard", "rough-cut", "canon"];
 
-  it("every gate in the spec §3 order has a verb that PARSES", () => {
+  // Spawns one CLI process per gate (six tsx starts); under load that exceeds the default
+  // 20s budget, so the budget moves rather than the assertion.
+  it("every gate in the spec §3 order has a verb that PARSES", { timeout: 120_000 }, () => {
     // The registry used a SPACE for concept/script/rough-cut but a HYPHEN for
     // approve-character/approve-storyboard, so `mmcs approve character` died with
     // "too many arguments for 'approve'" and the documented chain could not be walked.
