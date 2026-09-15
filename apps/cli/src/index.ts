@@ -797,6 +797,44 @@ function registerRemainingHandlers(map: Record<string, Handler>): void {
     }
   }) as unknown as Handler;
 
+  // The `character` and `storyboard` GATES had no working verb. The registry used
+  // `approve-character` for the gate, but that verb is "approve a character VERSION" and takes
+  // an id — a different action — while `approve-storyboard` had no handler at all. Meanwhile
+  // `approve concept` / `approve script` / `approve rough-cut` follow the registry's
+  // space-nested convention, and the spec §3 gate order (concept → script → character →
+  // storyboard → rough-cut → canon) is enforced by NAME. The result: the documented chain
+  // could not be walked — `mmcs approve character` died with "too many arguments for
+  // 'approve'". These register the two missing gate verbs under the space convention, leaving
+  // the id-taking `approve-character` verb intact for its own distinct purpose.
+  const approveGate = (gateName: string, label: string, nextStep: string): Handler =>
+    (async () => {
+      const store = approvals();
+      try {
+        const record = await store.approve(gateName as never, {});
+        process.stdout.write(
+          [`[mmcs] approve ${label} — APPROVED at ${record.approvedAt ?? "(now)"}`, nextStep].join("\n") + "\n",
+        );
+      } catch (err) {
+        // GateOrderError is the §3 state machine doing its job — a clean failure, not a crash.
+        process.stderr.write(
+          `[mmcs] approve ${label}: ${err instanceof Error ? err.message : String(err)}\n`,
+        );
+        process.exitCode = 1;
+      }
+    }) as unknown as Handler;
+
+  map["approve character"] = approveGate(
+    "character",
+    "character",
+    "Gate 3 open: character work may proceed to storyboard.",
+  );
+  map["approve storyboard"] = approveGate(
+    "storyboard",
+    "storyboard",
+    "Gate 4 open: generation and rough cut may proceed.",
+  );
+  map["approve canon"] = approveGate("canon", "canon", "Gate 6 open: canon may be updated.");
+
   map["providers"] = (async () => {
     const configured = loadConfiguredProviders();
     const lines = ["[mmcs] providers — configured (credentials-present, names only):"];

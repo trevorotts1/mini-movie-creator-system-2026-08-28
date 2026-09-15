@@ -235,6 +235,21 @@ export function buildRegistry(): CommandSpec[] {
     },
     // --- providers / models (spec §5, §15) ---
     {
+      name: "approve character",
+      description: "Approve the character gate",
+      group: "characters",
+    },
+    {
+      name: "approve storyboard",
+      description: "Approve the storyboard gate",
+      group: "storyboard",
+    },
+    {
+      name: "approve canon",
+      description: "Approve the canon gate",
+      group: "pipeline",
+    },
+    {
       name: "providers",
       description: "List configured providers",
       group: "providers",

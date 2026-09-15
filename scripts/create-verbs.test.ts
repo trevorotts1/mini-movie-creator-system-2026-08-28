@@ -179,3 +179,36 @@ describe("mmcs create-scene / create-shot (SKR-003)", () => {
     expect(r.out).not.toMatch(/no shots/);
   });
 });
+
+describe("approval gate verbs (SKR-003)", () => {
+  const chain = ["concept", "script", "character", "storyboard", "rough-cut", "canon"];
+
+  it("every gate in the spec §3 order has a verb that PARSES", () => {
+    // The registry used a SPACE for concept/script/rough-cut but a HYPHEN for
+    // approve-character/approve-storyboard, so `mmcs approve character` died with
+    // "too many arguments for 'approve'" and the documented chain could not be walked.
+    // This asserts each gate name is at least ACCEPTED as a verb; whether it succeeds is a
+    // separate matter (gate order, and the script-bridge defect still open).
+    for (const gate of chain) {
+      const r = cli(freshState(), ["approve", gate]);
+      expect(r.out, `approve ${gate} must not be a parse error`).not.toMatch(/too many arguments/);
+      expect(r.out, `approve ${gate} must not be an unknown command`).not.toMatch(/unknown command/);
+    }
+  });
+
+  it("keeps `approve-character <id>` as its own id-taking verb", () => {
+    // It approves a character VERSION, not the character gate — the fix must not have
+    // collapsed the two into one.
+    const r = cli(freshState(), ["approve-character", "char-1"]);
+    expect(r.out).not.toMatch(/too many arguments/);
+  });
+
+  it("enforces gate order once the chain is walkable", () => {
+    const state = freshState();
+    expect(cli(state, ["approve", "concept"]).code).toBe(0);
+    // character cannot be approved while script is pending — the §3 state machine working.
+    const skip = cli(state, ["approve", "character"]);
+    expect(skip.code).toBe(1);
+    expect(skip.out).toMatch(/gate order/);
+  });
+});
