@@ -168,7 +168,13 @@ else
       fi
     fi
     if [ -n "$RETRIED" ]; then
-      area_pass "vitest" "$(grep -E "Tests  " "$LOG.retry" | tail -1 | sed 's/^ *//')$RETRIED"
+      # Report the FIRST pass's full-suite line, not the retry's. The retry runs
+      # only the failing files, so quoting its "Tests N passed" line made a
+      # 4000-test suite that FAILED read as e.g. "Tests 12 passed (12)" — a
+      # green line that concealed both the failure and the suite size. Disclose
+      # the first-pass counts and the retry outcome together.
+      FIRST_PASS="$(grep -E "Tests  " "$LOG" | tail -1 | sed 's/^ *//')"
+      area_pass "vitest" "first pass: ${FIRST_PASS:-unknown}$RETRIED"
     else
       dump_log_tail vitest
       # Surface the failing test files, not the whole log.

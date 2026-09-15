@@ -70,9 +70,16 @@ describe("parseRoughCutArgs", () => {
 });
 
 describe("executeRoughCut", () => {
-  it("prints usage and exits 0 when no episode is given (discoverability)", async () => {
+  it("prints usage and exits 1 when no episode is given", async () => {
+    // Asserted exit 0 before, justified as "discoverability". But `mmcs
+    // rough-cut --help` already prints this usage at exit 0, so exiting 0 on a
+    // MISSING REQUIRED ARGUMENT bought no discoverability — it only told a
+    // scripted caller a render had succeeded when nothing ran. This module's
+    // own usage text says "Exit 0 on success, 1 when the plan is invalid or a
+    // step fails", and the registry convention is that a missing required
+    // argument exits 1.
     const result = await executeRoughCut([], () => undefined, fixtureAdapter);
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
     expect(result.lines[0]).toBe(USAGE_ROUGH_CUT);
   });
 

@@ -91,7 +91,10 @@ export async function executeFinal(
 ): Promise<FinalCliResult> {
   const opts = parseFinalArgs(argv);
   if (!opts.episodeId) {
-    return { exitCode: 0, lines: [USAGE_FINAL] };
+    // A missing required argument is a usage error, not a success — see the
+    // note in rough-cut/cli.ts. Exiting 0 here let `mmcs final` report success
+    // having rendered nothing.
+    return { exitCode: 1, lines: [USAGE_FINAL] };
   }
   const spec = specFactory(opts.episodeId);
   if (!spec) {

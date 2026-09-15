@@ -150,16 +150,37 @@ function db(): ReturnType<typeof connectSqlite> {
   return dbHandle;
 }
 
-/** The $25 cumulative paid-spend gate (CORE-009, spec §33; env-overridable). */
-function ledger(): CostLedger {
-  const autoLimit = Number(process.env.AUTO_SPEND_LIMIT_USD ?? 25);
-  return new CostLedger(db(), {
-    limitUsd: Number.isFinite(autoLimit) && autoLimitUsdValid(autoLimit) ? autoLimit : 25,
-  });
+/** Hard ceiling for cumulative paid spend (CORE-009, spec §33). */
+const AUTO_SPEND_CEILING_USD = 25;
+
+/**
+ * The effective cumulative spend limit.
+ *
+ * AUTO_SPEND_LIMIT_USD may LOWER this ceiling but never raise it — the same
+ * rule the release smoke enforces (scripts/release/provider-smoke.ts caps at
+ * MIN(requested, SMOKE_HARD_CAP_USD)). The old check was `v >= 0` with no
+ * upper bound, so AUTO_SPEND_LIMIT_USD=99999 silently removed the wall in
+ * production while the smoke path refused to go above 25.
+ */
+function autoLimitUsd(): number {
+  const raw = Number(process.env.AUTO_SPEND_LIMIT_USD ?? AUTO_SPEND_CEILING_USD);
+  if (!Number.isFinite(raw) || raw < 0) return AUTO_SPEND_CEILING_USD;
+  return Math.min(raw, AUTO_SPEND_CEILING_USD);
 }
 
-function autoLimitUsdValid(v: number): boolean {
-  return v >= 0;
+/**
+ * The cumulative paid-spend ledger.
+ *
+ * NOTE: this is the enforcement point for the spend ceiling, and it is
+ * currently constructed by nothing on a paid path — `generate` and
+ * `generate-shot` fail closed because no generation runner is wired into this
+ * CLI, so no provider spend can be submitted, reserved or committed yet. When
+ * a generation runner IS wired it MUST reserve through this ledger before
+ * submitting to a provider, or the ceiling is decorative. Tracked in the
+ * review packet as an open blocker.
+ */
+function ledger(): CostLedger {
+  return new CostLedger(db(), { limitUsd: autoLimitUsd() });
 }
 
 /** The VERIFIED image capability profile (registry, image kind only). */
@@ -928,7 +949,12 @@ function registerDirectHandlers(map: Record<string, Handler>): void {
         }, 0);
         lines.push(`  ${p.name} [${p.id}] — ${series.length} series, ${episodeCount} episode(s)`);
       }
-      lines.push("[mmcs] status — spend: `mmcs estimate` for per-episode projections; ledger limit $" + (process.env.AUTO_SPEND_LIMIT_USD ?? "25"));
+      lines.push(
+        "[mmcs] status — spend: `mmcs estimate` for per-episode projections; " +
+          `spend ceiling $${autoLimitUsd()} (AUTO_SPEND_LIMIT_USD may only lower it). ` +
+          "Enforcement is not yet wired: no generation runner exists in this CLI, " +
+          "so no paid work can be submitted or reserved.",
+      );
     } catch (err) {
       lines.push(`[mmcs] status — database: ${err instanceof Error ? err.message : String(err)}`);
     }

@@ -146,7 +146,12 @@ export async function executeRoughCut(
 ): Promise<RoughCutCliResult> {
   const opts = parseRoughCutArgs(argv);
   if (!opts.episodeId) {
-    return { exitCode: 0, lines: [USAGE_ROUGH_CUT] };
+    // A missing required argument is a usage error, not a success. Returning 0
+    // here meant `mmcs rough-cut` with no episode reported success having
+    // rendered nothing, contradicting this module's own usage text
+    // ("Exit 0 on success, 1 when the plan is invalid or a step fails") and the
+    // registry convention that a missing required argument exits 1.
+    return { exitCode: 1, lines: [USAGE_ROUGH_CUT] };
   }
   const plan = planFactory(opts.episodeId);
   if (!plan) {

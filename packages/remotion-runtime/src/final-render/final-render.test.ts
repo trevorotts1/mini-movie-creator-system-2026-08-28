@@ -539,13 +539,16 @@ describe("mmcs final — CLI wiring (spec §24)", () => {
     expect(FINAL_SPEC.description.length).toBeGreaterThan(0);
   });
 
-  it("bare `mmcs final` prints usage and exits 0 (discoverability)", async () => {
+  it("bare `mmcs final` prints usage and exits 1", async () => {
+    // See the equivalent rough-cut test: `mmcs final --help` already provides
+    // discoverability at exit 0, so exiting 0 on a missing required argument
+    // only produced a false success.
     const result = await executeFinal([], () => makeSpec(), {
       approvals: gatePort("APPROVED"),
       render: stubRender,
       validate: okProbe,
     });
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
     expect(result.lines[0]).toContain("Usage: mmcs final");
   });
 
