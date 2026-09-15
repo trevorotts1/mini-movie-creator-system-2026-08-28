@@ -61,11 +61,32 @@ export function makeWriteScriptHandler(ports: WriteScriptCommandPorts) {
  * `flags` are the raw argv tail; `options` is any pre-parsed subset.
  */
 export function makeApproveScriptHandler(ports: WriteScriptCommandPorts) {
-  return (options: ApproveScriptDecision = {}, flags: readonly string[] = []): void => {
+  // The dispatcher invokes handlers as (args, options) — see wire() in
+  // dispatch/dispatcher.ts. This handler previously declared
+  // (options, flags), an order predating CORE-011, so the options OBJECT landed
+  // in `flags` and parseApproveScriptOptions saw flags.length === undefined:
+  // --by and --note were accepted by commander and then silently ignored, and
+  // the gate could be approved with no recorded operator identity.
+  return (
+    _args: Record<string, string> = {},
+    rawOptions: Record<string, unknown> = {},
+  ): void => {
+    // commander camelCases long flags; the parser reads kebab-case argv pairs.
+    const flags = Object.entries(rawOptions).flatMap(([k, v]) => {
+      const flag = k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+      return v === true ? [`--${flag}`] : [`--${flag}`, String(v)];
+    });
     const parsed = parseApproveScriptOptions(flags);
+    const asString = (v: unknown): string | undefined =>
+      typeof v === "string" && v.length > 0 ? v : undefined;
     const decision: ApproveScriptDecision = {
-      decidedBy: parsed.by ?? options.decidedBy ?? options.by,
-      note: parsed.note ?? options.note,
+      // Fallback chain preserved from the original handler: a parsed --by flag
+      // wins, then a programmatic `decidedBy`, then a programmatic `by`.
+      decidedBy:
+        parsed.by ??
+        asString(rawOptions.decidedBy) ??
+        asString(rawOptions.by),
+      note: parsed.note ?? asString(rawOptions.note),
     };
     const result = isRejectNote(decision.note)
       ? ports.rejectScript({ ...decision, note: stripRejectMarker(decision.note) })

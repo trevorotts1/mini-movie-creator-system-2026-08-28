@@ -132,7 +132,7 @@ describe("approve script handler", () => {
   it("records the APPROVED decision with the operator id", () => {
     const ports = makePorts();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-    makeApproveScriptHandler(ports)({ decidedBy: "trevor" }, ["--by", "trevor"]);
+    makeApproveScriptHandler(ports)({}, { by: "trevor" });
     const text = String(stdout.mock.calls.map((c) => c[0]).join(""));
     stdout.mockRestore();
 
@@ -142,14 +142,14 @@ describe("approve script handler", () => {
 
   it("routes a reject-note to the REJECTED transition with the marker stripped", () => {
     const ports = makePorts();
-    makeApproveScriptHandler(ports)({}, ["--note", "reject: act two sags"]);
+    makeApproveScriptHandler(ports)({}, { note: "reject: act two sags" });
     expect(ports.rejections).toEqual([{ decidedBy: undefined, note: "act two sags" }]);
     expect(ports.approvals).toHaveLength(0);
   });
 
   it("falls back through parsed flags to pre-parsed options", () => {
     const ports = makePorts();
-    makeApproveScriptHandler(ports)({ decidedBy: "op", note: "ship it" }, []);
+    makeApproveScriptHandler(ports)({}, { decidedBy: "op", note: "ship it" });
     expect(ports.approvals).toEqual([{ decidedBy: "op", note: "ship it" }]);
   });
 

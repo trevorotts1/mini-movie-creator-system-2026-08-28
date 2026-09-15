@@ -34,21 +34,22 @@ export interface CommandSpec {
 export const WRITE_SCRIPT_SPEC: CommandSpec = {
   name: "write-script",
   description: "Write the script for the episode (STOP at script gate)",
-  options: [
-    { flag: "by", value: "name", description: "Author identity" },
-    { flag: "decided-by", value: "name", description: "Approver identity" },
-    { flag: "note", value: "text", description: "Decision note" },
-  ],
+  // No flags: the documented usage is exactly "Usage: mmcs write-script".
+  // Declaring --by/--decided-by/--note advertised an interface this verb does
+  // not have, and its handler takes no parameters, so the flags were accepted
+  // and then silently dropped.
   group: "approvals",
 };
 
 export const APPROVE_SCRIPT_SPEC: CommandSpec = {
   name: "approve script",
   description: "Approve the written script (gate 2, spec §3)",
+  // Exactly what the documented usage allows:
+  //   "Usage: mmcs approve script [--by <operator>] [--note <text>]"
+  // --decided-by was declared but appears in neither the parser nor the docs.
   options: [
-    { flag: "by", value: "name", description: "Author identity" },
-    { flag: "decided-by", value: "name", description: "Approver identity" },
-    { flag: "note", value: "text", description: "Decision note" },
+    { flag: "by", value: "operator", description: "Operator recording the sign-off" },
+    { flag: "note", value: "text", description: "Decision note; a reject: prefix sends it back for revision" },
   ],
   group: "approvals",
 };
