@@ -141,6 +141,50 @@ describe("resumeEmergencyArchival — restart at GENERATED_TEMPORARY", () => {
     expect(hosted.calls[0]?.altId).toBe("LOC123");
   });
 
+  it("BLOCKS a write whose altId contradicts the asset's persisted location", async () => {
+    // Emergency archival is exactly when a stale GHL_LOCATION_ID would redirect
+    // a client's media into another sub-account, so a caller that knows the
+    // persisted location must have it enforced.
+    const hosted = makeHosted("ok");
+    const probe = okProbe();
+    const outcome = await resumeEmergencyArchival(
+      { ...baseRecord(), expectedLocationId: "LOC999" },
+      hosted,
+      { now: () => FIXED_NOW, probe: probe.probe },
+    );
+    expect(outcome.status).toBe("BLOCKED");
+    if (outcome.status !== "BLOCKED") return;
+    expect(outcome.reason).toBe("TENANT_MISMATCH");
+    expect(outcome.nextAction).toContain("sub-account");
+    // Nothing was ingested into the wrong tenant.
+    expect(hosted.calls).toHaveLength(0);
+  });
+
+  it("proceeds when altId matches the persisted location", async () => {
+    const hosted = makeHosted("ok");
+    const probe = okProbe();
+    const outcome = await resumeEmergencyArchival(
+      { ...baseRecord(), expectedLocationId: "LOC123" },
+      hosted,
+      { now: () => FIXED_NOW, probe: probe.probe },
+    );
+    expect(outcome.status).toBe("ARCHIVED");
+    expect(hosted.calls[0]?.altId).toBe("LOC123");
+  });
+
+  it("refuses before touching the network (no probe, no ingest)", async () => {
+    const hosted = makeHosted("ok");
+    const probe = makeProbe(200);
+    const outcome = await resumeEmergencyArchival(
+      { ...baseRecord(), expectedLocationId: "LOC999" },
+      hosted,
+      { now: () => FIXED_NOW, probe: probe.probe },
+    );
+    expect(outcome.status).toBe("BLOCKED");
+    expect(probe.urls).toHaveLength(0);
+    expect(hosted.calls).toHaveLength(0);
+  });
+
   it("is immediate: probes once, no retry loop, single archival attempt", async () => {
     const hosted = makeHosted("ok");
     const probe = okProbe();

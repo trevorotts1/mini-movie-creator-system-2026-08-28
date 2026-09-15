@@ -42,6 +42,8 @@
  *   is treated as unknown and decided by the reachability probe alone.
  */
 
+import { assertStoredLocationMatches } from "../ghl/tenant.js";
+
 /** Pipeline states this module may resume archival from (spec §18 machine). */
 export type EmergencyResumableState = "GENERATED_TEMPORARY" | "ARCHIVING";
 
@@ -74,6 +76,15 @@ export interface EmergencyArchivalRecord {
   parentId: string;
   /** GHL location (sub-account) ID, passed through when supplied. */
   altId?: string;
+  /**
+   * The location this asset is ALREADY persisted under, when the caller knows
+   * it. Supplying both this and `altId` makes them mutually checked, which
+   * matters more here than anywhere else: emergency archival runs precisely
+   * when something has already gone wrong, and it is the moment a stale
+   * GHL_LOCATION_ID would silently redirect one client's media into another
+   * client's sub-account. Omit only when no persisted location exists yet.
+   */
+  expectedLocationId?: string;
 }
 
 /** Request handed to the injected hosted-ingest port (GHL-005 shape). */
@@ -121,7 +132,11 @@ export type EmergencyBlockReason =
   | "URL_INVALID"
   | "EXPIRED_URL"
   | "URL_UNREACHABLE"
-  | "HOSTED_INGEST_FAILED";
+  | "HOSTED_INGEST_FAILED"
+  // A safety refusal, not a transport failure: the write targeted a different
+  // GHL sub-account than the one the asset is persisted under. Appended rather
+  // than inserted so the canonical order of the existing reasons is unchanged.
+  | "TENANT_MISMATCH";
 
 /** All block reasons, in canonical order. */
 export const EMERGENCY_BLOCK_REASONS: readonly EmergencyBlockReason[] = [
@@ -130,6 +145,7 @@ export const EMERGENCY_BLOCK_REASONS: readonly EmergencyBlockReason[] = [
   "EXPIRED_URL",
   "URL_UNREACHABLE",
   "HOSTED_INGEST_FAILED",
+  "TENANT_MISMATCH",
 ];
 
 /** Documented next action per block reason — persisted with the record. */
@@ -144,6 +160,8 @@ export const EMERGENCY_BLOCK_NEXT_ACTIONS: Readonly<
     "The provider URL expired before archival completed. Keep the provider task/job ID persisted; escalate for manual recovery (provider-side re-fetch only if the provider supports it). Never regenerate automatically.",
   URL_UNREACHABLE:
     "The provider URL did not answer 2xx at resume. It may be transiently down or already expired; keep the record persisted and re-run this resume later, or escalate. Never regenerate automatically.",
+  TENANT_MISMATCH:
+    "The asset is persisted under a different GHL location than this write targets. Reconcile GHL_LOCATION_ID and the caller-supplied altId against the asset's stored location before retrying — never archive into another client's sub-account.",
   HOSTED_INGEST_FAILED:
     "The provider URL was reachable but GHL hosted ingest failed. Run the binary fallback upload (GHL-006) while the URL is still valid, or escalate. Never regenerate automatically.",
 };
@@ -385,6 +403,26 @@ export async function resumeEmergencyArchival(
     );
   }
 
+  // Tenant check FIRST, before any network activity. A caller-supplied altId
+  // must agree with the location the asset is already persisted under, or the
+  // write is refused without probing the provider URL at all.
+  let locationId: string | undefined;
+  try {
+    locationId = assertStoredLocationMatches({
+      storedLocationId: record.expectedLocationId,
+      requestedLocationId: record.altId,
+      subject: `emergency archival of "${record.name}"`,
+      action: "archive",
+    });
+  } catch (err) {
+    return blocked(
+      "TENANT_MISMATCH",
+      record,
+      now,
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
   const probe = options.probe ?? defaultProbe;
   let reachable = false;
   let probeStatus: number | undefined;
@@ -414,7 +452,7 @@ export async function resumeEmergencyArchival(
       fileUrl: providerUrl,
       name: record.name,
       parentId: record.parentId,
-      ...(record.altId !== undefined ? { altId: record.altId } : {}),
+      ...(locationId !== undefined ? { altId: locationId } : {}),
     });
     if (!result || result.status !== "ARCHIVED") {
       return blocked(

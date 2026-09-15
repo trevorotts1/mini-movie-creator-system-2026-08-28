@@ -302,6 +302,20 @@ export abstract class BaseMediaStore implements MediaStore {
   }
 
   updateAsset(assetId: string, patch: AssetRecordPatch): AssetRecord | undefined {
+    // update() writes ANY column except assetId/createdAt, and the patch type
+    // includes ghlLocationId — so without this guard a single patch could move
+    // an asset into another client's sub-account, bypassing every check the
+    // archive path performs. Same rule as everywhere else: a persisted location
+    // is authoritative, and a differing request fails loudly. Setting a
+    // location for the first time (stored undefined) is allowed as backfill.
+    if (patch.ghlLocationId !== undefined) {
+      assertStoredLocationMatches({
+        storedLocationId: this.assets.getById(assetId)?.ghlLocationId,
+        requestedLocationId: requireLocationId(patch.ghlLocationId, "ghlLocationId"),
+        subject: `asset "${assetId}"`,
+        action: "update",
+      });
+    }
     return this.assets.update(assetId, patch);
   }
 }

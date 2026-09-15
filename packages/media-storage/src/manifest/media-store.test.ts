@@ -589,6 +589,29 @@ describe("GHL tenant isolation (SKR-011)", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("refuses a patch that retargets an asset to another location", () => {
+    // updateAsset delegates to update(), which writes any column — and the
+    // patch type includes ghlLocationId. Without a guard, one patch moved an
+    // asset into another client's sub-account.
+    assets.create(record({ assetId: "mmcs_patch_1", ghlLocationId: "loc_A" }));
+    expect(() =>
+      storeFor().updateAsset("mmcs_patch_1", { ghlLocationId: "loc_B" }),
+    ).toThrow(GhlLocationMismatchError);
+    expect(assets.getById("mmcs_patch_1")?.ghlLocationId).toBe("loc_A");
+  });
+
+  it("allows a patch that keeps the same location, or backfills an unset one", () => {
+    assets.create(record({ assetId: "mmcs_patch_2", ghlLocationId: "loc_A" }));
+    expect(
+      storeFor().updateAsset("mmcs_patch_2", { ghlLocationId: "loc_A" })?.ghlLocationId,
+    ).toBe("loc_A");
+    // No stored location yet: setting one is a backfill, not a retarget.
+    assets.create(record({ assetId: "mmcs_patch_3" }));
+    expect(
+      storeFor().updateAsset("mmcs_patch_3", { ghlLocationId: "loc_A" })?.ghlLocationId,
+    ).toBe("loc_A");
+  });
+
   it("refuses a different location when the existing row is ALREADY linked", async () => {
     // The tenant check used to sit after the idempotent-reuse early return, so
     // re-archiving an already-linked asset under another location returned the
