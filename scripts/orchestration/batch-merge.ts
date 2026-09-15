@@ -1245,17 +1245,25 @@ export class BatchMergeEngine {
     if (tasksRaw) {
       try {
         const doc = JSON.parse(tasksRaw) as { items?: Array<TaskRecord> };
-        const mergedAt = this.now().toISOString();
         for (const t of Array.isArray(doc.items) ? doc.items : []) {
           if (typeof t?.id === "string" && shaByTask.has(t.id)) {
+            const sha = shaByTask.get(t.id);
             t.status = "MERGED";
             // Persist the evidence the merge already produced. Dropping the sha here is
             // what left 92 of 149 tasks reading a bare "MERGED" that nothing could
             // substantiate; scripts/release/task-ledger-verify.mjs now fails the release
             // gate on a MERGED claim with no supporting merge commit.
-            const sha = shaByTask.get(t.id);
+            //
+            // Only record a sha we actually hold. MERGED with no sha is half-evidence — a
+            // claim pointing at nothing — so the field is omitted rather than left blank;
+            // the task still has to satisfy the verifier, which requires a merge commit
+            // naming it.
+            //
+            // `mergedAt` is deliberately NOT written. It is derived from the merge
+            // commit's own date by the verifier; stamping the batch run's wall-clock time
+            // here produced a date that permanently disagreed with the commit beside it
+            // (CORE-009: 23:35:00Z written vs 20:28:48Z actual).
             if (sha) t.mergedSha = sha;
-            t.mergedAt = mergedAt;
           }
         }
         // Preserve the ledger's existing indentation rather than reformatting the file.

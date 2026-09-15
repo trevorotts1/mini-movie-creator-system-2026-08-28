@@ -229,9 +229,13 @@ describe("BatchMergeEngine on fixture git repos", () => {
       const outcome = report.merged.find((m) => m.taskId === taskId);
       expect(rec.mergedSha).toBe(outcome?.mergeSha);
       expect(rec.mergedSha).toMatch(/^[0-9a-f]{40}$/);
-      expect(Number.isNaN(Date.parse(rec.mergedAt))).toBe(false);
-      // the recorded sha must be the real integration merge commit
+      // The recorded sha must be the real integration merge commit.
       expect(sh(repo, "rev-parse", `${rec.mergedSha}^{commit}`)).toBe(rec.mergedSha);
+      // `mergedAt` must NOT be stamped with the batch run's wall clock. It is derived from
+      // the merge commit's own date by the verifier; writing it here produced a date that
+      // permanently disagreed with the commit it sits next to (CORE-009: 23:35:00Z
+      // written vs 20:28:48Z actual).
+      expect(rec.mergedAt).toBeUndefined();
     }
 
     // the ledger's own indentation survives the write

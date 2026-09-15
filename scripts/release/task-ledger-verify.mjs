@@ -18,10 +18,15 @@
  *   2. A task's owned paths are `ownsNow` when present (the path the work actually landed
  *      at, after a rename), otherwise `owns` (the path as declared when the task was cut).
  *      `owns` is never rewritten — it is the historical record.
- *   3. Claimed MERGED + no merge commit            -> UNSUBSTANTIATED_NO_MERGE
- *      Claimed MERGED + no resolvable owned path   -> UNSUBSTANTIATED_NO_PATHS
+ *   3. Claimed MERGED + a recorded mergedSha that no merge names,
+ *      or that disagrees with the merge that does      -> EVIDENCE_MISMATCH
+ *      Claimed MERGED + no merge commit names it       -> UNSUBSTANTIATED_NO_MERGE
+ *      Claimed MERGED + no resolvable owned path       -> UNSUBSTANTIATED_NO_PATHS
  *      Claimed MERGED + merge commit + 0 paths present -> UNSUBSTANTIATED_PATHS_ABSENT
- *      otherwise                                   -> SUBSTANTIATED
+ *      otherwise                                       -> SUBSTANTIATED
+ *
+ *      A recorded sha is checked before the no-merge case, so a dangling sha reports
+ *      EVIDENCE_MISMATCH rather than UNSUBSTANTIATED_NO_MERGE. Both fail the gate.
  *
  * Usage:
  *   node scripts/release/task-ledger-verify.mjs            # verify; exit 1 on any gap
@@ -205,8 +210,15 @@ export function verifyLedger(ledger) {
     const { inRepo, outOfRepo } = resolveOwnedPaths(item.ownsNow ?? item.owns);
     const present = inRepo.filter(existsInTree);
     const absent = inRepo.filter((p) => !existsInTree(p));
-    const re = idMatcher(String(item.id));
-    const match = merges.find((m) => re.test(m.subject)) ?? null;
+    const id = String(item.id);
+    const re = idMatcher(id);
+    const candidates = merges.filter((m) => re.test(m.subject));
+    // Prefer the repo's canonical form, `merge: <ID> ...`. A merge that merely names the
+    // id in passing (e.g. "Merge remote-tracking branch ... into task/CORE-006-...") is a
+    // weaker attribution: it is about the branch, not the task landing. CORE-006 has three
+    // such passing mentions, so taking the plain newest match would be luck, not evidence.
+    const canonical = new RegExp(`^merge:\\s*${escapeRe(id)}\\b`);
+    const match = candidates.find((m) => canonical.test(m.subject)) ?? candidates[0] ?? null;
 
     const status = String(item.status ?? '').toUpperCase();
     const claimsMerged = status === 'MERGED';
@@ -233,6 +245,7 @@ export function verifyLedger(ledger) {
       recordedSha,
       shaMismatch,
       merge: match,
+      mergeCandidates: candidates.length,
       branch: item.branch ?? null,
       branchState: branchState(item.branch),
       ownedPaths: inRepo,
@@ -391,7 +404,11 @@ function applyEvidence(ledger, report) {
       // Backfill the historical pair only when absent. A present-but-wrong sha is a
       // reported failure (EVIDENCE_MISMATCH) and must be corrected by a human.
       if (!out.mergedSha) out.mergedSha = r.merge.commit;
-      if (!out.mergedAt) out.mergedAt = r.merge.date;
+      // `mergedAt` is always DERIVED from the merge commit's own date. The batch writer
+      // used to stamp its wall-clock run time here, which permanently disagreed with the
+      // commit it sits next to (CORE-009: 23:35:00Z written vs 20:28:48Z actual). A date
+      // field that is evidence must be the commit's date, not when a script happened to run.
+      out.mergedAt = r.merge.date;
     } else {
       delete out.merge;
     }
@@ -408,7 +425,16 @@ function main() {
     console.error(`task-ledger-verify: ${path.relative(REPO, LEDGER)} not found`);
     process.exit(1);
   }
-  const raw = fs.readFileSync(LEDGER, 'utf8');
+  const raw = (() => {
+    try {
+      return fs.readFileSync(LEDGER, 'utf8');
+    } catch (err) {
+      // Read and parse are both wrapped: an unreadable ledger (EACCES, EISDIR) must fail
+      // closed with the same one-line message as a malformed one, not an uncaught stack.
+      console.error(`task-ledger-verify: ${path.relative(REPO, LEDGER)} unreadable — ${err.message}`);
+      process.exit(1);
+    }
+  })();
   let ledger;
   try {
     ledger = JSON.parse(raw);

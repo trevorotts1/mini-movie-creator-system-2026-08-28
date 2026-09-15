@@ -194,6 +194,28 @@ describe("task-ledger-verify — end to end", () => {
     expect(r.stderr).toContain("UNSUBSTANTIATED_NO_MERGE");
   });
 
+  it("prefers the canonical `merge: <ID>` subject over a passing mention of the id", () => {
+    // 23 real tasks have more than one merge naming them, and several of those extra
+    // mentions are of the form "Merge remote-tracking branch ... into task/<ID>-...",
+    // which is about the branch, not the task landing. Picking the newest match would be
+    // luck; the canonical `merge: <ID>` prefix is the repo's actual convention.
+    const s = sandbox();
+    // A later merge that merely mentions the id in passing.
+    git(s.dir, "checkout", "-q", "-b", "side");
+    fs.writeFileSync(path.join(s.dir, "side.txt"), "side\n");
+    git(s.dir, "add", "-A");
+    git(s.dir, "commit", "-qm", "side work");
+    git(s.dir, "checkout", "-q", "main");
+    git(s.dir, "merge", "-q", "--no-ff", "side", "-m", "Merge remote-tracking branch 'origin/side' into task/REC-011-auto-compact");
+
+    const r = run(s, "--write");
+    expect(r.code).toBe(0);
+    const item = JSON.parse(fs.readFileSync(s.ledgerPath, "utf8")).items[0];
+    expect(item.merge.subject).toBe("merge: REC-011 auto-compact simulation (QC PASS)");
+    expect(item.mergedSha).toBe(s.mergeSha);
+    expect(item.mergeCandidates).toBeUndefined(); // candidates count is internal
+  });
+
   it("FAILS on EVIDENCE_MISMATCH when a recorded mergedSha disagrees with the graph", () => {
     const s = sandbox({ recordedSha: "0123456789abcdef0123456789abcdef01234567" });
     const r = run(s);
@@ -261,6 +283,35 @@ describe("task-ledger-verify — end to end", () => {
     const bad = run(s);
     expect(bad.code).toBe(1);
     expect(bad.stderr).toContain("not valid JSON");
+  });
+
+  it("exits 1 with a clear message (not a stack trace) when the ledger is unreadable", () => {
+    // An EACCES/EISDIR read used to escape the try/catch and surface as an uncaught
+    // stack. Still fail-closed either way, but the operator should get the one-liner.
+    const s = sandbox();
+    fs.chmodSync(s.ledgerPath, 0o000);
+    try {
+      const r = run(s);
+      expect(r.code).toBe(1);
+      expect(r.stderr).toContain("unreadable");
+      expect(r.stderr).not.toContain("at Object.readFileSync");
+    } finally {
+      fs.chmodSync(s.ledgerPath, 0o644); // let the sandbox cleanup succeed
+    }
+  });
+
+  it("derives mergedAt from the merge commit, never from a stamped wall clock", () => {
+    const s = sandbox();
+    const original = JSON.parse(fs.readFileSync(s.ledgerPath, "utf8"));
+    // A wrong wall-clock stamp that disagrees with the commit it sits beside.
+    original.items[0].mergedAt = "2001-01-01T00:00:00Z";
+    original.items[0].mergedSha = s.mergeSha;
+    fs.writeFileSync(s.ledgerPath, JSON.stringify(original, null, 1) + "\n");
+
+    run(s, "--write");
+    const item = JSON.parse(fs.readFileSync(s.ledgerPath, "utf8")).items[0];
+    expect(item.mergedAt).not.toBe("2001-01-01T00:00:00Z");
+    expect(item.mergedAt).toBe(item.merge.date);
   });
 
   it("--json emits a machine-readable report and no human noise on stdout", () => {
