@@ -36,7 +36,31 @@ const MAX_UNREACHABLE = maxArg >= 0 ? Number(args[maxArg + 1]) : 25;
 const git = (a) =>
   execFileSync('git', a, { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] }).trimEnd();
 
+/**
+ * Is git actually usable here?
+ *
+ * `git fsck` exiting non-zero is normal (it reports problems that way), so the call above
+ * cannot distinguish "found nothing" from "never ran". Without this probe a missing git —
+ * an empty PATH, a PATH-less cron, a container without git — produced EMPTY output that read
+ * as "zero unreachable commits", and the guard printed "within budget on every check" and
+ * exited 0. A guard that reports all-clear when it could not look is the exact false green
+ * this script exists to prevent.
+ */
+export function gitUsable(repoRoot = REPO) {
+  try {
+    execFileSync('git', ['rev-parse', '--git-dir'], {
+      cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function unreachableCommits(repoRoot = REPO) {
+  if (!gitUsable(repoRoot)) {
+    throw new Error('git is unavailable — cannot inspect unreachable objects');
+  }
   let out = '';
   try {
     out = execFileSync('git', ['fsck', '--unreachable', '--no-progress'], {
@@ -61,6 +85,9 @@ export function lostFoundEntries(repoRoot = REPO) {
 }
 
 export function trackedBackupSnapshots(repoRoot = REPO) {
+  if (!gitUsable(repoRoot)) {
+    throw new Error('git is unavailable — cannot list tracked files');
+  }
   try {
     return execFileSync('git', ['ls-files', 'state/backup-*'], {
       cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
@@ -104,7 +131,15 @@ export function scanResidue(repoRoot = REPO, maxUnreachable = MAX_UNREACHABLE) {
 }
 
 function main() {
-  const { counts, findings, maxUnreachable: budget } = scanResidue();
+  let scan;
+  try {
+    scan = scanResidue();
+  } catch (err) {
+    console.error(`repo-residue: cannot verify — ${err.message}`);
+    console.error('repo-residue: failing closed rather than reporting an unverified all-clear');
+    process.exit(1);
+  }
+  const { counts, findings, maxUnreachable: budget } = scan;
 
   if (JSON_OUT) {
     process.stdout.write(JSON.stringify({ counts, budget, findings }, null, 2) + '\n');

@@ -18,6 +18,13 @@ state
 logs
 *.log
 
+# Secrets. A populated .env carries 12 credential names (KIE_API_KEY, GHL_ACCESS_TOKEN,
+# ...) and `COPY . .` would bake it into any published image. The template is kept so the
+# image documents which variables exist.
+.env
+.env.*
+!.env.example
+
 # Local scratch and OS noise.
 .DS_Store
 *.bak

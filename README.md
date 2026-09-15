@@ -129,3 +129,9 @@ checkpoint).
 MIT — see [LICENSE](LICENSE). Fork attribution to the upstream
 faceless-shorts-creator project is preserved permanently
 (`docs/upstream-audit/preservation-map.md`).
+
+**Bundled third-party software is not MIT.** The Remotion compositor packages embed FFmpeg
+built with `--enable-gpl` (GPL v2 obligations attach) and with the Fraunhofer FDK AAC
+library compiled in. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the verified
+configuration, how to reproduce it, and the one question that still needs a human legal
+read.

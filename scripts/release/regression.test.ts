@@ -141,6 +141,17 @@ function withSandbox(
     path.resolve(__dirname, "package-entry-check.mjs"),
     path.join(root, "scripts/release/package-entry-check.mjs"),
   );
+  // Gate area 12 runs the licence notice check; the sandbox has no compositor, so it SKIPs.
+  copyFileSync(
+    path.resolve(__dirname, "licence-notice-check.mjs"),
+    path.join(root, "scripts/release/licence-notice-check.mjs"),
+  );
+  // ...and the notices file it validates, so the area reaches its SKIP path rather than
+  // failing for a missing file the sandbox never had.
+  copyFileSync(
+    path.resolve(__dirname, "..", "..", "THIRD-PARTY-NOTICES.md"),
+    path.join(root, "THIRD-PARTY-NOTICES.md"),
+  );
   const defaultBranch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
     cwd: root,
     encoding: "utf8",
@@ -295,6 +306,7 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
         "repo-residue",
         "linux-render",
         "package-entry",
+        "licence-notice",
       ]);
       for (const [name, result] of Object.entries(parsed.areas)) {
         expect(result, `area ${name}`).toBe("PASS");

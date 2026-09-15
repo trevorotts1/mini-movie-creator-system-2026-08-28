@@ -104,9 +104,25 @@ export function worktreePaths(repoRoot = REPO) {
     .map((l) => l.slice('worktree '.length).trim());
 }
 
+/**
+ * The MAIN worktree path, as git reports it.
+ *
+ * Scoping must not depend on the caller's spelling of the repo root. `fs.realpathSync` does
+ * NOT canonicalise character case on APFS, so a repo reached through a symlink whose stored
+ * target says `Projects` while git reports `projects` produced two different "real" roots:
+ * the primary checkout was misread as external and every project worktree fell out of scope,
+ * neutering the guard completely (exit 0 on state that fails when invoked directly). Taking
+ * both sides of the comparison from git's own output removes the caller from the equation.
+ */
+function mainWorktreeOf(repoRoot) {
+  const paths = worktreePaths(repoRoot);
+  return paths.length ? paths[0] : repoRoot;
+}
+
 /** Scan the worktrees of `repoRoot`. Parameterised so tests can use a real sandbox repo. */
 export function scanWorktreesIn(repoRoot) {
   const worktrees = [];
+  const mainWt = mainWorktreeOf(repoRoot);
   for (const wt of worktreePaths(repoRoot)) {
     if (!fs.existsSync(wt)) continue;
     let porcelain = '';
@@ -127,11 +143,11 @@ export function scanWorktreesIn(repoRoot) {
   for (const wt of worktrees) {
     // The primary checkout is never pruned, so in-flight work there is normal and not the
     // subject of this guard. Only LINKED worktrees can be destroyed by `worktree prune`.
-    if (real(wt.path) === real(repoRoot)) continue;
+    if (real(wt.path) === real(mainWt)) continue;
     // Scope to the project's own task worktrees. A worktree a tool created elsewhere (a QC
     // sandbox under $TMPDIR, say) is that tool's scratch space, not project state that a
     // prune of THIS repo would destroy — failing on it would be a false alarm.
-    if (!real(wt.path).startsWith(real(path.join(repoRoot, 'worktrees')) + path.sep)) {
+    if (!real(wt.path).startsWith(real(path.join(mainWt, 'worktrees')) + path.sep)) {
       if (wt.findings.length) outOfScope.push({ worktree: wt.path, findings: wt.findings.length });
       continue;
     }
@@ -146,7 +162,7 @@ export function scanWorktreesIn(repoRoot) {
 
 function main() {
   const { worktrees, actionable, outOfScope } = scanWorktreesIn(REPO);
-  const linked = worktrees.filter((w) => real(w.path) !== real(REPO));
+  const linked = worktrees.filter((w) => real(w.path) !== real(mainWorktreeOf(REPO)));
   const disposable = linked.flatMap((w) =>
     w.findings.filter((f) => f.verdict === 'DISPOSABLE' && f.kind !== 'MODIFIED').map((f) => `${w.path}/${f.file}`),
   );

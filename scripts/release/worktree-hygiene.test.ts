@@ -140,6 +140,30 @@ describe("worktree-hygiene — end to end", () => {
     expect(outOfScope.map((o) => fs.realpathSync(o.worktree))).toContain(fs.realpathSync(ext));
   });
 
+  it("is NOT neutered when the repo path is spelled with different casing", () => {
+    // Scoping used to compare the caller's repoRoot against git's worktree paths. On APFS
+    // `fs.realpathSync` does NOT canonicalise character case, so `/…/Projects/x` and
+    // `/…/projects/x` produced two different "real" roots: the primary checkout was read as
+    // external, every project worktree fell out of scope, and the guard exited 0 on exactly
+    // the state that fails when invoked directly. Both sides now come from git.
+    const { root, wt } = repoWithWorktree();
+    fs.writeFileSync(path.join(wt, "stray.ts"), "export const x=1;\n");
+
+    expect(scanWorktreesIn(root).actionable).toHaveLength(1);
+
+    // Flip the case of the sandbox directory's own name. APFS is case-insensitive, so this
+    // spelling resolves to the same repo while differing from git's reported path.
+    const dir = path.basename(root);
+    const flipped = dir.replace(/[a-z]/, (c) => c.toUpperCase());
+    const alt = path.join(path.dirname(root), flipped);
+    // Only meaningful where the case-variant actually resolves (case-insensitive volume).
+    if (flipped !== dir && fs.existsSync(alt)) {
+      const viaAlt = scanWorktreesIn(alt);
+      expect(viaAlt.actionable, "case-variant spelling must reach the same verdict").toHaveLength(1);
+      expect(viaAlt.outOfScope, "project worktrees must not fall out of scope").toEqual([]);
+    }
+  });
+
   it("scans every linked worktree, not just the first", () => {
     const { root } = repoWithWorktree();
     const second = path.join(root, "worktrees", "REC-002");

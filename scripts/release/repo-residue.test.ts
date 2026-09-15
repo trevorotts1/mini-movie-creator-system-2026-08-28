@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { lostFoundEntries, scanResidue, trackedBackupSnapshots } from "./repo-residue.mjs";
+import { lostFoundEntries, scanResidue, trackedBackupSnapshots, unreachableCommits } from "./repo-residue.mjs";
 
 const tmpRoots: string[] = [];
 
@@ -134,5 +134,23 @@ describe("repo-residue — unreachable commit budget", () => {
 
   it("passes everything on a fresh repo", () => {
     expect(scanResidue(repo()).findings).toEqual([]);
+  });
+
+  it("FAILS CLOSED when git is unavailable instead of reporting an all-clear", () => {
+    // `git fsck` exits non-zero to report problems, so it cannot distinguish "found
+    // nothing" from "never ran". Without a liveness probe, a missing git yielded empty
+    // output that read as zero unreachable commits — the guard printed "within budget on
+    // every check" and exited 0 while having looked at nothing.
+    const root = repo();
+    const realPath = process.env.PATH;
+    process.env.PATH = "/nonexistent-qc-no-git";
+    try {
+      // Asserted per-function so removing either probe is caught, not just the outer one.
+      expect(() => unreachableCommits(root)).toThrow(/git is unavailable/);
+      expect(() => trackedBackupSnapshots(root)).toThrow(/git is unavailable/);
+      expect(() => scanResidue(root)).toThrow(/git is unavailable/);
+    } finally {
+      process.env.PATH = realPath;
+    }
   });
 });

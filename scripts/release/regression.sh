@@ -347,6 +347,11 @@ if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
 elif (cd "$REPO_ROOT" && docker image inspect mmcs-render-linux:latest >/dev/null 2>&1); then
   if (cd "$REPO_ROOT" && docker run --rm --shm-size=1g mmcs-render-linux:latest bash scripts/release/linux-render-check.sh /tmp/lrc >"$LOG" 2>&1); then
     area_pass "linux-render" "$(grep -E 'linux-render-check: PASS' "$LOG" | head -1 | sed 's/^linux-render-check: PASS — //')"
+  elif ! docker info >/dev/null 2>&1; then
+    # The daemon can disappear between the check above and this run (a VM being stopped by
+    # another process does exactly that). Reporting SKIPPED with the reason is honest;
+    # calling it a render failure would be a false red, and false reds get gates muted.
+    area_pass "linux-render" "SKIPPED — the docker daemon went away mid-run (was reachable when the area started); re-run to exercise it"
   else
     dump_log_tail linux-render
     area_fail "linux-render" "the Linux render failed inside the image — run 'docker run --rm --shm-size=1g mmcs-render-linux:latest' for the log"
@@ -365,6 +370,19 @@ if (cd "$REPO_ROOT" && node scripts/release/package-entry-check.mjs >"$LOG" 2>&1
   area_pass "package-entry" "${PE_NOTE#package-entry: }"
 else
   area_fail "package-entry" "a package exports ONLY a scaffold marker — run 'node scripts/release/package-entry-check.mjs' for which one"
+fi
+
+# 12. licence-notice --------------------------------------------------------
+# SKR-045: THIRD-PARTY-NOTICES.md makes checkable claims about the FFmpeg bundled in the
+# pinned compositor. Those claims are a property of the BINARY and silently become false
+# when the Remotion version is bumped, so they are verified rather than trusted.
+step_header 12 "licence-notice: third-party notices match the bundled FFmpeg"
+if (cd "$REPO_ROOT" && node scripts/release/licence-notice-check.mjs >"$LOG" 2>&1); then
+  LN_NOTE="$(grep -E '^licence-notice: ' "$LOG" | head -1)"
+  area_pass "licence-notice" "${LN_NOTE#licence-notice: }"
+else
+  dump_log_tail licence-notice
+  area_fail "licence-notice" "the third-party notices disagree with the bundled FFmpeg — run 'node scripts/release/licence-notice-check.mjs'"
 fi
 
 # ---------------------------------------------------------------------------
