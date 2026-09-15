@@ -813,6 +813,49 @@ function registerRemainingHandlers(map: Record<string, Handler>): void {
     process.stdout.write(lines.join("\n") + "\n");
   }) as unknown as Handler;
 
+  map["spend"] = (async () => {
+    // SKR-010: the spend ceiling's enforcement point must be REACHABLE on a production
+    // path. `ledger()` existed but was called by nothing, so the $25 wall was decorative —
+    // an operator could not even read their remaining budget, and the gate that generation
+    // must use was never exercised by a real command. This verb constructs the ledger and
+    // reports it. It is read-only: it reserves nothing and submits nothing, so it cannot
+    // spend, and it works identically today (always $0 committed) and once a generation
+    // runner exists.
+    let summary;
+    try {
+      summary = ledger().summary();
+    } catch (err) {
+      process.stderr.write(
+        `[mmcs] spend — could not open the spend ledger: ${err instanceof Error ? err.message : String(err)}\n`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+
+    const money = (n: number) => `$${n.toFixed(2)}`;
+    const remaining = summary.limitUsd - summary.projectedTotalUsd;
+    const lines = [
+      "[mmcs] spend — cumulative paid-spend ledger (spec §15/§33):",
+      `  ceiling:            ${money(summary.limitUsd)}  (AUTO_SPEND_LIMIT_USD may only lower it)`,
+      `  committed actual:   ${money(summary.committedActualUsd)}`,
+      `  open reservations:  ${money(summary.openReservedUsd)}`,
+      `  projected total:    ${money(summary.projectedTotalUsd)}`,
+      `  remaining:          ${money(remaining)}`,
+    ];
+    if (summary.byProvider.length) {
+      lines.push("  by provider:");
+      for (const p of summary.byProvider) lines.push(`    ${p.provider}: ${money(p.projectedUsd)}`);
+    } else {
+      lines.push("  by provider:        (none — no provider spend has been reserved or committed)");
+    }
+    lines.push(
+      remaining <= 0
+        ? "  STATUS: ceiling reached — further reservations will be refused."
+        : "  STATUS: within ceiling. Nothing here submits paid work; generation is not wired.",
+    );
+    process.stdout.write(lines.join("\n") + "\n");
+  }) as unknown as Handler;
+
   map["estimate"] = (async () => {
     failClosed(
       "estimate",

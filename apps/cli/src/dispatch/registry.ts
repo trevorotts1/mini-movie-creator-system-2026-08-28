@@ -149,6 +149,11 @@ export function buildRegistry(): CommandSpec[] {
     },
     // --- generation / QC / assembly ---
     {
+      name: "spend",
+      description: "Show the cumulative paid-spend ledger against the ceiling (read-only)",
+      group: "generation",
+    },
+    {
       name: "estimate",
       description: "Estimate cost and duration of the generation plan",
       group: "generation",
