@@ -1085,6 +1085,122 @@ function registerDirectHandlers(map: Record<string, Handler>): void {
     );
   }) as unknown as Handler;
 
+  map["create-scene"] = (async (_args: Record<string, string>, options: Record<string, unknown>) => {
+    // SKR-003: `mmcs final` reported "composition has no shots" because nothing could add
+    // them. Scenes and shots are planning records — repository writes, no provider contact,
+    // no spend. This is what makes the terminal deliverable reachable on synthetic data.
+    const raw = options;
+    const episodeRef = typeof raw.episode === "string" ? raw.episode.trim() : "";
+    if (!episodeRef) {
+      failClosed("create-scene", "no scene was created — --episode is required", [
+        'Usage: mmcs create-scene --episode <code|id> [--title "<title>"] [--index 0]',
+      ]);
+      return;
+    }
+    const indexRaw = raw.index;
+    const sequenceIndex = indexRaw === undefined || indexRaw === "" ? 0 : Number(indexRaw);
+    if (!Number.isInteger(sequenceIndex) || sequenceIndex < 0) {
+      failClosed("create-scene", "no scene was created — --index must be a non-negative integer");
+      return;
+    }
+
+    let sceneId: string;
+    try {
+      const database = db();
+      const episode = episodeByCode(episodeRef);
+      if (episode === undefined) {
+        failClosed("create-scene", `no scene was created — no episode matches "${episodeRef}"`, [
+          'Run `mmcs create-episode --series "<series>" --title "<title>"` first.',
+        ]);
+        return;
+      }
+      const created = new SceneRepository(database).create({
+        sceneId: `scn_${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`,
+        episodeId: episode.id,
+        sequenceIndex,
+        ...(typeof raw.title === "string" && raw.title.trim() ? { title: raw.title.trim() } : {}),
+        characterIds: [],
+        visualSourceType: "GENERATED_VIDEO",
+        planningStatus: "PLANNED",
+      } as never);
+      sceneId = created.sceneId;
+    } catch (err) {
+      failClosed("create-scene", `no scene was created — ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+
+    process.stdout.write(
+      [
+        `[mmcs] create-scene — created scene ${sceneId}`,
+        `  episode: ${episodeRef}`,
+        // Echo the title so the operator can see what was actually stored.
+        ...(typeof raw.title === "string" && raw.title.trim() ? [`  title:   ${raw.title.trim()}`] : []),
+        `  next:    mmcs create-shot --scene ${sceneId} --duration 3`,
+      ].join("\n") + "\n",
+    );
+  }) as unknown as Handler;
+
+  map["create-shot"] = (async (_args: Record<string, string>, options: Record<string, unknown>) => {
+    const raw = options;
+    const sceneRef = typeof raw.scene === "string" ? raw.scene.trim() : "";
+    const durationRaw = raw.duration;
+    if (!sceneRef || durationRaw === undefined || durationRaw === "") {
+      failClosed("create-shot", "no shot was created — --scene and --duration are required", [
+        'Usage: mmcs create-shot --scene <sceneId> --duration <seconds> [--index N] [--action "<text>"]',
+      ]);
+      return;
+    }
+    const targetDuration = Number(durationRaw);
+    if (!Number.isFinite(targetDuration) || targetDuration <= 0) {
+      failClosed("create-shot", "no shot was created — --duration must be a positive number of seconds");
+      return;
+    }
+    const indexRaw = raw.index;
+    const sequenceIndex = indexRaw === undefined || indexRaw === "" ? 0 : Number(indexRaw);
+    if (!Number.isInteger(sequenceIndex) || sequenceIndex < 0) {
+      failClosed("create-shot", "no shot was created — --index must be a non-negative integer");
+      return;
+    }
+
+    let shotId: string;
+    try {
+      const database = db();
+      const scene = new SceneRepository(database).list().find((sc) => sc.sceneId === sceneRef);
+      if (scene === undefined) {
+        failClosed("create-shot", `no shot was created — no scene matches "${sceneRef}"`, [
+          "Create one with `mmcs create-scene --episode <code>`.",
+        ]);
+        return;
+      }
+      const created = new ShotRepository(database).create({
+        shotId: `shot_${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`,
+        sceneId: sceneRef,
+        sequenceIndex,
+        targetDuration,
+        characters: [],
+        characterVersions: [],
+        wardrobe: [],
+        props: [],
+        referenceAssets: [],
+        // Planning defaults: nothing has been approved, submitted or QC'd yet. Naming them
+        // explicitly rather than relying on a caller default keeps the record honest.
+        keyframeStrategy: "NONE",
+        approvalStatus: "PENDING",
+        generationStatus: "NOT_STARTED",
+        qcStatus: "PENDING",
+        ...(typeof raw.action === "string" && raw.action.trim() ? { action: raw.action.trim() } : {}),
+      } as never);
+      shotId = created.shotId;
+    } catch (err) {
+      failClosed("create-shot", `no shot was created — ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+
+    process.stdout.write(
+      [`[mmcs] create-shot — created shot ${shotId}`, `  scene: ${sceneRef}`, `  duration: ${targetDuration}s`].join("\n") + "\n",
+    );
+  }) as unknown as Handler;
+
   map["create-episode"] = (async (_args: Record<string, string>, options: Record<string, unknown>) => {
     const raw = options;
     const title = typeof raw.title === "string" ? raw.title.trim() : "";

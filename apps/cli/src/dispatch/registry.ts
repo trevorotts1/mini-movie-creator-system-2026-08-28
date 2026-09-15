@@ -81,6 +81,27 @@ export function buildRegistry(): CommandSpec[] {
       ],
     },
     {
+      name: "create-scene",
+      description: "Add a scene to an episode",
+      group: "pipeline",
+      options: [
+        { flag: "episode", value: "code-or-id", description: "Episode code or id (required)" },
+        { flag: "title", value: "title", description: "Scene title" },
+        { flag: "index", value: "n", description: "Sequence index (default 0)" },
+      ],
+    },
+    {
+      name: "create-shot",
+      description: "Add a shot to a scene",
+      group: "pipeline",
+      options: [
+        { flag: "scene", value: "sceneId", description: "Scene id (required)" },
+        { flag: "duration", value: "seconds", description: "Target duration in seconds (required)" },
+        { flag: "index", value: "n", description: "Sequence index (default 0)" },
+        { flag: "action", value: "text", description: "Action description" },
+      ],
+    },
+    {
       name: "create-episode",
       description: "Create a new episode in a series",
       group: "pipeline",

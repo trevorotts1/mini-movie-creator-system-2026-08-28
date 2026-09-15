@@ -119,3 +119,63 @@ describe("mmcs create-series / create-episode (SKR-003)", () => {
     expect(r.out).not.toMatch(/not found|does not exist|unknown episode/i);
   });
 });
+
+describe("mmcs create-scene / create-shot (SKR-003)", () => {
+  /** Build series → episode, returning the state dir. */
+  function withEpisode() {
+    const state = freshState();
+    cli(state, ["create-series", "--name", "Scene Series"]);
+    cli(state, ["create-episode", "--series", "Scene Series", "--title", "Pilot", "--runtime", "6"]);
+    return state;
+  }
+
+  it("create-scene adds a scene to an existing episode", () => {
+    const state = withEpisode();
+    const r = cli(state, ["create-scene", "--episode", "S01E01", "--title", "Opening"]);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/scn_/);
+    expect(r.out).toContain("Opening");
+  });
+
+  it("create-shot adds a shot to an existing scene", () => {
+    const state = withEpisode();
+    const sceneId = /scn_\w+/.exec(cli(state, ["create-scene", "--episode", "S01E01"]).out)?.[0];
+    expect(sceneId).toBeDefined();
+    const r = cli(state, ["create-shot", "--scene", sceneId as string, "--duration", "3"]);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/shot_/);
+    expect(r.out).toContain("3s");
+  });
+
+  it("FAILS CLOSED when the episode or scene does not exist", () => {
+    const state = withEpisode();
+    const noEp = cli(state, ["create-scene", "--episode", "S99E99"]);
+    expect(noEp.code).toBe(1);
+    expect(noEp.out).toContain("S99E99");
+
+    const noScene = cli(state, ["create-shot", "--scene", "scn_nope", "--duration", "3"]);
+    expect(noScene.code).toBe(1);
+    expect(noScene.out).toContain("scn_nope");
+  });
+
+  it("rejects a non-positive --duration instead of storing it", () => {
+    const state = withEpisode();
+    const sceneId = /scn_\w+/.exec(cli(state, ["create-scene", "--episode", "S01E01"]).out)?.[0];
+    const r = cli(state, ["create-shot", "--scene", sceneId as string, "--duration", "0"]);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/positive number/);
+  });
+
+  it("moves `mmcs final` past the no-shots wall to the approval gate", () => {
+    // The point of adding scenes and shots: `final` no longer fails because the composition
+    // is empty. It now fails on the NEXT real requirement (spec §3.5 needs rough-cut
+    // approval), which is a gate doing its job rather than missing data.
+    const state = withEpisode();
+    const sceneId = /scn_\w+/.exec(cli(state, ["create-scene", "--episode", "S01E01"]).out)?.[0];
+    cli(state, ["create-shot", "--scene", sceneId as string, "--duration", "3"]);
+    const r = cli(state, ["final", "S01E01"]);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/GATE_NOT_APPROVED/);
+    expect(r.out).not.toMatch(/no shots/);
+  });
+});
