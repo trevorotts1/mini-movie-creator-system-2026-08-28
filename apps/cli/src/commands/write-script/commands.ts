@@ -67,10 +67,10 @@ export function makeApproveScriptHandler(ports: WriteScriptCommandPorts) {
   // in `flags` and parseApproveScriptOptions saw flags.length === undefined:
   // --by and --note were accepted by commander and then silently ignored, and
   // the gate could be approved with no recorded operator identity.
-  return (
+  return async (
     _args: Record<string, string> = {},
     rawOptions: Record<string, unknown> = {},
-  ): void => {
+  ): Promise<void> => {
     // commander camelCases long flags; the parser reads kebab-case argv pairs.
     const flags = Object.entries(rawOptions).flatMap(([k, v]) => {
       const flag = k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
@@ -89,8 +89,8 @@ export function makeApproveScriptHandler(ports: WriteScriptCommandPorts) {
       note: parsed.note ?? asString(rawOptions.note),
     };
     const result = isRejectNote(decision.note)
-      ? ports.rejectScript({ ...decision, note: stripRejectMarker(decision.note) })
-      : ports.approveScript(decision);
+      ? await ports.rejectScript({ ...decision, note: stripRejectMarker(decision.note) })
+      : await ports.approveScript(decision);
     const code = emit(result.output, result.exitCode);
     if (code === 1) throw new Error("approve script rejected (exit 1)");
   };

@@ -96,18 +96,26 @@ export interface ApproveScriptDecision {
 export interface ScriptGatePorts {
   /** Present the QC-passed screenplay for approval (`write-script`). */
   present(): { presented: boolean; output: string[]; record: ScriptGateRecordLike | null };
-  /** Record the operator's APPROVED decision at gate 2. */
-  approveScript(decision: ApproveScriptDecision): {
+  /**
+   * Record the operator's APPROVED decision at gate 2.
+   *
+   * Returns a Promise. It used to be synchronous, and the CLI bridged the async approval
+   * store into that shape by spinning on `Atomics.wait` — which blocked the event loop and
+   * so could never observe the microtask that produced the value. The timeout was
+   * guaranteed, not a race: `approve script` could not succeed. Awaiting removes the bridge
+   * entirely.
+   */
+  approveScript(decision: ApproveScriptDecision): Promise<{
     exitCode: 0 | 1;
     output: string[];
     record: ScriptGateRecordLike | null;
-  };
-  /** Record the operator's REJECTED decision at gate 2 (revision loop). */
-  rejectScript(decision: ApproveScriptDecision): {
+  }>;
+  /** Record the operator's REJECTED decision at gate 2 (revision loop). Awaited; see above. */
+  rejectScript(decision: ApproveScriptDecision): Promise<{
     exitCode: 0 | 1;
     output: string[];
     record: ScriptGateRecordLike | null;
-  };
+  }>;
 }
 
 /** Parse `--by <operator>` / `--note <text>` flag pairs from raw argv tails. */

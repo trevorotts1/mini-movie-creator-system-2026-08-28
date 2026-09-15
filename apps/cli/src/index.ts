@@ -297,25 +297,6 @@ function conceptPorts(): ConceptCommandPorts {
 }
 
 
-/** Block on a synchronous port bridge until the async store settles. */
-function drain<T>(
-  slot: { value: T | null },
-  context: string,
-): T {
-  const deadline = Date.now() + 5_000;
-  while (slot.value === null && Date.now() < deadline) {
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1);
-  }
-  return (
-    slot.value ??
-    ({
-      exitCode: 1,
-      output: [`${context}: approval store did not respond in time`],
-      record: null,
-    } as unknown as T)
-  );
-}
-
 /** Short episode-ish stamp for synthesized screenplay ids. */
 function episodeStamp(): string {
   const d = new Date();
@@ -349,88 +330,79 @@ function scriptPorts(): WriteScriptCommandPorts {
       ],
       record: null,
     }),
-    approveScript: (decision) => {
+    // Awaited ports (SKR-003). These used to be synchronous, bridged from the async store by
+    // `drain()` spinning on `Atomics.wait`. That could never work: Atomics.wait blocks the
+    // event loop, and the callback assigning the value it waited for is a microtask, which
+    // cannot run while the thread is blocked. `approve script` therefore always failed with
+    // "approval store did not respond in time". Awaiting removes the bridge entirely.
+    approveScript: async (decision) => {
       // Gate order is a hard stop (spec §3): gate 2 may only be approved
       // after gate 1 APPROVED. The durable store write happens only then.
-      let settled: {
-        exitCode: 0 | 1;
-        output: string[];
-        record: ScriptGateRecordLike | null;
-      } | null = null;
-      void (async () => {
-        try {
-          const concept = await store.snapshot("concept");
-          if (concept.state !== "APPROVED") {
-            settled = {
-              exitCode: 1,
-              output: [
-                `Gate 1 not passed: the concept is ${concept.state}; no screenplay approval before concept approval (spec §3).`,
-                "Run `mmcs approve concept` first.",
-              ],
-              record: null,
-            };
-            return;
-          }
-          const record = await store.approve("script", {
-            decidedBy: decision.decidedBy,
-            note: decision.note,
-          });
-          settled = {
-            exitCode: 0,
+      try {
+        const concept = await store.snapshot("concept");
+        if (concept.state !== "APPROVED") {
+          return {
+            exitCode: 1 as const,
             output: [
-              `[mmcs] approve script — APPROVED by ${record.decidedBy ?? "operator"} at ${record.approvedAt ?? "(now)"}`,
-              "Gate 2 open: cast/candidate work may proceed (runbook step 8).",
+              `Gate 1 not passed: the concept is ${concept.state}; no screenplay approval before concept approval (spec §3).`,
+              "Run `mmcs approve concept` first.",
             ],
-            record: {
-              screenplayId: `SCR_${episodeStamp()}`,
-              state: record.state,
-              decidedAt: record.approvedAt ?? null,
-              decidedBy: record.decidedBy ?? null,
-              note: record.note ?? null,
-            },
-          };
-        } catch (err) {
-          settled = {
-            exitCode: 1,
-            output: [`[mmcs] approve script: ${err instanceof Error ? err.message : String(err)}`],
             record: null,
           };
         }
-      })();
-      return drain<ScriptGateRecordResult>({ value: settled }, "[mmcs] approve script");
-    },
-    rejectScript: (decision) => {
-      let settled: {
-        exitCode: 0 | 1;
-        output: string[];
-        record: ScriptGateRecordLike | null;
-      } | null = null;
-      void store
-        .reject("script", { decidedBy: decision.decidedBy, note: decision.note })
-        .then((record) => {
-          settled = {
-            exitCode: 0,
-            output: [
-              `[mmcs] approve script — REJECTED by ${record.decidedBy ?? "operator"} (revision loop, spec §14)`,
-              "Revise the screenplay, then re-run `mmcs write-script`.",
-            ],
-            record: {
-              screenplayId: `SCR_${episodeStamp()}`,
-              state: record.state,
-              decidedAt: record.updatedAt ?? null,
-              decidedBy: record.decidedBy ?? null,
-              note: record.note ?? null,
-            },
-          };
-        })
-        .catch((err: unknown) => {
-          settled = {
-            exitCode: 1,
-            output: [`[mmcs] approve script: ${err instanceof Error ? err.message : String(err)}`],
-            record: null,
-          };
+        const record = await store.approve("script", {
+          decidedBy: decision.decidedBy,
+          note: decision.note,
         });
-      return drain<ScriptGateRecordResult>({ value: settled }, "[mmcs] approve script");
+        return {
+          exitCode: 0 as const,
+          output: [
+            `[mmcs] approve script — APPROVED by ${record.decidedBy ?? "operator"} at ${record.approvedAt ?? "(now)"}`,
+            "Gate 2 open: cast/candidate work may proceed (runbook step 8).",
+          ],
+          record: {
+            screenplayId: `SCR_${episodeStamp()}`,
+            state: record.state,
+            decidedAt: record.approvedAt ?? null,
+            decidedBy: record.decidedBy ?? null,
+            note: record.note ?? null,
+          },
+        };
+      } catch (err) {
+        return {
+          exitCode: 1 as const,
+          output: [`[mmcs] approve script: ${err instanceof Error ? err.message : String(err)}`],
+          record: null,
+        };
+      }
+    },
+    rejectScript: async (decision) => {
+      try {
+        const record = await store.reject("script", {
+          decidedBy: decision.decidedBy,
+          note: decision.note,
+        });
+        return {
+          exitCode: 0 as const,
+          output: [
+            `[mmcs] approve script — REJECTED by ${record.decidedBy ?? "operator"} (revision loop, spec §14)`,
+            "Revise the screenplay, then re-run `mmcs write-script`.",
+          ],
+          record: {
+            screenplayId: `SCR_${episodeStamp()}`,
+            state: record.state,
+            decidedAt: record.updatedAt ?? null,
+            decidedBy: record.decidedBy ?? null,
+            note: record.note ?? null,
+          },
+        };
+      } catch (err) {
+        return {
+          exitCode: 1 as const,
+          output: [`[mmcs] approve script: ${err instanceof Error ? err.message : String(err)}`],
+          record: null,
+        };
+      }
     },
   };
 }

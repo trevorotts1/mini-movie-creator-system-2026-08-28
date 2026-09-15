@@ -129,10 +129,12 @@ describe("write-script handler", () => {
 });
 
 describe("approve script handler", () => {
-  it("records the APPROVED decision with the operator id", () => {
+  it("records the APPROVED decision with the operator id", async () => {
+    // The handler is async now: the gate-2 port is awaited rather than bridged from the
+    // async store with an Atomics.wait spin, which could never observe its own result.
     const ports = makePorts();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-    makeApproveScriptHandler(ports)({}, { by: "trevor" });
+    await makeApproveScriptHandler(ports)({}, { by: "trevor" });
     const text = String(stdout.mock.calls.map((c) => c[0]).join(""));
     stdout.mockRestore();
 
@@ -153,9 +155,9 @@ describe("approve script handler", () => {
     expect(ports.approvals).toEqual([{ decidedBy: "op", note: "ship it" }]);
   });
 
-  it("throws for the dispatcher to map when the decision exits 1", () => {
+  it("throws for the dispatcher to map when the decision exits 1", async () => {
     const ports = makePorts({
-      approveScript: () => ({
+      approveScript: async () => ({
         exitCode: 1 as const,
         output: [
           "Gate 2 not satisfied: no screenplay has been presented for approval.",
@@ -165,7 +167,7 @@ describe("approve script handler", () => {
       }),
     });
     const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-    expect(() => makeApproveScriptHandler(ports)({}, [])).toThrow(/rejected \(exit 1\)/);
+    await expect(makeApproveScriptHandler(ports)({}, [])).rejects.toThrow(/rejected \(exit 1\)/);
     const text = String(stderr.mock.calls.map((c) => c[0]).join(""));
     stderr.mockRestore();
     expect(text).toContain("mmcs write-script");

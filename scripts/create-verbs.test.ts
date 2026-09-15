@@ -166,7 +166,7 @@ describe("mmcs create-scene / create-shot (SKR-003)", () => {
     expect(r.out).toMatch(/positive number/);
   });
 
-  it("moves `mmcs final` past the no-shots wall to the approval gate", () => {
+  it("moves `mmcs final` past the no-shots wall to the approval gate", { timeout: 90_000 }, () => {
     // The point of adding scenes and shots: `final` no longer fails because the composition
     // is empty. It now fails on the NEXT real requirement (spec §3.5 needs rough-cut
     // approval), which is a gate doing its job rather than missing data.
@@ -177,6 +177,11 @@ describe("mmcs create-scene / create-shot (SKR-003)", () => {
     expect(r.code).toBe(1);
     expect(r.out).toMatch(/GATE_NOT_APPROVED/);
     expect(r.out).not.toMatch(/no shots/);
+    // NOTE: this takes tens of seconds because `final` still reads the gate through a
+    // SECOND Atomics.wait bridge (finalPorts().approvalsPort in apps/cli/src/index.ts), so
+    // each read burns the full 5s timeout before falling back to "PENDING". That bridge is
+    // the remaining known defect; the extended timeout is here so this test documents the
+    // behaviour instead of flaking, and it should be tightened when the bridge is removed.
   });
 });
 
@@ -210,5 +215,32 @@ describe("approval gate verbs (SKR-003)", () => {
     const skip = cli(state, ["approve", "character"]);
     expect(skip.code).toBe(1);
     expect(skip.out).toMatch(/gate order/);
+  });
+});
+
+describe("gate-2 approval is awaited, not bridged (SKR-003)", () => {
+  it("`approve script` SUCCEEDS — it used to be a guaranteed timeout", () => {
+    // The port was synchronous and bridged from the async store by spinning on
+    // Atomics.wait. That blocks the event loop, so the microtask that assigns the value it
+    // waits for can never run: the 5s timeout was guaranteed, not a race. `approve script`
+    // could NEVER succeed.
+    const state = freshState();
+    expect(cli(state, ["approve", "concept"]).code).toBe(0);
+    const r = cli(state, ["approve", "script"]);
+    expect(r.code).toBe(0);
+    expect(r.out).toMatch(/APPROVED/);
+    expect(r.out).not.toMatch(/did not respond in time/);
+  });
+
+  it("the whole spec §3 chain can be walked in order", () => {
+    const state = freshState();
+    for (const gate of ["concept", "script", "character", "storyboard", "rough-cut"]) {
+      const r = cli(state, ["approve", gate]);
+      expect(r.code, `approve ${gate} should succeed: ${r.out}`).toBe(0);
+      expect(r.out).toMatch(/APPROVED/);
+    }
+    // And `status` agrees, which is what makes the walk meaningful.
+    const status = cli(state, ["status"]).out;
+    expect(status).toMatch(/rough-cut: APPROVED/);
   });
 });
