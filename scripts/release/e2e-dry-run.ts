@@ -1321,12 +1321,14 @@ async function scenarioSubmitResumeArchive(
     assert(includedOk, "included $0 reservation commits without touching the paid gate", `reservation=${included.outcome === "approved" ? included.reservation.id : "declined"}`),
   );
 
-  // The job store self-heals its OWN provider_jobs table shape (ref-keyed),
-  // which drifts from the 0401 band's id-keyed table — so the durable record
-  // lives in its OWN file-claimed SQLite opened by a FRESH connection. The
-  // restart boundary below opens the same file through a second connection.
+  // The job store speaks the canonical id-keyed provider_jobs table now; it no
+  // longer self-heals a divergent ref-keyed shape. A separate file is kept so
+  // the restart boundary below is a genuine fresh-connection test, but it is
+  // migrated like any other database rather than relying on the store to invent
+  // its own schema.
   const jobsDbPath = join(scratchRoot, "mmcs-e2e-jobs.sqlite");
   const jobsDb = connectSqlite({ path: jobsDbPath });
+  migrate(jobsDb, MIGRATIONS);
   const store = new AgnesVideoJobStoreSqlite(jobsDb);
   const submitter = new AgnesVideoSubmitter(client, store, gate, { now: () => NOW });
 

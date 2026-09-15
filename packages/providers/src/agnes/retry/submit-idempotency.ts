@@ -4,7 +4,7 @@ import {
   IdempotencyStore,
   requestHash,
   type IdempotencyRecord,
-} from "@mmcs/core/idempotency";
+} from "@mmcs/core/idempotency/index.js";
 import { boundedRetry, RetryBudgetExhaustedError, type BoundedRetryOptions } from "./bounded-retry.js";
 
 /**

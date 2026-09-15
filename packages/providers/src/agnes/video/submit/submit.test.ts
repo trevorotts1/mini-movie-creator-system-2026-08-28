@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import { requestHash } from "@mmcs/core/idempotency/request-hash.js";
-import { connectSqlite } from "@mmcs/database/index.js";
+import { connectSqlite, migrate, MIGRATIONS } from "@mmcs/database/index.js";
 import { AGNES_VIDEO_2_5, AGNES_VIDEO_2_5_FLASH } from "@mmcs/capability-registry/data/agnes.js";
 import type { MediaModelCapabilitySeed } from "@mmcs/capability-registry/data/types.js";
 
@@ -774,6 +774,11 @@ describe("AgnesVideoSubmitter (mocked submit → SUBMITTED, spec §18)", () => {
 describe("AgnesVideoJobStoreSqlite (CORE-007 seam)", () => {
   it("round-trips a record through SQLite with denormalized columns", async () => {
     const db = connectSqlite({ path: ":memory:" });
+    // The store no longer self-heals a divergent table shape: the 040_ band
+    // owns provider_jobs, so the database must be migrated first. This test
+    // previously passed only because the store created its own ref-keyed table
+    // — the drift that broke the real, id-keyed one.
+    migrate(db, MIGRATIONS);
     const store = new AgnesVideoJobStoreSqlite(db);
     const record: AgnesVideoJobRecord = {
       ref: "S01E03:SC04:SH07",
@@ -798,11 +803,14 @@ describe("AgnesVideoJobStoreSqlite (CORE-007 seam)", () => {
     expect(loaded?.providerJobId).toBe("vid_sql1");
     expect(loaded?.submitRequest?.model).toBe("agnes-video-2.5-flash");
 
-    // Denormalized columns queryable without JSON parsing.
-    const row = db
-      .get("SELECT provider_task_id, state FROM provider_jobs WHERE ref = ?", record.ref);
+    // Denormalized columns queryable without JSON parsing. Column names are the
+    // canonical 040_ ones: id (not ref) and status (not state).
+    const row = db.get(
+      "SELECT provider_task_id, status FROM provider_jobs WHERE id = ?",
+      record.ref,
+    );
     expect(row?.["provider_task_id"]).toBe("vid_sql1");
-    expect(row?.["state"]).toBe("SUBMITTED");
+    expect(row?.["status"]).toBe("SUBMITTED");
 
     // Upsert overwrites by ref.
     await store.save({ ...record, state: "GENERATING" });

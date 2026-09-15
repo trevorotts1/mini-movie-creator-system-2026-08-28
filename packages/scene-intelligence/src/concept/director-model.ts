@@ -18,15 +18,15 @@
  * mocked test proves the gate, not bypasses it.
  */
 
-import { REASONING_MODEL_PROFILES } from "@mmcs/capability-registry/data";
+import { REASONING_MODEL_PROFILES } from "@mmcs/capability-registry/data/index.js";
 import {
   REASONING_ADAPTERS,
   getReasoningAdapter,
   resolveReasoning,
   type ReasoningAdapter,
   type ReasoningPreference,
-} from "@mmcs/capability-registry/max-reasoning";
-import { validatePricingProfile } from "@mmcs/capability-registry/pricing";
+} from "@mmcs/capability-registry/max-reasoning/index.js";
+import { validatePricingProfile } from "@mmcs/capability-registry/pricing/index.js";
 
 import { toSingleLine } from "./sanitize.js";
 import type { DirectorCapabilitySnapshot } from "./types.js";

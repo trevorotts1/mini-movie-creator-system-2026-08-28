@@ -36,5 +36,12 @@ export default defineConfig({
   test: {
     include: ["src/**/*.{test,spec}.ts", "src/**/*.{test,spec}.tsx"],
     environment: "node",
+    // These suites shell out to ffmpeg/ffprobe or do real SQLite round-trips.
+    // They are milliseconds in isolation but exceed the default 5s budget when
+    // all 208 files run in parallel (measured: each of the three files below
+    // passes 4-12/12 alone and times out inside the full run). The assertions
+    // are about correctness, not latency, so the budget moves rather than the
+    // assertions.
+    testTimeout: 20_000,
   },
 });

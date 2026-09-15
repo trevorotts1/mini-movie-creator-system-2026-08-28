@@ -31,4 +31,4 @@ export {
   type AgnesSubmitRecord,
   type AgnesSubmitRequest,
 } from "./submit-idempotency.js";
-export type { IdempotencyRecord } from "@mmcs/core/idempotency";
+export type { IdempotencyRecord } from "@mmcs/core/idempotency/index.js";
