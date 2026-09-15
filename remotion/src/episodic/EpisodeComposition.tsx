@@ -24,11 +24,12 @@ import type {
 export const EpisodeScene: React.FC<{
   config: SceneCompositionConfig;
   fps: number;
-}> = ({ config, fps }) => {
+  showDebug?: boolean;
+}> = ({ config, fps, showDebug = false }) => {
   return (
     <>
       {config.shots.map((shot) => (
-        <EpisodeShot key={shot.shotId} config={shot} fps={fps} />
+        <EpisodeShot key={shot.shotId} config={shot} fps={fps} showDebug={showDebug} />
       ))}
     </>
   );
@@ -37,22 +38,31 @@ export const EpisodeScene: React.FC<{
 export const EpisodeShot: React.FC<{
   config: ShotCompositionConfig;
   fps: number;
-}> = ({ config, fps }) => {
+  /**
+   * Renders the shot-identifying debug overlay. Defaults to FALSE, and that default is the
+   * fix for SKR-009: this overlay used to render unconditionally, so every episodic render
+   * — including a real, paid one — came out with a shot label burned into the picture
+   * ("S01E01-S01 · shot 1 · 90f @ 30fps"). Debug text must be opt-in, never the default.
+   */
+  showDebug?: boolean;
+}> = ({ config, fps, showDebug = false }) => {
   return (
     <AbsoluteFill style={{ backgroundColor: '#101014' }}>
       {/* Placeholder shot surface — layer components (VID-004..009) mount here. */}
-      <div
-        style={{
-          position: 'absolute',
-          left: 24,
-          top: 24,
-          fontFamily: 'sans-serif',
-          fontSize: 18,
-          color: 'rgba(255,255,255,0.72)',
-        }}
-      >
-        {config.shotId} · shot {config.sequenceIndex} · {config.durationInFrames}f @ {fps}fps
-      </div>
+      {showDebug ? (
+        <div
+          style={{
+            position: 'absolute',
+            left: 24,
+            top: 24,
+            fontFamily: 'sans-serif',
+            fontSize: 18,
+            color: 'rgba(255,255,255,0.72)',
+          }}
+        >
+          {config.shotId} · shot {config.sequenceIndex} · {config.durationInFrames}f @ {fps}fps
+        </div>
+      ) : null}
     </AbsoluteFill>
   );
 };
@@ -63,7 +73,13 @@ export const EpisodeComposition: React.FC<{
   return (
     <AbsoluteFill>
       {config.scenes.map((scene) => (
-        <EpisodeScene key={scene.sceneId} config={scene} fps={config.fps} />
+        <EpisodeScene
+          key={scene.sceneId}
+          config={scene}
+          fps={config.fps}
+          // Only a placeholder registry turns this on — see EpisodeShot.showDebug.
+          showDebug={config.placeholder === true}
+        />
       ))}
     </AbsoluteFill>
   );

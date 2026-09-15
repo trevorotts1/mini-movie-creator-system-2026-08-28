@@ -4,6 +4,7 @@ import type { EpisodeCompositionConfig } from './types';
 export const episodeCompositions: EpisodeCompositionConfig[] = [
   {
     "compositionId": "S01E01",
+    "placeholder": true,
     "episodeCode": "S01E01",
     "seriesId": "ser_example",
     "episodeId": "ep_example_101",

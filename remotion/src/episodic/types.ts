@@ -40,4 +40,11 @@ export interface EpisodeCompositionConfig {
   readonly height: number;
   readonly durationInFrames: number;
   readonly scenes: readonly SceneCompositionConfig[];
+  /**
+   * True when the registry was generated from `episodic-plan.example.json` because no real
+   * DB-derived plan exists yet (SKR-009). Placeholder compositions render a shot-identifying
+   * debug overlay so a developer can see what they are looking at; production compositions
+   * must NOT, because that text is burned into the rendered video.
+   */
+  readonly placeholder?: boolean;
 }
