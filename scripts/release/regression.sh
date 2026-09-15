@@ -385,6 +385,22 @@ else
   area_fail "licence-notice" "the third-party notices disagree with the bundled FFmpeg — run 'node scripts/release/licence-notice-check.mjs'"
 fi
 
+# 13. integrations ----------------------------------------------------------
+# The root vitest config's include is packages|apps|scripts, so `npx vitest run` (area 2)
+# never reaches integrations/**. Those two workspaces have their own suites — 78 tests —
+# which nothing was running at release time. Scoped to integrations only: the other 15
+# workspaces are already covered by area 2 and re-running them here would just double the
+# gate's cost.
+step_header 13 "integrations: the workspaces the root vitest config does not reach"
+if (cd "$REPO_ROOT" && pnpm -r --filter "./integrations/*" run test >"$LOG" 2>&1); then
+  INT_LINE="$(grep -E "Tests +[0-9]+ passed" "$LOG" | tail -1 | sed 's/^ *//')"
+  INT_TOTAL="$(grep -oE "Tests +[0-9]+ passed" "$LOG" | grep -oE "[0-9]+" | paste -sd+ - | bc 2>/dev/null || echo "")"
+  area_pass "integrations" "${INT_TOTAL:+$INT_TOTAL test(s) across integrations/* — }${INT_LINE:-suite green}"
+else
+  dump_log_tail integrations
+  area_fail "integrations" "an integrations workspace suite failed — run 'pnpm -r --filter \"./integrations/*\" run test' for details"
+fi
+
 # ---------------------------------------------------------------------------
 echo
 if [ "$FAILED_AREAS" -gt 0 ]; then

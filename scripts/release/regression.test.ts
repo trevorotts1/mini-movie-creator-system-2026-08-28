@@ -307,6 +307,7 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
         "linux-render",
         "package-entry",
         "licence-notice",
+        "integrations",
       ]);
       for (const [name, result] of Object.entries(parsed.areas)) {
         expect(result, `area ${name}`).toBe("PASS");
