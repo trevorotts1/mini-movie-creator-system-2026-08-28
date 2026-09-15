@@ -109,6 +109,31 @@ describe("failure classification", () => {
     expect(classifyFailure(domAbort)).toBe("stop");
   });
 
+  it("retries a timeout that arrives dressed as an AbortError", () => {
+    // AbortSignal.timeout() rejects with a TimeoutError DOMException, and fetch
+    // layers commonly re-surface a timed-out request as AbortError. Keying only
+    // on the name made those unretryable.
+    const viaReason = Object.assign(new Error("This operation was aborted"), {
+      name: "AbortError",
+      reason: Object.assign(new Error("signal timed out"), { name: "TimeoutError" }),
+    });
+    expect(classifyFailure(viaReason)).toBe("retry");
+
+    const viaMessage = Object.assign(new Error("request timed out"), { name: "AbortError" });
+    expect(classifyFailure(viaMessage)).toBe("retry");
+
+    const viaCause = Object.assign(new Error("aborted"), {
+      name: "AbortError",
+      cause: Object.assign(new Error("timeout"), { name: "TimeoutError" }),
+    });
+    expect(classifyFailure(viaCause)).toBe("retry");
+  });
+
+  it("still stops on an AbortError with no timeout signal", () => {
+    const plain = Object.assign(new Error("aborted by caller"), { name: "AbortError" });
+    expect(classifyFailure(plain)).toBe("stop");
+  });
+
   it("stops when the daily quota is spent (X-RateLimit-Daily-Remaining: 0)", () => {
     const quotaSpent = new GhlRetryableHttpError(429, "daily limit", {
       rateLimit: { dailyRemaining: 0, limitDaily: 200_000 },

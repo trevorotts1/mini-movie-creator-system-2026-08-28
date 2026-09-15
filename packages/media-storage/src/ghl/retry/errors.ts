@@ -182,13 +182,37 @@ export function classifyFailure(err: unknown): RetryDecision {
     if (named.code === "ECONNRESET" || named.code === "ETIMEDOUT" || named.code === "EAI_AGAIN" || named.code === "ECONNREFUSED") {
       return "retry";
     }
-    // Caller cancellation is final: honour the stop signal, never retry it.
-    if (err.name === "AbortError") return "stop";
-    // Timeout aborts are not cancellations — the call timed out on its own.
+    // AbortError covers BOTH a caller cancellation and a timeout: fetch layers
+    // abort a request when their own deadline fires, and AbortSignal.timeout()
+    // rejects with a TimeoutError that many wrappers re-surface as AbortError.
+    // Keying on the name alone made a timeout unretryable, so inspect the abort
+    // reason/message and only treat a GENUINE cancellation as final.
+    if (err.name === "AbortError") {
+      return isTimeoutShaped(err) ? "retry" : "stop";
+    }
+    // A distinct TimeoutError is unambiguous: the call timed out on its own.
     if (err.name === "TimeoutError") return "retry";
     if (err.name === "TypeError") return "retry"; // fetch(): network-layer failure
   }
   return "stop";
+}
+
+/**
+ * Distinguish a timeout that arrived dressed as an AbortError from a genuine
+ * caller cancellation. AbortSignal.timeout() sets the signal's `reason` to a
+ * TimeoutError DOMException; most fetch implementations also report a timed-out
+ * request with "timeout"/"timed out" in the message.
+ */
+function isTimeoutShaped(err: Error): boolean {
+  const withReason = err as Error & { reason?: unknown; cause?: unknown };
+  const reason = withReason.reason ?? withReason.cause;
+  const reasonName =
+    typeof reason === "object" && reason !== null && "name" in reason
+      ? String((reason as { name: unknown }).name)
+      : "";
+  if (reasonName === "TimeoutError") return true;
+  const text = `${err.message} ${reasonName}`.toLowerCase();
+  return text.includes("timeout") || text.includes("timed out");
 }
 
 /**
