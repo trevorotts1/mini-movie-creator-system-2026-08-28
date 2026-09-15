@@ -20,14 +20,14 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
 const remotionRoot = path.join(repoRoot, 'remotion');
-const ADAPTER = path.join(
+const PIPELINE_ADAPTER = path.join(
   repoRoot,
   'packages',
   'dist',
   'remotion-runtime',
   'src',
   'final-render',
-  'remotion-renderer.js',
+  'pipeline-adapter.js',
 );
 const ENTRY = path.join(remotionRoot, 'src', '__adapter_smoke__.tsx');
 const COMPOSITION_ID = 'S01E01';
@@ -43,8 +43,8 @@ const fail = (msg) => {
   process.exit(1);
 };
 
-if (!existsSync(ADAPTER)) {
-  fail(`built adapter not found at ${ADAPTER} — run the package build first`);
+if (!existsSync(PIPELINE_ADAPTER)) {
+  fail(`built pipeline adapter not found at ${PIPELINE_ADAPTER} — run the package build first`);
 }
 if (!existsSync(path.join(remotionRoot, 'node_modules', '@remotion'))) {
   fail("remotion/node_modules/@remotion missing — run: cd remotion && npm ci");
@@ -111,33 +111,33 @@ const cleanup = () => {
 try {
   // Dynamic import so a load failure is reported as a smoke failure, not a
   // module-resolution crash before any output.
-  let makeRemotionRenderAdapter;
+  // Drive the PIPELINE path, not the raw adapter: makePipelineRenderPort is the
+  // bridge production uses (pipeline RenderRequest -> adapter request), so this
+  // proves the conversion and the adapter together. It also means a break in
+  // either half fails the gate.
+  let makePipelineRenderPort;
   try {
-    ({ makeRemotionRenderAdapter } = await import(ADAPTER));
+    ({ makePipelineRenderPort } = await import(PIPELINE_ADAPTER));
   } catch (err) {
     fail(
-      `could not import the built adapter (${err instanceof Error ? err.message : String(err)})`,
+      `could not import the built pipeline adapter (${err instanceof Error ? err.message : String(err)})`,
     );
   }
 
-  const adapter = makeRemotionRenderAdapter({
+  const render = makePipelineRenderPort({
     entryPoint: ENTRY,
     publicDir: path.join(repoRoot, 'media'),
   });
 
-  const started = Date.now();
-  const result = await adapter({
+  const result = await render({
     compositionId: COMPOSITION_ID,
     output,
     fps: 30,
-    width: 1920,
-    height: 1080,
-    durationInFrames: 30,
+    // Pipeline shape: a resolution OBJECT and a duration in SECONDS.
+    resolution: { width: 1920, height: 1080 },
+    durationSeconds: 1, // 30 frames @ 30fps
     codec: 'h264',
     scale: 0.5,
-    imageFormat: 'jpeg',
-    crf: 18,
-    overwrite: true,
   });
 
   if (!existsSync(output)) fail(`adapter reported success but wrote no file at ${output}`);
@@ -165,7 +165,7 @@ try {
     fail(`expected 960x540 at scale 0.5, got ${width}x${height}`);
   }
 
-  console.log(`  adapter: ${COMPOSITION_ID} rendered through makeRemotionRenderAdapter`);
+  console.log(`  pipeline: ${COMPOSITION_ID} rendered through makePipelineRenderPort -> Remotion adapter`);
   console.log(`  ${width}x${height} ${codec} OK  (${result.renderSeconds.toFixed(1)}s)`);
   console.log('ADAPTER_SMOKE_OK');
   cleanup();

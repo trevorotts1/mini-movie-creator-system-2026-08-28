@@ -241,7 +241,12 @@ export function planFinalRender(
         : `rough-cut gate is ${gate.state} — no final render before approval (spec §3.5)`,
     gate,
     resolution: planResolution(spec, mode),
-    scale: mode === "native" ? 1 : 1,
+    // planResolution above already applies the mode — native renders at the
+    // master resolution, otherwise at a real resolution tier — so the scale
+    // multiplier is 1 either way. The previous `mode === "native" ? 1 : 1` read
+    // as though the branches differed; they never did, and it invited a reader
+    // to believe the mode affected scale when it affects resolution.
+    scale: 1,
     outputFileName: finalFileName(spec.episodeCode, version),
     outputFolder: finalFolderSegments(spec.episodeCode, spec.episodeTitle),
     sidecarFileName: sidecarFileName(spec.episodeCode, version),
