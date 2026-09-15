@@ -432,6 +432,12 @@ export const SketchArrow: React.FC<{
   const len = getLength(d);
   const tip = getPointAtLength(d, len * prog);
   const back = getPointAtLength(d, Math.max(0, len * prog - 26));
+  // @remotion/paths types these as `Point | null`: a path that cannot be
+  // measured (unparseable, or shorter than the requested length) yields no
+  // point. That is a real case, not a typing nuisance — skip this frame rather
+  // than dereferencing null. Surfaced by aligning the project to 4.0.518, whose
+  // typings are stricter than 4.0.486's.
+  if (tip === null || back === null) return null;
   const ang = (Math.atan2(tip.y - back.y, tip.x - back.x) * 180) / Math.PI;
   return (
     <svg viewBox={`0 0 ${vb.w} ${vb.h}`} style={{ position: 'absolute', left: 0, top: 0, width: vb.w, height: vb.h, overflow: 'visible', zIndex: z }}>
