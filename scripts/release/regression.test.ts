@@ -288,10 +288,27 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
         "task-ledger",
         "worktree-hygiene",
         "repo-residue",
+        "linux-render",
       ]);
       for (const [name, result] of Object.entries(parsed.areas)) {
         expect(result, `area ${name}`).toBe("PASS");
       }
+    });
+  }, 60_000);
+
+  it("reports the linux-render area as an explicit SKIP when docker is unavailable", () => {
+    // The sandbox PATH has no docker, so the Linux render cannot run. The danger is a
+    // silently-green area: a gate that says PASS while having done nothing is worse than no
+    // gate. The note must say SKIPPED and name the command that would exercise it.
+    withSandbox(({ binDir, run }) => {
+      installGreenToolchain(binDir);
+      const r = run();
+      expect(r.status).toBe(0);
+      const line = r.stdout.split("\n").find((l) => l.includes("[linux-render]"));
+      expect(line).toBeDefined();
+      expect(line).toContain("PASS");
+      expect(line).toContain("SKIPPED");
+      expect(line).toMatch(/docker build -f docker\/Dockerfile\.render/);
     });
   }, 60_000);
 

@@ -1,0 +1,25 @@
+# Build context exclusions for the Linux render image.
+#
+# The render image needs the source tree and `media/`, but not the artefacts of the macOS
+# working copy. Without this the context is ~3.5 GB (worktrees 1.2G + remotion/node_modules
+# 1.5G + node_modules 594M + .git 135M), almost all of it either wrong-platform or dead
+# weight. node_modules is excluded on purpose: installing inside the image is what produces
+# a LINUX `@remotion/compositor-*`; copying the darwin tree across would fail at render time.
+
+.git
+.github
+worktrees
+node_modules
+remotion/node_modules
+**/node_modules
+
+# Control-plane churn that has no bearing on a render.
+state
+logs
+*.log
+
+# Local scratch and OS noise.
+.DS_Store
+*.bak
+*.bak-*
+.colima

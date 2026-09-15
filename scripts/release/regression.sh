@@ -336,6 +336,25 @@ else
   area_fail "repo-residue" "repository residue over budget — run 'node scripts/release/repo-residue.mjs' for the failing checks and their fixes"
 fi
 
+# 10. linux-render ----------------------------------------------------------
+# SKR-033: the repo rendered only on macOS. This area renders INSIDE the Linux image, so
+# "works in a container" is demonstrated rather than asserted. Docker is not present in
+# every environment, so absence is reported as a SKIP note rather than a silent pass —
+# a green area that quietly did nothing is the failure mode this whole gate exists to stop.
+step_header 10 "linux-render: render inside the Linux image (docker)"
+if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+  area_pass "linux-render" "SKIPPED — no usable docker daemon here; run 'docker build -f docker/Dockerfile.render -t mmcs-render-linux .' then 'docker run --rm --shm-size=1g mmcs-render-linux' to exercise it"
+elif (cd "$REPO_ROOT" && docker image inspect mmcs-render-linux:latest >/dev/null 2>&1); then
+  if (cd "$REPO_ROOT" && docker run --rm --shm-size=1g mmcs-render-linux:latest bash scripts/release/linux-render-check.sh /tmp/lrc >"$LOG" 2>&1); then
+    area_pass "linux-render" "$(grep -E 'linux-render-check: PASS' "$LOG" | head -1 | sed 's/^linux-render-check: PASS — //')"
+  else
+    dump_log_tail linux-render
+    area_fail "linux-render" "the Linux render failed inside the image — run 'docker run --rm --shm-size=1g mmcs-render-linux:latest' for the log"
+  fi
+else
+  area_pass "linux-render" "SKIPPED — image mmcs-render-linux:latest not built in this docker daemon; build it with 'docker build -f docker/Dockerfile.render -t mmcs-render-linux .'"
+fi
+
 # ---------------------------------------------------------------------------
 echo
 if [ "$FAILED_AREAS" -gt 0 ]; then
