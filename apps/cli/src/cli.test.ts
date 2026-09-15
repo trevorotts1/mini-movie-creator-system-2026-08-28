@@ -144,6 +144,36 @@ describe("argument parsing / dispatch", () => {
     write.mockRestore();
   });
 
+  it("reports a handler's failure in its RESULT, not only at the process boundary", async () => {
+    // Handlers signal failure by assigning process.exitCode. The bin shim
+    // already honoured that, but dispatch()'s own result always said 0 — so an
+    // in-process caller (a test, an embedder) was told a failed verb succeeded.
+    const handler = (): void => {
+      process.exitCode = 1;
+    };
+    const res = await dispatch(["retry-shot", "shot-9"], [], { "retry-shot": handler });
+    expect(res.exitCode).toBe(1);
+  });
+
+  it("propagates a non-zero handler code through main()'s return", async () => {
+    const handler = (): void => {
+      process.exitCode = 3;
+    };
+    const res = await dispatch(["retry-shot", "shot-9"], [], { "retry-shot": handler });
+    expect(res.exitCode).toBe(3);
+  });
+
+  it("does not leak process.exitCode into the caller or the next dispatch", async () => {
+    const prior = process.exitCode;
+    const handler = (): void => {
+      process.exitCode = 1;
+    };
+    await dispatch(["retry-shot", "shot-9"], [], { "retry-shot": handler });
+    expect(process.exitCode).toBe(prior);
+    const next = await dispatch(["status"]);
+    expect(next.exitCode).toBe(0);
+  });
+
   it("exits 1 on unknown command with an error message", async () => {
     const err = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     const res = await dispatch(["definitely-not-a-verb"]);

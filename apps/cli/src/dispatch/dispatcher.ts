@@ -135,9 +135,18 @@ export async function dispatch(
   overrides: HandlerOverrides = {},
 ): Promise<ParseResult> {
   const program = buildProgram(mergeSpecs(buildRegistry(), specs), overrides);
+  // Handlers return void and signal failure by assigning `process.exitCode`.
+  // The PROCESS boundary already honoured that (the bin shim preserves a
+  // non-zero code), but this function's RESULT did not: an in-process caller —
+  // a test, an embedder — was told exitCode 0 for a verb that had just failed.
+  // Capture this dispatch's own assignment, report it, and restore the caller's
+  // value afterwards so dispatch does not leak global state.
+  const priorExitCode = process.exitCode;
+  process.exitCode = undefined;
   try {
     await program.parseAsync([...argv], { from: "user" });
-    return { exitCode: 0 };
+    const handlerExitCode = typeof process.exitCode === "number" ? process.exitCode : 0;
+    return { exitCode: handlerExitCode };
   } catch (err) {
     if (err instanceof CommanderError) {
       // usage errors (--help is 0; unknown command / bad args are 1)
@@ -148,6 +157,8 @@ export async function dispatch(
     }
     const message = err instanceof Error ? err.message : String(err);
     return { exitCode: 1, error: message };
+  } finally {
+    process.exitCode = priorExitCode;
   }
 }
 
