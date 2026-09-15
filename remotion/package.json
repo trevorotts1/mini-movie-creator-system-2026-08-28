@@ -11,17 +11,17 @@
     "still": "node scripts/gen-registry.mjs && node scripts/gen-episodic-registry.mjs && node scripts/render-all.mjs --still"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.486",
-    "@remotion/cli": "^4.0.486",
-    "@remotion/google-fonts": "^4.0.486",
-    "@remotion/paths": "^4.0.486",
-    "@remotion/renderer": "^4.0.486",
-    "@remotion/shapes": "^4.0.486",
+    "@remotion/bundler": "4.0.518",
+    "@remotion/cli": "4.0.518",
+    "@remotion/google-fonts": "4.0.518",
+    "@remotion/paths": "4.0.518",
+    "@remotion/renderer": "4.0.518",
+    "@remotion/shapes": "4.0.518",
     "chroma-js": "^3.2.0",
     "lucide-react": "^1.23.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remotion": "^4.0.486"
+    "remotion": "4.0.518"
   },
   "devDependencies": {
     "@types/chroma-js": "^3.1.2",
