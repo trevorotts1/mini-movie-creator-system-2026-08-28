@@ -27,6 +27,7 @@ import {
   sidecarFileName,
   sidecarFolderSegments,
   type ApprovalGatePort,
+  type GateSnapshot,
   type FinalRenderSpec,
   type PlannedShot,
   type QualityTier,
@@ -193,7 +194,8 @@ export interface FinalRenderPorts {
 export interface FinalRenderPlan {
   renderable: boolean;
   blockedReason?: string;
-  gate: ReturnType<ApprovalGatePort>;
+  /** The resolved gate snapshot. `planFinalRender` awaits the port, so this is a value. */
+  gate: GateSnapshot;
   resolution: Resolution;
   scale: number;
   outputFileName: string;
@@ -205,10 +207,10 @@ export interface FinalRenderPlan {
 }
 
 /** Build the deterministic render plan without rendering (dry-run + pipeline step). */
-export function planFinalRender(
+export async function planFinalRender(
   spec: FinalRenderSpec,
   approvals: ApprovalGatePort,
-): FinalRenderPlan {
+): Promise<FinalRenderPlan> {
   if (!spec.episodeCode || spec.episodeCode.trim().length === 0) {
     throw new FinalRenderError("INVALID_SPEC", "episodeCode is required");
   }
@@ -230,7 +232,9 @@ export function planFinalRender(
   if (spec.format.series === "custom" && !spec.format.custom) {
     throw new FinalRenderError("INVALID_SPEC", "custom series format requires a resolution");
   }
-  const gate = approvals("rough-cut");
+  // Awaited: the approval store is async, and reading it through a synchronous port forced
+  // callers into an Atomics.wait spin that could never observe its own result (SKR-003).
+  const gate = await approvals("rough-cut");
   const mode = spec.mode ?? "timeline";
   const version = spec.version ?? 1;
   return {
@@ -286,7 +290,7 @@ export async function runFinalRender(
   spec: FinalRenderSpec,
   ports: FinalRenderPorts,
 ): Promise<ProductionReport> {
-  const plan = planFinalRender(spec, ports.approvals);
+  const plan = await planFinalRender(spec, ports.approvals);
   if (!plan.renderable) {
     throw new FinalRenderError("GATE_NOT_APPROVED", plan.blockedReason ?? "rough-cut not approved");
   }

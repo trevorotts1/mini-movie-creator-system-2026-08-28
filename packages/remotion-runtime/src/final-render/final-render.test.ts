@@ -118,8 +118,8 @@ const okProbe: MediaValidator = async () => ({
 });
 
 describe("gate 5 — no final render before rough-cut approval (spec §3.5)", () => {
-  it("plan is not renderable while the gate is PENDING", () => {
-    const plan = planFinalRender(makeSpec(), gatePort("PENDING"));
+  it("plan is not renderable while the gate is PENDING", async () => {
+    const plan = await planFinalRender(makeSpec(), gatePort("PENDING"));
     expect(plan.renderable).toBe(false);
     expect(plan.blockedReason).toContain("PENDING");
     expect(plan.blockedReason).toContain("no final render before approval");
@@ -141,13 +141,13 @@ describe("gate 5 — no final render before rough-cut approval (spec §3.5)", ()
     expect(renderCalls).toBe(0);
   });
 
-  it("renderable once the gate is APPROVED", () => {
-    const plan = planFinalRender(makeSpec(), gatePort("APPROVED"));
+  it("renderable once the gate is APPROVED", async () => {
+    const plan = await planFinalRender(makeSpec(), gatePort("APPROVED"));
     expect(plan.renderable).toBe(true);
     expect(plan.gate.approvedAt).toBe("2026-08-28T12:00:00.000Z");
   });
 
-  it("gate ids match the six spec §3 gates with rough-cut as gate 5", () => {
+  it("gate ids match the six spec §3 gates with rough-cut as gate 5", async () => {
     expect(GATES).toEqual([
       "concept",
       "script",
@@ -161,27 +161,25 @@ describe("gate 5 — no final render before rough-cut approval (spec §3.5)", ()
 });
 
 describe("resolution — series/episode formats (spec §23)", () => {
-  it("16:9 series default renders at 1920x1080", () => {
-    const plan = planFinalRender(makeSpec(), gatePort("APPROVED"));
+  it("16:9 series default renders at 1920x1080", async () => {
+    const plan = await planFinalRender(makeSpec(), gatePort("APPROVED"));
     expect(plan.resolution).toEqual({ width: 1920, height: 1080 });
   });
 
-  it("9:16 episode override wins over the 16:9 series default (1080x1920)", () => {
-    const plan = planFinalRender(
+  it("9:16 episode override wins over the 16:9 series default (1080x1920)", async () => {
+    const plan = await planFinalRender(
       makeSpec({ format: { series: "16:9", episode: "9:16" } }),
       gatePort("APPROVED"),
     );
     expect(plan.resolution).toEqual({ width: 1080, height: 1920 });
   });
 
-  it("custom format requires a resolution — missing one is INVALID_SPEC", () => {
-    expect(() =>
-      planFinalRender(
+  it("custom format requires a resolution — missing one is INVALID_SPEC", async () => {
+    await expect(planFinalRender(
         makeSpec({ format: { series: "custom" } }),
         gatePort("APPROVED"),
-      ),
-    ).toThrowError(/custom/);
-    const plan = planFinalRender(
+      )).rejects.toThrowError(/custom/);
+    const plan = await planFinalRender(
       makeSpec({
         format: { series: "custom", custom: { width: 2048, height: 858 } },
       }),
@@ -227,7 +225,7 @@ describe("720p-source upscale metadata flag (spec §21 core rule)", () => {
     expect(native.qualityTier).toBe("native-1080p");
   });
 
-  it("episode tier for a mixed native-1080 + upscaled-720 composition is 'mixed-source'", () => {
+  it("episode tier for a mixed native-1080 + upscaled-720 composition is 'mixed-source'", async () => {
     const records = computeShotQuality(
       [SHOT_1080, SHOT_720],
       RESOLUTION_1080P,
@@ -236,12 +234,12 @@ describe("720p-source upscale metadata flag (spec §21 core rule)", () => {
     expect(episodeTier(records)).toBe("mixed-source");
   });
 
-  it("all-720p composition upscaled to 1080p is 'upscaled-720p' at episode level", () => {
+  it("all-720p composition upscaled to 1080p is 'upscaled-720p' at episode level", async () => {
     const records = computeShotQuality([SHOT_720, SHOT_720], RESOLUTION_1080P);
     expect(episodeTier(records)).toBe("upscaled-720p");
   });
 
-  it("below-720p upscale is 'upscaled-lower'", () => {
+  it("below-720p upscale is 'upscaled-lower'", async () => {
     expect(tierFor({ width: 640, height: 360 }, RESOLUTION_1080P)).toBe("upscaled-lower");
     const records = computeShotQuality(
       [{ ...SHOT_720, source: { width: 640, height: 360 } }],
@@ -250,7 +248,7 @@ describe("720p-source upscale metadata flag (spec §21 core rule)", () => {
     expect(episodeTier(records)).toBe("upscaled-lower");
   });
 
-  it("a ≥1080p source upscaled to a bigger master is 'upscaled-higher' — honest, never mislabeled", () => {
+  it("a ≥1080p source upscaled to a bigger master is 'upscaled-higher' — honest, never mislabeled", async () => {
     // 1080p native source enlarged to a 4K master: not native at output,
     // not a 720 upscale — its own honest tier.
     expect(tierFor(RESOLUTION_1080P, { width: 3840, height: 2160 })).toBe("upscaled-higher");
@@ -263,14 +261,14 @@ describe("720p-source upscale metadata flag (spec §21 core rule)", () => {
     expect(episodeTier(records)).toBe("upscaled-higher");
   });
 
-  it("classification helpers split the quality bands correctly", () => {
+  it("classification helpers split the quality bands correctly", async () => {
     expect(isNative1080(RESOLUTION_1080P)).toBe(true);
     expect(isNative1080(RESOLUTION_720P)).toBe(false);
     expect(is720Class(RESOLUTION_720P)).toBe(true);
     expect(is720Class(RESOLUTION_1080P)).toBe(false);
   });
 
-  it("native mode (scale=1) never upscales — each shot renders at its own source", () => {
+  it("native mode (scale=1) never upscales — each shot renders at its own source", async () => {
     const records = computeShotQuality([SHOT_720], RESOLUTION_1080P, "native");
     expect(records[0]!.upscaled).toBe(false);
     expect(records[0]!.renderedAt).toEqual(RESOLUTION_720P);
@@ -292,13 +290,13 @@ describe("720p-source upscale metadata flag (spec §21 core rule)", () => {
 });
 
 describe("final render pipeline — deterministic naming and archive plan (spec §17/§19)", () => {
-  it("final filename is deterministic S01E01_final_v01.mp4 (provenance in DB, not the name)", () => {
+  it("final filename is deterministic S01E01_final_v01.mp4 (provenance in DB, not the name)", async () => {
     expect(finalFileName("S01E01", 1)).toBe("S01E01_final_v01.mp4");
     expect(finalFileName("S01E12", 3)).toBe("S01E12_final_v03.mp4");
     expect(sidecarFileName("S01E01", 1)).toBe("S01E01_final_v01.mp4.metadata.json");
   });
 
-  it("folders follow the GHL layout: <Episode>/08 Final and <Episode>/09 QC Metadata", () => {
+  it("folders follow the GHL layout: <Episode>/08 Final and <Episode>/09 QC Metadata", async () => {
     expect(finalFolderSegments("S01E01", "Pilot")).toEqual([
       "S01E01 - Pilot",
       "08 Final",
@@ -306,12 +304,12 @@ describe("final render pipeline — deterministic naming and archive plan (spec 
     expect(sidecarFolderSegments("S01E01")).toEqual(["S01E01", "09 QC Metadata"]);
   });
 
-  it("composition id is deterministic and filesystem-safe", () => {
+  it("composition id is deterministic and filesystem-safe", async () => {
     expect(compositionIdFor(makeSpec())).toBe("final-s01e01");
     expect(compositionIdFor(makeSpec({ episodeCode: "S02E10" }))).toBe("final-s02e10");
   });
 
-  it("isSafeEpisodeCode rejects traversal and unsafe tokens, accepts spec codes", () => {
+  it("isSafeEpisodeCode rejects traversal and unsafe tokens, accepts spec codes", async () => {
     expect(isSafeEpisodeCode("S01E01")).toBe(true);
     expect(isSafeEpisodeCode("a.b-c_d")).toBe(true);
     expect(isSafeEpisodeCode("../../evil")).toBe(false);
@@ -326,15 +324,13 @@ describe("final render pipeline — deterministic naming and archive plan (spec 
     expect(isSafeEpisodeCode("a".repeat(65))).toBe(false);
   });
 
-  it("planFinalRender REFUSES a path-traversal episodeCode (INVALID_SPEC, nothing built)", () => {
+  it("planFinalRender REFUSES a path-traversal episodeCode (INVALID_SPEC, nothing built)", async () => {
     for (const evil of ["../../evil", "a/b", "a\\b", ".hidden", ".."]) {
-      expect(() =>
-        planFinalRender(makeSpec({ episodeCode: evil }), gatePort("APPROVED")),
-      ).toThrowError(/safe filename token/);
+      await expect(planFinalRender(makeSpec({ episodeCode: evil }), gatePort("APPROVED"))).rejects.toThrowError(/safe filename token/);
     }
   });
 
-  it("sanitizeTitleLeaf neutralizes hostile titles (no traversal, no control chars)", () => {
+  it("sanitizeTitleLeaf neutralizes hostile titles (no traversal, no control chars)", async () => {
     expect(sanitizeTitleLeaf("../../etc/passwd")).not.toContain("/");
     expect(sanitizeTitleLeaf("..\\..\\win")).not.toContain("\\");
     expect(finalFolderSegments("S01E01", "../../etc/passwd")[0]).toBe(
@@ -430,19 +426,20 @@ describe("pipeline steps — render → ffprobe → report → archive", () => {
     ).rejects.toMatchObject({ code: "RENDER_FAILED" });
   });
 
-  it("invalid specs throw INVALID_SPEC before any port runs", () => {
-    expect(() => planFinalRender(makeSpec({ episodeCode: "  " }), gatePort("APPROVED"))).toThrowError(
+  it("invalid specs throw INVALID_SPEC before any port runs", async () => {
+    await expect(planFinalRender(makeSpec({ episodeCode: "  " }), gatePort("APPROVED"))).rejects.toThrowError(
       /episodeCode/,
     );
-    expect(() => planFinalRender(makeSpec({ composition: { episodeId: "e", shots: [], fps: 30, durationSeconds: 1 } }), gatePort("APPROVED"))).toThrowError(
-      /no shots/,
-    );
-    expect(() =>
+    await expect(
       planFinalRender(
-        makeSpec({ composition: { episodeId: "e", shots: [SHOT_1080], fps: 0, durationSeconds: 1 } }),
+        makeSpec({ composition: { episodeId: "e", shots: [], fps: 30, durationSeconds: 1 } }),
         gatePort("APPROVED"),
       ),
-    ).toThrowError(/fps/);
+    ).rejects.toThrowError(/no shots/);
+    await expect(planFinalRender(
+        makeSpec({ composition: { episodeId: "e", shots: [SHOT_1080], fps: 0, durationSeconds: 1 } }),
+        gatePort("APPROVED"),
+      )).rejects.toThrowError(/fps/);
   });
 });
 
@@ -533,7 +530,7 @@ describe("fixture final render passes real ffprobe (VID-015 contract)", () => {
 });
 
 describe("mmcs final — CLI wiring (spec §24)", () => {
-  it("registers the exact spec §24 verb", () => {
+  it("registers the exact spec §24 verb", async () => {
     expect(FINAL_SPEC.name).toBe("final");
     expect(FINAL_SPEC.group).toBe("generation");
     expect(FINAL_SPEC.description.length).toBeGreaterThan(0);

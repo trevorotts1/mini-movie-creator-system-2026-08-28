@@ -52,7 +52,7 @@ export interface GateSnapshot {
  * state only — it never mutates approvals; approvals advance solely through
  * the CLI/API gate commands (spec §3: explicit operator sign-off).
  */
-export type ApprovalGatePort = (gate: GateId) => GateSnapshot;
+export type ApprovalGatePort = (gate: GateId) => GateSnapshot | Promise<GateSnapshot>;
 
 /** Master output formats (spec §23). Chosen once per series, per-episode override. */
 export type MasterFormat = "16:9" | "9:16" | "custom";

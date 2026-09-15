@@ -618,30 +618,16 @@ function roughCutPlanFactory(): (episodeId: string) => RoughCutPlan | undefined 
 
 function finalPorts(): FinalRenderPorts {
   const store = approvals();
-  // VID-014's ApprovalGatePort is a SYNC callback (gate) => GateSnapshot.
-  // The durable store is async; we block on the tiny read (same bridge as
-  // the gate-2 ports).
-  const approvalsPort = (gate: FinalGateId): FinalGateSnapshot => {
-    let settled: FinalGateSnapshot | null = null;
-    void store
-      .snapshot(gate as GateId)
-      .then((s) => {
-        settled = {
-          gate: s.gate,
-          state: s.state,
-          approvedAt: s.approvedAt ?? null,
-        };
-      })
-      .catch(() => {
-        settled = { gate, state: "PENDING", approvedAt: null };
-      });
-    const deadline = Date.now() + 5_000;
-    while (settled === null && Date.now() < deadline) {
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1);
-    }
-    return (
-      settled ?? { gate, state: "PENDING", approvedAt: null }
-    );
+  // Awaitable port (SKR-003). This used to be synchronous and bridged from the async store
+  // with the same Atomics.wait spin the gate-2 ports used — which blocks the event loop, so
+  // the microtask that assigns the value could never run. Worse, the `.catch` returned
+  // `{ state: "PENDING" }`, making a TIMEOUT indistinguishable from a genuine "not
+  // approved": `mmcs final` reported the rough-cut gate PENDING while `mmcs status` reported
+  // the same gate APPROVED at the same moment. It now awaits, and a read failure is
+  // distinguishable rather than silently reported as a gate state.
+  const approvalsPort = async (gate: FinalGateId): Promise<FinalGateSnapshot> => {
+    const s = await store.snapshot(gate as GateId);
+    return { gate: s.gate, state: s.state, approvedAt: s.approvedAt ?? null };
   };
   return {
     approvals: approvalsPort,

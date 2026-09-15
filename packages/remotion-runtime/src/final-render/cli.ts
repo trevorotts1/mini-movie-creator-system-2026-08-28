@@ -117,7 +117,7 @@ export async function executeFinal(
   try {
     if (opts.dryRun) {
       const { planFinalRender } = await import("./pipeline.js");
-      const plan = planFinalRender(spec, ports.approvals);
+      const plan = await planFinalRender(spec, ports.approvals);
       return {
         exitCode: plan.renderable ? 0 : 1,
         lines: [
