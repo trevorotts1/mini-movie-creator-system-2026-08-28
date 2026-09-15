@@ -75,11 +75,22 @@ export function buildRegistry(): CommandSpec[] {
       name: "create-series",
       description: "Create a new series with persistent defaults",
       group: "pipeline",
+      options: [
+        { flag: "name", value: "title", description: "Series title (required)" },
+        { flag: "aspect-ratio", value: "ratio", description: 'Default "16:9"' },
+      ],
     },
     {
       name: "create-episode",
       description: "Create a new episode in a series",
       group: "pipeline",
+      options: [
+        { flag: "series", value: "id-or-name", description: "Series to create the episode in (required)" },
+        { flag: "title", value: "title", description: "Episode title (required)" },
+        { flag: "season", value: "n", description: "Season number (default 1)" },
+        { flag: "number", value: "n", description: "Episode number (default 1)" },
+        { flag: "runtime", value: "seconds", description: "Target runtime in seconds" },
+      ],
     },
     // --- approval gates (spec §3) ---
     {

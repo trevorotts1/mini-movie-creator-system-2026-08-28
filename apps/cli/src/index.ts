@@ -108,6 +108,7 @@ import {
   SqliteEpisodeRepository,
   SqliteSeriesRepository,
   SqliteProjectRepository,
+  formatEpisodeCode,
   ProviderJobRepository,
 } from "@mmcs/database";
 // The backup operations live in their own subpath — @mmcs/database's main index
@@ -1040,35 +1041,108 @@ function registerDirectHandlers(map: Record<string, Handler>): void {
     process.stdout.write(lines.join("\n") + "\n");
   }) as Handler;
 
-  map["create-series"] = (async () => {
-    failClosed(
-      "create-series",
-      "no series was created — series creation is not implemented in this CLI",
-      [
-        "Usage: mmcs create-series",
-        "",
-        "Creates the series with persistent defaults (spec §24): title, output",
-        "format, runtime range, style, models, routing, storage root, spend",
-        "threshold. The durable stores are wired; creation is driven from the skill",
-        "interview, which calls the same repositories (SqliteProjectRepository →",
-        "SqliteSeriesRepository).",
-      ],
-    );
-  }) as Handler;
+  map["create-series"] = (async (_args: Record<string, string>, options: Record<string, unknown>) => {
+    // SKR-003: this was a fail-closed stub, which is why no episode could ever exist to
+    // render — `mmcs final` had a real render port but nothing to point it at. Series and
+    // episode creation are repository writes: no provider is contacted and nothing is
+    // spent.
+    const raw = options;
+    const name = typeof raw.name === "string" ? raw.name.trim() : "";
+    if (!name) {
+      failClosed("create-series", "no series was created — --name is required", [
+        "Usage: mmcs create-series --name \"<series title>\" [--aspect-ratio 16:9]",
+      ]);
+      return;
+    }
+    const aspectRatio =
+      typeof raw.aspectRatio === "string" && raw.aspectRatio.trim()
+        ? raw.aspectRatio.trim()
+        : "16:9";
 
-  map["create-episode"] = (async () => {
-    failClosed(
-      "create-episode",
-      "no episode was created — episode creation is not implemented in this CLI",
+    let projectId: string;
+    let seriesId: string;
+    try {
+      const database = db();
+      const projects = new SqliteProjectRepository(database);
+      // Reuse a project of the same name rather than piling up duplicates on re-run.
+      const existing = projects.list().find((p) => p.name === name);
+      projectId = existing?.id ?? projects.create({ name, kind: "series", aspectRatio }).id;
+      const series = new SqliteSeriesRepository(database).create({ projectId, name, aspectRatio });
+      seriesId = series.id;
+    } catch (err) {
+      failClosed("create-series", `no series was created — ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+
+    process.stdout.write(
       [
-        "Usage: mmcs create-episode",
-        "",
-        "Creates one episode inside a series (season/number/title, spec §24) from",
-        "the skill interview; the durable episode store is wired here and every",
-        "other verb reads it.",
-      ],
+        `[mmcs] create-series — created "${name}"`,
+        `  project: ${projectId}`,
+        `  series:  ${seriesId}`,
+        `  aspect:  ${aspectRatio}`,
+        `  next:    mmcs create-episode --series ${seriesId} --title "<episode title>"`,
+      ].join("\n") + "\n",
     );
-  }) as Handler;
+  }) as unknown as Handler;
+
+  map["create-episode"] = (async (_args: Record<string, string>, options: Record<string, unknown>) => {
+    const raw = options;
+    const title = typeof raw.title === "string" ? raw.title.trim() : "";
+    const seriesRef = typeof raw.series === "string" ? raw.series.trim() : "";
+    if (!title || !seriesRef) {
+      failClosed("create-episode", "no episode was created — --title and --series are required", [
+        'Usage: mmcs create-episode --series "<series id or name>" --title "<episode title>" [--season 1] [--number 1] [--runtime 60]',
+      ]);
+      return;
+    }
+    const seasonNumber = Number(raw.season ?? 1);
+    const episodeNumber = Number(raw.number ?? 1);
+    const runtimeRaw = raw.runtime;
+    const targetRuntimeSeconds =
+      runtimeRaw === undefined || runtimeRaw === "" ? null : Number(runtimeRaw);
+    if (!Number.isInteger(seasonNumber) || !Number.isInteger(episodeNumber) || seasonNumber < 1 || episodeNumber < 1) {
+      failClosed("create-episode", "no episode was created — --season and --number must be positive integers");
+      return;
+    }
+    if (targetRuntimeSeconds !== null && (!Number.isFinite(targetRuntimeSeconds) || targetRuntimeSeconds <= 0)) {
+      failClosed("create-episode", "no episode was created — --runtime must be a positive number of seconds");
+      return;
+    }
+
+    let episodeCode: string;
+    let episodeId: string;
+    try {
+      const database = db();
+      const series = new SqliteSeriesRepository(database).list().find((s) => s.id === seriesRef || s.name === seriesRef);
+      if (series === undefined) {
+        failClosed("create-episode", `no episode was created — no series matches "${seriesRef}"`, [
+          "Run `mmcs status` to list series, or `mmcs create-series --name \"<title>\"` first.",
+        ]);
+        return;
+      }
+      const created = new SqliteEpisodeRepository(database).create({
+        projectId: series.projectId,
+        seriesId: series.id,
+        seasonNumber,
+        episodeNumber,
+        title,
+        targetRuntimeSeconds,
+      });
+      episodeId = created.id;
+      episodeCode = formatEpisodeCode(seasonNumber, episodeNumber);
+    } catch (err) {
+      failClosed("create-episode", `no episode was created — ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    }
+
+    process.stdout.write(
+      [
+        `[mmcs] create-episode — created "${title}" (${episodeCode})`,
+        `  episode: ${episodeId}`,
+        `  next:    add scenes and shots, then \`mmcs final ${episodeCode}\``,
+      ].join("\n") + "\n",
+    );
+  }) as unknown as Handler;
 }
 
 function handlerOverrides(): Record<string, Handler> {
