@@ -324,6 +324,18 @@ else
   area_fail "worktree-hygiene" "unclassified state in a task worktree — run 'node scripts/release/worktree-hygiene.mjs' for the file list"
 fi
 
+# 9. repo-residue -----------------------------------------------------------
+# SKR-042: 189 unreachable commits, a populated .git/lost-found/ and 29 committed
+# state/backup-* snapshots had accumulated with nothing surfacing them. Threshold check on
+# unreachable commits (ordinary work leaves a few) plus hard checks on the other two.
+step_header 9 "repo-residue: unreachable commits within budget, no lost-found, no tracked backups"
+if (cd "$REPO_ROOT" && node scripts/release/repo-residue.mjs >"$LOG" 2>&1); then
+  RESIDUE_NOTE="$(grep -E '^repo-residue: [0-9]+ unreachable' "$LOG" | head -1)"
+  area_pass "repo-residue" "${RESIDUE_NOTE#repo-residue: }"
+else
+  area_fail "repo-residue" "repository residue over budget — run 'node scripts/release/repo-residue.mjs' for the failing checks and their fixes"
+fi
+
 # ---------------------------------------------------------------------------
 echo
 if [ "$FAILED_AREAS" -gt 0 ]; then

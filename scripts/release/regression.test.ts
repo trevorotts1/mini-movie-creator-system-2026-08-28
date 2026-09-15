@@ -131,6 +131,11 @@ function withSandbox(
     path.resolve(__dirname, "worktree-hygiene.mjs"),
     path.join(root, "scripts/release/worktree-hygiene.mjs"),
   );
+  // Gate area 9 runs the repo residue guard; the sandbox repo is fresh, so it passes.
+  copyFileSync(
+    path.resolve(__dirname, "repo-residue.mjs"),
+    path.join(root, "scripts/release/repo-residue.mjs"),
+  );
   const defaultBranch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
     cwd: root,
     encoding: "utf8",
@@ -282,6 +287,7 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
         "render-smoke",
         "task-ledger",
         "worktree-hygiene",
+        "repo-residue",
       ]);
       for (const [name, result] of Object.entries(parsed.areas)) {
         expect(result, `area ${name}`).toBe("PASS");
