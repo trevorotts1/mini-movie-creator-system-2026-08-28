@@ -95,6 +95,8 @@ import type {
   FormatSpec,
 } from "@mmcs/remotion-runtime/final-render/contract.js";
 import type { FinalRenderPorts } from "@mmcs/remotion-runtime/final-render/pipeline.js";
+import { makePipelineRenderPort } from "@mmcs/remotion-runtime/final-render/pipeline-adapter.js";
+import { ffprobeValidate } from "@mmcs/remotion-runtime/final-render/ffprobe-fixture.js";
 
 import { ApprovalStore, type GateId, type GateSnapshot } from "@mmcs/core";
 import {
@@ -123,6 +125,18 @@ import { CostLedger, createCostEngineSchema } from "@mmcs/cost-engine";
 /** Engine state root: MMCS_STATE_DIR, else repo-root `state/` (backup docs use the same default). */
 const STATE_DIR = process.env.MMCS_STATE_DIR ?? resolve(process.cwd(), "state");
 const DB_PATH = process.env.MMCS_DB ?? join(STATE_DIR, "mmcs.db");
+
+/**
+ * Repo root for render inputs. MMCS_REPO_ROOT is written by the installer
+ * (~/.mmcs/mmcs.env); without it the CWD is the best available guess, and a
+ * wrong guess fails loudly at the named REMOTION_ENTRY_POINT_MISSING /
+ * bundle step rather than silently rendering a fixture.
+ */
+const REPO_ROOT = process.env.MMCS_REPO_ROOT ?? process.cwd();
+/** The production Remotion bundle entry (registers shot AND episodic comps). */
+const REMOTION_ENTRY = join(REPO_ROOT, "remotion", "src", "index.ts");
+/** `staticFile()` public root (upstream `media/`). */
+const MEDIA_DIR = join(REPO_ROOT, "media");
 const APPROVALS_DIR = join(STATE_DIR, "approvals");
 const HUMAN_REVIEW_DIR = join(STATE_DIR, "human-review");
 
@@ -658,14 +672,16 @@ function finalPorts(): FinalRenderPorts {
   };
   return {
     approvals: approvalsPort,
-    render: async () => {
-      throw new Error(
-        "final: no render adapter configured in this CLI — run renders through the skill (Remotion integration)",
-      );
-    },
-    validate: async () => {
-      throw new Error("final: no media validator configured in this CLI");
-    },
+    // Real render + validate ports. The chain below was previously a hard
+    // refusal, which is why `mmcs final` could never produce a file: the
+    // adapter had never been proven, no bridge existed from the pipeline's
+    // request shape, and the production bundle entry did not even register the
+    // episodic compositions. All three are fixed; this connects them.
+    render: makePipelineRenderPort({
+      entryPoint: REMOTION_ENTRY,
+      publicDir: MEDIA_DIR,
+    }),
+    validate: ffprobeValidate,
   };
 }
 

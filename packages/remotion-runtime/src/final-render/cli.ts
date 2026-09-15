@@ -34,6 +34,16 @@ export interface CommandSpec {
 export const FINAL_SPEC: CommandSpec = {
   name: "final",
   description: "Render the final episode into 08 Final (gate 5, spec §3.5/§21)",
+  // Both of these are exactly what USAGE_FINAL documents and what
+  // parseFinalArgs accepts. Neither was declared, so commander rejected the
+  // episode id as a surplus argument ("Expected 0 arguments but got 1") before
+  // any handler ran — the verb was uncallable in its documented form.
+  args: ["<episodeId>"],
+  options: [
+    { flag: "dry-run", description: "Plan the render without rendering" },
+    { flag: "native", description: "Render at native master resolution" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: "generation",
 };
 

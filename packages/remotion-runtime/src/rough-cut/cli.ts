@@ -35,6 +35,12 @@ export interface CommandSpec {
 export const ROUGH_CUT_SPEC: CommandSpec = {
   name: "rough-cut",
   description: "Assemble the episode rough-cut preview MP4 (spec §21/§32)",
+  // Matches USAGE_ROUGH_CUT and parseRoughCutArgs; see the note on FINAL_SPEC.
+  args: ["<episodeId>"],
+  options: [
+    { flag: "dry-run", description: "Assemble the plan without rendering" },
+    { flag: "json", description: "Emit machine-readable JSON" },
+  ],
   group: "generation",
 };
 
