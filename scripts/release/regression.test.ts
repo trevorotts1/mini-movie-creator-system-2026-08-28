@@ -136,6 +136,11 @@ function withSandbox(
     path.resolve(__dirname, "repo-residue.mjs"),
     path.join(root, "scripts/release/repo-residue.mjs"),
   );
+  // Gate area 11 runs the package entry guard; the sandbox has no packages/, so it passes.
+  copyFileSync(
+    path.resolve(__dirname, "package-entry-check.mjs"),
+    path.join(root, "scripts/release/package-entry-check.mjs"),
+  );
   const defaultBranch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
     cwd: root,
     encoding: "utf8",
@@ -289,6 +294,7 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
         "worktree-hygiene",
         "repo-residue",
         "linux-render",
+        "package-entry",
       ]);
       for (const [name, result] of Object.entries(parsed.areas)) {
         expect(result, `area ${name}`).toBe("PASS");

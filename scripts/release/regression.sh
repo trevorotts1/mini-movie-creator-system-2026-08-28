@@ -355,6 +355,18 @@ else
   area_pass "linux-render" "SKIPPED — image mmcs-render-linux:latest not built in this docker daemon; build it with 'docker build -f docker/Dockerfile.render -t mmcs-render-linux .'"
 fi
 
+# 11. package-entry ---------------------------------------------------------
+# SKR-012/SKR-043 class: a package whose src/index.ts exports ONLY a scaffold marker while
+# substantial source sits behind it. A root import then resolves to a module exporting one
+# string — a silent no-op TypeScript does not flag.
+step_header 11 "package-entry: no package exports only a scaffold marker"
+if (cd "$REPO_ROOT" && node scripts/release/package-entry-check.mjs >"$LOG" 2>&1); then
+  PE_NOTE="$(grep -E '^package-entry: every package' "$LOG" | head -1)"
+  area_pass "package-entry" "${PE_NOTE#package-entry: }"
+else
+  area_fail "package-entry" "a package exports ONLY a scaffold marker — run 'node scripts/release/package-entry-check.mjs' for which one"
+fi
+
 # ---------------------------------------------------------------------------
 echo
 if [ "$FAILED_AREAS" -gt 0 ]; then
