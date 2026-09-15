@@ -1,7 +1,7 @@
 {
   "taskId": "VID-001",
   "phase": "PASS",
-  "commit": "e41ccc65b27925e34aeede337e770c5cbe88dd85",
+  "commit": "f65ddd3329ff1fdbec8af698a9e1e1d8350fcfce",
   "checksRun": "node --test remotion/tests/chess-assets.test.mjs; cd remotion && npm run gen && npx tsc --noEmit && npm audit && node scripts/frames.mjs Short1Chess 30,300,600 --scale=0.5 && npx remotion render src/index.ts Short1Chess out/Short1Chess-smoke.mp4 --scale=1 --frames=0-5",
   "defectsFound": 0,
   "defectsFixed": 0,
@@ -9,5 +9,7 @@
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T18:30:00Z",
   "notes": "QC verified: PF-1 chess SVG kit intact & renders, PF-2 audit clean (0 vulns), registry gen + tsc clean, remotion render smoke PASS",
-  "blockers": []
+  "blockers": [],
+  "preRebaseCommit": "e41ccc65b27925e34aeede337e770c5cbe88dd85",
+  "commitNote": "Repointed to the commit that landed this task in main. The branch sha this verdict was originally rendered against was rebased away during promotion and is preserved in preRebaseCommit."
 }

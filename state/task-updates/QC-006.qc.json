@@ -1,7 +1,7 @@
 {
   "taskId": "QC-006",
   "phase": "PASS",
-  "commit": "aac9e974f8bad53bcb3cefb7a7c0578b43ce1c32",
+  "commit": "0eefdc17e4250578f6a23a94f84152253ec7c8b0",
   "checksRun": "npx vitest run --config packages/qc/src/retry/vitest.config.mts; npx tsc --noEmit -p packages/qc/tsconfig.json",
   "defectsFound": 2,
   "defectsFixed": 2,
@@ -9,5 +9,7 @@
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T18:30:00Z",
   "notes": "Retry policy QC PASS: targeted single-shot repair verified, spend gate enforcement confirmed, bounded retries with escalation ladder, typecheck and 25 unit tests green",
-  "blockers": []
+  "blockers": [],
+  "preRebaseCommit": "aac9e974f8bad53bcb3cefb7a7c0578b43ce1c32",
+  "commitNote": "Repointed to the commit that landed this task in main. The branch sha this verdict was originally rendered against was rebased away during promotion and is preserved in preRebaseCommit."
 }

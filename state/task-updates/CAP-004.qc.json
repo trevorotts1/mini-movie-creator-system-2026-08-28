@@ -1,7 +1,7 @@
 {
   "taskId": "CAP-004",
   "phase": "PASS",
-  "commit": "e907a5f5f71cd31b6e90a3af332b7dbb33515a4e",
+  "commit": "2fc34f14cee91f2880e13fe86ab3344544ef7c75",
   "rebasedOnto": "6ca3b08fc7e70cb0bba7746849a934e85d812db8",
   "rebaseCommit": "06bc36a131e175566cd63e4150d58f38368942d1",
   "checksRun": "VITE_CONFIG_NATIVE_IGNORE_WARNING=true npx vitest run packages/capability-registry/src/validators (19/19 passed); npx tsc --noEmit -p packages/capability-registry (clean); security pass clean",
@@ -11,5 +11,7 @@
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T14:40:00Z",
   "notes": "Pre-flight reference-count validator verified: Wan 3.0 baseline (>10 images rejects before provider call), per-kind images/videos/audio and maxFiles total limits enforced, UNKNOWN (null) limits unconstrained per runbook §16, zero references allowed, malformed counts flagged; tsc clean; vitest 19/19 green.",
-  "blockers": []
+  "blockers": [],
+  "preRebaseCommit": "e907a5f5f71cd31b6e90a3af332b7dbb33515a4e",
+  "commitNote": "Repointed to the commit that landed this task in main. The branch sha this verdict was originally rendered against was rebased away during promotion and is preserved in preRebaseCommit."
 }

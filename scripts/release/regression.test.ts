@@ -124,6 +124,13 @@ function withSandbox(
     path.resolve(__dirname, "task-ledger-verify.mjs"),
     path.join(root, "scripts/release/task-ledger-verify.mjs"),
   );
+  // Gate area 8 runs the worktree hygiene guard. The sandbox has no linked worktrees, so
+  // the guard's real (clean) path is exercised here; its failing paths are covered by
+  // scripts/release/worktree-hygiene.test.ts.
+  copyFileSync(
+    path.resolve(__dirname, "worktree-hygiene.mjs"),
+    path.join(root, "scripts/release/worktree-hygiene.mjs"),
+  );
   const defaultBranch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
     cwd: root,
     encoding: "utf8",
@@ -274,6 +281,7 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
         "lint",
         "render-smoke",
         "task-ledger",
+        "worktree-hygiene",
       ]);
       for (const [name, result] of Object.entries(parsed.areas)) {
         expect(result, `area ${name}`).toBe("PASS");

@@ -43,7 +43,14 @@ const WRITE = argv.has('--write');
 const JSON_OUT = argv.has('--json');
 
 const git = (args) =>
-  execFileSync('git', args, { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 28 }).trimEnd();
+  execFileSync('git', args, {
+    cwd: REPO,
+    encoding: 'utf8',
+    maxBuffer: 1 << 28,
+    // Probes below deliberately ask about refs that may not exist; git's "fatal:" chatter
+    // on stderr is the expected failure signal, not a diagnostic worth leaking.
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trimEnd();
 
 // ---------------------------------------------------------------------------
 // owned-path resolution
@@ -249,6 +256,120 @@ export function verifyLedger(ledger) {
 }
 
 // ---------------------------------------------------------------------------
+// QC evidence store — state/task-updates/<ID>.qc.json
+// ---------------------------------------------------------------------------
+//
+// Each QC record cites the commit its verdict was rendered against. Those shas were
+// written on task branches, and task branches were rebased before promotion, so a
+// citation can name a commit that no longer exists in main's history — evidence that
+// cannot be checked against the tree it is supposed to certify. This pass reports and
+// (in --write) repoints them at the in-main commit that actually landed the task,
+// preserving the original in `preRebaseCommit` rather than erasing it.
+
+const QC_DIR = path.join(REPO, 'state', 'task-updates');
+
+/**
+ * The commit that landed `id` in main.
+ *
+ * Prefer the MERGE COMMIT that names the task — that is the commit which actually brought
+ * the work into main, and it is the same evidence the ledger pass derives. Falling back to
+ * "newest commit mentioning the id" is deliberately second choice: batch-control commits
+ * list many ids in passing, so a subject match alone can cite a commit that merely talks
+ * about the task instead of one that contains it.
+ */
+function inMainCommitFor(id, merges, log) {
+  const re = idMatcher(id);
+  const merge = merges.find((m) => re.test(m.subject));
+  if (merge) return merge;
+  return log.find((entry) => re.test(entry.subject)) ?? null;
+}
+
+export function verifyQcRecords() {
+  const merges = mergeIndex();
+  const log = git(['log', '--format=%H%x1f%s', 'HEAD'])
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [commit, subject] = line.split('\x1f');
+      return { commit, subject };
+    });
+
+  let files = [];
+  try {
+    files = fs.readdirSync(QC_DIR).filter((f) => f.endsWith('.qc.json'));
+  } catch {
+    return { total: 0, inMain: 0, failing: [], results: [] };
+  }
+
+  const results = [];
+  for (const file of files) {
+    const id = file.replace(/\.qc\.json$/, '');
+    let record;
+    try {
+      record = JSON.parse(fs.readFileSync(path.join(QC_DIR, file), 'utf8'));
+    } catch {
+      results.push({ id, file, sha: null, verdict: 'UNREADABLE', target: null });
+      continue;
+    }
+    const sha = record.commit ?? null;
+    if (!sha) continue;
+
+    let inMain = false;
+    try {
+      git(['merge-base', '--is-ancestor', sha, 'HEAD']);
+      inMain = true;
+    } catch {
+      inMain = false;
+    }
+    const target = inMain ? null : inMainCommitFor(id, merges, log);
+    results.push({
+      id,
+      file,
+      sha,
+      verdict: inMain ? 'IN-MAIN' : target ? 'DANGLING_REPOINTABLE' : 'DANGLING_UNMAPPABLE',
+      target,
+    });
+  }
+
+  // Anything that is not IN-MAIN is unsubstantiated: the record certifies a commit that
+  // does not exist in the tree being released. Repointable ones are fixed by --write, so
+  // the gate goes green only once the citations actually resolve.
+  const failing = results.filter((r) => r.verdict !== 'IN-MAIN');
+  return {
+    total: results.length,
+    inMain: results.filter((r) => r.verdict === 'IN-MAIN').length,
+    repointable: results.filter((r) => r.verdict === 'DANGLING_REPOINTABLE').length,
+    failing,
+    results,
+  };
+}
+
+/** Repoint dangling citations at the in-main commit, keeping the original as history. */
+function applyQcEvidence(qc) {
+  let changed = 0;
+  for (const r of qc.results) {
+    if (r.verdict !== 'DANGLING_REPOINTABLE' || !r.target) continue;
+    const abs = path.join(QC_DIR, r.file);
+    const raw = fs.readFileSync(abs, 'utf8');
+    let record;
+    try {
+      record = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    if (record.preRebaseCommit === undefined) record.preRebaseCommit = r.sha;
+    record.commit = r.target.commit;
+    record.commitNote =
+      'Repointed to the commit that landed this task in main. The branch sha this verdict ' +
+      'was originally rendered against was rebased away during promotion and is preserved ' +
+      'in preRebaseCommit.';
+    fs.writeFileSync(abs, JSON.stringify(record, null, detectIndent(raw)) + '\n');
+    changed += 1;
+  }
+  return changed;
+}
+
+// ---------------------------------------------------------------------------
 // ledger rewriting
 // ---------------------------------------------------------------------------
 
@@ -308,6 +429,12 @@ function main() {
     report = verifyLedger(next);
   }
 
+  let qc = verifyQcRecords();
+  if (WRITE) {
+    const repointed = applyQcEvidence(qc);
+    if (repointed) qc = verifyQcRecords();
+  }
+
   if (JSON_OUT) {
     process.stdout.write(JSON.stringify({
       checkedAt: report.checkedAt,
@@ -317,6 +444,12 @@ function main() {
       failing: report.failing.map((f) => ({
         id: f.id, verdict: f.verdict, absent: f.absent, ownedPaths: f.ownedPaths,
       })),
+      qc: {
+        total: qc.total,
+        inMain: qc.inMain,
+        repointable: qc.repointable,
+        failing: qc.failing.map((f) => ({ id: f.id, sha: f.sha, verdict: f.verdict })),
+      },
     }, null, 2) + '\n');
   } else {
     const pruned = report.results.filter((r) => r.branchState === 'absent').length;
@@ -324,6 +457,10 @@ function main() {
       `task-ledger: ${report.substantiated}/${report.total} MERGED task(s) substantiated by merge commit + present owned path`,
     );
     console.log(`task-ledger: ${pruned} declared branch(es) pruned after merge (recorded, not claimed live)`);
+    console.log(
+      `task-ledger: ${qc.inMain}/${qc.total} QC record(s) cite a commit that is in main` +
+        (qc.repointable ? `; ${qc.repointable} dangling (repointable with --write)` : ''),
+    );
     if (report.failing.length) {
       console.error(`task-ledger: ${report.failing.length} MERGED task(s) UNSUBSTANTIATED:`);
       for (const f of report.failing) {
@@ -332,9 +469,15 @@ function main() {
         if (!f.ownedPaths.length) console.error(`      no repo-relative owned path in: ${JSON.stringify(f.outOfRepo)}`);
       }
     }
+    if (qc.failing.length) {
+      console.error(`task-ledger: ${qc.failing.length} QC record(s) UNSUBSTANTIATED:`);
+      for (const f of qc.failing) {
+        console.error(`  - ${f.id} [${f.verdict}] commit=${f.sha ?? '(none)'}`);
+      }
+    }
   }
 
-  process.exit(report.failing.length ? 1 : 0);
+  process.exit(report.failing.length || qc.failing.length ? 1 : 0);
 }
 
 // Compare REAL paths, not lexical ones: on macOS os.tmpdir() hands back /var/... which is

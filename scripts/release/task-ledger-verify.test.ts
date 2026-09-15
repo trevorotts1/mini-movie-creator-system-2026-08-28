@@ -273,3 +273,82 @@ describe("task-ledger-verify — end to end", () => {
     expect(report.failing).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// QC evidence store
+// ---------------------------------------------------------------------------
+//
+// A QC record cites the commit its verdict was rendered against. Task branches were
+// rebased before promotion, so those citations can name commits that no longer exist in
+// main — evidence that cannot be checked against the tree it certifies.
+
+describe("task-ledger-verify — QC evidence citations", () => {
+  const writeQc = (s: { dir: string }, id: string, commit: string, extra: Record<string, unknown> = {}) => {
+    const dir = path.join(s.dir, "state", "task-updates");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, `${id}.qc.json`),
+      JSON.stringify({ taskId: id, phase: "PASS", commit, ...extra }, null, 2) + "\n",
+    );
+  };
+
+  it("accepts a citation that is in main", () => {
+    const s = sandbox();
+    writeQc(s, "REC-011", s.mergeSha);
+    const r = run(s, "--json");
+    expect(r.code).toBe(0);
+    expect(JSON.parse(r.stdout).qc).toMatchObject({ total: 1, inMain: 1, repointable: 0 });
+  });
+
+  it("FAILS on a citation that is not in main's history", () => {
+    const s = sandbox();
+    writeQc(s, "REC-011", "0123456789abcdef0123456789abcdef01234567");
+    const r = run(s);
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("QC record(s) UNSUBSTANTIATED");
+  });
+
+  it("--write repoints a dangling citation at the merge commit and keeps the original", () => {
+    const s = sandbox();
+    writeQc(s, "REC-011", "0123456789abcdef0123456789abcdef01234567");
+    expect(run(s, "--write").code).toBe(0);
+    const rec = JSON.parse(
+      fs.readFileSync(path.join(s.dir, "state", "task-updates", "REC-011.qc.json"), "utf8"),
+    );
+    expect(rec.commit).toBe(s.mergeSha);
+    expect(rec.preRebaseCommit).toBe("0123456789abcdef0123456789abcdef01234567");
+    expect(rec.commitNote).toMatch(/rebased/);
+  });
+
+  it("prefers the MERGE commit over a later commit that merely mentions the id", () => {
+    const s = sandbox();
+    // A batch-control commit that lists the id in passing, after the merge.
+    fs.writeFileSync(path.join(s.dir, "control.txt"), "batch-2 records: REC-011 merged\n");
+    git(s.dir, "add", "-A");
+    git(s.dir, "commit", "-qm", "control: batch-2 records (REC-011)");
+    writeQc(s, "REC-011", "0123456789abcdef0123456789abcdef01234567");
+    run(s, "--write");
+    const rec = JSON.parse(
+      fs.readFileSync(path.join(s.dir, "state", "task-updates", "REC-011.qc.json"), "utf8"),
+    );
+    // Must be the merge, not the newer control commit that only talks about it.
+    expect(rec.commit).toBe(s.mergeSha);
+    expect(rec.commit).not.toBe(git(s.dir, "rev-parse", "HEAD"));
+  });
+
+  it("is idempotent and preserves unrelated fields", () => {
+    const s = sandbox();
+    writeQc(s, "REC-011", "0123456789abcdef0123456789abcdef01234567", { notes: "keep me" });
+    run(s, "--write");
+    const p = path.join(s.dir, "state", "task-updates", "REC-011.qc.json");
+    const first = fs.readFileSync(p, "utf8");
+    run(s, "--write");
+    expect(fs.readFileSync(p, "utf8")).toBe(first);
+    expect(JSON.parse(first).notes).toBe("keep me");
+  });
+
+  it("does not fail when there is no QC store at all", () => {
+    const s = sandbox();
+    expect(run(s).code).toBe(0);
+  });
+});

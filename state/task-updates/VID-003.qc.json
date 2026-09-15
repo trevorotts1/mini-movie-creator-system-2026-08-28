@@ -1,7 +1,7 @@
 {
   "taskId": "VID-003",
   "phase": "PASS",
-  "commit": "a4ed4ea",
+  "commit": "9487589e477f32c23f71961210593395471675e3",
   "checksRun": "npx vitest run packages/remotion-runtime/src/timeline/timeline.test.ts --config apps/cli/vitest.config.ts; npx tsc --noEmit -p packages/remotion-runtime/tsconfig.json; npx tsc --noEmit -p tsconfig.base.json",
   "defectsFound": 0,
   "defectsFixed": 0,
@@ -9,5 +9,7 @@
   "qcAgent": "qc-batch",
   "queuedAt": "2026-08-28T18:30:00Z",
   "notes": "Shot timeline abstraction verified: upstream frames.mjs local_f formula exact, 16 unit tests green, typecheck clean, zero defects.",
-  "blockers": []
+  "blockers": [],
+  "preRebaseCommit": "a4ed4ea",
+  "commitNote": "Repointed to the commit that landed this task in main. The branch sha this verdict was originally rendered against was rebased away during promotion and is preserved in preRebaseCommit."
 }

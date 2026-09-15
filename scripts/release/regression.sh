@@ -312,6 +312,18 @@ else
   area_fail "task-ledger" "MERGED claim(s) unsubstantiated — run 'node scripts/release/task-ledger-verify.mjs' for the per-task verdicts"
 fi
 
+# 8. worktree-hygiene -------------------------------------------------------
+# SKR-041: files sat untracked/modified inside task worktrees with nothing surfacing
+# them, so pruning a finished worktree would have destroyed them silently. This area
+# fails when a project worktree carries state that is not explicitly classified.
+step_header 8 "worktree-hygiene: no unclassified state in any task worktree"
+if (cd "$REPO_ROOT" && node scripts/release/worktree-hygiene.mjs >"$LOG" 2>&1); then
+  HYGIENE_NOTE="$(grep -E '^worktree-hygiene: [0-9]+ linked' "$LOG" | head -1)"
+  area_pass "worktree-hygiene" "${HYGIENE_NOTE#worktree-hygiene: }, no unclassified state"
+else
+  area_fail "worktree-hygiene" "unclassified state in a task worktree — run 'node scripts/release/worktree-hygiene.mjs' for the file list"
+fi
+
 # ---------------------------------------------------------------------------
 echo
 if [ "$FAILED_AREAS" -gt 0 ]; then

@@ -1,7 +1,7 @@
 {
   "taskId": "CHAR-001",
   "phase": "PASS",
-  "commit": "54db532",
+  "commit": "4e329d0dc6837eb3eb1d635d6c1712c90eb23494",
   "checksRun": "npx --package=vitest@3.0.0 vitest run packages/character-library/src/ids -> 27 passed (27); npx tsc --noEmit -p packages/character-library -> clean; git diff origin/integration...HEAD verified",
   "defectsFound": 0,
   "defectsFixed": 0,
@@ -9,5 +9,7 @@
   "qcAgent": "sonnet-qc-fixer",
   "queuedAt": "2026-08-28T13:55:00Z",
   "notes": "Verified CHAR_<NAME>_<NNN> generator + validator: pure slug-keyed allocator, strict parsing, full 1000-id collision test, clean typecheck, zero defects.",
-  "blockers": []
+  "blockers": [],
+  "preRebaseCommit": "54db532",
+  "commitNote": "Repointed to the commit that landed this task in main. The branch sha this verdict was originally rendered against was rebased away during promotion and is preserved in preRebaseCommit."
 }
