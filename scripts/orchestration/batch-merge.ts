@@ -587,6 +587,9 @@ export interface TaskRecord {
   branch?: string;
   status?: string;
   dependsOn?: string[];
+  /** Commit that landed this task; recorded so "MERGED" is derivable, not asserted. */
+  mergedSha?: string;
+  mergedAt?: string;
 }
 
 export async function readTasksJson(filePath: string): Promise<Map<string, TaskRecord>> {
@@ -1242,12 +1245,22 @@ export class BatchMergeEngine {
     if (tasksRaw) {
       try {
         const doc = JSON.parse(tasksRaw) as { items?: Array<TaskRecord> };
+        const mergedAt = this.now().toISOString();
         for (const t of Array.isArray(doc.items) ? doc.items : []) {
           if (typeof t?.id === "string" && shaByTask.has(t.id)) {
             t.status = "MERGED";
+            // Persist the evidence the merge already produced. Dropping the sha here is
+            // what left 92 of 149 tasks reading a bare "MERGED" that nothing could
+            // substantiate; scripts/release/task-ledger-verify.mjs now fails the release
+            // gate on a MERGED claim with no supporting merge commit.
+            const sha = shaByTask.get(t.id);
+            if (sha) t.mergedSha = sha;
+            t.mergedAt = mergedAt;
           }
         }
-        await atomicWriteFile(tasksPath, `${JSON.stringify(doc, null, 2)}\n`);
+        // Preserve the ledger's existing indentation rather than reformatting the file.
+        const indent = tasksRaw.match(/\n(\s+)"/)?.[1] ?? " ";
+        await atomicWriteFile(tasksPath, `${JSON.stringify(doc, null, indent)}\n`);
       } catch {
         report.notes.push("tasks.json update skipped (unreadable)");
       }

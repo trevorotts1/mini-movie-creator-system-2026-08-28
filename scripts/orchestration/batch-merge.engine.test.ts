@@ -177,13 +177,18 @@ describe("BatchMergeEngine on fixture git repos", () => {
       items: [{ taskId: "A", branch: "task/A-alpha" }, { taskId: "B", branch: "task/B-beta" }],
       updated_at: "2026-08-28T00:00:00Z",
     });
-    writeJson(repo, "state/tasks.json", {
-      schema_version: 1,
-      items: [
-        { id: "A", branch: "task/A-alpha", status: "PASS" },
-        { id: "B", branch: "task/B-beta", status: "PASS" },
-      ],
-    });
+    // Written with the real ledger's 1-space indentation (writeJson would use 2), so the
+    // "indentation survives the write" assertion below is meaningful.
+    fs.writeFileSync(
+      path.join(repo, "state/tasks.json"),
+      `${JSON.stringify({
+        schema_version: 1,
+        items: [
+          { id: "A", branch: "task/A-alpha", status: "PASS" },
+          { id: "B", branch: "task/B-beta", status: "PASS" },
+        ],
+      }, null, 1)}\n`,
+    );
     writeQc(repo, "A", passQc("A", a));
     writeQc(repo, "B", passQc("B", b));
 
@@ -215,6 +220,22 @@ describe("BatchMergeEngine on fixture git repos", () => {
     const tasksAfter = JSON.parse(fs.readFileSync(path.join(repo, "state/tasks.json"), "utf8"));
     expect(tasksAfter.items.find((t: { id: string }) => t.id === "A").status).toBe("MERGED");
     expect(tasksAfter.items.find((t: { id: string }) => t.id === "B").status).toBe("MERGED");
+
+    // SKR-036: the merge evidence the engine already holds is persisted, so "MERGED" is
+    // derivable. Before this, the sha computed at merge time was dropped on the floor and
+    // the ledger recorded a bare status nothing could substantiate.
+    for (const taskId of ["A", "B"]) {
+      const rec = tasksAfter.items.find((t: { id: string }) => t.id === taskId);
+      const outcome = report.merged.find((m) => m.taskId === taskId);
+      expect(rec.mergedSha).toBe(outcome?.mergeSha);
+      expect(rec.mergedSha).toMatch(/^[0-9a-f]{40}$/);
+      expect(Number.isNaN(Date.parse(rec.mergedAt))).toBe(false);
+      // the recorded sha must be the real integration merge commit
+      expect(sh(repo, "rev-parse", `${rec.mergedSha}^{commit}`)).toBe(rec.mergedSha);
+    }
+
+    // the ledger's own indentation survives the write
+    expect(fs.readFileSync(path.join(repo, "state/tasks.json"), "utf8")).toMatch(/\n "schema_version"/);
 
     // merge commits are real two-parent merges on integration
     const shas = report.merged.map((m) => m.mergeSha as string);

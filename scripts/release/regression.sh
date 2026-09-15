@@ -299,6 +299,19 @@ else
   fi
 fi
 
+# 7. task-ledger ------------------------------------------------------------
+# SKR-036: `status: "MERGED"` must be a derivation from the commit graph, not an
+# assertion. This area fails the gate when any task claims MERGED and neither a merge
+# commit naming it nor a present owned path supports the claim, and when a recorded
+# mergedSha disagrees with the commit graph.
+step_header 7 "task-ledger: MERGED claims substantiated by merge commit + owned path"
+if (cd "$REPO_ROOT" && node scripts/release/task-ledger-verify.mjs >"$LOG" 2>&1); then
+  LEDGER_LINE="$(grep -E '^task-ledger: [0-9]+/' "$LOG" | head -1)"
+  area_pass "task-ledger" "${LEDGER_LINE#task-ledger: }"
+else
+  area_fail "task-ledger" "MERGED claim(s) unsubstantiated — run 'node scripts/release/task-ledger-verify.mjs' for the per-task verdicts"
+fi
+
 # ---------------------------------------------------------------------------
 echo
 if [ "$FAILED_AREAS" -gt 0 ]; then

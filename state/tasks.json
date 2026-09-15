@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated_at": "2026-08-29T12:20:00Z",
+ "updated_at": "2026-09-15T10:33:30Z",
  "items": [
   {
    "id": "CORE-001",
@@ -8,10 +8,19 @@
    "workflow": "WF01",
    "dependsOn": [],
    "owns": "docs/upstream-audit/, BASELINE-REPORT.md (append audit section)",
+   "ownsNow": "docs/upstream-audit/, docs/BASELINE-REPORT.md",
    "branch": "task/CORE-001-upstream-audit",
    "worktree": "worktrees/CORE-001/",
-   "acceptance": "docs/upstream-audit/preservation-map.md exists and lists every upstream package/script/tool with keep|rewrite|drop + reason; PF-1 and PF-2 carried forward; decisions reconciled against spec \u00a72 facts; verified by `test -s docs/upstream-audit/preservation-map.md && grep -q \"PF-1\" docs/upstream-audit/preservation-map.md`.",
-   "status": "MERGED"
+   "acceptance": "docs/upstream-audit/preservation-map.md exists and lists every upstream package/script/tool with keep|rewrite|drop + reason; PF-1 and PF-2 carried forward; decisions reconciled against spec §2 facts; verified by `test -s docs/upstream-audit/preservation-map.md && grep -q \"PF-1\" docs/upstream-audit/preservation-map.md`.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "b1631a34d59d090f686a6371565b5b4ba548cfe8",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: CORE-001 Audit upstream packages/scripts + preservation map"
+   },
+   "mergedSha": "b1631a34d59d090f686a6371565b5b4ba548cfe8",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-002",
@@ -24,7 +33,15 @@
    "branch": "task/CORE-002-monorepo-layout",
    "worktree": "worktrees/CORE-002/",
    "acceptance": "all 11 packages + 3 apps + 2 integrations dirs exist with package.json; `npm install && npx tsc --noEmit -p tsconfig.base.json` passes; `node -e \"require('./package.json').workspaces\"` lists packages/*.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "2f25a8e3963929c88b613a15960ab851f814b4fd",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-002 Target monorepo/module layout"
+   },
+   "mergedSha": "2f25a8e3963929c88b613a15960ab851f814b4fd",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-003",
@@ -37,7 +54,15 @@
    "branch": "task/CORE-003-sqlite-migrations",
    "worktree": "worktrees/CORE-003/",
    "acceptance": "migration runner applies + rolls back idempotently; repository interfaces exported; `npx vitest run packages/database/src/migrations` green (includes open/close/transaction/migration-order tests on a temp file DB).",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "1f873915045e91ca26389a9371747adaa6af8b16",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-003 SQLite connection + migrations runner"
+   },
+   "mergedSha": "1f873915045e91ca26389a9371747adaa6af8b16",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-004",
@@ -47,10 +72,19 @@
     "CORE-003"
    ],
    "owns": "packages/database/src/migrations/001-projects/, packages/database/src/repositories/projects/, packages/database/src/repositories/series/, packages/database/src/repositories/episodes/",
+   "ownsNow": "packages/database/src/migrations/010-project-series-episode/, packages/database/src/repositories/projects/, packages/database/src/repositories/series/, packages/database/src/repositories/episodes/",
    "branch": "task/CORE-004-project-schema",
    "worktree": "worktrees/CORE-004/",
-   "acceptance": "migrations create projects/series/episodes tables incl. aspect-ratio + per-episode override fields (spec \u00a723); repositories CRUD-tested; `npx vitest run packages/database/src/repositories/projects` green.",
-   "status": "MERGED"
+   "acceptance": "migrations create projects/series/episodes tables incl. aspect-ratio + per-episode override fields (spec §23); repositories CRUD-tested; `npx vitest run packages/database/src/repositories/projects` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "e12c7bcd005002fe4156442a4b8e868e49cf0469",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: CORE-004 Project/series/episode schema"
+   },
+   "mergedSha": "e12c7bcd005002fe4156442a4b8e868e49cf0469",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "present"
   },
   {
    "id": "CORE-005",
@@ -60,10 +94,19 @@
     "CORE-003"
    ],
    "owns": "packages/database/src/migrations/002-characters/, packages/database/src/repositories/characters/, packages/database/src/repositories/locations/, packages/database/src/repositories/appearances/",
+   "ownsNow": "packages/database/src/migrations/020-characters/, packages/database/src/repositories/characters/, packages/database/src/repositories/locations/, packages/database/src/repositories/appearances/",
    "branch": "task/CORE-005-character-schema",
    "worktree": "worktrees/CORE-005/",
-   "acceptance": "tables for characters, identity versions (immutable history), appearance versions w/ effective-episode, locations/props; GHL file/folder ID + sha256 columns present (spec \u00a79); `npx vitest run packages/database/src/repositories/characters` green incl. version-history immutability test.",
-   "status": "MERGED"
+   "acceptance": "tables for characters, identity versions (immutable history), appearance versions w/ effective-episode, locations/props; GHL file/folder ID + sha256 columns present (spec §9); `npx vitest run packages/database/src/repositories/characters` green incl. version-history immutability test.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "aeff8cd548a433bd27b016c0d95a6a97b638d5e5",
+    "date": "2026-08-28T12:06:01-04:00",
+    "subject": "merge: CORE-005 Character/location/appearance schema"
+   },
+   "mergedSha": "aeff8cd548a433bd27b016c0d95a6a97b638d5e5",
+   "mergedAt": "2026-08-28T12:06:01-04:00",
+   "branchState": "present"
   },
   {
    "id": "CORE-006",
@@ -73,12 +116,19 @@
     "CORE-003"
    ],
    "owns": "packages/database/src/migrations/003-scenes/, packages/database/src/repositories/scenes/, packages/database/src/repositories/shots/, packages/database/src/repositories/references/",
+   "ownsNow": "packages/database/src/migrations/030-scenes-shots/, packages/database/src/repositories/scenes/, packages/database/src/repositories/shots/, packages/database/src/repositories/references/",
    "branch": "task/CORE-006-scene-shot-schema",
    "worktree": "worktrees/CORE-006/",
-   "acceptance": "shot table carries every field of spec \u00a712 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.",
+   "acceptance": "shot table carries every field of spec §12 Shot Specification Record (verified by a schema-introspection test listing all 28 required fields); `npx vitest run packages/database/src/repositories/shots` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "e7980aba27f42930039b5f52541592d201c7ab70"
+   "mergedSha": "e7980aba27f42930039b5f52541592d201c7ab70",
+   "merge": {
+    "commit": "e7980aba27f42930039b5f52541592d201c7ab70",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: CORE-006 Scene/shot/reference schema"
+   },
+   "branchState": "present"
   },
   {
    "id": "CORE-007",
@@ -90,8 +140,16 @@
    "owns": "packages/database/src/migrations/004-jobs-assets/, packages/database/src/repositories/jobs/, packages/database/src/repositories/assets/",
    "branch": "task/CORE-007-job-asset-schema",
    "worktree": "worktrees/CORE-007/",
-   "acceptance": "provider_jobs + assets tables carry every field of spec \u00a719 asset manifest (all 26 fields asserted by introspection test) and \u00a718 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.",
-   "status": "MERGED"
+   "acceptance": "provider_jobs + assets tables carry every field of spec §19 asset manifest (all 26 fields asserted by introspection test) and §18 job-safety fields; job state enum covers PLANNED..REJECTED; `npx vitest run packages/database/src/repositories/jobs` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "c6766d5332066d7bf7399df5e2edd44922f530a4",
+    "date": "2026-08-28T15:46:27-04:00",
+    "subject": "merge: CORE-007 Provider job/asset schema"
+   },
+   "mergedSha": "c6766d5332066d7bf7399df5e2edd44922f530a4",
+   "mergedAt": "2026-08-28T15:46:27-04:00",
+   "branchState": "present"
   },
   {
    "id": "CORE-008",
@@ -108,7 +166,13 @@
    "status": "MERGED",
    "mergedSha": "afe126e2af7dd3f8ca2f68aa0ccb8fbbb1e04358",
    "mergedAt": "2026-08-28T23:35:00Z",
-   "mergedBatch": "batch-10"
+   "mergedBatch": "batch-10",
+   "merge": {
+    "commit": "afe126e2af7dd3f8ca2f68aa0ccb8fbbb1e04358",
+    "date": "2026-08-28T16:28:47-04:00",
+    "subject": "merge: CORE-008 approval state machine + gates (QC PASS 2/2 defects fixed)"
+   },
+   "branchState": "present"
   },
   {
    "id": "CORE-009",
@@ -121,11 +185,17 @@
    "owns": "packages/cost-engine/",
    "branch": "task/CORE-009-cost-engine",
    "worktree": "worktrees/CORE-009/",
-   "acceptance": "$24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger \u2014 run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.",
+   "acceptance": "$24.99 cumulative projected proceeds automatically; request reaching $25.00 stops for approval; two concurrent reservations cannot bypass (atomic against one ledger — run 5 parallel reservations of $24.99, exactly 1 succeeds); included quota tracked separately; `npx vitest run packages/cost-engine` green.",
    "status": "MERGED",
    "mergedSha": "362a9857039326fe446c4ec2e43b587514715670",
    "mergedAt": "2026-08-28T23:35:00Z",
-   "mergedBatch": "batch-10"
+   "mergedBatch": "batch-10",
+   "merge": {
+    "commit": "362a9857039326fe446c4ec2e43b587514715670",
+    "date": "2026-08-28T16:28:48-04:00",
+    "subject": "merge: CORE-009 cost/quota reservations engine (QC PASS 2/2 defects fixed)"
+   },
+   "branchState": "present"
   },
   {
    "id": "CORE-010",
@@ -138,7 +208,15 @@
    "branch": "task/CORE-010-config-loader",
    "worktree": "worktrees/CORE-010/",
    "acceptance": "loads + zod-validates AGNES_API_KEY, KIE_API_KEY, FISH_API_KEY, GHL_ACCESS_TOKEN, GHL_LOCATION_ID, OPENROUTER_API_KEY, NINEROUTER_URL, NINEROUTER_KEY, AUTO_SPEND_LIMIT_USD (default 25.00); missing-var error names the variable; .env.example has names+descriptions only; `npx vitest run packages/core/src/config` green; `git check-ignore .env` exits 0.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "4f1655925701f50a422d14b5ed04643e1a4b1f9f",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-010 Config/env validation loader"
+   },
+   "mergedSha": "4f1655925701f50a422d14b5ed04643e1a4b1f9f",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-011",
@@ -151,8 +229,16 @@
    "owns": "apps/cli/",
    "branch": "task/CORE-011-cli-bootstrap",
    "worktree": "worktrees/CORE-011/",
-   "acceptance": "command registry + argument parsing for the full verb list in spec \u00a724 (doctor, status, create-series \u2026 recover) with stub handlers; `npx vitest run apps/cli` green; `node apps/cli/dist/index.js doctor` exits 0 (or documented stub output).",
-   "status": "MERGED"
+   "acceptance": "command registry + argument parsing for the full verb list in spec §24 (doctor, status, create-series … recover) with stub handlers; `npx vitest run apps/cli` green; `node apps/cli/dist/index.js doctor` exits 0 (or documented stub output).",
+   "status": "MERGED",
+   "merge": {
+    "commit": "b1cbb68bfcf7bc19161cc7ea900a7ecf2e3c98e5",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-011 mmcs CLI bootstrap"
+   },
+   "mergedSha": "b1cbb68bfcf7bc19161cc7ea900a7ecf2e3c98e5",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-012",
@@ -165,7 +251,15 @@
    "branch": "task/CORE-012-logging",
    "worktree": "worktrees/CORE-012/",
    "acceptance": "structured JSON logger with levels + task-id/agent fields; redaction hook that scrubs values matching token/key patterns (test proves a fake API key never reaches output); `npx vitest run packages/core/src/logging` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "27aa4d6138c5fdb984507c56453ac8b4cb63f26f",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-012 Structured logging"
+   },
+   "mergedSha": "27aa4d6138c5fdb984507c56453ac8b4cb63f26f",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-013",
@@ -178,7 +272,15 @@
    "branch": "task/CORE-013-idempotency",
    "worktree": "worktrees/CORE-013/",
    "acceptance": "atomic file write (temp+rename), request-hash idempotency keys, once-only execution guard; duplicate submit attempt returns original result; `npx vitest run packages/core/src/idempotency` green incl. crash-mid-write test.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "6b1203763ba7774d05c597c09c203686cd162e2a",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-013 Idempotency primitives"
+   },
+   "mergedSha": "6b1203763ba7774d05c597c09c203686cd162e2a",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-014",
@@ -190,8 +292,16 @@
    "owns": "packages/core/src/recovery/, state/ (schema + writers for checkpoint.json)",
    "branch": "task/CORE-014-checkpoint-service",
    "worktree": "worktrees/CORE-014/",
-   "acceptance": "checkpoint.json written atomically with runbook \u00a75 fields; kill -9 mid-write leaves previous valid checkpoint; reload reconstructs ready/blocked/mergeQueue ids; `npx vitest run packages/core/src/recovery` green.",
-   "status": "MERGED"
+   "acceptance": "checkpoint.json written atomically with runbook §5 fields; kill -9 mid-write leaves previous valid checkpoint; reload reconstructs ready/blocked/mergeQueue ids; `npx vitest run packages/core/src/recovery` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "847243a41cee220d156e3d6bcd0841fb4f0af5ef",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CORE-014 Recovery checkpoint service"
+   },
+   "mergedSha": "847243a41cee220d156e3d6bcd0841fb4f0af5ef",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CORE-015",
@@ -211,7 +321,13 @@
    "status": "MERGED",
    "mergedSha": "b2992b910b18b1785347d7077a19b05b032bcd50",
    "mergedAt": "2026-08-28T23:35:00Z",
-   "mergedBatch": "batch-10"
+   "mergedBatch": "batch-10",
+   "merge": {
+    "commit": "b2992b910b18b1785347d7077a19b05b032bcd50",
+    "date": "2026-08-28T16:28:49-04:00",
+    "subject": "merge: CORE-015 database backup/export (QC PASS 1/1 defects fixed)"
+   },
+   "branchState": "present"
   },
   {
    "id": "CHAR-001",
@@ -224,8 +340,16 @@
    "owns": "packages/character-library/src/ids/",
    "branch": "task/CHAR-001-character-ids",
    "worktree": "worktrees/CHAR-001/",
-   "acceptance": "`CHAR_<NAME>_<NNN>` stable business-ID generator + validator (spec \u00a79); never display-name-keyed; collision test proves 1000 generated IDs unique; `npx vitest run packages/character-library/src/ids` green.",
-   "status": "MERGED"
+   "acceptance": "`CHAR_<NAME>_<NNN>` stable business-ID generator + validator (spec §9); never display-name-keyed; collision test proves 1000 generated IDs unique; `npx vitest run packages/character-library/src/ids` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "4e329d0dc6837eb3eb1d635d6c1712c90eb23494",
+    "date": "2026-08-28T09:25:43-04:00",
+    "subject": "merge: CHAR-001 Global character stable IDs"
+   },
+   "mergedSha": "4e329d0dc6837eb3eb1d635d6c1712c90eb23494",
+   "mergedAt": "2026-08-28T09:25:43-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-002",
@@ -238,8 +362,16 @@
    "owns": "packages/character-library/src/identity-asset/",
    "branch": "task/CHAR-002-identity-asset",
    "worktree": "worktrees/CHAR-002/",
-   "acceptance": "asset record carries every field of spec \u00a79 canonical identity record (asset ID, character ID, identity version, ghlFileId, ghlFolderId, ghlUrl, sha256, local cache, dimensions, provider/model, source job ID, prompt, approval state, canonical flag); schema test asserts all fields; `npx vitest run packages/character-library/src/identity-asset` green.",
-   "status": "MERGED"
+   "acceptance": "asset record carries every field of spec §9 canonical identity record (asset ID, character ID, identity version, ghlFileId, ghlFolderId, ghlUrl, sha256, local cache, dimensions, provider/model, source job ID, prompt, approval state, canonical flag); schema test asserts all fields; `npx vitest run packages/character-library/src/identity-asset` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "df35fe0bf684886fbfed5870afc3f6ee3345a1a2",
+    "date": "2026-08-28T09:25:43-04:00",
+    "subject": "merge: CHAR-002 Canonical identity asset metadata"
+   },
+   "mergedSha": "df35fe0bf684886fbfed5870afc3f6ee3345a1a2",
+   "mergedAt": "2026-08-28T09:25:43-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-003",
@@ -253,7 +385,15 @@
    "branch": "task/CHAR-003-candidate-flow",
    "worktree": "worktrees/CHAR-003/",
    "acceptance": "new character request produces exactly 3 candidates as DRAFT/REVIEW; Try Again creates 3 NEW candidates; rejected candidates never selectable (state-machine test); `npx vitest run packages/character-library/src/candidates` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "e877f9e57202e83c3f1291e63a9aaed3c4556562",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: CHAR-003 Candidate generation flow (3 designs)"
+   },
+   "mergedSha": "e877f9e57202e83c3f1291e63a9aaed3c4556562",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CHAR-004",
@@ -267,7 +407,15 @@
    "branch": "task/CHAR-004-selection-contract",
    "worktree": "worktrees/CHAR-004/",
    "acceptance": "`mmcs choose-character <1|2|3|4>` maps 4=Try Again; `mmcs approve-character <id>` requires gate 3; invalid selections rejected with usage text; `npx vitest run apps/cli/src/commands/choose-character` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "e1c075efd7e7989d0e429ea7df5c8fdf192ee8f1",
+    "date": "2026-08-28T10:36:07-04:00",
+    "subject": "merge: CHAR-004 Selection/retry UI-CLI contract"
+   },
+   "mergedSha": "e1c075efd7e7989d0e429ea7df5c8fdf192ee8f1",
+   "mergedAt": "2026-08-28T10:36:07-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-005",
@@ -281,10 +429,17 @@
    "owns": "packages/character-library/src/locking/",
    "branch": "task/CHAR-005-character-locking",
    "worktree": "worktrees/CHAR-005/",
-   "acceptance": "LOCK CHARACTER approval \u2192 candidate asset states transition DRAFT\u2192APPROVED\u2192CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.",
+   "acceptance": "LOCK CHARACTER approval → candidate asset states transition DRAFT→APPROVED→CANONICAL; lock without approval throws; REJECTED never becomes CANONICAL (test); `npx vitest run packages/character-library/src/locking` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "2e1fb2a"
+   "mergeCommit": "2e1fb2a",
+   "merge": {
+    "commit": "2e1fb2a3add2f2e6198b56426f96476e1ed95323",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: CHAR-005 character lock canonicalization (QC PASS 3/3 defects fixed)"
+   },
+   "mergedSha": "2e1fb2a3add2f2e6198b56426f96476e1ed95323",
+   "branchState": "present"
   },
   {
    "id": "CHAR-006",
@@ -297,8 +452,16 @@
    "owns": "packages/character-library/src/appearance-versions/",
    "branch": "task/CHAR-006-appearance-versions",
    "worktree": "worktrees/CHAR-006/",
-   "acceptance": "hair/wardrobe change creates new appearance version with effective episode/time; historical episodes resolve canon-at-the-time version (Monica v1 braids E01\u2013E08, v2 short from E09 test); base identity master never replaced; `npx vitest run packages/character-library/src/appearance-versions` green.",
-   "status": "MERGED"
+   "acceptance": "hair/wardrobe change creates new appearance version with effective episode/time; historical episodes resolve canon-at-the-time version (Monica v1 braids E01–E08, v2 short from E09 test); base identity master never replaced; `npx vitest run packages/character-library/src/appearance-versions` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "42db1c1f40175c544f96714aa007e2e4e006715e",
+    "date": "2026-08-28T09:25:43-04:00",
+    "subject": "merge: CHAR-006 Appearance versions (effective episode)"
+   },
+   "mergedSha": "42db1c1f40175c544f96714aa007e2e4e006715e",
+   "mergedAt": "2026-08-28T09:25:43-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-007",
@@ -311,7 +474,15 @@
    "branch": "task/CHAR-007-wardrobe-versions",
    "worktree": "worktrees/CHAR-007/",
    "acceptance": "wardrobe states versioned per character; active-wardrobe resolution for an episode continuity point; `npx vitest run packages/character-library/src/wardrobe` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "40765af7deec75324353e5123c8465629b55453b",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: CHAR-007 Wardrobe versions"
+   },
+   "mergedSha": "40765af7deec75324353e5123c8465629b55453b",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-008",
@@ -324,7 +495,15 @@
    "branch": "task/CHAR-008-hair-versions",
    "worktree": "worktrees/CHAR-008/",
    "acceptance": "hair states versioned per character; change never overwrites identity history; `npx vitest run packages/character-library/src/hair` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "df2d73da69c6e46b65de97417fc73f566286f982",
+    "date": "2026-08-28T09:25:43-04:00",
+    "subject": "merge: CHAR-008 Hair versions"
+   },
+   "mergedSha": "df2d73da69c6e46b65de97417fc73f566286f982",
+   "mergedAt": "2026-08-28T09:25:43-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-009",
@@ -337,8 +516,16 @@
    "owns": "packages/character-library/src/voice-binding/",
    "branch": "task/CHAR-009-voice-binding",
    "worktree": "worktrees/CHAR-009/",
-   "acceptance": "voice profile record per spec \u00a716 (character ID, Fish voice/reference ID, model, pace, emotion/style, pronunciation dictionary, proper nouns, test sample status, approval state); recurring character voice never randomly changes across episodes (determinism test); `npx vitest run packages/character-library/src/voice-binding` green.",
-   "status": "MERGED"
+   "acceptance": "voice profile record per spec §16 (character ID, Fish voice/reference ID, model, pace, emotion/style, pronunciation dictionary, proper nouns, test sample status, approval state); recurring character voice never randomly changes across episodes (determinism test); `npx vitest run packages/character-library/src/voice-binding` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "223d779a8bc237090caefb909af15a975e382d76",
+    "date": "2026-08-28T09:25:43-04:00",
+    "subject": "merge: CHAR-009 Fish voice binding"
+   },
+   "mergedSha": "223d779a8bc237090caefb909af15a975e382d76",
+   "mergedAt": "2026-08-28T09:25:43-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-010",
@@ -352,8 +539,16 @@
    "owns": "packages/character-library/src/cast/",
    "branch": "task/CHAR-010-cast-links",
    "worktree": "worktrees/CHAR-010/",
-   "acceptance": "global library \u2194 per-series cast join; cast resolution by episode; removing series cast never deletes global character; `npx vitest run packages/character-library/src/cast` green.",
-   "status": "MERGED"
+   "acceptance": "global library ↔ per-series cast join; cast resolution by episode; removing series cast never deletes global character; `npx vitest run packages/character-library/src/cast` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "d260ead982577b4e0ea314a266174e901820fa59",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: CHAR-010 Series cast links"
+   },
+   "mergedSha": "d260ead982577b4e0ea314a266174e901820fa59",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CHAR-011",
@@ -367,7 +562,15 @@
    "branch": "task/CHAR-011-location-library",
    "worktree": "worktrees/CHAR-011/",
    "acceptance": "location masters with approved wide/medium/reverse angles + day/night states; resolution by episode continuity point; `npx vitest run packages/character-library/src/locations` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "94b44dd3909eebf4031b1b381a06cf97f077b62c",
+    "date": "2026-08-28T12:06:12-04:00",
+    "subject": "merge: CHAR-011 Recurring location library"
+   },
+   "mergedSha": "94b44dd3909eebf4031b1b381a06cf97f077b62c",
+   "mergedAt": "2026-08-28T12:06:12-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-012",
@@ -380,8 +583,16 @@
    "owns": "packages/character-library/src/series-bible/",
    "branch": "task/CHAR-012-series-bible",
    "worktree": "worktrees/CHAR-012/",
-   "acceptance": "bible stores premise, world rules, characters, relationships, locations, wardrobe, props, visual style, camera language, voice profiles, timeline, episode summaries, plot threads, versioned canon changes (spec \u00a710); historical episodes read canon-at-time; `npx vitest run packages/character-library/src/series-bible` green.",
-   "status": "MERGED"
+   "acceptance": "bible stores premise, world rules, characters, relationships, locations, wardrobe, props, visual style, camera language, voice profiles, timeline, episode summaries, plot threads, versioned canon changes (spec §10); historical episodes read canon-at-time; `npx vitest run packages/character-library/src/series-bible` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "8f1446ccde1313899ac1c5b4daca518ab94b70c9",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: CHAR-012 Series Bible events"
+   },
+   "mergedSha": "8f1446ccde1313899ac1c5b4daca518ab94b70c9",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-013",
@@ -397,7 +608,14 @@
    "acceptance": "end-of-episode proposal produces Proposed Canon Changes list; no permanent canon update without approval; approved proposals create new version; `npx vitest run packages/character-library/src/canon-approval` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "dd9106a"
+   "mergeCommit": "dd9106a",
+   "merge": {
+    "commit": "dd9106ac3541eb26e7f79b6219a3666e7dc003b3",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: CHAR-013 canon approval gate (QC PASS 3/3 defects fixed)"
+   },
+   "mergedSha": "dd9106ac3541eb26e7f79b6219a3666e7dc003b3",
+   "branchState": "present"
   },
   {
    "id": "CHAR-014",
@@ -411,7 +629,15 @@
    "branch": "task/CHAR-014-asset-links",
    "worktree": "worktrees/CHAR-014/",
    "acceptance": "canonical GHL file ID + URL + checksum resolved verbatim in downstream reference plans; stale-link refresh via manifest; local-cache-removal resolution test passes against mocked GHL; `npx vitest run packages/character-library/src/asset-links` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "56ceb82f6273f0ad8807c1866b8c1cca0fce097b",
+    "date": "2026-08-28T12:06:48-04:00",
+    "subject": "merge: CHAR-014 Asset links"
+   },
+   "mergedSha": "56ceb82f6273f0ad8807c1866b8c1cca0fce097b",
+   "mergedAt": "2026-08-28T12:06:48-04:00",
+   "branchState": "present"
   },
   {
    "id": "CHAR-015",
@@ -427,7 +653,13 @@
    "acceptance": "persists which references produced accepted vs rejected clips; historical success rate queryable per character/model/reference combination (feeds DIR-013 scoring); `npx vitest run packages/character-library/src/refpack-metrics` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "ff6ccb56f294de4531eb523690768725cf4a1715"
+   "mergedSha": "ff6ccb56f294de4531eb523690768725cf4a1715",
+   "merge": {
+    "commit": "ff6ccb56f294de4531eb523690768725cf4a1715",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: CHAR-015 Character reference-pack metrics"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-001",
@@ -440,10 +672,16 @@
    "owns": "packages/scene-intelligence/src/intake/",
    "branch": "task/DIR-001-idea-intake",
    "worktree": "worktrees/DIR-001/",
-   "acceptance": "idea record (raw text, aspect ratio, target runtime, series link) validated; story text treated as untrusted data (spec \u00a729 \u2014 injection test passes); `npx vitest run packages/scene-intelligence/src/intake` green.",
+   "acceptance": "idea record (raw text, aspect ratio, target runtime, series link) validated; story text treated as untrusted data (spec §29 — injection test passes); `npx vitest run packages/scene-intelligence/src/intake` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "728f8a88780ee4240aa5615cc75ed717fda95e1b"
+   "mergedSha": "728f8a88780ee4240aa5615cc75ed717fda95e1b",
+   "merge": {
+    "commit": "728f8a88780ee4240aa5615cc75ed717fda95e1b",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-001 Idea intake schema"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-002",
@@ -457,8 +695,16 @@
    "owns": "packages/scene-intelligence/src/concept/",
    "branch": "task/DIR-002-concept-generator",
    "worktree": "worktrees/DIR-002/",
-   "acceptance": "idea \u2192 developed concept via director-model interface (OpenRouter-compatible, CAP-007 registry); mocked-LLM test produces concept options; no provider call without capability check; `npx vitest run packages/scene-intelligence/src/concept` green.",
-   "status": "MERGED"
+   "acceptance": "idea → developed concept via director-model interface (OpenRouter-compatible, CAP-007 registry); mocked-LLM test produces concept options; no provider call without capability check; `npx vitest run packages/scene-intelligence/src/concept` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "044354dc0eac73a43727eeade3bd0ceb241a5f5a",
+    "date": "2026-08-28T15:46:27-04:00",
+    "subject": "merge: DIR-002 Concept generator"
+   },
+   "mergedSha": "044354dc0eac73a43727eeade3bd0ceb241a5f5a",
+   "mergedAt": "2026-08-28T15:46:27-04:00",
+   "branchState": "present"
   },
   {
    "id": "DIR-003",
@@ -475,7 +721,14 @@
    "status": "MERGED",
    "notes": "QC PASS 0 defects (agent transport-dropped after writing qc.json; work verified by orchestrator 26/26 green)",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "88cc4dc"
+   "mergeCommit": "88cc4dc",
+   "merge": {
+    "commit": "88cc4dcf6b9bae816c601f3c5646010c86599164",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: DIR-003 concept approval gate (QC PASS 0 defects)"
+   },
+   "mergedSha": "88cc4dcf6b9bae816c601f3c5646010c86599164",
+   "branchState": "present"
   },
   {
    "id": "DIR-004",
@@ -489,10 +742,16 @@
    "owns": "packages/scene-intelligence/src/screenplay/",
    "branch": "task/DIR-004-screenplay-generator",
    "worktree": "worktrees/DIR-004/",
-   "acceptance": "approved concept \u2192 screenplay via writer-model interface; output structured (scenes, dialogue, characters); mocked-LLM test; `npx vitest run packages/scene-intelligence/src/screenplay` green.",
+   "acceptance": "approved concept → screenplay via writer-model interface; output structured (scenes, dialogue, characters); mocked-LLM test; `npx vitest run packages/scene-intelligence/src/screenplay` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "4e74683230fc34b455159fea1d4713bbd76cce71"
+   "mergedSha": "4e74683230fc34b455159fea1d4713bbd76cce71",
+   "merge": {
+    "commit": "4e74683230fc34b455159fea1d4713bbd76cce71",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-004 Screenplay generator"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-005",
@@ -505,10 +764,16 @@
    "owns": "packages/scene-intelligence/src/runtime-estimator/",
    "branch": "task/DIR-005-runtime-estimator",
    "worktree": "worktrees/DIR-005/",
-   "acceptance": "screenplay \u2192 estimated runtime within \u00b110% on fixture screenplays (test with known-duration fixtures); per-scene and total estimates persisted; `npx vitest run packages/scene-intelligence/src/runtime-estimator` green.",
+   "acceptance": "screenplay → estimated runtime within ±10% on fixture screenplays (test with known-duration fixtures); per-scene and total estimates persisted; `npx vitest run packages/scene-intelligence/src/runtime-estimator` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "92772640fa7f5d66425434187e1ff10dda5f337d"
+   "mergedSha": "92772640fa7f5d66425434187e1ff10dda5f337d",
+   "merge": {
+    "commit": "92772640fa7f5d66425434187e1ff10dda5f337d",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-005 Runtime estimator"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-006",
@@ -525,7 +790,13 @@
    "acceptance": "critic-model interface returns structured findings (pacing, continuity, dialogue, character consistency) on fixture screenplay; findings schema versioned; `npx vitest run packages/scene-intelligence/src/script-critic` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "8f870a275f1cafb0aa63d7f0a88546c144b8f7bc"
+   "mergedSha": "8f870a275f1cafb0aa63d7f0a88546c144b8f7bc",
+   "merge": {
+    "commit": "8f870a275f1cafb0aa63d7f0a88546c144b8f7bc",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-006 Script critic/QC"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-007",
@@ -539,10 +810,16 @@
    "owns": "packages/scene-intelligence/src/script-revision/",
    "branch": "task/DIR-007-script-revision",
    "worktree": "worktrees/DIR-007/",
-   "acceptance": "critic findings \u2192 targeted revision \u2192 re-criticize; loop bounded (max iterations configurable); convergence test on fixture; `npx vitest run packages/scene-intelligence/src/script-revision` green.",
+   "acceptance": "critic findings → targeted revision → re-criticize; loop bounded (max iterations configurable); convergence test on fixture; `npx vitest run packages/scene-intelligence/src/script-revision` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "97e6e48ef4c765149e512729c3285c654a7afc8a"
+   "mergedSha": "97e6e48ef4c765149e512729c3285c654a7afc8a",
+   "merge": {
+    "commit": "97e6e48ef4c765149e512729c3285c654a7afc8a",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-007 Script revision loop"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-008",
@@ -559,7 +836,14 @@
    "acceptance": "no cast/candidate work while script unapproved; `mmcs write-script` + `mmcs approve script` wired; `npx vitest run packages/scene-intelligence/src/screenplay/approval` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "ff2ce06"
+   "mergeCommit": "ff2ce06",
+   "merge": {
+    "commit": "ff2ce063f5163f9ac18a371598f5f468f719304e",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: DIR-008 script approval gate (QC PASS 0 defects)"
+   },
+   "mergedSha": "ff2ce063f5163f9ac18a371598f5f468f719304e",
+   "branchState": "present"
   },
   {
    "id": "DIR-009",
@@ -572,10 +856,16 @@
    "owns": "packages/scene-intelligence/src/scene-parser/",
    "branch": "task/DIR-009-scene-parser",
    "worktree": "worktrees/DIR-009/",
-   "acceptance": "approved screenplay \u2192 narrative scenes with per-scene characters, location, duration; 45-second reference scene parses to \u22655 named scenes on fixture; `npx vitest run packages/scene-intelligence/src/scene-parser` green.",
+   "acceptance": "approved screenplay → narrative scenes with per-scene characters, location, duration; 45-second reference scene parses to ≥5 named scenes on fixture; `npx vitest run packages/scene-intelligence/src/scene-parser` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "87da7623f47c736016d653ce7bfb8f737bf7d11c"
+   "mergedSha": "87da7623f47c736016d653ce7bfb8f737bf7d11c",
+   "merge": {
+    "commit": "87da7623f47c736016d653ce7bfb8f737bf7d11c",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-009 Scene parser"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-010",
@@ -589,10 +879,16 @@
    "owns": "packages/scene-intelligence/src/shot-planner/",
    "branch": "task/DIR-010-shot-planner",
    "worktree": "worktrees/DIR-010/",
-   "acceptance": "scenes \u2192 shots by dialogue/emotional/action beats; shots inside selected model duration limits; Shot Specification Record fields populated (spec \u00a712); 45s scene \u2192 5\u20138 shots on fixture; `npx vitest run packages/scene-intelligence/src/shot-planner` green.",
+   "acceptance": "scenes → shots by dialogue/emotional/action beats; shots inside selected model duration limits; Shot Specification Record fields populated (spec §12); 45s scene → 5–8 shots on fixture; `npx vitest run packages/scene-intelligence/src/shot-planner` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "f5970e2784491188f6c831e7efef2f08cfdcc7f1"
+   "mergedSha": "f5970e2784491188f6c831e7efef2f08cfdcc7f1",
+   "merge": {
+    "commit": "f5970e2784491188f6c831e7efef2f08cfdcc7f1",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-010 Shot planner"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-011",
@@ -609,7 +905,13 @@
    "acceptance": "multi-character scenes flagged for Scene Master Image; scene-master spec carries identities, wardrobe, room, lighting, props, positions; internal storyboard images marked non-provider-input; `npx vitest run packages/scene-intelligence/src/scene-master` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "fa8a4f07404f4b5c640a809354a14d3750be5882"
+   "mergedSha": "fa8a4f07404f4b5c640a809354a14d3750be5882",
+   "merge": {
+    "commit": "fa8a4f07404f4b5c640a809354a14d3750be5882",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: DIR-011 Scene master planner"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-012",
@@ -622,10 +924,16 @@
    "owns": "packages/scene-intelligence/src/keyframe-planner/",
    "branch": "task/DIR-012-keyframe-planner",
    "worktree": "worktrees/DIR-012/",
-   "acceptance": "mutually exclusive classification per shot: zero / one / start+end / scene-master+refs / multimodal package (spec \u00a78); classification changes when capability profile changes (fixture test); `npx vitest run packages/scene-intelligence/src/keyframe-planner` green.",
+   "acceptance": "mutually exclusive classification per shot: zero / one / start+end / scene-master+refs / multimodal package (spec §8); classification changes when capability profile changes (fixture test); `npx vitest run packages/scene-intelligence/src/keyframe-planner` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "a8d44792bf14b7c59bc770a40965b36a75289168"
+   "mergedSha": "a8d44792bf14b7c59bc770a40965b36a75289168",
+   "merge": {
+    "commit": "a8d44792bf14b7c59bc770a40965b36a75289168",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: DIR-012 Keyframe planner"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-013",
@@ -640,10 +948,16 @@
    "owns": "packages/scene-intelligence/src/reference-budget/",
    "branch": "task/DIR-013-reference-budget",
    "worktree": "worktrees/DIR-013/",
-   "acceptance": "minimum-sufficient references (single close-up 1\u20132; two-character dialogue prefers scene master over portrait stack); scoring by identity/wardrobe/location/prop/pose/start/end/historical-success; never stuffs max slots (test asserts under-limit selection); `npx vitest run packages/scene-intelligence/src/reference-budget` green.",
+   "acceptance": "minimum-sufficient references (single close-up 1–2; two-character dialogue prefers scene master over portrait stack); scoring by identity/wardrobe/location/prop/pose/start/end/historical-success; never stuffs max slots (test asserts under-limit selection); `npx vitest run packages/scene-intelligence/src/reference-budget` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "0aa42cac9658379e2030d2b247bdf90830c7d08c"
+   "mergedSha": "0aa42cac9658379e2030d2b247bdf90830c7d08c",
+   "merge": {
+    "commit": "0aa42cac9658379e2030d2b247bdf90830c7d08c",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: DIR-013 ReferenceBudgetPlanner"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-014",
@@ -657,10 +971,16 @@
    "owns": "packages/scene-intelligence/src/storyboard/",
    "branch": "task/DIR-014-storyboard-contract",
    "worktree": "worktrees/DIR-014/",
-   "acceptance": "storyboard plan = per-shot image-generation contract (image model by capability profile, spec \u00a715); no paid generation in this task (mocked image client); `npx vitest run packages/scene-intelligence/src/storyboard` green.",
+   "acceptance": "storyboard plan = per-shot image-generation contract (image model by capability profile, spec §15); no paid generation in this task (mocked image client); `npx vitest run packages/scene-intelligence/src/storyboard` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "7337b163038a8e03962d0600b73aa2a5c8e72731"
+   "mergedSha": "7337b163038a8e03962d0600b73aa2a5c8e72731",
+   "merge": {
+    "commit": "7337b163038a8e03962d0600b73aa2a5c8e72731",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: DIR-014 Storyboard generator contract"
+   },
+   "branchState": "present"
   },
   {
    "id": "DIR-015",
@@ -676,7 +996,14 @@
    "acceptance": "no paid generation while storyboard unapproved; `mmcs storyboard` + `mmcs approve-storyboard` wired; `npx vitest run packages/scene-intelligence/src/storyboard/approval` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "0c174e1"
+   "mergeCommit": "0c174e1",
+   "merge": {
+    "commit": "0c174e16a6ab395b6eab41fb59ce5fc3c7636081",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: DIR-015 storyboard approval gate (QC PASS 4/4 defects fixed)"
+   },
+   "mergedSha": "0c174e16a6ab395b6eab41fb59ce5fc3c7636081",
+   "branchState": "present"
   },
   {
    "id": "CAP-001",
@@ -688,8 +1015,16 @@
    "owns": "packages/capability-registry/src/schema/",
    "branch": "task/CAP-001-capability-schema",
    "worktree": "worktrees/CAP-001/",
-   "acceptance": "MediaModelCapability TS interface + zod schema exactly per spec \u00a75 (all fields incl. confidence enum VERIFIED/PROVISIONAL/UNKNOWN, incompatibleCombinations); separate registry kinds for reasoning/vision/image/video/voice/storage; `npx vitest run packages/capability-registry/src/schema` green.",
-   "status": "MERGED"
+   "acceptance": "MediaModelCapability TS interface + zod schema exactly per spec §5 (all fields incl. confidence enum VERIFIED/PROVISIONAL/UNKNOWN, incompatibleCombinations); separate registry kinds for reasoning/vision/image/video/voice/storage; `npx vitest run packages/capability-registry/src/schema` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "0af3ad5b3f38d780188c8812abd43158426a1418",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CAP-001 Capability schema"
+   },
+   "mergedSha": "0af3ad5b3f38d780188c8812abd43158426a1418",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-002",
@@ -702,7 +1037,15 @@
    "branch": "task/CAP-002-capability-data",
    "worktree": "worktrees/CAP-002/",
    "acceptance": "seed profiles for Agnes Video 2.5 Flash + regular, Seedance 2.0 Mini, Wan 3.0, Fish S2.1 family, GLM 5.3 Flash / DeepSeek V4 Flash Vision Experimental / Qwen 3.8 Flash / Gemini 3.7 Flash; every value carries lastVerifiedAt + sourceUrls + confidence; UNKNOWN preserved where undocumented (Agnes hard prompt ceiling = UNKNOWN, asserted by test); one docs file per provider family; `npx vitest run packages/capability-registry/src/data` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "94d60850fdd46752fe29667b2a17c82b568b07cc",
+    "date": "2026-08-28T09:25:42-04:00",
+    "subject": "merge: CAP-002 Capability source/date/confidence data"
+   },
+   "mergedSha": "94d60850fdd46752fe29667b2a17c82b568b07cc",
+   "mergedAt": "2026-08-28T09:25:42-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-003",
@@ -715,7 +1058,15 @@
    "branch": "task/CAP-003-character-count",
    "worktree": "worktrees/CAP-003/",
    "acceptance": "counts compiled prompt characters exactly; rejects over hard max BEFORE provider call (Wan >20,000 test); passes when UNKNOWN hard max (never invents a limit); `npx vitest run packages/capability-registry/src/validators` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "b6980757059b1b7c59ade6d32985267770b906a7",
+    "date": "2026-08-28T15:46:27-04:00",
+    "subject": "merge: CAP-003 Character-count validator"
+   },
+   "mergedSha": "b6980757059b1b7c59ade6d32985267770b906a7",
+   "mergedAt": "2026-08-28T15:46:27-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-004",
@@ -728,7 +1079,15 @@
    "branch": "task/CAP-004-reference-count",
    "worktree": "worktrees/CAP-004/",
    "acceptance": "rejects too many Wan reference images (>10) before call; validates images/videos/audio counts per profile; `npx vitest run packages/capability-registry/src/validators` green incl. reference tests.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "2fc34f14cee91f2880e13fe86ab3344544ef7c75",
+    "date": "2026-08-28T10:36:05-04:00",
+    "subject": "merge: CAP-004 Reference-count validator"
+   },
+   "mergedSha": "2fc34f14cee91f2880e13fe86ab3344544ef7c75",
+   "mergedAt": "2026-08-28T10:36:05-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-005",
@@ -741,7 +1100,15 @@
    "branch": "task/CAP-005-exclusive-modes",
    "worktree": "worktrees/CAP-005/",
    "acceptance": "rejects first/last-frame combined with multimodal references (Wan); validates incompatibleCombinations generically; `npx vitest run packages/capability-registry/src/validators` green incl. mode tests.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "fff515d5683772975e089dfe99cbfe6f1bedb3bb",
+    "date": "2026-08-28T09:48:54-04:00",
+    "subject": "merge: CAP-005"
+   },
+   "mergedSha": "fff515d5683772975e089dfe99cbfe6f1bedb3bb",
+   "mergedAt": "2026-08-28T09:48:54-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-006",
@@ -754,7 +1121,15 @@
    "branch": "task/CAP-006-pricing-model",
    "worktree": "worktrees/CAP-006/",
    "acceptance": "per-model pricing_unit/current_price/quota/overage consumed by cost estimate; spend estimation test against fixture profiles; `npx vitest run packages/capability-registry/src/pricing` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "7cf45a12be1453d5757f705c53979f4437b5a2ea",
+    "date": "2026-08-28T09:48:54-04:00",
+    "subject": "merge: CAP-006"
+   },
+   "mergedSha": "7cf45a12be1453d5757f705c53979f4437b5a2ea",
+   "mergedAt": "2026-08-28T09:48:54-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-007",
@@ -767,7 +1142,15 @@
    "branch": "task/CAP-007-llm-registry",
    "worktree": "worktrees/CAP-007/",
    "acceptance": "OpenRouter-compatible selection; separate slots for director/writer/script-critic/image-QC/video-QC/continuity-QC/final-QC; any compatible model ID accepted (not closed to 4 presets); `npx vitest run packages/capability-registry/src/llm-registry` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "8fadc54e1f88f4d87744dc496052e49f1f3312e4",
+    "date": "2026-08-28T12:05:53-04:00",
+    "subject": "merge: CAP-007 LLM registry"
+   },
+   "mergedSha": "8fadc54e1f88f4d87744dc496052e49f1f3312e4",
+   "mergedAt": "2026-08-28T12:05:53-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-008",
@@ -780,7 +1163,15 @@
    "branch": "task/CAP-008-max-reasoning",
    "worktree": "worktrees/CAP-008/",
    "acceptance": "MAX_REASONING logical config maps per-adapter to highest supported reasoning effort; never sends literal \"max\" to endpoints that reject it (adapter table test); `npx vitest run packages/capability-registry/src/max-reasoning` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "1669e5b0109d71f8858658e5ad198af61d422292",
+    "date": "2026-08-28T09:48:54-04:00",
+    "subject": "merge: CAP-008"
+   },
+   "mergedSha": "1669e5b0109d71f8858658e5ad198af61d422292",
+   "mergedAt": "2026-08-28T09:48:54-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-009",
@@ -795,7 +1186,15 @@
    "worktree": "worktrees/CAP-009/",
    "acceptance": "`mmcs providers verify` reports configured vs documented vs runtime-observed capability + last verified date + discrepancy warning; transient failure never silently rewrites VERIFIED (test); `npx vitest run packages/capability-registry/src/verify` green.",
    "status": "MERGED",
-   "note": " | 2026-08-28T15:26Z batch4 rollback: merged code broke integration typecheck (TS6059 cross-package import in apps/cli/src/commands/providers-verify/command.ts)"
+   "note": " | 2026-08-28T15:26Z batch4 rollback: merged code broke integration typecheck (TS6059 cross-package import in apps/cli/src/commands/providers-verify/command.ts) | RESOLVED (verified 2026-09-15): the TS6059 rootDir violation was fixed by 7f4561d (\"CAP-009 QC fix: TS6059 rootDir violation in providers-verify command\", 2026-08-28T11:56-04:00) using the CHAR-004 CLI-local-type pattern, and CAP-009 was then merged cleanly at 0ad6ce17 (2026-08-28T12:05:57-04:00). The regression guard added by 7f4561d (\"rootDir isolation (TS6059 regression guard)\", apps/cli/src/commands/providers-verify/command.test.ts:151) is present at HEAD, so the rollback above is history, not the current state.",
+   "merge": {
+    "commit": "0ad6ce1737732e5fd6b472ef12b0a48859dc4216",
+    "date": "2026-08-28T12:05:57-04:00",
+    "subject": "merge: CAP-009 Provider health/verify"
+   },
+   "mergedSha": "0ad6ce1737732e5fd6b472ef12b0a48859dc4216",
+   "mergedAt": "2026-08-28T12:05:57-04:00",
+   "branchState": "absent"
   },
   {
    "id": "CAP-010",
@@ -809,7 +1208,15 @@
    "branch": "task/CAP-010-observed-overrides",
    "worktree": "worktrees/CAP-010/",
    "acceptance": "runtime-discovered model IDs/limits refine profiles with PROVISIONAL confidence + provenance; VERIFIED values immutable on one transient failure (test); Agnes 2.5 runtime IDs recorded with source/date; `npx vitest run packages/capability-registry/src/observed-overrides` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "8fed2496ab8afd07f0e7dcdae54fe521c6f694f1",
+    "date": "2026-08-28T15:46:27-04:00",
+    "subject": "merge: CAP-010 Runtime observed capability overrides"
+   },
+   "mergedSha": "8fed2496ab8afd07f0e7dcdae54fe521c6f694f1",
+   "mergedAt": "2026-08-28T15:46:27-04:00",
+   "branchState": "absent"
   },
   {
    "id": "AGN-001",
@@ -823,10 +1230,16 @@
    "owns": "packages/providers/src/agnes/client/",
    "branch": "task/AGN-001-agnes-client",
    "worktree": "worktrees/AGN-001/",
-   "acceptance": "HTTP client with bearer auth from config, timeout/retry limits (spec \u00a729), token never logged (redaction test); docs inspection source URLs + date recorded in docs/provider-capabilities/agnes.md; `npx vitest run packages/providers/src/agnes/client` green (mocked API).",
+   "acceptance": "HTTP client with bearer auth from config, timeout/retry limits (spec §29), token never logged (redaction test); docs inspection source URLs + date recorded in docs/provider-capabilities/agnes.md; `npx vitest run packages/providers/src/agnes/client` green (mocked API).",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "945030125edc82c7627afd1ce081c5a90625a3ba"
+   "mergedSha": "945030125edc82c7627afd1ce081c5a90625a3ba",
+   "merge": {
+    "commit": "945030125edc82c7627afd1ce081c5a90625a3ba",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-001 Agnes auth/client"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-002",
@@ -837,12 +1250,19 @@
     "CAP-002"
    ],
    "owns": "packages/providers/src/agnes/image/",
+   "ownsNow": "packages/providers/src/agnes/profiles/image/",
    "branch": "task/AGN-002-agnes-image",
    "worktree": "worktrees/AGN-002/",
    "acceptance": "image generation + edit/compose paths per current API (AGN-003 scope merged if API supports); capability profile consulted before request; mocked test produces image record with provider_task_id; `npx vitest run packages/providers/src/agnes/image` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "989c0ba0ff1d21245447607781f9dfe957f48842"
+   "mergedSha": "989c0ba0ff1d21245447607781f9dfe957f48842",
+   "merge": {
+    "commit": "989c0ba0ff1d21245447607781f9dfe957f48842",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-002 Agnes image generation"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-003",
@@ -852,12 +1272,19 @@
     "AGN-002"
    ],
    "owns": "packages/providers/src/agnes/image/edit/",
+   "ownsNow": "packages/providers/src/agnes/profiles/edit/",
    "branch": "task/AGN-003-agnes-edit",
    "worktree": "worktrees/AGN-003/",
    "acceptance": "if current Agnes API supports edit/compose: masked edit + multi-image compose implemented behind capability flags; if unsupported: capability registry records mode unsupported + task closes with documented evidence in docs/provider-capabilities/agnes.md; `npx vitest run packages/providers/src/agnes/image/edit` green either way.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "dd63c75634cd82fdd9bb853d4377d9eb0bf7aa61"
+   "mergedSha": "dd63c75634cd82fdd9bb853d4377d9eb0bf7aa61",
+   "merge": {
+    "commit": "dd63c75634cd82fdd9bb853d4377d9eb0bf7aa61",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-003 Agnes image edit/compose (conditional)"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-004",
@@ -870,10 +1297,16 @@
    "owns": "packages/providers/src/agnes/video/submit/",
    "branch": "task/AGN-004-agnes-submit",
    "worktree": "worktrees/AGN-004/",
-   "acceptance": "job submitted with request persisted BEFORE polling (task/job ID in DB first, spec \u00a718); pre-request validation chain runs (character count \u2192 references \u2192 modes \u2192 duration \u2192 budget); mocked submit returns job record in SUBMITTED; `npx vitest run packages/providers/src/agnes/video/submit` green.",
+   "acceptance": "job submitted with request persisted BEFORE polling (task/job ID in DB first, spec §18); pre-request validation chain runs (character count → references → modes → duration → budget); mocked submit returns job record in SUBMITTED; `npx vitest run packages/providers/src/agnes/video/submit` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "2581e24214bf867c7fd3dafbb4042d704b579b51"
+   "mergedSha": "2581e24214bf867c7fd3dafbb4042d704b579b51",
+   "merge": {
+    "commit": "2581e24214bf867c7fd3dafbb4042d704b579b51",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-004 Agnes video job submit"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-005",
@@ -885,10 +1318,16 @@
    "owns": "packages/providers/src/agnes/video/poll/",
    "branch": "task/AGN-005-agnes-poll",
    "worktree": "worktrees/AGN-005/",
-   "acceptance": "resume at SUBMITTED polls existing job, never resubmits (kill-poller test: restart \u2192 same task ID, no second charge); GENERATED_TEMPORARY persists URL + expiration; `npx vitest run packages/providers/src/agnes/video/poll` green.",
+   "acceptance": "resume at SUBMITTED polls existing job, never resubmits (kill-poller test: restart → same task ID, no second charge); GENERATED_TEMPORARY persists URL + expiration; `npx vitest run packages/providers/src/agnes/video/poll` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "b4833af7c0cc9b884c1ffb9d5b8f92dbb40ce2ab"
+   "mergedSha": "b4833af7c0cc9b884c1ffb9d5b8f92dbb40ce2ab",
+   "merge": {
+    "commit": "b4833af7c0cc9b884c1ffb9d5b8f92dbb40ce2ab",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-005 Agnes video poll + resume"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-006",
@@ -901,10 +1340,16 @@
    "owns": "packages/providers/src/agnes/profiles/flash/",
    "branch": "task/AGN-006-agnes-flash",
    "worktree": "worktrees/AGN-006/",
-   "acceptance": "Agnes Video 2.5 Flash profile (720p, 4\u201312s, \u22645 ref images, first/last-frame, no ref-video, prompt ceiling UNKNOWN); runtime model ID discovered + recorded with source/date (not hard-coded from stale agnes-video-v2.0 docs); profile test; `npx vitest run packages/providers/src/agnes/profiles/flash` green.",
+   "acceptance": "Agnes Video 2.5 Flash profile (720p, 4–12s, ≤5 ref images, first/last-frame, no ref-video, prompt ceiling UNKNOWN); runtime model ID discovered + recorded with source/date (not hard-coded from stale agnes-video-v2.0 docs); profile test; `npx vitest run packages/providers/src/agnes/profiles/flash` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "6a0cebf89c41232f6320e31f0eec396357e9b486"
+   "mergedSha": "6a0cebf89c41232f6320e31f0eec396357e9b486",
+   "merge": {
+    "commit": "6a0cebf89c41232f6320e31f0eec396357e9b486",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-006 Agnes Flash profile"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-007",
@@ -917,10 +1362,16 @@
    "owns": "packages/providers/src/agnes/profiles/regular/",
    "branch": "task/AGN-007-agnes-regular",
    "worktree": "worktrees/AGN-007/",
-   "acceptance": "Agnes Video 2.5 regular profile (4\u201312s, \u22645 ref images, reference-video support, 720p/960p/2K, prompt ceiling UNKNOWN); reference-video path exercised in mocked test; `npx vitest run packages/providers/src/agnes/profiles/regular` green.",
+   "acceptance": "Agnes Video 2.5 regular profile (4–12s, ≤5 ref images, reference-video support, 720p/960p/2K, prompt ceiling UNKNOWN); reference-video path exercised in mocked test; `npx vitest run packages/providers/src/agnes/profiles/regular` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "c18943acf1842211855ca4c744f6581dd6161da9"
+   "mergedSha": "c18943acf1842211855ca4c744f6581dd6161da9",
+   "merge": {
+    "commit": "c18943acf1842211855ca4c744f6581dd6161da9",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-007 Agnes regular 2.5 profile"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-008",
@@ -936,7 +1387,13 @@
    "acceptance": "first-frame, last-frame, reference-image request shapes validated against profile before call; invalid combination rejected pre-flight (test); `npx vitest run packages/providers/src/agnes/validation` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "ebeb61a6ef6337e407e698a6277bb27d5a6763c7"
+   "mergedSha": "ebeb61a6ef6337e407e698a6277bb27d5a6763c7",
+   "merge": {
+    "commit": "ebeb61a6ef6337e407e698a6277bb27d5a6763c7",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-008 Agnes first/last/reference validation"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-009",
@@ -952,7 +1409,13 @@
    "acceptance": "requested/generated/accepted/rejected seconds + retries + cost recorded per job; included quota tracked separately from paid spend; `npx vitest run packages/providers/src/agnes/quota` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "b8be5a413e411eadb0aaf6ebcefb33da61675bd8"
+   "mergedSha": "b8be5a413e411eadb0aaf6ebcefb33da61675bd8",
+   "merge": {
+    "commit": "b8be5a413e411eadb0aaf6ebcefb33da61675bd8",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-009 Agnes quota accounting"
+   },
+   "branchState": "present"
   },
   {
    "id": "AGN-010",
@@ -965,10 +1428,16 @@
    "owns": "packages/providers/src/agnes/retry/",
    "branch": "task/AGN-010-agnes-retry",
    "worktree": "worktrees/AGN-010/",
-   "acceptance": "bounded retry (no unbounded loops, spec \u00a729); same request hash never double-submits; retry count persisted; `npx vitest run packages/providers/src/agnes/retry` green.",
+   "acceptance": "bounded retry (no unbounded loops, spec §29); same request hash never double-submits; retry count persisted; `npx vitest run packages/providers/src/agnes/retry` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "54d5f86c0d7b10103e58c002831bbc5af09b3cdc"
+   "mergedSha": "54d5f86c0d7b10103e58c002831bbc5af09b3cdc",
+   "merge": {
+    "commit": "54d5f86c0d7b10103e58c002831bbc5af09b3cdc",
+    "date": "2026-08-28T15:37:29-04:00",
+    "subject": "merge: AGN-010 Agnes retry/idempotency"
+   },
+   "branchState": "present"
   },
   {
    "id": "KIE-001",
@@ -983,7 +1452,15 @@
    "branch": "task/KIE-001-kie-client",
    "worktree": "worktrees/KIE-001/",
    "acceptance": "HTTP client, bearer auth from config, timeouts/retries, key never logged; current docs.kie.ai schema facts recorded in docs/provider-capabilities/kie.md with URLs + date; `npx vitest run packages/providers/src/kie/client` green (mocked).",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "e6092153b4465ea87aacc12788ad20f77b57164d",
+    "date": "2026-08-28T12:06:35-04:00",
+    "subject": "merge: KIE-001 Kie client/auth"
+   },
+   "mergedSha": "e6092153b4465ea87aacc12788ad20f77b57164d",
+   "mergedAt": "2026-08-28T12:06:35-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-002",
@@ -996,8 +1473,16 @@
    "owns": "packages/providers/src/kie/task/",
    "branch": "task/KIE-002-kie-task",
    "worktree": "worktrees/KIE-002/",
-   "acceptance": "generic Kie task abstraction: persist task ID before polling; resume-at-SUBMITTED polls existing task (no resubmit test); state mapping to \u00a718 machine; `npx vitest run packages/providers/src/kie/task` green.",
-   "status": "MERGED"
+   "acceptance": "generic Kie task abstraction: persist task ID before polling; resume-at-SUBMITTED polls existing task (no resubmit test); state mapping to §18 machine; `npx vitest run packages/providers/src/kie/task` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "54abd402293ecb59bdd5519fe14f4866ca1f2ba1",
+    "date": "2026-08-28T09:48:54-04:00",
+    "subject": "merge: KIE-002"
+   },
+   "mergedSha": "54abd402293ecb59bdd5519fe14f4866ca1f2ba1",
+   "mergedAt": "2026-08-28T09:48:54-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-003",
@@ -1011,7 +1496,15 @@
    "branch": "task/KIE-003-seedance-profile",
    "worktree": "worktrees/KIE-003/",
    "acceptance": "Seedance 2.0 Mini adapter per live Kie schema (verify at build; record in docs/provider-capabilities/kie.md); generation modes tracked separately (first-frame I2V / first+last I2V / multimodal-reference); unstated numeric limits stay UNKNOWN/PROVISIONAL; `npx vitest run packages/providers/src/kie/seedance` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "e973ac2c18fa4ef02e01017c457252f3b0779bcd",
+    "date": "2026-08-28T09:48:54-04:00",
+    "subject": "merge: KIE-003"
+   },
+   "mergedSha": "e973ac2c18fa4ef02e01017c457252f3b0779bcd",
+   "mergedAt": "2026-08-28T09:48:54-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-004",
@@ -1024,7 +1517,15 @@
    "branch": "task/KIE-004-seedance-modes",
    "worktree": "worktrees/KIE-004/",
    "acceptance": "mutually exclusive modes never combined (pre-flight rejection test); mode selected explicitly per request; `npx vitest run packages/providers/src/kie/seedance/validation` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "90ac338dd75d530e85a95e1a5bef03ede60cfd09",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: KIE-004 Seedance modes/validation"
+   },
+   "mergedSha": "90ac338dd75d530e85a95e1a5bef03ede60cfd09",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-005",
@@ -1037,8 +1538,16 @@
    "owns": "packages/providers/src/kie/wan/",
    "branch": "task/KIE-005-wan-profile",
    "worktree": "worktrees/KIE-005/",
-   "acceptance": "Wan 3.0 adapter after live schema/pricing/limits verification recorded in registry (baseline: 20,000-char prompt, \u226410 ref images, \u22645 ref videos, \u22645 ref audio, \u226430s, 480p/720p/1080p \u2014 verify, never trust static doc over newer docs); `npx vitest run packages/providers/src/kie/wan` green.",
-   "status": "MERGED"
+   "acceptance": "Wan 3.0 adapter after live schema/pricing/limits verification recorded in registry (baseline: 20,000-char prompt, ≤10 ref images, ≤5 ref videos, ≤5 ref audio, ≤30s, 480p/720p/1080p — verify, never trust static doc over newer docs); `npx vitest run packages/providers/src/kie/wan` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "0d71aa62725430e59c3f992b75cac83375a300dc",
+    "date": "2026-08-28T12:06:38-04:00",
+    "subject": "merge: KIE-005 Wan 3.0 profile"
+   },
+   "mergedSha": "0d71aa62725430e59c3f992b75cac83375a300dc",
+   "mergedAt": "2026-08-28T12:06:38-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-006",
@@ -1050,8 +1559,16 @@
    "owns": "packages/providers/src/kie/wan/validation/",
    "branch": "task/KIE-006-wan-validation",
    "worktree": "worktrees/KIE-006/",
-   "acceptance": ">20,000-char prompt rejected BEFORE provider call; >10 reference images rejected before call; first/last-frame vs multimodal incompatibility enforced; `npx vitest run packages/providers/src/kie/wan/validation` green (spec \u00a732 media-capability acceptance).",
-   "status": "MERGED"
+   "acceptance": ">20,000-char prompt rejected BEFORE provider call; >10 reference images rejected before call; first/last-frame vs multimodal incompatibility enforced; `npx vitest run packages/providers/src/kie/wan/validation` green (spec §32 media-capability acceptance).",
+   "status": "MERGED",
+   "merge": {
+    "commit": "09dee8197b3a913f7f01235a712c186059dc1a91",
+    "date": "2026-08-28T12:06:38-04:00",
+    "subject": "merge: KIE-006 Wan validation"
+   },
+   "mergedSha": "09dee8197b3a913f7f01235a712c186059dc1a91",
+   "mergedAt": "2026-08-28T12:06:38-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-007",
@@ -1068,7 +1585,13 @@
    "acceptance": "per-model cost estimate from registry pricing before submission; feeds CORE-009 reservation; fixture test with known pricing; `npx vitest run packages/providers/src/kie/cost` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "acb3e282e10c54b1ee1194b02cb8f53bdcade92f"
+   "mergedSha": "acb3e282e10c54b1ee1194b02cb8f53bdcade92f",
+   "merge": {
+    "commit": "acb3e282e10c54b1ee1194b02cb8f53bdcade92f",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: KIE-007 Kie cost calculator"
+   },
+   "branchState": "present"
   },
   {
    "id": "KIE-008",
@@ -1081,7 +1604,15 @@
    "branch": "task/KIE-008-temp-url",
    "worktree": "worktrees/KIE-008/",
    "acceptance": "GENERATED_TEMPORARY persists provider URL + expiration immediately; archival handoff to GHL store triggered (GHL-012 integration point); `npx vitest run packages/providers/src/kie/temp-url` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "038c0d8b0e822c8063a6d230bc5b06f03e3c749d",
+    "date": "2026-08-28T12:06:41-04:00",
+    "subject": "merge: KIE-008 Temp URL"
+   },
+   "mergedSha": "038c0d8b0e822c8063a6d230bc5b06f03e3c749d",
+   "mergedAt": "2026-08-28T12:06:41-04:00",
+   "branchState": "present"
   },
   {
    "id": "KIE-009",
@@ -1094,7 +1625,15 @@
    "branch": "task/KIE-009-kie-errors",
    "worktree": "worktrees/KIE-009/",
    "acceptance": "all Kie error shapes normalized to one error taxonomy (retryable/fatal/quota); no raw error leakage into logs with secrets; `npx vitest run packages/providers/src/kie/errors` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "2f79d22845f9ce869658a2e16ce5b0c3c8d34983",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: KIE-009 Failure normalization"
+   },
+   "mergedSha": "2f79d22845f9ce869658a2e16ce5b0c3c8d34983",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "KIE-010",
@@ -1110,7 +1649,15 @@
    "branch": "task/KIE-010-kie-contract",
    "worktree": "worktrees/KIE-010/",
    "acceptance": "full mocked contract suite (submit/poll/resume/fail/archive handoff); optional live smoke gated behind credentials + $25 rule, skipped cleanly when absent; `npx vitest run packages/providers/src/kie/__tests__` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "2a03767ffbdb26d34f15a92617f654bedca24b6d",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: KIE-010 Contract/smoke tests"
+   },
+   "mergedSha": "2a03767ffbdb26d34f15a92617f654bedca24b6d",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-001",
@@ -1125,7 +1672,15 @@
    "branch": "task/FISH-001-fish-client",
    "worktree": "worktrees/FISH-001/",
    "acceptance": "HTTP client, auth from config, timeouts/retries, key never logged; current docs verified + recorded in docs/provider-capabilities/fish.md with URLs + date; s2.1-pro-free availability recorded but NOT assumed (config-driven model selection); `npx vitest run packages/providers/src/fish-audio/client` green (mocked).",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "e6d5b48de90241402421cf91e0b22c9a4c54ef35",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: FISH-001 Fish Audio client"
+   },
+   "mergedSha": "e6d5b48de90241402421cf91e0b22c9a4c54ef35",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-002",
@@ -1138,8 +1693,16 @@
    "owns": "packages/providers/src/fish-audio/voice-profiles/",
    "branch": "task/FISH-002-voice-profiles",
    "worktree": "worktrees/FISH-002/",
-   "acceptance": "create/persist/list voice profiles per spec \u00a716 fields; profile bound to character ID; test-sample status tracked; `npx vitest run packages/providers/src/fish-audio/voice-profiles` green.",
-   "status": "MERGED"
+   "acceptance": "create/persist/list voice profiles per spec §16 fields; profile bound to character ID; test-sample status tracked; `npx vitest run packages/providers/src/fish-audio/voice-profiles` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "469b245e1631fbc59f34954c01a3316f36b8c9d3",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: FISH-002 Voice profile management"
+   },
+   "mergedSha": "469b245e1631fbc59f34954c01a3316f36b8c9d3",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-003",
@@ -1152,8 +1715,16 @@
    "owns": "packages/providers/src/fish-audio/tts/",
    "branch": "task/FISH-003-tts",
    "worktree": "worktrees/FISH-003/",
-   "acceptance": "dialogue \u2192 audio asset as separate durable asset (video replacement never forces voice regeneration); job record persisted before polling; mocked test returns asset with provider_task_id; `npx vitest run packages/providers/src/fish-audio/tts` green.",
-   "status": "MERGED"
+   "acceptance": "dialogue → audio asset as separate durable asset (video replacement never forces voice regeneration); job record persisted before polling; mocked test returns asset with provider_task_id; `npx vitest run packages/providers/src/fish-audio/tts` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "90cd17d129bc248d7301529813db8561e2043a8c",
+    "date": "2026-08-28T15:46:27-04:00",
+    "subject": "merge: FISH-003 TTS generation"
+   },
+   "mergedSha": "90cd17d129bc248d7301529813db8561e2043a8c",
+   "mergedAt": "2026-08-28T15:46:27-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-004",
@@ -1166,7 +1737,15 @@
    "branch": "task/FISH-004-pronunciation",
    "worktree": "worktrees/FISH-004/",
    "acceptance": "per-character pronunciation dictionary + proper-noun list applied to TTS requests; dictionary versioned; `npx vitest run packages/providers/src/fish-audio/pronunciation` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "0a820f354a4f9c37d58a1613d7034bae91fc5343",
+    "date": "2026-08-28T10:36:07-04:00",
+    "subject": "merge: FISH-004 Pronunciation dictionary"
+   },
+   "mergedSha": "0a820f354a4f9c37d58a1613d7034bae91fc5343",
+   "mergedAt": "2026-08-28T10:36:07-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-005",
@@ -1180,7 +1759,15 @@
    "branch": "task/FISH-005-dialogue-cache",
    "worktree": "worktrees/FISH-005/",
    "acceptance": "same text+voice+model request returns cached asset (idempotency test); cache keyed by request hash; `npx vitest run packages/providers/src/fish-audio/cache` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "218b2667cf908138302173f0c80122532955ce7f",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: FISH-005 Dialogue cache"
+   },
+   "mergedSha": "218b2667cf908138302173f0c80122532955ce7f",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-006",
@@ -1193,7 +1780,15 @@
    "branch": "task/FISH-006-alignment",
    "worktree": "worktrees/FISH-006/",
    "acceptance": "word/phoneme timestamps extracted and persisted per dialogue asset; timestamp data feeds FISH-007; fixture test with known alignment; `npx vitest run packages/providers/src/fish-audio/alignment` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "8be62a75ec6e69a29f2ec2e4de43303314d1a707",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: FISH-006 Alignment/timestamps"
+   },
+   "mergedSha": "8be62a75ec6e69a29f2ec2e4de43303314d1a707",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-007",
@@ -1206,7 +1801,15 @@
    "branch": "task/FISH-007-captions",
    "worktree": "worktrees/FISH-007/",
    "acceptance": "word-exact caption track generated from alignment (upstream gen_voice.py word-exact discipline); output format consumable by VID-004; `npx vitest run packages/providers/src/fish-audio/captions` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "0c9631a95bd428488eb8393a91f5b09ec483bb69",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: FISH-007 Caption output"
+   },
+   "mergedSha": "0c9631a95bd428488eb8393a91f5b09ec483bb69",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-008",
@@ -1218,8 +1821,16 @@
    "owns": "packages/providers/src/fish-audio/normalize/",
    "branch": "task/FISH-008-normalization",
    "worktree": "worktrees/FISH-008/",
-   "acceptance": "FFmpeg loudness normalization contract (target LUFS configurable, deterministic args); probe-before/after; `npx vitest run packages/providers/src/fish-audio/normalize` green (fixture WAV; ffmpeg present per spec \u00a72).",
-   "status": "MERGED"
+   "acceptance": "FFmpeg loudness normalization contract (target LUFS configurable, deterministic args); probe-before/after; `npx vitest run packages/providers/src/fish-audio/normalize` green (fixture WAV; ffmpeg present per spec §2).",
+   "status": "MERGED",
+   "merge": {
+    "commit": "4efda078b18ae246529d08da22271d4513ee49a5",
+    "date": "2026-08-28T12:06:12-04:00",
+    "subject": "merge: FISH-008 Audio normalization"
+   },
+   "mergedSha": "4efda078b18ae246529d08da22271d4513ee49a5",
+   "mergedAt": "2026-08-28T12:06:12-04:00",
+   "branchState": "present"
   },
   {
    "id": "FISH-009",
@@ -1232,7 +1843,15 @@
    "branch": "task/FISH-009-mix",
    "worktree": "worktrees/FISH-009/",
    "acceptance": "dialogue + music bed + SFX mixed via FFmpeg with deterministic filter graph; mix plan as data; output passes ffprobe; `npx vitest run packages/providers/src/fish-audio/mix` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "debc17030107c76cf5702044f2b31fda246029e3",
+    "date": "2026-08-28T12:06:16-04:00",
+    "subject": "merge: FISH-009 Mix pipeline"
+   },
+   "mergedSha": "debc17030107c76cf5702044f2b31fda246029e3",
+   "mergedAt": "2026-08-28T12:06:16-04:00",
+   "branchState": "absent"
   },
   {
    "id": "FISH-010",
@@ -1246,7 +1865,15 @@
    "branch": "task/FISH-010-fish-config",
    "worktree": "worktrees/FISH-010/",
    "acceptance": "model selection + pricing fully config-driven (no hard-coded free assumption); cost estimate feeds CORE-009; `npx vitest run packages/providers/src/fish-audio/config` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "5e2714b8793cf8d0a9b79939f4bb86c20a413dba",
+    "date": "2026-08-28T12:06:16-04:00",
+    "subject": "merge: FISH-010 Fish config"
+   },
+   "mergedSha": "5e2714b8793cf8d0a9b79939f4bb86c20a413dba",
+   "mergedAt": "2026-08-28T12:06:16-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-001",
@@ -1258,10 +1885,19 @@
     "CORE-012"
    ],
    "owns": "packages/media-storage/src/ghl/auth/",
+   "ownsNow": "packages/media-storage/src/ghl/auth.ts",
    "branch": "task/GHL-001-ghl-auth",
    "worktree": "worktrees/GHL-001/",
    "acceptance": "bearer token + `Version: v3` header from config; token never logged (redaction test); current official docs verified + recorded in docs/provider-capabilities/ghl.md with URLs + date; `npx vitest run packages/media-storage/src/ghl/auth` green (mocked).",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "de8c967bc73a1b6926028fb36c5e9121ba87a3a7",
+    "date": "2026-08-28T10:36:06-04:00",
+    "subject": "merge: GHL-001 GHL auth/config"
+   },
+   "mergedSha": "de8c967bc73a1b6926028fb36c5e9121ba87a3a7",
+   "mergedAt": "2026-08-28T10:36:06-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-002",
@@ -1274,7 +1910,15 @@
    "branch": "task/GHL-002-ghl-list",
    "worktree": "worktrees/GHL-002/",
    "acceptance": "`GET /medias/files` with location context (altType=location, altId) lists/searches files + folders; pagination handled; folder-resolution by exact name (test: find \"Convert and Flow\"); `npx vitest run packages/media-storage/src/ghl/list` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "0b650af2f9798d9f9e8213a595a376db14536df5",
+    "date": "2026-08-28T10:36:07-04:00",
+    "subject": "merge: GHL-002 List/search media"
+   },
+   "mergedSha": "0b650af2f9798d9f9e8213a595a376db14536df5",
+   "mergedAt": "2026-08-28T10:36:07-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-003",
@@ -1287,7 +1931,15 @@
    "branch": "task/GHL-003-ghl-create-folder",
    "worktree": "worktrees/GHL-003/",
    "acceptance": "`POST /medias/folder` {altId, altType:\"location\", name, parentId?}; returned folder ID persisted; search-before-create (duplicate-root prevention test); `npx vitest run packages/media-storage/src/ghl/folders` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "022ad51f85eba24b3f1f3eceb53778dcc2f9ee3c",
+    "date": "2026-08-28T12:06:20-04:00",
+    "subject": "merge: GHL-003 Create folder"
+   },
+   "mergedSha": "022ad51f85eba24b3f1f3eceb53778dcc2f9ee3c",
+   "mergedAt": "2026-08-28T12:06:20-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-004",
@@ -1300,8 +1952,16 @@
    "owns": "packages/media-storage/src/ghl/tree/",
    "branch": "task/GHL-004-ghl-tree",
    "worktree": "worktrees/GHL-004/",
-   "acceptance": "full spec \u00a717 tree (Convert and Flow / Character Library / Series / Standalone Movies + 01\u201309 episode subfolders) created idempotently; second run creates zero duplicates (test against mocked API recording calls); `npx vitest run packages/media-storage/src/ghl/tree` green.",
-   "status": "MERGED"
+   "acceptance": "full spec §17 tree (Convert and Flow / Character Library / Series / Standalone Movies + 01–09 episode subfolders) created idempotently; second run creates zero duplicates (test against mocked API recording calls); `npx vitest run packages/media-storage/src/ghl/tree` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "a9558422f09d6102e4ddbc1263110cd3031e1d8f",
+    "date": "2026-08-28T12:06:20-04:00",
+    "subject": "merge: GHL-004 GHL tree"
+   },
+   "mergedSha": "a9558422f09d6102e4ddbc1263110cd3031e1d8f",
+   "mergedAt": "2026-08-28T12:06:20-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-005",
@@ -1314,7 +1974,15 @@
    "branch": "task/GHL-005-ghl-hosted",
    "worktree": "worktrees/GHL-005/",
    "acceptance": "`POST /medias/upload-file` multipart hosted=true + fileUrl + deterministic canonical name + parentId; returns fileId + storage URL stored; GHL URL reachability verified before ARCHIVED; `npx vitest run packages/media-storage/src/ghl/upload-hosted` green (mocked).",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "1bedfe7851837f8ec6633d328964db5eb047352a",
+    "date": "2026-08-28T12:06:24-04:00",
+    "subject": "merge: GHL-005 Hosted upload"
+   },
+   "mergedSha": "1bedfe7851837f8ec6633d328964db5eb047352a",
+   "mergedAt": "2026-08-28T12:06:24-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-006",
@@ -1326,8 +1994,16 @@
    "owns": "packages/media-storage/src/ghl/upload-binary/",
    "branch": "task/GHL-006-ghl-binary",
    "worktree": "worktrees/GHL-006/",
-   "acceptance": "hosted ingest failure \u2192 immediate download \u2192 checksum \u2192 ffprobe/decode verify \u2192 binary upload (25 MB general / 500 MB video limits enforced) \u2192 returned ID/URL verified \u2192 integrity compare before ARCHIVED; size-limit rejection test; `npx vitest run packages/media-storage/src/ghl/upload-binary` green.",
-   "status": "MERGED"
+   "acceptance": "hosted ingest failure → immediate download → checksum → ffprobe/decode verify → binary upload (25 MB general / 500 MB video limits enforced) → returned ID/URL verified → integrity compare before ARCHIVED; size-limit rejection test; `npx vitest run packages/media-storage/src/ghl/upload-binary` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "0a23e8abf8cd6acd2ddc02320c7e95945e5dbf9d",
+    "date": "2026-08-28T12:06:24-04:00",
+    "subject": "merge: GHL-006 Binary fallback upload"
+   },
+   "mergedSha": "0a23e8abf8cd6acd2ddc02320c7e95945e5dbf9d",
+   "mergedAt": "2026-08-28T12:06:24-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-007",
@@ -1339,8 +2015,16 @@
    "owns": "packages/media-storage/src/ghl/validation/",
    "branch": "task/GHL-007-ghl-validation",
    "worktree": "worktrees/GHL-007/",
-   "acceptance": "remote download URL validation (spec \u00a729: scheme allowlist, no SSRF to private ranges); MIME/file-type + file-size checks; path-traversal-safe filenames; `npx vitest run packages/media-storage/src/ghl/validation` green.",
-   "status": "MERGED"
+   "acceptance": "remote download URL validation (spec §29: scheme allowlist, no SSRF to private ranges); MIME/file-type + file-size checks; path-traversal-safe filenames; `npx vitest run packages/media-storage/src/ghl/validation` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "9a9fc4c9f8e3f00fe95c6650309f5f56173d81e5",
+    "date": "2026-08-28T10:36:07-04:00",
+    "subject": "merge: GHL-007 URL/file validation"
+   },
+   "mergedSha": "9a9fc4c9f8e3f00fe95c6650309f5f56173d81e5",
+   "mergedAt": "2026-08-28T10:36:07-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-008",
@@ -1353,8 +2037,16 @@
    "owns": "packages/media-storage/src/manifest/",
    "branch": "task/GHL-008-asset-manifest",
    "worktree": "worktrees/GHL-008/",
-   "acceptance": "MediaStore abstraction + GoHighLevelMediaStore implementation; asset record (spec \u00a719 all 26 fields) written with ghl_file_id/ghl_folder_id/ghl_url/checksum; resolve-after-local-cache-removal test passes via DB; `npx vitest run packages/media-storage/src/manifest` green.",
-   "status": "MERGED"
+   "acceptance": "MediaStore abstraction + GoHighLevelMediaStore implementation; asset record (spec §19 all 26 fields) written with ghl_file_id/ghl_folder_id/ghl_url/checksum; resolve-after-local-cache-removal test passes via DB; `npx vitest run packages/media-storage/src/manifest` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "1e2e214335e568a4120a1535614aa050e0584d89",
+    "date": "2026-08-28T12:06:27-04:00",
+    "subject": "merge: GHL-008 Asset manifest"
+   },
+   "mergedSha": "1e2e214335e568a4120a1535614aa050e0584d89",
+   "mergedAt": "2026-08-28T12:06:27-04:00",
+   "branchState": "present"
   },
   {
    "id": "GHL-009",
@@ -1367,8 +2059,16 @@
    "owns": "packages/media-storage/src/character-links/",
    "branch": "task/GHL-009-character-links",
    "worktree": "worktrees/GHL-009/",
-   "acceptance": "canonical character image \u2192 Character Library/<Name>/Identity Masters/ folder; GHL file ID + URL + folder ID + SHA-256 + generation metadata persisted on the character record (spec \u00a79 exact fields); `npx vitest run packages/media-storage/src/character-links` green.",
-   "status": "MERGED"
+   "acceptance": "canonical character image → Character Library/<Name>/Identity Masters/ folder; GHL file ID + URL + folder ID + SHA-256 + generation metadata persisted on the character record (spec §9 exact fields); `npx vitest run packages/media-storage/src/character-links` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "4d08ddc5a9b1a99327b39c5de99165dba5fdf96b",
+    "date": "2026-08-28T12:06:31-04:00",
+    "subject": "merge: GHL-009 Character links"
+   },
+   "mergedSha": "4d08ddc5a9b1a99327b39c5de99165dba5fdf96b",
+   "mergedAt": "2026-08-28T12:06:31-04:00",
+   "branchState": "present"
   },
   {
    "id": "GHL-010",
@@ -1382,7 +2082,15 @@
    "branch": "task/GHL-010-episode-folders",
    "worktree": "worktrees/GHL-010/",
    "acceptance": "Series/<Name>/Season 01/S01E01 - <Title>/ created + all 9 subfolder IDs persisted; per-episode override respected; idempotent re-run test; `npx vitest run packages/media-storage/src/episode-folders` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "c22358e9666b9c20c52935d2da5d68d8e1db1bf6",
+    "date": "2026-08-28T12:06:31-04:00",
+    "subject": "merge: GHL-010 Episode folders"
+   },
+   "mergedSha": "c22358e9666b9c20c52935d2da5d68d8e1db1bf6",
+   "mergedAt": "2026-08-28T12:06:31-04:00",
+   "branchState": "present"
   },
   {
    "id": "GHL-011",
@@ -1395,8 +2103,16 @@
    "owns": "packages/media-storage/src/ghl/retry/",
    "branch": "task/GHL-011-ghl-retry",
    "worktree": "worktrees/GHL-011/",
-   "acceptance": "bounded retry with backoff; retry never creates duplicate GHL files (idempotency-key test); archival never triggers regeneration (spec \u00a717.5); `npx vitest run packages/media-storage/src/ghl/retry` green.",
-   "status": "MERGED"
+   "acceptance": "bounded retry with backoff; retry never creates duplicate GHL files (idempotency-key test); archival never triggers regeneration (spec §17.5); `npx vitest run packages/media-storage/src/ghl/retry` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "06fb3e772588a8cec8873e05a8072a06015278ab",
+    "date": "2026-08-28T12:06:35-04:00",
+    "subject": "merge: GHL-011 Retry/idempotency"
+   },
+   "mergedSha": "06fb3e772588a8cec8873e05a8072a06015278ab",
+   "mergedAt": "2026-08-28T12:06:35-04:00",
+   "branchState": "absent"
   },
   {
    "id": "GHL-012",
@@ -1413,7 +2129,13 @@
    "acceptance": "restart at GENERATED_TEMPORARY archives the known provider URL immediately if valid (never regenerates); expired-URL path falls back to documented BLOCKED state, never silent regeneration; `npx vitest run packages/media-storage/src/emergency-archival` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "da7cf37801de0809ee7519b6edfa18d101f5bf7c"
+   "mergedSha": "da7cf37801de0809ee7519b6edfa18d101f5bf7c",
+   "merge": {
+    "commit": "da7cf37801de0809ee7519b6edfa18d101f5bf7c",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: GHL-012 Provider temporary URL emergency archival"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-001",
@@ -1425,8 +2147,16 @@
    "owns": "remotion/src/lib/, media/library/chess/ (SVG set), package fixes for PF-2",
    "branch": "task/VID-001-preserve-kits",
    "worktree": "worktrees/VID-001/",
-   "acceptance": "shared kits + registry generation (`npm run gen`) + frame-QA discipline preserved; PF-1 fixed (chess SVGs committed or chess.tsx inline \u2014 Short1Chess renders); PF-2 `npm audit fix` applied; `cd remotion && npm run gen && npx tsc --noEmit` passes; render smoke on previously-failing composition passes with `--scale=1`.",
-   "status": "MERGED"
+   "acceptance": "shared kits + registry generation (`npm run gen`) + frame-QA discipline preserved; PF-1 fixed (chess SVGs committed or chess.tsx inline — Short1Chess renders); PF-2 `npm audit fix` applied; `cd remotion && npm run gen && npx tsc --noEmit` passes; render smoke on previously-failing composition passes with `--scale=1`.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "f65ddd3329ff1fdbec8af698a9e1e1d8350fcfce",
+    "date": "2026-08-28T12:06:45-04:00",
+    "subject": "merge: VID-001 Preserve shared kits"
+   },
+   "mergedSha": "f65ddd3329ff1fdbec8af698a9e1e1d8350fcfce",
+   "mergedAt": "2026-08-28T12:06:45-04:00",
+   "branchState": "absent"
   },
   {
    "id": "VID-002",
@@ -1439,8 +2169,16 @@
    "owns": "packages/remotion-runtime/src/registry/",
    "branch": "task/TASK-VID-002-episodic-registry",
    "worktree": "worktrees/VID-002/",
-   "acceptance": "episodic composition registry (series/episode/scene/shot \u2192 composition) generated from DB plan; `npm run gen` extended; registry test proves one composition per episode resolves; `npx vitest run packages/remotion-runtime/src/registry` green.",
-   "status": "MERGED"
+   "acceptance": "episodic composition registry (series/episode/scene/shot → composition) generated from DB plan; `npm run gen` extended; registry test proves one composition per episode resolves; `npx vitest run packages/remotion-runtime/src/registry` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "a8fa4ea5aa71d4ecbc1eb8065179c7dc663d7009",
+    "date": "2026-08-28T19:57:26Z",
+    "subject": "merge: VID-002"
+   },
+   "mergedSha": "a8fa4ea5aa71d4ecbc1eb8065179c7dc663d7009",
+   "mergedAt": "2026-08-28T19:57:26Z",
+   "branchState": "present"
   },
   {
    "id": "VID-003",
@@ -1452,10 +2190,16 @@
    "owns": "packages/remotion-runtime/src/timeline/",
    "branch": "task/VID-003-shot-timeline",
    "worktree": "worktrees/VID-003/",
-   "acceptance": "shot \u2192 timeline sequence mapping (sequence_index, in/out frames, fps); upstream frames.mjs local_f = global_s * fps \u2212 sequence_from convention preserved; unit test with known timings; `npx vitest run packages/remotion-runtime/src/timeline` green.",
+   "acceptance": "shot → timeline sequence mapping (sequence_index, in/out frames, fps); upstream frames.mjs local_f = global_s * fps − sequence_from convention preserved; unit test with known timings; `npx vitest run packages/remotion-runtime/src/timeline` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "9487589e477f32c23f71961210593395471675e3"
+   "mergedSha": "9487589e477f32c23f71961210593395471675e3",
+   "merge": {
+    "commit": "9487589e477f32c23f71961210593395471675e3",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: VID-003 Shot timeline abstraction"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-004",
@@ -1468,10 +2212,16 @@
    "owns": "packages/remotion-runtime/src/layers/captions/",
    "branch": "task/VID-004-captions-layer",
    "worktree": "worktrees/VID-004/",
-   "acceptance": "word-exact captions from FISH-007 alignment rendered in timeline; timing sync test (caption frame == alignment ms\u2192frames); `npx vitest run packages/remotion-runtime/src/layers/captions` green.",
+   "acceptance": "word-exact captions from FISH-007 alignment rendered in timeline; timing sync test (caption frame == alignment ms→frames); `npx vitest run packages/remotion-runtime/src/layers/captions` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "e8193ca1a0f6137d7c6a3ff278abb4622297092e"
+   "mergedSha": "e8193ca1a0f6137d7c6a3ff278abb4622297092e",
+   "merge": {
+    "commit": "e8193ca1a0f6137d7c6a3ff278abb4622297092e",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: VID-004 Dialogue/captions layer"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-005",
@@ -1485,7 +2235,15 @@
    "branch": "task/VID-005-generated-clip-layer",
    "worktree": "worktrees/VID-005/",
    "acceptance": "archived provider clips (GHL-resolved assets) placed on timeline per shot plan; missing-asset error names the shot; mocked test assembles 3-shot sequence; `npx vitest run packages/remotion-runtime/src/layers/generated-clips` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "b22a21f912b6f277b23ce839303a1b37cbbcd7ed",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: VID-005 Generated clip layer"
+   },
+   "mergedSha": "b22a21f912b6f277b23ce839303a1b37cbbcd7ed",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "present"
   },
   {
    "id": "VID-006",
@@ -1497,10 +2255,16 @@
    "owns": "packages/remotion-runtime/src/layers/still-motion/",
    "branch": "task/VID-006-still-motion",
    "worktree": "worktrees/VID-006/",
-   "acceptance": "AI stills animated with camera movement (pan/zoom/drift) per camera_motion spec field; deterministic rendering (same inputs \u2192 same frames, seeded); `npx vitest run packages/remotion-runtime/src/layers/still-motion` green.",
+   "acceptance": "AI stills animated with camera movement (pan/zoom/drift) per camera_motion spec field; deterministic rendering (same inputs → same frames, seeded); `npx vitest run packages/remotion-runtime/src/layers/still-motion` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "88d67281f13262487f1f999c17335584dfce87a2"
+   "mergedSha": "88d67281f13262487f1f999c17335584dfce87a2",
+   "merge": {
+    "commit": "88d67281f13262487f1f999c17335584dfce87a2",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: VID-006 Still-image motion layer"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-007",
@@ -1510,12 +2274,19 @@
     "VID-003"
    ],
    "owns": "packages/remotion-runtime/src/layers/stock/",
+   "ownsNow": "packages/remotion-runtime/src/stock-layer/",
    "branch": "task/VID-007-stock-layer",
    "worktree": "worktrees/VID-007/",
-   "acceptance": "stock/B-roll clips placed for generic establishing shots only; guard test rejects stock substitution for recurring main characters (spec \u00a722); optional Pexels/Pixabay adapter interface stubbed; `npx vitest run packages/remotion-runtime/src/layers/stock` green.",
+   "acceptance": "stock/B-roll clips placed for generic establishing shots only; guard test rejects stock substitution for recurring main characters (spec §22); optional Pexels/Pixabay adapter interface stubbed; `npx vitest run packages/remotion-runtime/src/layers/stock` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "1507bc412a913e297a5dfc79170b44c176db287c"
+   "mergedSha": "1507bc412a913e297a5dfc79170b44c176db287c",
+   "merge": {
+    "commit": "1507bc412a913e297a5dfc79170b44c176db287c",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: VID-007 Stock/B-roll layer"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-008",
@@ -1528,7 +2299,15 @@
    "branch": "task/VID-008-graphics-layer",
    "worktree": "worktrees/VID-008/",
    "acceptance": "native Remotion graphics (titles, overlays, credits, lower thirds) composable per shot plan; `npx vitest run packages/remotion-runtime/src/layers/graphics` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "f99eea41ec33874675057fcebac75070b0601edb",
+    "date": "2026-08-28T16:23:26-04:00",
+    "subject": "merge: VID-008 graphics layer (cycle-2 rebase of reverted IQ-B6 layer; QC PASS 93/93)"
+   },
+   "mergedSha": "f99eea41ec33874675057fcebac75070b0601edb",
+   "mergedAt": "2026-08-28T16:23:26-04:00",
+   "branchState": "present"
   },
   {
    "id": "VID-009",
@@ -1543,7 +2322,13 @@
    "acceptance": "transition catalog (cut, crossfade, wipe minimum) applied at shot boundaries from plan data; frame-exact overlap math tested; `npx vitest run packages/remotion-runtime/src/transitions` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "3fa72c02a16990670deec11c065bfef9686fee1c"
+   "mergedSha": "3fa72c02a16990670deec11c065bfef9686fee1c",
+   "merge": {
+    "commit": "3fa72c02a16990670deec11c065bfef9686fee1c",
+    "date": "2026-08-28T15:37:31-04:00",
+    "subject": "merge: VID-009 Transitions"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-010",
@@ -1559,7 +2344,13 @@
    "acceptance": "dialogue + music + SFX placed on audio timeline from mix plan; loop-friendly (frame-0==last-frame convention preserved); sync test; `npx vitest run packages/remotion-runtime/src/layers/audio` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "9bf4bdef6b7991f301e51b2c14d75a516545f191"
+   "mergedSha": "9bf4bdef6b7991f301e51b2c14d75a516545f191",
+   "merge": {
+    "commit": "9bf4bdef6b7991f301e51b2c14d75a516545f191",
+    "date": "2026-08-28T15:37:31-04:00",
+    "subject": "merge: VID-010 Audio/music/SFX timeline"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-011",
@@ -1574,7 +2365,13 @@
    "acceptance": "16:9 and 9:16 compositions both generate from the same plan; series-level default + per-episode override; resolution/safe-area math tested; `npx vitest run packages/remotion-runtime/src/aspect` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "b3e6ade85f693a234f50a04bb72fac312ee56244"
+   "mergedSha": "b3e6ade85f693a234f50a04bb72fac312ee56244",
+   "merge": {
+    "commit": "b3e6ade85f693a234f50a04bb72fac312ee56244",
+    "date": "2026-08-28T15:37:31-04:00",
+    "subject": "merge: VID-011 Aspect ratios"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-012",
@@ -1595,10 +2392,16 @@
    "owns": "packages/remotion-runtime/src/rough-cut/",
    "branch": "task/VID-012-rough-cut",
    "worktree": "worktrees/VID-012/",
-   "acceptance": "full episode assembles from shot plan + archived assets; `mmcs rough-cut` wired; 16:9 AND 9:16 rough cuts render (acceptance \u00a732) on fixture project; `npx vitest run packages/remotion-runtime/src/rough-cut` green.",
+   "acceptance": "full episode assembles from shot plan + archived assets; `mmcs rough-cut` wired; 16:9 AND 9:16 rough cuts render (acceptance §32) on fixture project; `npx vitest run packages/remotion-runtime/src/rough-cut` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "a30297ba8239841f5a91c694dce305f41d943070"
+   "mergedSha": "a30297ba8239841f5a91c694dce305f41d943070",
+   "merge": {
+    "commit": "a30297ba8239841f5a91c694dce305f41d943070",
+    "date": "2026-08-28T15:37:31-04:00",
+    "subject": "merge: VID-012 Rough cut assembly"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-013",
@@ -1610,8 +2413,16 @@
    "owns": "packages/remotion-runtime/src/shot-replacement/",
    "branch": "task/VID-013-shot-replacement",
    "worktree": "worktrees/VID-013/",
-   "acceptance": "replace one shot (new asset/trim) without regenerating unaffected shots \u2014 composition diff test proves only the targeted shot's inputs change; `mmcs retry-shot <id>` wired; `npx vitest run packages/remotion-runtime/src/shot-replacement` green.",
-   "status": "MERGED"
+   "acceptance": "replace one shot (new asset/trim) without regenerating unaffected shots — composition diff test proves only the targeted shot's inputs change; `mmcs retry-shot <id>` wired; `npx vitest run packages/remotion-runtime/src/shot-replacement` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "6d8cce166d62ee035a0d1cace04a26e20a77de04",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: VID-013 Selective shot replacement"
+   },
+   "mergedSha": "6d8cce166d62ee035a0d1cace04a26e20a77de04",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "present"
   },
   {
    "id": "VID-014",
@@ -1625,10 +2436,16 @@
    "owns": "packages/remotion-runtime/src/final-render/",
    "branch": "task/VID-014-final-render",
    "worktree": "worktrees/VID-014/",
-   "acceptance": "approved rough cut \u2192 final render at series/episode resolution; 720p-source upscale never labeled native 1080p (metadata flag test); `mmcs final` wired; fixture final render completes and passes VID-015 ffprobe; `npx vitest run packages/remotion-runtime/src/final-render` green.",
+   "acceptance": "approved rough cut → final render at series/episode resolution; 720p-source upscale never labeled native 1080p (metadata flag test); `mmcs final` wired; fixture final render completes and passes VID-015 ffprobe; `npx vitest run packages/remotion-runtime/src/final-render` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "b2dac9ddc093c3e62b848a68936429e0be034c77"
+   "mergedSha": "b2dac9ddc093c3e62b848a68936429e0be034c77",
+   "merge": {
+    "commit": "b2dac9ddc093c3e62b848a68936429e0be034c77",
+    "date": "2026-08-28T15:37:31-04:00",
+    "subject": "merge: VID-014 Final render pipeline"
+   },
+   "branchState": "present"
   },
   {
    "id": "VID-015",
@@ -1641,7 +2458,15 @@
    "branch": "task/VID-015-ffprobe",
    "worktree": "worktrees/VID-015/",
    "acceptance": "ffprobe wrapper reports codec/duration/resolution/bitrate; integrity check fails on corrupted fixture (truncated file test); every render output validated before ARCHIVED; `npx vitest run packages/remotion-runtime/src/ffprobe` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "e3024887c53c0cb72350e5b18ee669d9f15d98a4",
+    "date": "2026-08-28T12:06:48-04:00",
+    "subject": "merge: VID-015 FFprobe"
+   },
+   "mergedSha": "e3024887c53c0cb72350e5b18ee669d9f15d98a4",
+   "mergedAt": "2026-08-28T12:06:48-04:00",
+   "branchState": "present"
   },
   {
    "id": "VID-016",
@@ -1653,10 +2478,16 @@
    "owns": "packages/remotion-runtime/src/frame-extraction/",
    "branch": "task/VID-016-frame-extraction",
    "worktree": "worktrees/VID-016/",
-   "acceptance": "representative frames extracted from any generated clip for image-vision QC (spec \u00a720 fallback path); frame count/timestamps configurable; upstream frames.mjs discipline reused; `npx vitest run packages/remotion-runtime/src/frame-extraction` green.",
+   "acceptance": "representative frames extracted from any generated clip for image-vision QC (spec §20 fallback path); frame count/timestamps configurable; upstream frames.mjs discipline reused; `npx vitest run packages/remotion-runtime/src/frame-extraction` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "204ad7c2a5938ad3e846a12ce496e7abf5dc993b"
+   "mergedSha": "204ad7c2a5938ad3e846a12ce496e7abf5dc993b",
+   "merge": {
+    "commit": "204ad7c2a5938ad3e846a12ce496e7abf5dc993b",
+    "date": "2026-08-28T15:37:31-04:00",
+    "subject": "merge: VID-016 Video frame extraction for QC"
+   },
+   "branchState": "present"
   },
   {
    "id": "QC-001",
@@ -1668,10 +2499,16 @@
    "owns": "packages/qc/src/schema/",
    "branch": "task/QC-001-qc-schema",
    "worktree": "worktrees/QC-001/",
-   "acceptance": "QC result schema covers all spec \u00a720 checks (identity, face consistency, skin tone, hair, wardrobe, accessories, anatomy, props, location, lighting continuity, camera, action, artifacts, lip/face, start/end state, neighbor continuity, dialogue suitability); verdict + evidence fields versioned; `npx vitest run packages/qc/src/schema` green.",
+   "acceptance": "QC result schema covers all spec §20 checks (identity, face consistency, skin tone, hair, wardrobe, accessories, anatomy, props, location, lighting continuity, camera, action, artifacts, lip/face, start/end state, neighbor continuity, dialogue suitability); verdict + evidence fields versioned; `npx vitest run packages/qc/src/schema` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "ece6e34cd31e5aae04ec1731d2ad1169f17b398e"
+   "mergedSha": "ece6e34cd31e5aae04ec1731d2ad1169f17b398e",
+   "merge": {
+    "commit": "ece6e34cd31e5aae04ec1731d2ad1169f17b398e",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: QC-001 Per-shot visual QC schema"
+   },
+   "branchState": "present"
   },
   {
    "id": "QC-002",
@@ -1684,7 +2521,15 @@
    "branch": "task/QC-002-identity-check",
    "worktree": "worktrees/QC-002/",
    "acceptance": "extracted frame vs canonical identity asset comparison via vision-model interface (registry-selected); mismatch verdict on doctored fixture; `npx vitest run packages/qc/src/identity` green (mocked vision model).",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "0255884e741d5d8364e322e1c629464883126444",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: QC-002 Character identity comparison"
+   },
+   "mergedSha": "0255884e741d5d8364e322e1c629464883126444",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "present"
   },
   {
    "id": "QC-003",
@@ -1697,7 +2542,15 @@
    "branch": "task/QC-003-wardrobe-check",
    "worktree": "worktrees/QC-003/",
    "acceptance": "active appearance version (hair/wardrobe/props) verified against shot spec requirements; wrong-wardrobe fixture flagged; `npx vitest run packages/qc/src/wardrobe` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "692b20f9f83fc934ab561668026b0c610a350a88",
+    "date": "2026-08-28T19:57:27Z",
+    "subject": "merge: QC-003"
+   },
+   "mergedSha": "692b20f9f83fc934ab561668026b0c610a350a88",
+   "mergedAt": "2026-08-28T19:57:27Z",
+   "branchState": "present"
   },
   {
    "id": "QC-004",
@@ -1709,8 +2562,16 @@
    "owns": "packages/qc/src/continuity/",
    "branch": "task/QC-004-continuity",
    "worktree": "worktrees/QC-004/",
-   "acceptance": "neighboring shots compared against each other + current Series Bible state (spec \u00a711); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.",
-   "status": "MERGED"
+   "acceptance": "neighboring shots compared against each other + current Series Bible state (spec §11); continuity-break fixture flagged; `npx vitest run packages/qc/src/continuity` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "b43743aefded95186bd5bf1c83a02f2e243a8855",
+    "date": "2026-08-28T19:57:27Z",
+    "subject": "merge: QC-004"
+   },
+   "mergedSha": "b43743aefded95186bd5bf1c83a02f2e243a8855",
+   "mergedAt": "2026-08-28T19:57:27Z",
+   "branchState": "present"
   },
   {
    "id": "QC-005",
@@ -1724,11 +2585,17 @@
    "owns": "packages/qc/src/route/",
    "branch": "task/QC-005-qc-route",
    "worktree": "worktrees/QC-005/",
-   "acceptance": "video-capable model \u2192 direct video review; otherwise FFmpeg frame extraction \u2192 image-vision QC; route selection from capability profile (both branches tested); `npx vitest run packages/qc/src/route` green.",
+   "acceptance": "video-capable model → direct video review; otherwise FFmpeg frame extraction → image-vision QC; route selection from capability profile (both branches tested); `npx vitest run packages/qc/src/route` green.",
    "status": "MERGED",
    "mergedSha": "73de2a2c7ac612518d88b27fdae7da8e332e8bac",
    "mergedAt": "2026-08-28T23:35:00Z",
-   "mergedBatch": "batch-10"
+   "mergedBatch": "batch-10",
+   "merge": {
+    "commit": "73de2a2c7ac612518d88b27fdae7da8e332e8bac",
+    "date": "2026-08-28T16:28:50-04:00",
+    "subject": "merge: QC-005 video direct vs extracted-frame route (QC PASS 2/2 defects fixed)"
+   },
+   "branchState": "present"
   },
   {
    "id": "QC-006",
@@ -1741,10 +2608,16 @@
    "owns": "packages/qc/src/retry/",
    "branch": "task/QC-006-retry-policy",
    "worktree": "worktrees/QC-006/",
-   "acceptance": "targeted repair of affected shot only \u2014 never whole-episode regeneration (test proves single-shot scope); retry bounded by cost policy; `npx vitest run packages/qc/src/retry` green.",
+   "acceptance": "targeted repair of affected shot only — never whole-episode regeneration (test proves single-shot scope); retry bounded by cost policy; `npx vitest run packages/qc/src/retry` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "0eefdc17e4250578f6a23a94f84152253ec7c8b0"
+   "mergedSha": "0eefdc17e4250578f6a23a94f84152253ec7c8b0",
+   "merge": {
+    "commit": "0eefdc17e4250578f6a23a94f84152253ec7c8b0",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: QC-006 Retry policy"
+   },
+   "branchState": "present"
   },
   {
    "id": "QC-007",
@@ -1757,11 +2630,18 @@
    "owns": "packages/qc/src/routes/agnes-flash/",
    "branch": "task/QC-007-agnes-flash-route",
    "worktree": "worktrees/QC-007/",
-   "acceptance": "Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure \u2192 one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.",
+   "acceptance": "Flash PASS kept as FINAL footage (never auto-discarded as preview-only); likely prompt/seed failure → one Flash retry; `npx vitest run packages/qc/src/routes/agnes-flash` green.",
    "status": "MERGED",
    "notes": "QC PASS verified: defectsFixed=2/defectsFound=2, 28/28 tests green, ready for merge",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "c5802ad"
+   "mergeCommit": "c5802ad",
+   "merge": {
+    "commit": "c5802adf0ec50dc8b7763c1022dabb5a21fae13f",
+    "date": "2026-08-28T22:10:56-04:00",
+    "subject": "merge: QC-007 Agnes Flash acceptance route (QC PASS round-2 verified 94ce8b2, 2/2 defects fixed; add/add conflict on qc record resolved to branch final verdict — integration's stale 3/2 fold counted repo-wide lint-script infra gap outside owned paths, superseded by control 3f55d17)"
+   },
+   "mergedSha": "c5802adf0ec50dc8b7763c1022dabb5a21fae13f",
+   "branchState": "present"
   },
   {
    "id": "QC-008",
@@ -1774,10 +2654,16 @@
    "owns": "packages/qc/src/routes/agnes-regular/",
    "branch": "task/QC-008-agnes-regular-fallback",
    "worktree": "worktrees/QC-008/",
-   "acceptance": "Flash FAIL after retry \u2192 Agnes Video 2.5 regular escalation; fallback trigger conditions tested; `npx vitest run packages/qc/src/routes/agnes-regular` green.",
+   "acceptance": "Flash FAIL after retry → Agnes Video 2.5 regular escalation; fallback trigger conditions tested; `npx vitest run packages/qc/src/routes/agnes-regular` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "3c041c6e019f1b09b0a2e842fa0cfec58239acb2"
+   "mergedSha": "3c041c6e019f1b09b0a2e842fa0cfec58239acb2",
+   "merge": {
+    "commit": "3c041c6e019f1b09b0a2e842fa0cfec58239acb2",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: QC-008 Agnes regular fallback"
+   },
+   "branchState": "present"
   },
   {
    "id": "QC-009",
@@ -1790,10 +2676,16 @@
    "owns": "packages/qc/src/routes/seedance/",
    "branch": "task/QC-009-seedance-fallback",
    "worktree": "worktrees/QC-009/",
-   "acceptance": "reference/identity problem persists after Agnes regular \u2192 Seedance 2.0 Mini escalation; mode constraints honored on fallback requests; `npx vitest run packages/qc/src/routes/seedance` green.",
+   "acceptance": "reference/identity problem persists after Agnes regular → Seedance 2.0 Mini escalation; mode constraints honored on fallback requests; `npx vitest run packages/qc/src/routes/seedance` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "d0e4fa1ce728fdb568eff4cda681414221190a8d"
+   "mergedSha": "d0e4fa1ce728fdb568eff4cda681414221190a8d",
+   "merge": {
+    "commit": "d0e4fa1ce728fdb568eff4cda681414221190a8d",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: QC-009 Seedance fallback"
+   },
+   "branchState": "present"
   },
   {
    "id": "QC-010",
@@ -1807,7 +2699,15 @@
    "branch": "task/QC-010-wan-fallback",
    "worktree": "worktrees/QC-010/",
    "acceptance": "especially complex/long/hero/action shots route to Wan 3.0; routing policy considers capability/quality-history/cost/quota (policy table test); `npx vitest run packages/qc/src/routes/wan` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "47f919e7897295509934538afff2353d1345cd60",
+    "date": "2026-08-28T16:20:37-04:00",
+    "subject": "merge: QC-010 WAN fallback route"
+   },
+   "mergedSha": "47f919e7897295509934538afff2353d1345cd60",
+   "mergedAt": "2026-08-28T16:20:37-04:00",
+   "branchState": "present"
   },
   {
    "id": "QC-011",
@@ -1820,10 +2720,17 @@
    "owns": "packages/qc/src/human-review/",
    "branch": "task/QC-011-human-review",
    "worktree": "worktrees/QC-011/",
-   "acceptance": "automated routes exhausted \u2192 shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.",
+   "acceptance": "automated routes exhausted → shot enters persisted human REVIEW state; no silent auto-approval; `mmcs qc` surfaces REVIEW items; `npx vitest run packages/qc/src/human-review` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "4006d69"
+   "mergeCommit": "4006d69",
+   "merge": {
+    "commit": "4006d692021ea5de89c4dd0d8920b8df9bd746b9",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: QC-011 human review queue (QC PASS 3/3 defects fixed)"
+   },
+   "mergedSha": "4006d692021ea5de89c4dd0d8920b8df9bd746b9",
+   "branchState": "present"
   },
   {
    "id": "QC-012",
@@ -1837,10 +2744,16 @@
    "owns": "packages/qc/src/final-episode/",
    "branch": "task/QC-012-final-episode-qc",
    "worktree": "worktrees/QC-012/",
-   "acceptance": "full-episode QC runs before rough-cut presentation; production report data collected (runtime, aspect/resolution, providers/models, generated/accepted/rejected seconds, retries, cost, quota, characters, canon changes, final URL, QC status \u2014 spec \u00a721); `npx vitest run packages/qc/src/final-episode` green.",
+   "acceptance": "full-episode QC runs before rough-cut presentation; production report data collected (runtime, aspect/resolution, providers/models, generated/accepted/rejected seconds, retries, cost, quota, characters, canon changes, final URL, QC status — spec §21); `npx vitest run packages/qc/src/final-episode` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "b909ca23a134578cf0a5d78ff79bfe3e3789c373"
+   "mergedSha": "b909ca23a134578cf0a5d78ff79bfe3e3789c373",
+   "merge": {
+    "commit": "b909ca23a134578cf0a5d78ff79bfe3e3789c373",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: QC-012 Final episode QC"
+   },
+   "branchState": "present"
   },
   {
    "id": "SKL-001",
@@ -1854,10 +2767,16 @@
    "owns": "skills/mini-movie-creator/ (SKILL.md, references/workflow.md, references/approvals.md, references/providers.md, references/recovery.md, scripts/mmcs-status.sh)",
    "branch": "task/SKL-001-canonical-skill",
    "worktree": "worktrees/SKL-001/",
-   "acceptance": "AgentSkills-style SKILL.md concise frontmatter; all 25 required behaviors of spec \u00a727 teachable; references hold detail; no secrets/hard-coded credentials (secret-scan grep clean); `bash skills/mini-movie-creator/scripts/mmcs-status.sh` exits 0 against a stub state; SKILL.md \u2264 500 lines.",
+   "acceptance": "AgentSkills-style SKILL.md concise frontmatter; all 25 required behaviors of spec §27 teachable; references hold detail; no secrets/hard-coded credentials (secret-scan grep clean); `bash skills/mini-movie-creator/scripts/mmcs-status.sh` exits 0 against a stub state; SKILL.md ≤ 500 lines.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "4c4fe382408ede64a96dcad8c09d06196d2362d8"
+   "mergedSha": "4c4fe382408ede64a96dcad8c09d06196d2362d8",
+   "merge": {
+    "commit": "4c4fe382408ede64a96dcad8c09d06196d2362d8",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: SKL-001 Canonical portable Skill"
+   },
+   "branchState": "present"
   },
   {
    "id": "SKL-002",
@@ -1873,7 +2792,13 @@
    "status": "MERGED",
    "mergedSha": "dfa9ba76134486e6c7b16b2e005e326b91767b57",
    "mergedAt": "2026-08-28T23:35:00Z",
-   "mergedBatch": "batch-10"
+   "mergedBatch": "batch-10",
+   "merge": {
+    "commit": "dfa9ba76134486e6c7b16b2e005e326b91767b57",
+    "date": "2026-08-28T16:28:51-04:00",
+    "subject": "merge: SKL-002 claude project install (QC PASS 2/2 defects fixed; cycle-2 re-admission after IQ-B6 revert)"
+   },
+   "branchState": "present"
   },
   {
    "id": "SKL-003",
@@ -1886,7 +2811,15 @@
    "branch": "task/SKL-003-personal-install",
    "worktree": "worktrees/SKL-003/",
    "acceptance": "backup-before-overwrite logic (existing personal skill never destroyed without backup/confirmation); symlink to canonical source; verified in NEW session outside repo; documented skill-discovery root; `bash integrations/claude/personal-install.sh --check` exits 0.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "7c6a79faae59718855cc042b1e5c0bb7e5e6b692",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: SKL-003 Claude personal install"
+   },
+   "mergedSha": "7c6a79faae59718855cc042b1e5c0bb7e5e6b692",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "present"
   },
   {
    "id": "SKL-004",
@@ -1899,7 +2832,15 @@
    "branch": "task/SKL-004-nine-verify",
    "worktree": "worktrees/SKL-004/",
    "acceptance": "fresh claude-nine session invokes `/mini-movie-creator status` with same engine/state (no copied logic); actual skill discovery root (~/.claude-nine/skills/ primary + sync from ~/.claude/skills/) documented; verified behavior recorded, never invented; `bash integrations/claude/nine-verify.sh` exits 0.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "fef49fcb5a61f8ee99a58e73c854e4aacd44e791",
+    "date": "2026-08-28T19:57:26Z",
+    "subject": "merge: SKL-004"
+   },
+   "mergedSha": "fef49fcb5a61f8ee99a58e73c854e4aacd44e791",
+   "mergedAt": "2026-08-28T19:57:26Z",
+   "branchState": "present"
   },
   {
    "id": "SKL-005",
@@ -1911,8 +2852,16 @@
    "owns": "integrations/openclaw/mini-movie-creator/ (packaging), integrations/openclaw/install.sh",
    "branch": "task/SKL-005-openclaw-workspace",
    "worktree": "worktrees/SKL-005/",
-   "acceptance": "packaging at integrations/openclaw/mini-movie-creator/ (SKILL.md + references/scripts, calls same CLI/DB \u2014 no engine fork); active workspace resolved from OpenClaw config (never guessed); install via current `openclaw skills install` flow or workspace placement; `openclaw skills list` shows mini-movie-creator.",
-   "status": "MERGED"
+   "acceptance": "packaging at integrations/openclaw/mini-movie-creator/ (SKILL.md + references/scripts, calls same CLI/DB — no engine fork); active workspace resolved from OpenClaw config (never guessed); install via current `openclaw skills install` flow or workspace placement; `openclaw skills list` shows mini-movie-creator.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "f1689ba38dbff90cbc7eeb32368ced078e83a16a",
+    "date": "2026-08-28T15:46:28-04:00",
+    "subject": "merge: SKL-005 OpenClaw workspace install"
+   },
+   "mergedSha": "f1689ba38dbff90cbc7eeb32368ced078e83a16a",
+   "mergedAt": "2026-08-28T15:46:28-04:00",
+   "branchState": "present"
   },
   {
    "id": "SKL-006",
@@ -1927,7 +2876,13 @@
    "acceptance": "optional global install form documented + tested; workspace install remains the supported default; uninstall/rollback path verified; `bash integrations/openclaw/global-install.sh --check` exits 0.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "b45d5232c5b472c3e542334a4c237c69e5d26ac9"
+   "mergedSha": "b45d5232c5b472c3e542334a4c237c69e5d26ac9",
+   "merge": {
+    "commit": "b45d5232c5b472c3e542334a4c237c69e5d26ac9",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: SKL-006 OpenClaw global optional install"
+   },
+   "branchState": "present"
   },
   {
    "id": "SKL-007",
@@ -1942,7 +2897,13 @@
    "acceptance": "explicit invocation from an OpenClaw agent reaches the same mmcs engine + project state; skill watcher pickup verified (not assumed); `openclaw skills check` passes; test evidence recorded in docs/openclaw-skill-verification.md.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "c1fba7e73afeefcfb220f25a8c40f15d5ea16c4b"
+   "mergedSha": "c1fba7e73afeefcfb220f25a8c40f15d5ea16c4b",
+   "merge": {
+    "commit": "c1fba7e73afeefcfb220f25a8c40f15d5ea16c4b",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: SKL-007 OpenClaw invocation test"
+   },
+   "branchState": "present"
   },
   {
    "id": "REC-001",
@@ -1954,8 +2915,16 @@
    "owns": "state/ writers, scripts/orchestration/checkpoint.*",
    "branch": "task/REC-001-checkpoint-wiring",
    "worktree": "worktrees/REC-001/",
-   "acceptance": "checkpoint cadence enforced (every material transition, before/after compaction, before/after batch merge, session end, every watchdog cycle \u2014 spec \u00a728); atomic write verified under concurrent writers; `npx vitest run packages/core/src/recovery` + integration script exit 0.",
-   "status": "MERGED"
+   "acceptance": "checkpoint cadence enforced (every material transition, before/after compaction, before/after batch merge, session end, every watchdog cycle — spec §28); atomic write verified under concurrent writers; `npx vitest run packages/core/src/recovery` + integration script exit 0.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "a4ca8b2ce1068beca00a7721816a06f1a4da962f",
+    "date": "2026-08-28T12:06:41-04:00",
+    "subject": "merge: REC-001 Checkpoint wiring"
+   },
+   "mergedSha": "a4ca8b2ce1068beca00a7721816a06f1a4da962f",
+   "mergedAt": "2026-08-28T12:06:41-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-002",
@@ -1968,7 +2937,15 @@
    "branch": "task/REC-002-precompact",
    "worktree": "worktrees/REC-002/",
    "acceptance": "save-first-compact-second: reads hook JSON from stdin; checkpoint lock; session.md + checkpoint.json updated; ledger PRECOMPACT_CHECKPOINT appended; exits 0 after flush; executable bit set; simulated hook invocation test passes.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "36c9a62d08ebc2526d8e006458017874a09e5f8c",
+    "date": "2026-08-29T00:32:29-04:00",
+    "subject": "merge: REC-002 PreCompact hook (QC PASS 1/1 defects)"
+   },
+   "mergedSha": "36c9a62d08ebc2526d8e006458017874a09e5f8c",
+   "mergedAt": "2026-08-29T00:32:29-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-003",
@@ -1981,7 +2958,15 @@
    "branch": "task/TASK-REC-003-postcompact",
    "worktree": "worktrees/REC-003/",
    "acceptance": "records event; updates recovery marker; never treats compact summary as sole project state; simulated invocation test passes.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "f706e04d510587338206bb5b88263f038e21bec0",
+    "date": "2026-08-29T00:32:53-04:00",
+    "subject": "merge: REC-003 PostCompact hook (QC PASS 1/1 defects)"
+   },
+   "mergedSha": "f706e04d510587338206bb5b88263f038e21bec0",
+   "mergedAt": "2026-08-29T00:32:53-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-004",
@@ -1994,7 +2979,15 @@
    "branch": "task/REC-004-session-start",
    "worktree": "worktrees/REC-004/",
    "acceptance": "injects recovery context (orchestrator-only reminder; recovery.md/checkpoint.json/todo.md/ledger-tail pointers); reconcile instruction vs duplicate prevention (never duplicate ACTIVE/PASS/MERGED); recreates the two /loop skills when absent; simulated invocation test passes.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "3822ff5081661a51f6e7a6828c6ebda8a7fac3c4",
+    "date": "2026-08-29T00:33:02-04:00",
+    "subject": "merge: REC-004 SessionStart hook (QC PASS 2/2 defects)"
+   },
+   "mergedSha": "3822ff5081661a51f6e7a6828c6ebda8a7fac3c4",
+   "mergedAt": "2026-08-29T00:33:02-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-005",
@@ -2007,7 +3000,15 @@
    "branch": "task/REC-005-session-end",
    "worktree": "worktrees/REC-005/",
    "acceptance": "final checkpoint + exact resume command/state written to recovery.md; simulated invocation test passes.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "42f5146c692cc0d364d07ad4c088a243d22330ae",
+    "date": "2026-08-29T00:33:02-04:00",
+    "subject": "merge: REC-005 SessionEnd hook (QC PASS 2/2 defects)"
+   },
+   "mergedSha": "42f5146c692cc0d364d07ad4c088a243d22330ae",
+   "mergedAt": "2026-08-29T00:33:02-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-006",
@@ -2019,8 +3020,16 @@
    "owns": ".claude/hooks/task-completed.sh, .claude/settings.json (TaskCompleted wiring)",
    "branch": "task/REC-006-task-completed",
    "worktree": "worktrees/REC-006/",
-   "acceptance": "exit 2 blocks premature close when acceptance/QC evidence missing (task not in state/tasks.json; no test evidence; no QC PASS; ACTIVE\u2192MERGED jump; branch/worktree unrecorded); feedback message names exactly what remains; gate test with missing evidence exits 2, with evidence exits 0.",
-   "status": "MERGED"
+   "acceptance": "exit 2 blocks premature close when acceptance/QC evidence missing (task not in state/tasks.json; no test evidence; no QC PASS; ACTIVE→MERGED jump; branch/worktree unrecorded); feedback message names exactly what remains; gate test with missing evidence exits 2, with evidence exits 0.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "7a5dde42b89bf8bb28d031ca1da4aabb113a7c96",
+    "date": "2026-08-29T00:33:02-04:00",
+    "subject": "merge: REC-006 TaskCompleted hook (QC PASS 2/2 defects)"
+   },
+   "mergedSha": "7a5dde42b89bf8bb28d031ca1da4aabb113a7c96",
+   "mergedAt": "2026-08-29T00:33:02-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-007",
@@ -2033,7 +3042,15 @@
    "branch": "task/REC-007-teammate-idle",
    "worktree": "worktrees/REC-007/",
    "acceptance": "exit 2 + continue instruction when teammate owns ACTIVE/QC_FIXING task; directs to claim next compatible READY task in same workflow; allows idle when no useful work; both-branch tests pass.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "ec03405b51b850a14310fbf7649cdede209343c0",
+    "date": "2026-08-29T00:33:02-04:00",
+    "subject": "merge: REC-007 TeammateIdle hook (QC PASS 3/3 defects)"
+   },
+   "mergedSha": "ec03405b51b850a14310fbf7649cdede209343c0",
+   "mergedAt": "2026-08-29T00:33:02-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-008",
@@ -2046,10 +3063,16 @@
    "owns": ".claude/skills/mmcs-watchdog/SKILL.md, scripts/orchestration/watchdog.*",
    "branch": "task/REC-008-watchdog",
    "worktree": "worktrees/REC-008/",
-   "acceptance": "watchdog implements runbook \u00a77.1 checks (locks state/locks/watchdog.lock; verifies workflows/agents/worktrees vs recorded; enforces 10/500; refills under-capacity IMMEDIATELY \u2014 never merely reports; pings stalled; kills duplicates; ensures BUILDER_DONE has Sonnet QC; pushes PASS to queue; updates build-status.md + ledger + atomic checkpoint); `--selftest` with an artificially underfilled workflow detects + flags refill; `npx vitest run scripts/orchestration/watchdog.test.ts` green.",
+   "acceptance": "watchdog implements runbook §7.1 checks (locks state/locks/watchdog.lock; verifies workflows/agents/worktrees vs recorded; enforces 10/500; refills under-capacity IMMEDIATELY — never merely reports; pings stalled; kills duplicates; ensures BUILDER_DONE has Sonnet QC; pushes PASS to queue; updates build-status.md + ledger + atomic checkpoint); `--selftest` with an artificially underfilled workflow detects + flags refill; `npx vitest run scripts/orchestration/watchdog.test.ts` green.",
    "status": "MERGED",
    "mergedAt": "2026-08-28T21:59:00Z",
-   "mergedSha": "cdd60a4f4cb5c19a0fae3f99f33241c210c72f2c"
+   "mergedSha": "cdd60a4f4cb5c19a0fae3f99f33241c210c72f2c",
+   "merge": {
+    "commit": "cdd60a4f4cb5c19a0fae3f99f33241c210c72f2c",
+    "date": "2026-08-28T15:37:30-04:00",
+    "subject": "merge: REC-008 Watchdog Skill/loop"
+   },
+   "branchState": "present"
   },
   {
    "id": "REC-009",
@@ -2062,8 +3085,16 @@
    "owns": ".claude/skills/mmcs-batch-merge/SKILL.md, scripts/orchestration/batch-merge.*",
    "branch": "task/REC-009-batch-merge",
    "worktree": "worktrees/REC-009/",
-   "acceptance": "implements runbook \u00a77.2 (locks state/locks/merge.lock; admits only Sonnet-QC-PASS with passing tests; orders by dependency/conflict risk; batch-merges to integration in dedicated merge workflow; affected-area regression + secret scan before push; no QC PASS = no merge); dry-run mode test on fixture queue; `npx vitest run scripts/orchestration/batch-merge.test.ts` green.",
-   "status": "MERGED"
+   "acceptance": "implements runbook §7.2 (locks state/locks/merge.lock; admits only Sonnet-QC-PASS with passing tests; orders by dependency/conflict risk; batch-merges to integration in dedicated merge workflow; affected-area regression + secret scan before push; no QC PASS = no merge); dry-run mode test on fixture queue; `npx vitest run scripts/orchestration/batch-merge.test.ts` green.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "2f4646e3685cfab66c13be7e2a3672762ecd1de3",
+    "date": "2026-08-28T12:06:45-04:00",
+    "subject": "merge: REC-009 Batch merge"
+   },
+   "mergedSha": "2f4646e3685cfab66c13be7e2a3672762ecd1de3",
+   "mergedAt": "2026-08-28T12:06:45-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-010",
@@ -2080,8 +3111,16 @@
    "owns": "scripts/orchestration/restart-sim.*, docs/recovery-simulation.md",
    "branch": "task/REC-010-restart-sim",
    "worktree": "worktrees/REC-010/",
-   "acceptance": "simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission \u2192 resume polls existing task ID (no resubmit \u2014 spec \u00a732 recovery acceptance); simulation script exits 0.",
-   "status": "MERGED"
+   "acceptance": "simulated stop/restart recovers active task map WITHOUT duplicate task creation; worktree/branch reconciliation matches recorded state; kill provider polling after submission → resume polls existing task ID (no resubmit — spec §32 recovery acceptance); simulation script exits 0.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "ecf472276bd235bdd525ffd8135e81445efcb5c0",
+    "date": "2026-08-29T04:23:37-04:00",
+    "subject": "merge: REC-010 restart simulation (QC PASS 1 defect fixed)"
+   },
+   "mergedSha": "ecf472276bd235bdd525ffd8135e81445efcb5c0",
+   "mergedAt": "2026-08-29T04:23:37-04:00",
+   "branchState": "present"
   },
   {
    "id": "REC-011",
@@ -2094,8 +3133,16 @@
    "owns": "scripts/orchestration/compact-sim.*, docs/compact-simulation.md",
    "branch": "task/REC-011-compact-sim",
    "worktree": "worktrees/REC-011/",
-   "acceptance": "manual /compact (simulated PreCompact\u2192PostCompact) updates checkpoint; simulated new/resumed session injects + reads state; no data loss across compaction; simulation script exits 0.",
-   "status": "MERGED"
+   "acceptance": "manual /compact (simulated PreCompact→PostCompact) updates checkpoint; simulated new/resumed session injects + reads state; no data loss across compaction; simulation script exits 0.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "550a6da15f597e4d9b6841195363de728576dd63",
+    "date": "2026-08-29T04:23:39-04:00",
+    "subject": "merge: REC-011 auto-compact simulation (QC PASS 2 defects fixed)"
+   },
+   "mergedSha": "550a6da15f597e4d9b6841195363de728576dd63",
+   "mergedAt": "2026-08-29T04:23:39-04:00",
+   "branchState": "present"
   },
   {
    "id": "REL-001",
@@ -2112,10 +3159,17 @@
    "owns": "scripts/release/clean-install.sh, docs/installation.md",
    "branch": "task/TASK-REL-001-clean-install",
    "worktree": "worktrees/TASK-REL-001/",
-   "acceptance": "fresh clean clone \u2192 install \u2192 `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.",
+   "acceptance": "fresh clean clone → install → `mmcs doctor` exits 0; no secrets required for doctor; docs/installation.md covers prerequisites + .env configuration; script exits 0 on a pristine clone.",
    "status": "MERGED",
    "mergedAt": "2026-08-29T02:20:00Z",
-   "mergeCommit": "00d4bca"
+   "mergeCommit": "00d4bca",
+   "merge": {
+    "commit": "00d4bca1caa431fede9569768a47d4023439dbf4",
+    "date": "2026-08-28T22:04:25-04:00",
+    "subject": "merge: REL-001 clean-install verification (QC PASS 3/3 defects fixed)"
+   },
+   "mergedSha": "00d4bca1caa431fede9569768a47d4023439dbf4",
+   "branchState": "present"
   },
   {
    "id": "REL-002",
@@ -2128,7 +3182,15 @@
    "branch": "task/REL-002-full-regression",
    "worktree": "worktrees/REL-002/",
    "acceptance": "full vitest suite + `npm run gen` + `npx tsc --noEmit` + lint + Remotion render smoke (16:9 + 9:16) + ffprobe availability check all pass in one scripted run; script exits 0 with per-area summary.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "2478ef6bb977f8a2b454dc0f8c0d879c570770b6",
+    "date": "2026-08-29T00:33:02-04:00",
+    "subject": "merge: REL-002 full-regression release verification (QC PASS 0 defects)"
+   },
+   "mergedSha": "2478ef6bb977f8a2b454dc0f8c0d879c570770b6",
+   "mergedAt": "2026-08-29T00:33:02-04:00",
+   "branchState": "present"
   },
   {
    "id": "REL-003",
@@ -2141,7 +3203,15 @@
    "branch": "task/REL-003-example-project",
    "worktree": "worktrees/REL-003/",
    "acceptance": "example series + episode seed (fixtures, no paid generation) loads via `mmcs create-series`/`create-episode` and exercises the non-paid pipeline steps; docs/first-series.md walkthrough verified step-by-step; `npx vitest run examples/demo-series` green.",
-   "status": "MERGED"
+   "status": "MERGED",
+   "merge": {
+    "commit": "c365e8e668694f4a956d0f0aebfe87ccd5c369c9",
+    "date": "2026-08-29T04:23:41-04:00",
+    "subject": "merge: REL-003 example project (QC PASS 3 defects fixed)"
+   },
+   "mergedSha": "c365e8e668694f4a956d0f0aebfe87ccd5c369c9",
+   "mergedAt": "2026-08-29T04:23:41-04:00",
+   "branchState": "present"
   },
   {
    "id": "REL-004",
@@ -2161,8 +3231,16 @@
    "owns": "scripts/release/e2e-dry-run.sh, docs/e2e-dry-run-report.md",
    "branch": "task/REL-004-e2e-dry-run",
    "worktree": "worktrees/REL-004/",
-   "acceptance": "controlled short sample project exercises concept \u2192 script \u2192 character candidate selection \u2192 storyboard \u2192 (mocked paid generation where credentials absent) \u2192 GHL archival \u2192 Remotion assembly \u2192 QC \u2192 rough cut \u2192 final render \u2192 restart/resume simulation; every defect found fixed before PASS; report written; script exits 0.",
-   "status": "MERGED"
+   "acceptance": "controlled short sample project exercises concept → script → character candidate selection → storyboard → (mocked paid generation where credentials absent) → GHL archival → Remotion assembly → QC → rough cut → final render → restart/resume simulation; every defect found fixed before PASS; report written; script exits 0.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "7df92d2191d93b7ca8e7f4ccbfc06d8d3ec8d7fe",
+    "date": "2026-08-29T07:13:16-04:00",
+    "subject": "merge: REL-004 end-to-end dry run (QC PASS 2/2 defects fixed; 11/11 scenarios RC 0)"
+   },
+   "mergedSha": "7df92d2191d93b7ca8e7f4ccbfc06d8d3ec8d7fe",
+   "mergedAt": "2026-08-29T07:13:16-04:00",
+   "branchState": "present"
   },
   {
    "id": "REL-005",
@@ -2179,8 +3257,16 @@
    "owns": "scripts/release/provider-smoke.sh, docs/provider-smoke-report.md",
    "branch": "task/REL-005-provider-smoke",
    "worktree": "worktrees/REL-005/",
-   "acceptance": "minimal paid smoke (\u22651 Agnes generation; \u22651 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED \u2014 never falsely passed (spec \u00a730); report records spend + job IDs.",
-   "status": "MERGED"
+   "acceptance": "minimal paid smoke (≥1 Agnes generation; ≥1 Kie call if credentials/cost permit; Fish Audio; GHL archival) with cost controls + $25 gate enforced; credential-absent providers mocked and marked BLOCKED — never falsely passed (spec §30); report records spend + job IDs.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "4edaf7cf98d5b74fd17b8bea96805f0cfa1cccbc",
+    "date": "2026-08-29T07:44:33-04:00",
+    "subject": "merge: REL-005 minimal provider smoke (QC PASS 3/3 defects fixed; report-only credential gating, $25 gate, no false PASS)"
+   },
+   "mergedSha": "4edaf7cf98d5b74fd17b8bea96805f0cfa1cccbc",
+   "mergedAt": "2026-08-29T07:44:33-04:00",
+   "branchState": "present"
   },
   {
    "id": "REL-006",
@@ -2198,11 +3284,19 @@
     "REC-010",
     "REC-011"
    ],
-   "owns": "docs/ (all deliverables in spec \u00a733), README.md, session.md (final), release tag",
+   "owns": "docs/ (all deliverables in spec §33), README.md, session.md (final), release tag",
    "branch": "task/REL-006-release-docs",
    "worktree": "worktrees/REL-006/",
-   "acceptance": "spec \u00a733 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.",
-   "status": "MERGED"
+   "acceptance": "spec §33 doc list complete (installation, prerequisites, .env, first series, character library, approvals, provider setup, GHL setup, three skill installs, cost controls, capability registry, adding a provider, troubleshooting, recovery, standalone path); integration promoted to main after full regression; annotated release tag pushed; final session.md tells the user exactly how to launch/use MMCS; docs lint/verify script exits 0.",
+   "status": "MERGED",
+   "merge": {
+    "commit": "df308a731208962cb24ca0b7141e34ef791b1b92",
+    "date": "2026-08-29T08:04:47-04:00",
+    "subject": "merge: REL-006 release docs + final merge"
+   },
+   "mergedSha": "df308a731208962cb24ca0b7141e34ef791b1b92",
+   "mergedAt": "2026-08-29T08:04:47-04:00",
+   "branchState": "present"
   }
  ]
 }

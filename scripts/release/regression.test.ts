@@ -116,9 +116,56 @@ function withSandbox(
   // is tested by overwriting this stub).
   mkdirSync(path.join(root, "scripts/release"), { recursive: true });
   copyFileSync(SCRIPT, path.join(root, "scripts/release/regression.sh"));
+  // SKR-036: gate area 7 runs the real task-ledger verifier, so the sandbox needs the
+  // verifier itself plus a ledger whose single MERGED task is genuinely substantiated by
+  // a merge commit naming it and an owned path present at HEAD. Without this the area
+  // would fail in every sandbox for the wrong reason.
+  copyFileSync(
+    path.resolve(__dirname, "task-ledger-verify.mjs"),
+    path.join(root, "scripts/release/task-ledger-verify.mjs"),
+  );
+  const defaultBranch = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+    cwd: root,
+    encoding: "utf8",
+  }).stdout.trim();
+  spawnSync("git", ["checkout", "-q", "-b", "topic"], { cwd: root });
+  writeFileSync(path.join(root, "packages/core/src/ledger-fixture.ts"), "export const fixture = 1;\n");
+  spawnSync("git", ["add", "-A"], { cwd: root });
+  spawnSync("git", ["commit", "-qm", "LEDGER-001 work"], { cwd: root });
+  spawnSync("git", ["checkout", "-q", defaultBranch], { cwd: root });
+  spawnSync("git", ["merge", "-q", "--no-ff", "topic", "-m", "merge: LEDGER-001 sandbox fixture"], {
+    cwd: root,
+  });
+  mkdirSync(path.join(root, "state"), { recursive: true });
+  writeFileSync(
+    path.join(root, "state/tasks.json"),
+    JSON.stringify(
+      {
+        schema_version: 1,
+        items: [
+          {
+            id: "LEDGER-001",
+            title: "sandbox ledger fixture",
+            owns: "packages/core/src/",
+            branch: "task/LEDGER-001",
+            status: "MERGED",
+          },
+        ],
+      },
+      null,
+      1,
+    ) + "\n",
+  );
   writeFileSync(
     path.join(root, "scripts/release/regression-render-smoke.mjs"),
     "console.log('  9:16 stub rendered'); console.log('  16:9 stub rendered'); console.log('SMOKE_OK'); process.exit(0);\n",
+  );
+  // Gate area 6 also drives S01E01 through the production adapter. The real helper needs
+  // the @remotion tree the sandbox does not have, so it gets a GREEN stub too; the real
+  // path is exercised for real by the end-to-end test below.
+  writeFileSync(
+    path.join(root, "scripts/release/regression-adapter-smoke.mjs"),
+    "console.log('  adapter stub rendered'); console.log('ADAPTER_OK'); process.exit(0);\n",
   );
   const run = (extraEnv: NodeJS.ProcessEnv = {}, args: string[] = []): RunResult =>
     spawnBash(path.join(root, "scripts/release/regression.sh"), args, root, {
@@ -217,7 +264,20 @@ describe("regression.sh — unit (sandbox, fake toolchain)", () => {
       expect(line).toBeDefined();
       const parsed = JSON.parse(line) as { status: string; areas: Record<string, string> };
       expect(parsed.status).toBe("ok");
-      expect(Object.values(parsed.areas)).toEqual(["PASS", "PASS", "PASS", "PASS", "PASS", "PASS"]);
+      // Assert by NAME, not by a hardcoded count: a positional list silently rots every
+      // time a gate area is added, which is how the adapter smoke area slipped through.
+      expect(Object.keys(parsed.areas)).toEqual([
+        "tools",
+        "vitest",
+        "gen",
+        "typecheck",
+        "lint",
+        "render-smoke",
+        "task-ledger",
+      ]);
+      for (const [name, result] of Object.entries(parsed.areas)) {
+        expect(result, `area ${name}`).toBe("PASS");
+      }
     });
   }, 60_000);
 
