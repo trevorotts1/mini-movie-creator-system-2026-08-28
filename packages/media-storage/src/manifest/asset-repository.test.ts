@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { connectSqlite, type SqliteDatabase } from "@mmcs/database";
+import { connectSqlite, migrate, MIGRATIONS, type SqliteDatabase } from "@mmcs/database";
 import { AssetRepository, mapAssetRow } from "./asset-repository.js";
 import { ASSET_MANIFEST_FIELDS, AssetManifestError, type AssetRecord } from "./types.js";
 
@@ -297,6 +297,16 @@ describe("ghl_location_id tenant column (SKR-011)", () => {
     // The table was created by this test with the pre-SKR-011 DDL; the
     // repository must have added the tenant column additively at first use.
     const columns = db.all("PRAGMA table_info(assets)").map((column) => column["name"]);
+    expect(columns).toContain("ghl_location_id");
+  });
+
+  it("is owned by the schema band, so a migrated database needs no ALTER", () => {
+    // The race this closes: a column added ad hoc at first use is one that two
+    // processes can try to add at the same moment. Any database migrated from
+    // now on gets the column from the 004_ DDL, before any repository exists.
+    const fresh = connectSqlite({ path: ":memory:" });
+    migrate(fresh, MIGRATIONS);
+    const columns = fresh.all("PRAGMA table_info(assets)").map((column) => column["name"]);
     expect(columns).toContain("ghl_location_id");
   });
 

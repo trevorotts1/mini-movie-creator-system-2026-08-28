@@ -357,6 +357,10 @@ CREATE TABLE assets (
   ghl_file_id TEXT,
   ghl_folder_id TEXT,
   ghl_url TEXT,
+  -- SKR-011 tenant provenance. Owned here rather than added ad hoc by
+  -- @mmcs/media-storage at first use: a column outside the migration history
+  -- is one two racing processes can try to add simultaneously.
+  ghl_location_id TEXT,
   checksum TEXT,
   local_path TEXT,
   prompt TEXT,

@@ -132,11 +132,24 @@ export function mapAssetRow(row: Record<string, SqlOutputValue> | undefined): As
  * already has the column (or does not exist yet) is left untouched.
  */
 function ensureGhlLocationColumn(db: SqliteDatabase): void {
-  const columns = db.all("PRAGMA table_info(assets)");
-  if (columns.length === 0) return; // table not migrated yet — nothing to alter
-  const hasColumn = columns.some((column) => column["name"] === "ghl_location_id");
-  if (hasColumn) return;
-  db.exec("ALTER TABLE assets ADD COLUMN ghl_location_id TEXT");
+  const hasColumn = (): boolean =>
+    db
+      .all("PRAGMA table_info(assets)")
+      .some((column) => column["name"] === "ghl_location_id");
+  const rows = db.all("PRAGMA table_info(assets)");
+  if (rows.length === 0) return; // table not migrated yet — nothing to alter
+  if (hasColumn()) return;
+  try {
+    db.exec("ALTER TABLE assets ADD COLUMN ghl_location_id TEXT");
+  } catch (err) {
+    // The schema band owns this column for any database migrated from now on,
+    // so this path only serves databases created before the band shipped it.
+    // Two processes can still reach here at once and both attempt the ALTER;
+    // the loser gets "duplicate column name" on a race it did not lose in any
+    // meaningful sense — the column exists, which is all this function wants.
+    // Re-check rather than propagating a spurious failure.
+    if (!hasColumn()) throw err;
+  }
 }
 
 /** Durable asset-manifest persistence (spec §19 + §25). */
