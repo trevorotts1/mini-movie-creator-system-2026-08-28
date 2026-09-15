@@ -57,8 +57,12 @@ if [ -z "$MMCS_ROOT" ]; then
   MMCS_ROOT="$(resolve_root_from "$PWD" || true)"
 fi
 
-# Persistent-location fallback (survives container recreates): the engine is
-# installed at the client workspace's persisted mmcs/ dir by install-client.sh.
+# Discovery fallback (SKR-008): look for the engine at the client workspace's mmcs/ dir.
+# This is a DISCOVERY candidate, not a guarantee — nothing in this repo creates that path,
+# and whether it survives a container recreate is a property of the DEPLOYMENT (whether it
+# mounts ~/.openclaw as a volume), which this repo does not control. An earlier version of
+# this comment and of the AGENTS.md block install-client.sh writes both PROMISED
+# persistence; the promise was removed rather than left standing.
 # One candidate only — this loop previously listed the same path twice, so it
 # read as two fallbacks while testing one.
 if [ -z "$MMCS_ROOT" ]; then

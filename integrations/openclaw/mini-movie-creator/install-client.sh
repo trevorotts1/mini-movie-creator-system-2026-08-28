@@ -125,9 +125,16 @@ fi
 MARK="## MMCS mini-movie engine (skill $SKILL_SLOT)"
 BLOCK="
 $MARK
-Series/episodes with a LOCKED recurring character → skills/$SKILL_SLOT-$SLUG (engine CLI at HOME/.openclaw/workspace/mmcs — persisted across container recreates; preflight: skills/$SKILL_SLOT-$SLUG/scripts/env-preflight.sh; provider = KIE_API_KEY, never fal.ai).
+Series/episodes with a LOCKED recurring character → skills/$SKILL_SLOT-$SLUG (engine CLI: MMCS_ROOT, else the first of HOME/.openclaw/workspace/mmcs and HOME/mmcs that actually holds an MMCS engine — this installer DISCOVERS that path, it does not create it; whether it survives a container recreate depends on your deployment mounting it, which this repo does not control; preflight: skills/$SKILL_SLOT-$SLUG/scripts/env-preflight.sh; provider = KIE_API_KEY, never fal.ai).
 One-off montage / brief → finished video → 47-movie-producer instead.
 "
+
+# SKR-008: the block above used to claim the engine path was "persisted across container
+# recreates". Nothing in this repo created that path or mounted it, so the installer was
+# writing a promise it could not keep into every client's AGENTS.md. The wording above now
+# states what is true: this script DISCOVERS the path, and persistence is a deployment
+# property. If you deploy with a volume on ~/.openclaw, say so in your own runbook —
+# do not rely on this block to assert it.
 if [ -f "$AGENTS" ] && grep -qF "$MARK" "$AGENTS"; then
   log "AGENTS.md: block already present"
 else
