@@ -59,6 +59,12 @@ for pkg_dir in packages/dist/*/; do
     [ "$(readlink "packages/$pkg/dist")" = "$target" ] || { rm "packages/$pkg/dist"; ln -s "$target" "packages/$pkg/dist"; }
   elif [ ! -e "packages/$pkg/dist" ]; then
     ln -s "$target" "packages/$pkg/dist"
+  else
+    # A REAL directory here is never what the build produced (the composite emit
+    # goes to packages/dist/<pkg>/src), so it shadows the new build and the
+    # package silently resolves to stale code. Skipping it quietly was the bug:
+    # say so, loudly, and name the recovery.
+    echo "link-dist-deps: WARN packages/$pkg/dist is a real directory, not the expected bridge to $target — leaving it in place; the package may resolve to stale output. Remove it and re-run to pick up the composite build." >&2
   fi
 done
 echo "package dist bridges OK"
