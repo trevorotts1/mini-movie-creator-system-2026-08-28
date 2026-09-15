@@ -39,11 +39,11 @@ export const BACKUP_EXPORT_SPEC: CommandSpec = {
   name: "backup export",
   description:
     "Export the MMCS database to a restorable .mmcsbak archive (spec §25)",
+  // runBackupExport reads options.out and never reads force or archive, so those
+  // are not part of this verb's interface.
   options: [
     { flag: "db", value: "path", description: "Database path (default state/mmcs.db)" },
     { flag: "out", value: "path", description: "Output archive path" },
-    { flag: "archive", value: "path", description: "Archive path to restore" },
-    { flag: "force", description: "Overwrite an existing target" },
     { flag: "json", description: "Emit machine-readable JSON" },
   ],
   group: BACKUP_GROUP,
@@ -53,11 +53,12 @@ export const BACKUP_RESTORE_SPEC: CommandSpec = {
   name: "backup restore",
   description:
     "Restore a .mmcsbak archive into an empty database and verify counts+checksums",
+  // runBackupRestore reads options.archive and maps --force onto the restore
+  // call's `overwrite`. It never reads --out.
   options: [
-    { flag: "db", value: "path", description: "Database path (default state/mmcs.db)" },
-    { flag: "out", value: "path", description: "Output archive path" },
     { flag: "archive", value: "path", description: "Archive path to restore" },
-    { flag: "force", description: "Overwrite an existing target" },
+    { flag: "db", value: "path", description: "Target database path" },
+    { flag: "force", description: "Overwrite an existing target database" },
     { flag: "json", description: "Emit machine-readable JSON" },
   ],
   group: BACKUP_GROUP,
@@ -65,7 +66,9 @@ export const BACKUP_RESTORE_SPEC: CommandSpec = {
 
 export const USAGE_BACKUP = [
   "Usage: mmcs backup export --db <path> --out <archive>",
-  "       mmcs backup restore --archive <archive> --db <path> [--overwrite]",
+  // The synopsis said [--overwrite] while the option list below and the parser
+  // both use --force. The synopsis was the odd one out.
+  "       mmcs backup restore --archive <archive> --db <path> [--force]",
   "",
   "Export snapshots the live (WAL-safe) database into ONE .mmcsbak file",
   "carrying a manifest: schema version, migration ledger, and per-table",

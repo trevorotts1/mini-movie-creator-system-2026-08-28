@@ -108,6 +108,9 @@ import {
   SqliteProjectRepository,
   ProviderJobRepository,
 } from "@mmcs/database";
+// The backup operations live in their own subpath — @mmcs/database's main index
+// does not re-export them.
+import { exportBackup, restoreBackup } from "@mmcs/database/backup/index.js";
 import {
   planStoryboard,
   type ImageCapabilityProfile,
@@ -574,11 +577,28 @@ function retryPorts(): RetryShotPorts {
 /* Ports — backup (CORE-015, packages/database/src/backup engine)      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Real backup ports (SKR-042 / QC-A P1-4).
+ *
+ * This previously returned `{ databasePath, exists }` behind an
+ * `as unknown as BackupPorts` cast, so it satisfied the compiler while
+ * providing NONE of the four members the interface requires. Every
+ * `mmcs backup export` therefore died with "ports.databaseExists is not a
+ * function" — the database's own safety net had never worked. The cast is gone
+ * so the compiler checks the shape, and each port now delegates to the real
+ * @mmcs/database implementation.
+ */
 function backupPorts(): BackupPorts {
   return {
-    databasePath: () => DB_PATH,
-    exists: (p: string) => existsSync(p),
-  } as unknown as BackupPorts;
+    databaseExists: (dbPath: string) => existsSync(dbPath),
+    archiveExists: (archivePath: string) => existsSync(archivePath),
+    export: (options) => exportBackup(db(), { outputPath: options.outputPath }),
+    restore: (options) =>
+      restoreBackup(options.archivePath, {
+        databasePath: options.databasePath,
+        ...(options.overwrite === undefined ? {} : { overwrite: options.overwrite }),
+      }),
+  };
 }
 
 /* ------------------------------------------------------------------ */
