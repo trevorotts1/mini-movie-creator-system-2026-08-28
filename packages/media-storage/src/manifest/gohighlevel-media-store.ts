@@ -141,6 +141,13 @@ export class GoHighLevelMediaStore extends BaseMediaStore {
     this.preferHosted = options.preferHosted ?? true;
     this.ledger = options.ledger;
     this.findExistingFile = options.findExistingFile;
+    // NOTE: a ledger without findExistingFile is deliberately ACCEPTED. A held
+    // reservation then raises ArchivalReservationHeldError naming exactly what
+    // to do ("wire detectExisting, or release the key once the file is confirmed
+    // absent at GHL") rather than resolving itself. That is correct: the outcome
+    // of the earlier attempt is unknown and may have landed, so releasing on a
+    // guess is how one paid archival becomes two — the very duplicate the ledger
+    // exists to prevent. A completed ledger record needs no detector at all.
   }
 
   /**
