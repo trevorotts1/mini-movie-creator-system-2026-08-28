@@ -1,6 +1,13 @@
 # MMCS LIVE TASK LIST (todo.md)
 
 Source: runbook §24 (BUILD TASK DECOMPOSITION) + §9 (workflow topology) + spec.md §1 (package layout). Replaces the bootstrap seed of 2026-08-28 08:03.
+> **READING THIS FILE (reconciliation 2026-09-15).** The summary line directly below is the
+> FINAL build state. The sections further down — "## BLOCKED set", the "Status policy" block and
+> the per-workflow counts table showing `READY 1 / BLOCKED 1` — are **HISTORICAL planning
+> records** from earlier batches, preserved deliberately and NOT current. They previously sat
+> unlabelled beside the final counts, so a reader could not tell which was live: the same file
+> said both `BLOCKED: 0` and `## BLOCKED set (1)` ten lines apart. History is kept, not rewritten.
+
 Total tasks: **149** — MERGED: **149** — READY: **0** — BLOCKED: **0** — PASS: **0**. Batch-16: REL-006 merged clean (merge df308a7; QC PASS 0 defects, certified sha 96bedd9 ancestor of tip d43fc3e; docs-verify gate rc=0); regression PASS; pushed 6a39849..0b611d1. **ALL 149/149 TASKS MERGED — integration ready for main promotion + annotated release tag (REL-006 acceptance, merger applies).**
 
 ## Wave-1 READY set (all 130 READY tasks below dispatch at wave launch)

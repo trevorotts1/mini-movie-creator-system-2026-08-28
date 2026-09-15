@@ -2,7 +2,12 @@
 
 **Project:** mini-movie-creator-system (MMCS)
 **Updated:** 2026-08-29T12:20:00Z
-**Current Stage:** COMPLETE — Batch Merge 16 Pushed — 149/149 MERGED — main promotion next
+**Current Stage:** COMPLETE — Batch Merge 16 Pushed — 149/149 MERGED — **main promotion DONE**
+> Reconciliation 2026-09-15: this line said "main promotion next", but the promotion had already
+> happened. Verified from git, not from this file: tag `v1.0.0` is an annotated tag pointing at
+> `5889ebc`, that commit is an ancestor of `origin/main`, and the fast-forward range
+> `938238d..5889ebc` is a real 886-commit linear run. The "Next: main promotion" notes below are
+> therefore historical. Left in place and marked rather than rewritten.
 
 ---
 
