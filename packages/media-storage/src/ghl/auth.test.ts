@@ -16,7 +16,10 @@ import {
 import { GHL_ENDPOINTS } from "./config.js";
 
 const TOKEN = "pit-test-token-abcdef1234567890";
-const LOCATION = "sx6wyHhbFdRXh302LLNR";
+// Replaced a 20-char mixed-case literal that had the exact shape of a real
+// GHL locationId with an obvious placeholder: this repository is public and
+// the fixture only asserts header shape, never this value.
+const LOCATION = "loc_test_subaccount_0001";
 
 describe("GHL auth config", () => {
   it("builds bearer + Version: v3 headers from config", () => {
